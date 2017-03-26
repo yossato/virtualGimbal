@@ -11,7 +11,7 @@
 #include <GL/glew.h>
 
 // Include GLFW
-#include <GLFW/glfw3.h>
+#include <glfw3.h>
 GLFWwindow* window;
 
 // Include GLM
@@ -19,9 +19,9 @@ GLFWwindow* window;
 #include <glm/gtc/matrix_transform.hpp>
 using namespace glm;
 
-#include <shader.hpp>
-#include <texture.hpp>
-#include <controls.hpp>
+#include <common/shader.hpp>
+#include <common/texture.hpp>
+#include <common/controls.hpp>
 
 
 /**
