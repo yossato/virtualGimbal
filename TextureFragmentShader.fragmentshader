@@ -130,9 +130,9 @@ float BSpline( float x )
 }
 vec4 BiCubic( sampler2D textureSampler, vec2 TexCoord )
 {
-    vec2 texSize = textureSize(textureSampler, 0);
-    float fWidth = texSize.x;
-    float fHeight = texSize.y;
+    vec2 texSize = textureSize(textureSampler, 0);//This is failure.
+    float fWidth = texSize.x*3;
+    float fHeight = texSize.y*3;
     float texelSizeX = 1.0 / fWidth; //size of one texel
     float texelSizeY = 1.0 / fHeight; //size of one texel
     vec4 nSum = vec4( 0.0, 0.0, 0.0, 0.0 );

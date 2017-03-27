@@ -142,6 +142,13 @@ int main(int argc, char** argv){
     ReadDistortionParams("distortion.txt",matDist);
     std::cout << "Distortion Coeff:\n" << matDist << "\n" << std::endl;
 
+    cv::Mat img;
+    //動画の読み込み
+    Capture >> img;
+    const int TEXTURE_W = 2048;//テクスチャ。TODO:ビデオのサイズに合わせて拡大縮小
+    const int TEXTURE_H = 2048;
+    cv::Mat buff(TEXTURE_H,TEXTURE_W,CV_8UC3);//テクスチャ用Matを準備
+    img.copyTo(buff(cv::Rect(0,0,img.cols,img.rows)));
 
 
         // Initialise GLFW
@@ -202,13 +209,28 @@ int main(int argc, char** argv){
         glBindVertexArray(VertexArrayID);
 
         // Create and compile our GLSL program from the shaders
-        GLuint programID = LoadShaders( "TransformVertexShader.vertexshader", "TextureFragmentShader.fragmentshader" );
+        GLuint programID = LoadShaders( "../biCubic/TransformVertexShader.vertexshader", "../biCubic/TextureFragmentShader.fragmentshader" );
 
         // Get a handle for our "MVP" uniform
         GLuint MatrixID = glGetUniformLocation(programID, "MVP");
 
+        //////////////////
+        ///
+        // Create one OpenGL texture
+        GLuint textureID_0;
+        glGenTextures(1, &textureID_0);
+        //OpenGLに「これから、テクスチャ識別子idに対して指示を与えます」と指示
+        glBindTexture(GL_TEXTURE_2D,textureID_0);
+        //テクスチャをここで作成
+        glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,buff.cols,buff.rows,0,GL_BGR,GL_UNSIGNED_BYTE,buff.data);
+        //////////////////
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glGenerateMipmap(GL_TEXTURE_2D);
         // Load the texture
-        GLuint Texture = loadDDS("uvtemplate.DDS");
+//        GLuint Texture = loadDDS("uvtemplate.DDS");
 
         // Get a handle for our "myTextureSampler" uniform
         GLuint TextureID  = glGetUniformLocation(programID, "myTextureSampler");
@@ -325,7 +347,7 @@ int main(int argc, char** argv){
 
             // Bind our texture in Texture Unit 0
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, Texture);
+            glBindTexture(GL_TEXTURE_2D, textureID_0);//            glBindTexture(GL_TEXTURE_2D, Texture);
             // Set our "myTextureSampler" sampler to user Texture Unit 0
             glUniform1i(TextureID, 0);
 
