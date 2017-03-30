@@ -143,12 +143,18 @@ int main(int argc, char** argv){
     std::cout << "Distortion Coeff:\n" << matDist << "\n" << std::endl;
 
     cv::Mat img;
+
+    //試しに先に進む
+    Capture.set(cv::CAP_PROP_POS_FRAMES,3300);
+
     //動画の読み込み
     Capture >> img;
     const int TEXTURE_W = 2048;//テクスチャ。TODO:ビデオのサイズに合わせて拡大縮小
     const int TEXTURE_H = 2048;
     cv::Mat buff(TEXTURE_H,TEXTURE_W,CV_8UC3);//テクスチャ用Matを準備
     img.copyTo(buff(cv::Rect(0,0,img.cols,img.rows)));
+
+
 
 
         // Initialise GLFW
@@ -166,7 +172,7 @@ int main(int argc, char** argv){
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
         // Open a window and create its OpenGL context
-        window = glfwCreateWindow( 1024, 768, "Tutorial 0 - Keyboard and Mouse", NULL, NULL);
+        window = glfwCreateWindow( 1024, 1000, "Tutorial 0 - Keyboard and Mouse", NULL, NULL);
         if( window == NULL ){
             fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
             getchar();
@@ -187,7 +193,7 @@ int main(int argc, char** argv){
         // Ensure we can capture the escape key being pressed below
         glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
         // Hide the mouse and enable unlimited mouvement
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+//        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
         // Set the mouse at the center of the screen
         glfwPollEvents();
@@ -238,16 +244,27 @@ int main(int argc, char** argv){
         // Our vertices. Tree consecutive floats give a 3D vertex; Three consecutive vertices give a triangle.
         // A cube has 6 faces with 2 triangles each, so this makes 6*2=12 triangles, and 12*3 vertices
         static const GLfloat g_vertex_buffer_data[] = {
+            -1.0f,  1.0f, 0.0f,
             -1.0f, -1.0f, 0.0f,
-             1.0f, -1.0f, 0.0f,
-             0.0f,  1.0f, 0.0f,
+             1.0f, 1.0f, 0.0f,
+
+
+            -1.0f, -1.0f, 0.0f,
+            1.0f,  -1.0f, 0.0f,
+             1.0f, 1.0f, 0.0f,
+
         };
 
         // Two UV coordinatesfor each vertex. They were created with Blender.
         static const GLfloat g_uv_buffer_data[] = {
-            0.000059f, 0.000004f,
-            0.000103f, 0.336048f,
-            0.335973f, 0.335903f,
+            0.0f, 1.0f,
+            0.0f, 0.0f,
+            1.0f, 1.0f,
+
+
+            0.0f, 0.0f,
+            1.0f, 0.0f,
+            1.0f, 1.0f,
 
         };
 
@@ -275,7 +292,8 @@ int main(int argc, char** argv){
 //            glm::mat4 ViewMatrix = getViewMatrix();
 //            glm::mat4 ModelMatrix = glm::mat4(1.0);
 //            glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-            glm::mat4 MVP = glm::mat4(1.0f);
+//            glm::mat4 MVP = glm::mat4(1.0f);//動画保存用
+            glm::mat4 MVP = glm::rotate<float>(glm::mat4x4(),(float)M_PI,glm::vec3(0.0f,0.0f,1.0f));//画面表示用
             // Send our transformation to the currently bound shader,
             // in the "MVP" uniform
             glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
