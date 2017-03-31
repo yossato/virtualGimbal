@@ -160,8 +160,43 @@ vec4 BiCubic( sampler2D textureSampler, vec2 TexCoord )
     return nSum / nDenom;
 }
 
+/**
+ * @brief Undistort
+ * @param TexCoord
+ * @return
+ */
+vec2 Undistort(vec2 uv, vec2 f, vec2 c, vec4 kp){
+
+    vec2 p1 = (uv - c)/f;
+    float r = length(p1);
+    // vec4 kp = (k1, k2, p1, p2)としておく
+    vec2 p2 = p1*(1.0+kp[0]*r*r+kp[1]*r*r*r*r) + 2.0*kp.zw*p1.x*p1.y + kp.wz*(r*r+2.0*p1*p1);
+    return p2*f+c;
+
+    /*double u = refPointsX[i];
+    double v = refPointsY[i];
+
+    double x1 = (u - cx)/fx;
+    double y1 = (v - cy)/fy;
+
+    double r = sqrt(x1*x1+y1*y1);
+
+    double x2 = x1*(1.0+k1*r*r+k2*r*r*r*r)+2.0*p1*x1*y1+p2*(r*r+2.0*x1*x1);
+    double y2 = y1*(1.0+k1*r*r+k2*r*r*r*r)+p1*(r*r+2.0*y1*y1)+2.0*p2*x1*y1;
+    double mapx = x2*fx+cx;
+    double mapy = y2*fy+cy;
+    undistortedPointsX.push_back(mapx);
+    undistortedPointsY.push_back(mapy);*/
+}
+
+uniform vec2 normalizedFocalLength;
+uniform vec2 normalizedOpticalCenter;
+uniform vec4 distortionCoeffs;
+
 void main(){
 
         // Output color = color of the texture at the specified UV
-        color = BiCubic( myTextureSampler, UV ).rgb;
+//        color = BiCubic( myTextureSampler, UV ).rgb;
+//    color = vec3(UV.r,UV.g,0.0f);
+    color = BiCubic( myTextureSampler, Undistort(UV,normalizedFocalLength,normalizedOpticalCenter,distortionCoeffs) ).rgb;
 }

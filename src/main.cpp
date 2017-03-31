@@ -127,9 +127,9 @@ int ReadDistortionParams(const char FileName[], cv::Mat &Values){
 int main(int argc, char** argv){
     cv::VideoCapture Capture(argv[1]);//動画をオープン
     assert(Capture.isOpened());
-    cv::Size resolution = cv::Size(Capture.get(CV_CAP_PROP_FRAME_WIDTH),Capture.get(CV_CAP_PROP_FRAME_HEIGHT));//解像度を読む
+    cv::Size imageSize = cv::Size(Capture.get(CV_CAP_PROP_FRAME_WIDTH),Capture.get(CV_CAP_PROP_FRAME_HEIGHT));//解像度を読む
     double samplingPeriod = 1.0/Capture.get(CV_CAP_PROP_FPS);
-    std::cout << "resolution" << resolution << std::endl;
+    std::cout << "resolution" << imageSize << std::endl;
     std::cout << "samplingPeriod" << samplingPeriod << std::endl;
 
     //レンズ歪データを読み込み
@@ -149,10 +149,10 @@ int main(int argc, char** argv){
 
     //動画の読み込み
     Capture >> img;
-    cv::Size texture = cv::Size(2048,2048);
+    cv::Size textureSize = cv::Size(2048,2048);
 //    const int TEXTURE_W = 2048;//テクスチャ。TODO:ビデオのサイズに合わせて拡大縮小
 //    const int TEXTURE_H = 2048;
-    cv::Mat buff(texture.height,texture.width,CV_8UC3);//テクスチャ用Matを準備
+    cv::Mat buff(textureSize.height,textureSize.width,CV_8UC3);//テクスチャ用Matを準備
     img.copyTo(buff(cv::Rect(0,0,img.cols,img.rows)));
 
 
@@ -258,14 +258,14 @@ int main(int argc, char** argv){
 
         // Two UV coordinatesfor each vertex. They were created with Blender.
         static const GLfloat g_uv_buffer_data[] = {
-            0.0f, (float)resolution.height/(float)texture.height,
+            0.0f, (float)imageSize.height/(float)textureSize.height,
             0.0f, 0.0f,
-            (float)resolution.width/(float)texture.width, (float)resolution.height/(float)texture.height,
+            (float)imageSize.width/(float)textureSize.width, (float)imageSize.height/(float)textureSize.height,
 
 
             0.0f, 0.0f,
-            (float)resolution.width/(float)texture.width, 0.0f,
-            (float)resolution.width/(float)texture.width, (float)resolution.height/(float)texture.height,
+            (float)imageSize.width/(float)textureSize.width, 0.0f,
+            (float)imageSize.width/(float)textureSize.width, (float)imageSize.height/(float)textureSize.height,
 
         };
         //        static const GLfloat g_uv_buffer_data[] = {
@@ -289,6 +289,17 @@ int main(int argc, char** argv){
         glGenBuffers(1, &uvbuffer);
         glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
         glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
+
+        //歪補正の準備
+        GLuint nFxyID       = glGetUniformLocation(programID, "normalizedFocalLength");
+        GLuint nCxyID       = glGetUniformLocation(programID, "normalizedOpticalCenter");
+        GLuint distCoeffID  = glGetUniformLocation(programID, "distortionCoeffs");
+//        float nfxy[] = {(float)(matIntrinsic.at<double>(0,0)/imageSize.width), (float)(matIntrinsic.at<double>(1,1)/imageSize.height)};
+//        glUniform2fv(nFxyID, 1, nfxy);
+//        float ncxy[] = {(float)(matIntrinsic.at<double>(0,2)/imageSize.width), (float)(matIntrinsic.at<double>(1,2)/imageSize.height)};
+//        glUniform2fv(nCxyID, 1, ncxy);
+//        float distcoeffFloat[] = {(float)(matIntrinsic.at<double>(0,0)),(float)(matIntrinsic.at<double>(0,1)),(float)(matIntrinsic.at<double>(0,2)),(float)(matIntrinsic.at<double>(0,3))};
+//        glUniform4fv(distCoeffID, 1, distcoeffFloat);
 
         do{
 
@@ -315,6 +326,14 @@ int main(int argc, char** argv){
             glBindTexture(GL_TEXTURE_2D, textureID_0);//            glBindTexture(GL_TEXTURE_2D, Texture);
             // Set our "myTextureSampler" sampler to user Texture Unit 0
             glUniform1i(TextureID, 0);
+
+            //歪補正の準備
+            float nfxy[] = {(float)(matIntrinsic.at<double>(0,0)/imageSize.width), (float)(matIntrinsic.at<double>(1,1)/imageSize.height)};
+            glUniform2fv(nFxyID, 1, nfxy);
+            float ncxy[] = {(float)(matIntrinsic.at<double>(0,2)/imageSize.width), (float)(matIntrinsic.at<double>(1,2)/imageSize.height)};
+            glUniform2fv(nCxyID, 1, ncxy);
+            float distcoeffFloat[] = {(float)(matIntrinsic.at<double>(0,0)),(float)(matIntrinsic.at<double>(0,1)),(float)(matIntrinsic.at<double>(0,2)),(float)(matIntrinsic.at<double>(0,3))};
+            glUniform4fv(distCoeffID, 1, distcoeffFloat);
 
             // 1rst attribute buffer : vertices
             glEnableVertexAttribArray(0);
