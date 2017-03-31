@@ -149,9 +149,10 @@ int main(int argc, char** argv){
 
     //動画の読み込み
     Capture >> img;
-    const int TEXTURE_W = 2048;//テクスチャ。TODO:ビデオのサイズに合わせて拡大縮小
-    const int TEXTURE_H = 2048;
-    cv::Mat buff(TEXTURE_H,TEXTURE_W,CV_8UC3);//テクスチャ用Matを準備
+    cv::Size texture = cv::Size(2048,2048);
+//    const int TEXTURE_W = 2048;//テクスチャ。TODO:ビデオのサイズに合わせて拡大縮小
+//    const int TEXTURE_H = 2048;
+    cv::Mat buff(texture.height,texture.width,CV_8UC3);//テクスチャ用Matを準備
     img.copyTo(buff(cv::Rect(0,0,img.cols,img.rows)));
 
 
@@ -172,7 +173,7 @@ int main(int argc, char** argv){
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
         // Open a window and create its OpenGL context
-        window = glfwCreateWindow( 1024, 1000, "Tutorial 0 - Keyboard and Mouse", NULL, NULL);
+        window = glfwCreateWindow( 1280, 720, "Tutorial 0 - Keyboard and Mouse", NULL, NULL);
         if( window == NULL ){
             fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
             getchar();
@@ -257,16 +258,27 @@ int main(int argc, char** argv){
 
         // Two UV coordinatesfor each vertex. They were created with Blender.
         static const GLfloat g_uv_buffer_data[] = {
-            0.0f, 1.0f,
+            0.0f, (float)resolution.height/(float)texture.height,
             0.0f, 0.0f,
-            1.0f, 1.0f,
+            (float)resolution.width/(float)texture.width, (float)resolution.height/(float)texture.height,
 
 
             0.0f, 0.0f,
-            1.0f, 0.0f,
-            1.0f, 1.0f,
+            (float)resolution.width/(float)texture.width, 0.0f,
+            (float)resolution.width/(float)texture.width, (float)resolution.height/(float)texture.height,
 
         };
+        //        static const GLfloat g_uv_buffer_data[] = {
+//            0.0f, 1.0f,
+//            0.0f, 0.0f,
+//            1.0f, 1.0f,
+
+
+//            0.0f, 0.0f,
+//            1.0f, 0.0f,
+//            1.0f, 1.0f,
+
+//        };
 
         GLuint vertexbuffer;
         glGenBuffers(1, &vertexbuffer);
