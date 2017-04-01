@@ -10,6 +10,9 @@
 #include <unistd.h>
 
 #include "calcShift.hpp"
+#include <chrono>
+
+using namespace std;
 
 /**
 * @brief カメラ行列設定を記録したテキストファイルを読み込みます
@@ -160,8 +163,12 @@ int main(int argc, char** argv){
     }
 
     //動画からオプティカルフローを計算する
-    std::vector<cv::Vec3d> opticShift = CalcShiftFromVideo(videoPass,300);//ビデオからオプティカルフローを用いてシフト量を算出
-
+    auto t1 = std::chrono::system_clock::now() ;
+    std::vector<cv::Vec3d> opticShift = CalcShiftFromVideo(videoPass,1000);//ビデオからオプティカルフローを用いてシフト量を算出
+    auto t2 = std::chrono::system_clock::now() ;
+    // 処理の経過時間
+    auto elapsed = t2 - t1 ;
+    std::cout << "Elapsed time: " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << " ms\n";
 
     cv::VideoCapture Capture(videoPass);//動画をオープン
     assert(Capture.isOpened());
@@ -174,6 +181,11 @@ int main(int argc, char** argv){
     cv::Mat matIntrinsic;
     ReadIntrinsicsParams("intrinsic.txt",matIntrinsic);
     std::cout << "Camera matrix:\n" << matIntrinsic << "\n" <<  std::endl;
+    double fx = matIntrinsic.at<double>(0,0);
+    double fy = matIntrinsic.at<double>(1,1);
+    double cx = matIntrinsic.at<double>(0,2);
+    double cy = matIntrinsic.at<double>(1,2);
+
 
     //歪パラメータの読み込み
     cv::Mat matDist;
@@ -211,7 +223,20 @@ int main(int argc, char** argv){
         return angularVelocityIn60Hz[i]*(1.0-decimalPart)+angularVelocityIn60Hz[i+1]*decimalPart;
     };
 
+    cout << "angular Velocity" << endl;
+    for(int i=0;i<1000;i++){
+        cout << angularVelocity(i) << endl;
+    }
 
+
+
+    //動画のオプティカルフローと内部パラメータと解像度から角速度推定値を計算
+    vector<cv::Vec3d> estimatedAngularVelocity;
+    cout << "estimated AngularVelocity" << endl;
+    for(auto el:opticShift){
+        estimatedAngularVelocity.push_back(cv::Vec3d(-atan(el[1]/fy),atan(el[0]/fx),el[2])/Tvideo*-1);
+        cout << estimatedAngularVelocity.back() << endl;
+    }
 
 //    for(auto &el:vecw) std::cout << el << std::endl;
 }

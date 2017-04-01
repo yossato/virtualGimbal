@@ -9,57 +9,35 @@
 * @param [in] calcPeriod オプティカルフローを計算するフレーム数[ ]で正の整数。0未満を指定すると全域で相関を計算。
 **/
 std::vector<cv::Vec3d> CalcShiftFromVideo(char *filename, int calcPeriod){
-	//動画を開く
-	cv::VideoCapture cap(filename);
+    //動画を開く
+    cv::VideoCapture cap(filename);
     assert(cap.isOpened());
 
     cv::Mat cur, cur_grey;
     cv::Mat prev, prev_grey;
 
-	//リサイズor切り抜き関係
-	const int processWidth = 640;	//処理時の画像サイズ
-	double mag = 1.0;				//処理画像倍率
-	mag = processWidth/cap.get(CV_CAP_PROP_FRAME_WIDTH);
-	printf("Mag:%f\n",mag);
-	cv::Mat rimg;
-
-	//動画から最初のフレームを取得
+    //動画から最初のフレームを取得
     cap >> prev;
 
-	//リサイズ関係
-#if 0	//リサイズするとき
-	cv::resize(prev,rimg,cv::Size(),mag ,mag ,cv::INTER_NEAREST);
-	prev = rimg;
-#else  //中心部だけ切り抜くとき
-	prev = cv::Mat(prev,cv::Rect((prev.cols-640)/2,(prev.rows-480)/2,640,480));
-#endif
-	
-	//カラーからモノクロへ色変換
-    cv::cvtColor(prev, prev_grey, cv::COLOR_BGR2GRAY);
-    
+    //中心部を取り出してモノクロへ色変換
+    cv::cvtColor(prev(cv::Rect((prev.cols-640)/2,(prev.rows-480)/2,640,480)), prev_grey, cv::COLOR_BGR2GRAY);
+
     // Step 1 - Get previous to current frame transformation (dx, dy, da) for all frames
     std::vector <cv::Vec3d> prev_to_cur_transform; // previous to current
     int k=1;
     int max_frames = cap.get(CV_CAP_PROP_FRAME_COUNT);
     cv::Mat last_T;
-	
-	//繰り返し処理	
-	while(true) {
+
+    //繰り返し処理
+    while(true) {
         cap >> cur;
 
         if(cur.data == NULL) {
             break;
         }
 
-		//リサイズ
-#if 0	//リサイズするとき
-		cv::resize(cur,rimg,cv::Size(),mag ,mag ,cv::INTER_NEAREST));
-		cur = rimg;
-#else  //中心部だけ切り抜くとき
-		cur = cv::Mat(cur,cv::Rect((cur.cols-640)/2,(cur.rows-480)/2,640,480));
-#endif
-
-
+        //中心部だけ切り抜く
+        cur = cv::Mat(cur,cv::Rect((cur.cols-640)/2,(cur.rows-480)/2,640,480));
         cv::cvtColor(cur, cur_grey, cv::COLOR_BGR2GRAY);
 
         // vector from prev to cur
@@ -89,9 +67,8 @@ std::vector<cv::Vec3d> CalcShiftFromVideo(char *filename, int calcPeriod){
 
         T.copyTo(last_T);
 
-        // decompose T
-        double dx = T.at<double>(0,2)/mag;
-        double dy = T.at<double>(1,2)/mag;
+        double dx = T.at<double>(0,2);
+        double dy = T.at<double>(1,2);
         double da = atan2(T.at<double>(1,0), T.at<double>(0,0));
 
         prev_to_cur_transform.push_back(cv::Vec3d(dx, dy, da));
@@ -107,5 +84,5 @@ std::vector<cv::Vec3d> CalcShiftFromVideo(char *filename, int calcPeriod){
         if(calcPeriod <= 0){continue;}	//長さ0ならビデオ全域で継続
         else if(calcPeriod < k){break;}	//指定された長さで処理を終了
     }
-	return prev_to_cur_transform;
+    return prev_to_cur_transform;
 }

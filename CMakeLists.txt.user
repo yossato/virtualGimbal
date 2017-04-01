@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 3.5.1, 2017-04-01T23:47:57. -->
+<!-- Written by QtCreator 3.5.1, 2017-04-02T03:14:55. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -1007,7 +1007,7 @@
      <value type="int">14</value>
     </valuelist>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">sync</value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments">-i ~/videos/output3.mp4 -c ~/videos/angularVelocity3.csv</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments">-i ~/videos/2017-02-25_11.41.06.mts -c ~/videos/2017-02-25_11.41.06.csv</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
