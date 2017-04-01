@@ -132,7 +132,7 @@ int main(int argc, char** argv){
     std::cout << "resolution" << imageSize << std::endl;
     std::cout << "samplingPeriod" << samplingPeriod << std::endl;
 
-    //レンズ歪データを読み込み
+    //内部パラメータを読み込み
     cv::Mat matIntrinsic;
     ReadIntrinsicsParams("intrinsic.txt",matIntrinsic);
     std::cout << "Camera matrix:\n" << matIntrinsic << "\n" <<  std::endl;
@@ -145,7 +145,7 @@ int main(int argc, char** argv){
     cv::Mat img;
 
     //試しに先に進む
-    Capture.set(cv::CAP_PROP_POS_FRAMES,3300);
+    Capture.set(cv::CAP_PROP_POS_FRAMES,1000);
 
     //動画の読み込み
     Capture >> img;
@@ -174,6 +174,7 @@ int main(int argc, char** argv){
 
         // Open a window and create its OpenGL context
         window = glfwCreateWindow( 1280, 720, "Tutorial 0 - Keyboard and Mouse", NULL, NULL);
+//        window = glfwCreateWindow( 1920, 1080, "Tutorial 0 - Keyboard and Mouse", NULL, NULL);
         if( window == NULL ){
             fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
             getchar();
@@ -231,8 +232,14 @@ int main(int argc, char** argv){
         //テクスチャをここで作成
         glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,buff.cols,buff.rows,0,GL_BGR,GL_UNSIGNED_BYTE,buff.data);
         //////////////////
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+        static const GLfloat border[] = { 0.0, 1.0, 0.0, 1.0 };//背景色
+        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border);//テクスチャの境界色
+        //テクスチャの繰り返しの設定
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glGenerateMipmap(GL_TEXTURE_2D);
@@ -332,7 +339,7 @@ int main(int argc, char** argv){
             glUniform2fv(nFxyID, 1, nfxy);
             float ncxy[] = {(float)(matIntrinsic.at<double>(0,2)/imageSize.width), (float)(matIntrinsic.at<double>(1,2)/imageSize.height)};
             glUniform2fv(nCxyID, 1, ncxy);
-            float distcoeffFloat[] = {(float)(matIntrinsic.at<double>(0,0)),(float)(matIntrinsic.at<double>(0,1)),(float)(matIntrinsic.at<double>(0,2)),(float)(matIntrinsic.at<double>(0,3))};
+            float distcoeffFloat[] = {(float)(matDist.at<double>(0,0)),(float)(matDist.at<double>(0,1)),(float)(matDist.at<double>(0,2)),(float)(matDist.at<double>(0,3))};
             glUniform4fv(distCoeffID, 1, distcoeffFloat);
 
             // 1rst attribute buffer : vertices
