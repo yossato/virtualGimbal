@@ -1,0 +1,217 @@
+#include <stdio.h>
+#include <iostream>
+#include <string>
+#include <opencv2/opencv.hpp>
+
+// Include standard headers
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <unistd.h>
+
+#include "calcShift.hpp"
+
+/**
+* @brief カメラ行列設定を記録したテキストファイルを読み込みます
+* @param [in] FileName		テキストファイルの名前。例:"intrinsic.txt"
+* @param [out] Values		読み取った値を書き込む行列。
+* @retval 0で正常
+**/
+int ReadIntrinsicsParams(const char* FileName, cv::Mat &Values){
+    std::ifstream ifs(FileName);//CSVファイルを開く
+    if(!ifs){
+        printf("エラー：カメラ行列を記録した%sが見つかりません\nプログラムを終了します\n",FileName);//TODO:abotrせずに開けなかったことを上に返すようにして、その場合は推定値を使うようにする
+        abort();
+    }
+    std::string str;
+    Values = cv::Mat::zeros(3,3,CV_64F);//matを初期化
+
+    int j=0;
+    while(getline(ifs,str)){//1行ずつ読み込む
+        std::string token;
+        std::istringstream stream(str);
+
+        int i=0;
+        while(getline(stream, token, ' ')){
+            Values.at<double>(j,i++) = (double)stof(token);//値を保存
+            if(i>3){
+                printf("エラー:カメラ行列のパラメータファイルintrinsic.txtの書式が不正なため、プログラムを終了します。\n");
+                abort();
+            }
+        }
+        ++j;
+    }
+
+    return 0;
+
+}
+
+
+/**
+* @brief 歪補正パラメータを記録したテキストファイルを読み込みます
+* @param [in] FileName		テキストファイルの名前。例:"distortion.txt"
+* @param [out] Values		読み取った値を書き込む構造体。
+* @retval 0で正常
+**/
+//template<typename T_dcoef>
+int ReadDistortionParams(const char FileName[], cv::Mat &Values){
+    std::ifstream ifs(FileName);//CSVファイルを開く
+    if(!ifs){
+        printf("エラー：歪パラメータを記録した%sが見つかりません\nプログラムを終了します\n",FileName);//TODO:abotrせずに開けなかったことを上に返すようにして、その場合は推定値を使うようにする
+        abort();
+    }
+    std::string str;
+    Values = cv::Mat::zeros(1,4,CV_64F);//matを初期化
+
+    int j=0;
+    while(getline(ifs,str)){//1行ずつ読み込む
+        std::string token;
+        std::istringstream stream(str);
+
+        int i=0;
+        while(getline(stream, token, ' ')){
+            Values.at<double>(0,i++) = (double)stof(token);//値を保存
+        }
+    }
+    return 0;
+
+
+
+    //エラーチェック
+    assert(Values.cols == 5);
+    assert(Values.rows == 1);
+
+    FILE *fp;
+    const int Num = 5;
+    // テキストファイルを読み込み用に開く
+    if (fopen(FileName, "r") != 0){
+        // ファイルオープンに失敗
+        printf("File Open Error. \"%s\" is not found.\n", FileName);
+        return 1;
+    }
+
+    double valuesd[5] = { 0.0 };
+    if (fscanf(fp, "%lf %lf %lf %lf %lf", &valuesd[0], &valuesd[1], &valuesd[2], &valuesd[3], &valuesd[4]) == -1){//1行読み込み
+        //エラー処理
+        printf("エラー:歪パラメータファイルの読み込みに失敗しました。\r\n");
+        printf("Check format of \"%s\".\n", FileName);
+        fclose(fp);
+        return 1;
+    }
+    int i;
+    printf("%s\r\n", FileName);
+    for (i = 0; i < Num; i++){
+        //printf("%f%t\n", valuesd[i]);
+        Values.at<double>(0, i) = valuesd[i];//cv::Matに代入
+    }
+    std::cout << Values << std::endl;
+    printf("\r\n");
+    fclose(fp);
+    return 0;
+
+}
+
+/**
+ * @brief CSVファイルを読み込んで配列を返す関数
+ **/
+void ReadCSV(std::vector<cv::Vec3d> &w, const char* filename){
+        std::ifstream ifs(filename);//CSVファイルを開く
+        if(!ifs){
+                std::cout << "エラー：CSVファイルが見つかりません\n" << std::endl;
+                return;
+        }
+
+        std::string str;
+        w.clear();
+        cv::Vec3d numl;
+        while(getline(ifs,str)){//1行ずつ読み込む
+                std::string token;
+                std::istringstream stream(str);
+
+                int i=0;
+                while(getline(stream, token, ',')){
+                        double temp = stof(token);
+                        numl[i++] = (double)temp;//値を保存
+                }
+                w.push_back(numl);
+        }
+
+        printf("size of w is %ld\n",w.size());
+        return;
+}
+
+int main(int argc, char** argv){
+    //引数の確認
+    char *videoPass = NULL;
+    char *csvPass = NULL;
+    int opt;
+    while((opt = getopt(argc, argv, "i:c:")) != -1){
+        switch (opt) {
+        case 'i':
+            videoPass = optarg;
+            break;
+        case 'c':
+            csvPass = optarg;
+            break;
+        default :
+            printf("Use options. -i videofilepass -c csvfilepass.\r\n");
+            return 1;
+        }
+    }
+
+    //動画からオプティカルフローを計算する
+    std::vector<cv::Vec3d> opticShift = CalcShiftFromVideo(videoPass,300);//ビデオからオプティカルフローを用いてシフト量を算出
+
+
+    cv::VideoCapture Capture(videoPass);//動画をオープン
+    assert(Capture.isOpened());
+    cv::Size imageSize = cv::Size(Capture.get(CV_CAP_PROP_FRAME_WIDTH),Capture.get(CV_CAP_PROP_FRAME_HEIGHT));//解像度を読む
+    double Tvideo = 1.0/Capture.get(CV_CAP_PROP_FPS);
+    std::cout << "resolution" << imageSize << std::endl;
+    std::cout << "samplingPeriod" << Tvideo << std::endl;
+
+    //内部パラメータを読み込み
+    cv::Mat matIntrinsic;
+    ReadIntrinsicsParams("intrinsic.txt",matIntrinsic);
+    std::cout << "Camera matrix:\n" << matIntrinsic << "\n" <<  std::endl;
+
+    //歪パラメータの読み込み
+    cv::Mat matDist;
+    ReadDistortionParams("distortion.txt",matDist);
+    std::cout << "Distortion Coeff:\n" << matDist << "\n" << std::endl;
+
+    cv::Mat img;
+
+    //試しに先に進む
+    Capture.set(cv::CAP_PROP_POS_FRAMES,1000);
+
+    //動画の読み込み
+    Capture >> img;
+
+    //角速度データを読み込み
+    std::vector<cv::Vec3d> angularVelocityIn60Hz;
+    ReadCSV(angularVelocityIn60Hz,csvPass);
+
+    //軸の定義方向の入れ替え
+    //TODO:将来的に、CSVファイルに順番を揃えて、ゲインも揃えた値を書き込んでおくべき
+    for(auto &el:angularVelocityIn60Hz){
+            auto temp = el;
+            el[0] = temp[1]/16.4*M_PI/180.0;//16.4はジャイロセンサが感度[LSB/(degree/s)]で2000[degrees/second]の時のもの。ジャイロセンサの種類や感度を変更した時は値を変更する;
+            el[1] = temp[0]/16.4*M_PI/180.0;
+            el[2] = -temp[2]/16.4*M_PI/180.0;
+    }
+    double Tav = 1/60.0;//Sampling period of angular velocity
+
+    //動画のサンプリング周期に合わせて、角速度を得られるようにする関数を定義
+    //線形補間
+    auto angularVelocity = [&angularVelocityIn60Hz, Tvideo, Tav](uint32_t frame){
+        double dframe = frame * Tvideo/Tav;
+        int i = floor(dframe);
+        double decimalPart = dframe - (double)i;
+        return angularVelocityIn60Hz[i]*(1.0-decimalPart)+angularVelocityIn60Hz[i+1]*decimalPart;
+    };
+
+
+
+//    for(auto &el:vecw) std::cout << el << std::endl;
+}

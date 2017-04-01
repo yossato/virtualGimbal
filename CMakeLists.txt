@@ -41,7 +41,7 @@ include_directories(
         external/bullet-2.81-rev2613/src/
         .
 )
-
+include_directories(include)
 set(ALL_LIBS
         ${OPENGL_LIBRARY}
         ${OpenCV_LIBS}
@@ -70,6 +70,21 @@ add_executable(biCubic src/main.cpp
         TextureFragmentShader.fragmentshader
 )
 target_link_libraries(biCubic ${ALL_LIBS})
+
+add_executable(sync src/mainsync.cpp
+                    src/calcShift.cpp
+#        common/shader.cpp
+#        common/shader.hpp
+#        common/controls.cpp
+#        common/controls.hpp
+#        common/texture.cpp
+#        common/texture.hpp
+
+
+#        TransformVertexShader.vertexshader
+#        TextureFragmentShader.fragmentshader
+)
+target_link_libraries(sync ${ALL_LIBS})
 
 #~ # デバッグビルドする場合は以下3行のコメントを解除する
 set(CMAKE_BUILD_TYPE Debug)
