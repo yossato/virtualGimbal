@@ -58,14 +58,14 @@ add_definitions(
 )
 
 
-add_executable(biCubic src/main.cpp
+add_executable(biCubic src/undistortGL.cpp
         common/shader.cpp
         common/shader.hpp
         common/controls.cpp
         common/controls.hpp
         common/texture.cpp
         common/texture.hpp
-
+        src/mINIRead.cpp
         TransformVertexShader.vertexshader
         TextureFragmentShader.fragmentshader
 )
@@ -73,6 +73,7 @@ target_link_libraries(biCubic ${ALL_LIBS})
 
 add_executable(sync src/mainsync.cpp
                     src/calcShift.cpp
+                    src/mINIRead.cpp
 #        common/shader.cpp
 #        common/shader.hpp
 #        common/controls.cpp
@@ -85,6 +86,22 @@ add_executable(sync src/mainsync.cpp
 #        TextureFragmentShader.fragmentshader
 )
 target_link_libraries(sync ${ALL_LIBS})
+
+add_executable(virtualGimbal src/mainsyncandstabilize.cpp
+        common/shader.cpp
+        common/shader.hpp
+        common/controls.cpp
+        common/controls.hpp
+        common/texture.cpp
+        common/texture.hpp
+
+        src/calcShift.cpp
+        src/mINIRead.cpp
+        TransformVertexShader.vertexshader
+        TextureFragmentShader.fragmentshader
+)
+target_link_libraries(virtualGimbal ${ALL_LIBS})
+
 
 #~ # デバッグビルドする場合は以下3行のコメントを解除する
 set(CMAKE_BUILD_TYPE Debug)
