@@ -177,6 +177,28 @@ template <typename _Tp, typename _Tx> void getDistortUnrollingMap(
 
 }
 
+/**
+ * @brief 回転を表すクォータニオンを生成する関数
+ **/
+template <typename T_num,typename T_vec> quaternion<T_num> RotationQuaternion(T_num theta, T_vec n){
+    //nを規格化する
+    double tmp = 1.0/sqrt(n[0]*n[0]+n[1]*n[1]+n[2]*n[2]);
+    n = n * tmp;
+    return quaternion<T_num>(cos(theta/2),n[0]*sin(theta/2),n[1]*sin(theta/2),n[2]*sin(theta/2));
+}
+
+/**
+ * @brief 微小回転を表す回転ベクトルから四元数を作る関数
+ **/
+
+template <typename _Tp, int cn> quaternion<_Tp> RotationQuaternion(cv::Vec<_Tp,cn> w){
+    double theta = sqrt(w[0]*w[0]+w[1]*w[1]+w[2]*w[2]);	//!<回転角
+    if(theta == 0){
+        return quaternion<_Tp>(1,0,0,0);
+    }
+    auto n = w*(1.0/theta);								//!<回転軸を表す単位ベクトル
+    return RotationQuaternion(theta, n);
+}
 
 int main(int argc, char** argv){
     //引数の確認
@@ -328,11 +350,12 @@ int main(int argc, char** argv){
     }else if(minPosition == (lengthDiff-1)){//末尾
         subframeOffset = (double)(lengthDiff -1);
     }else{					//その他
-        if(correlationCoefficients[minPosition-1] >= correlationCoefficients[minPosition+1]){
-            subframeOffset = (correlationCoefficients[minPosition-1] - correlationCoefficients[minPosition+1])/(2*correlationCoefficients[minPosition-1]-2*correlationCoefficients[minPosition]);
-        }else{
-            subframeOffset = -(correlationCoefficients[minPosition+1]-correlationCoefficients[minPosition-1])/(2*correlationCoefficients[minPosition+1]-2*correlationCoefficients[minPosition]);
-        }
+//        if(correlationCoefficients[minPosition-1] >= correlationCoefficients[minPosition+1]){
+//            subframeOffset = (correlationCoefficients[minPosition-1] - correlationCoefficients[minPosition+1])/(2*correlationCoefficients[minPosition-1]-2*correlationCoefficients[minPosition]);
+//        }else{
+//            subframeOffset = -(correlationCoefficients[minPosition+1]-correlationCoefficients[minPosition-1])/(2*correlationCoefficients[minPosition+1]-2*correlationCoefficients[minPosition]);
+//        }
+        subframeOffset = -(correlationCoefficients[minPosition+1]-correlationCoefficients[minPosition-1])/(2*correlationCoefficients[minPosition-1]-4*correlationCoefficients[minPosition]+2*correlationCoefficients[minPosition+1]);
     }
 
     cout << "minPosition" << minPosition << endl;
@@ -361,15 +384,20 @@ int main(int argc, char** argv){
 
     //同期が取れている角速度を出力する関数を定義
     auto angularVelocitySync = [&angularVelocityIn60Hz, Tvideo, Tav, minPosition, subframeOffset](int32_t frame){
-        double dframe = frame * Tav / Tvideo;
-        dframe += (minPosition + subframeOffset);
+        double dframe = (frame + minPosition + subframeOffset) * Tav / Tvideo;
         int i = floor(dframe);
         double decimalPart = dframe - (double)i;
-        return angularVelocityIn60Hz[i]*(1.0-decimalPart)+angularVelocityIn60Hz[i+1]*decimalPart;
+        //領域外にはみ出した時は、末端の値で埋める
+        if((0<=i)&&((i+1)<angularVelocityIn60Hz.size())){
+            return angularVelocityIn60Hz[i]*(1.0-decimalPart)+angularVelocityIn60Hz[i+1]*decimalPart;
+        }else if(i<0){
+            return angularVelocityIn60Hz[0];
+        }else{
+            return angularVelocityIn60Hz.back();
+        }
     };
 
     {
-
         double sum = 0.0;
         for(int32_t i=0; i<estimatedAngularVelocity.size();i++){
             sum +=   abs(angularVelocitySync(i)[0]-estimatedAngularVelocity[i][0])
@@ -379,10 +407,43 @@ int main(int argc, char** argv){
         cout << " Sync correlationCoefficients:" << sum << endl;
     }
 
-    //平滑済みクォータニオンの計算//////////////////////////
-    vector<quaternion<double>> QuatAngle;
-    QuatAngle.push_back(quaternion<double>(1,0,0,0));
+    //FIRフィルタ係数の読み込み
+    //txtファイルの中身は、FIR(Finite Impluse Response)のローパスフィルタの係数である
+    char coeffs[][12] = {	//!<フィルタ係数のファイル名
+        "coeff00.txt",
+        "coeff01.txt",
+        "coeff02.txt",
+        "coeff03.txt",
+        "coeff04.txt",
+        "coeff05.txt",
+        "coeff06.txt",
+        "coeff07.txt",
+        "coeff08.txt",
+        "coeff09.txt",
+        "coeff10.txt",
+        "coeff11.txt",
+    };
 
+    std::vector<std::vector<double>> FIRcoeffs;
+    for(int i=0;i<12;i++){
+        std::vector<double> temp;
+        ReadCoeff(temp,coeffs[i]);
+        FIRcoeffs.push_back(temp);
+    }
+
+
+    //平滑済みクォータニオンの計算//////////////////////////
+    vector<quaternion<double>> Qa;
+    Qa.push_back(quaternion<double>(1,0,0,0));
+    //FIRフィルタに食わせやすいように位置を合わせて角度を計算する
+    int32_t hl = floor(FIRcoeffs[0].size()/2);
+    for(int frame=-hl;frame<(FIRcoeffs[0].size()-1-hl);frame++){
+        Qa.push_back(Qa.back()*RotationQuaternion(angularVelocitySync(frame)*Tvideo));
+        Qa.back() = Qa.back() * (1.0 / norm(Qa.back()));
+    }
+    for(int32_t i=0,e=Capture.get(CV_CAP_PROP_FRAME_COUNT);i<e;++i){
+
+    }
 
     //-------------------//
 
