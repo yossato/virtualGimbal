@@ -27,107 +27,12 @@ using namespace glm;
 #include <common/texture.hpp>
 #include <common/controls.hpp>
 
+#include "calcShift.hpp"
+#include <chrono>
+
 #include "mINIRead.hpp"
+using namespace std;
 
-/**
-* @brief カメラ行列設定を記録したテキストファイルを読み込みます
-* @param [in] FileName		テキストファイルの名前。例:"intrinsic.txt"
-* @param [out] Values		読み取った値を書き込む行列。
-* @retval 0で正常
-**/
-//int ReadIntrinsicsParams(const char* FileName, cv::Mat &Values){
-//    std::ifstream ifs(FileName);//CSVファイルを開く
-//    if(!ifs){
-//        printf("エラー：カメラ行列を記録した%sが見つかりません\nプログラムを終了します\n",FileName);//TODO:abotrせずに開けなかったことを上に返すようにして、その場合は推定値を使うようにする
-//        abort();
-//    }
-//    std::string str;
-//    Values = cv::Mat::zeros(3,3,CV_64F);//matを初期化
-
-//    int j=0;
-//    while(getline(ifs,str)){//1行ずつ読み込む
-//        std::string token;
-//        std::istringstream stream(str);
-
-//        int i=0;
-//        while(getline(stream, token, ' ')){
-//            Values.at<double>(j,i++) = (double)stof(token);//値を保存
-//            if(i>3){
-//                printf("エラー:カメラ行列のパラメータファイルintrinsic.txtの書式が不正なため、プログラムを終了します。\n");
-//                abort();
-//            }
-//        }
-//        ++j;
-//    }
-
-//    return 0;
-
-//}
-
-
-/**
-* @brief 歪補正パラメータを記録したテキストファイルを読み込みます
-* @param [in] FileName		テキストファイルの名前。例:"distortion.txt"
-* @param [out] Values		読み取った値を書き込む構造体。
-* @retval 0で正常
-**/
-//template<typename T_dcoef>
-//int ReadDistortionParams(const char FileName[], cv::Mat &Values){
-//    std::ifstream ifs(FileName);//CSVファイルを開く
-//    if(!ifs){
-//        printf("エラー：歪パラメータを記録した%sが見つかりません\nプログラムを終了します\n",FileName);//TODO:abotrせずに開けなかったことを上に返すようにして、その場合は推定値を使うようにする
-//        abort();
-//    }
-//    std::string str;
-//    Values = cv::Mat::zeros(1,4,CV_64F);//matを初期化
-
-//    int j=0;
-//    while(getline(ifs,str)){//1行ずつ読み込む
-//        std::string token;
-//        std::istringstream stream(str);
-
-//        int i=0;
-//        while(getline(stream, token, ' ')){
-//            Values.at<double>(0,i++) = (double)stof(token);//値を保存
-//        }
-//    }
-//    return 0;
-
-
-
-//    //エラーチェック
-//    assert(Values.cols == 5);
-//    assert(Values.rows == 1);
-
-//    FILE *fp;
-//    const int Num = 5;
-//    // テキストファイルを読み込み用に開く
-//    if (fopen(FileName, "r") != 0){
-//        // ファイルオープンに失敗
-//        printf("File Open Error. \"%s\" is not found.\n", FileName);
-//        return 1;
-//    }
-
-//    double valuesd[5] = { 0.0 };
-//    if (fscanf(fp, "%lf %lf %lf %lf %lf", &valuesd[0], &valuesd[1], &valuesd[2], &valuesd[3], &valuesd[4]) == -1){//1行読み込み
-//        //エラー処理
-//        printf("エラー:歪パラメータファイルの読み込みに失敗しました。\r\n");
-//        printf("Check format of \"%s\".\n", FileName);
-//        fclose(fp);
-//        return 1;
-//    }
-//    int i;
-//    printf("%s\r\n", FileName);
-//    for (i = 0; i < Num; i++){
-//        //printf("%f%t\n", valuesd[i]);
-//        Values.at<double>(0, i) = valuesd[i];//cv::Matに代入
-//    }
-//    std::cout << Values << std::endl;
-//    printf("\r\n");
-//    fclose(fp);
-//    return 0;
-
-//}
 
 /**
  * @brief 球面線形補間関数
@@ -274,17 +179,48 @@ template <typename _Tp, typename _Tx> void getDistortUnrollingMap(
 
 
 int main(int argc, char** argv){
-    cv::VideoCapture Capture(argv[1]);//動画をオープン
+    //引数の確認
+    char *videoPass = NULL;
+    char *csvPass = NULL;
+    int opt;
+    while((opt = getopt(argc, argv, "i:c:")) != -1){
+        switch (opt) {
+        case 'i':
+            videoPass = optarg;
+            break;
+        case 'c':
+            csvPass = optarg;
+            break;
+        default :
+            printf("Use options. -i videofilepass -c csvfilepass.\r\n");
+            return 1;
+        }
+    }
+
+    //動画からオプティカルフローを計算する
+    auto t1 = std::chrono::system_clock::now() ;
+    std::vector<cv::Vec3d> opticShift = CalcShiftFromVideo(videoPass,1000);//ビデオからオプティカルフローを用いてシフト量を算出
+    auto t2 = std::chrono::system_clock::now() ;
+    // 処理の経過時間
+    auto elapsed = t2 - t1 ;
+    std::cout << "Elapsed time: " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << " ms\n";
+
+    cv::VideoCapture Capture(videoPass);//動画をオープン
     assert(Capture.isOpened());
     cv::Size imageSize = cv::Size(Capture.get(CV_CAP_PROP_FRAME_WIDTH),Capture.get(CV_CAP_PROP_FRAME_HEIGHT));//解像度を読む
-    double samplingPeriod = 1.0/Capture.get(CV_CAP_PROP_FPS);
+    double Tvideo = 1.0/Capture.get(CV_CAP_PROP_FPS);
     std::cout << "resolution" << imageSize << std::endl;
-    std::cout << "samplingPeriod" << samplingPeriod << std::endl;
+    std::cout << "samplingPeriod" << Tvideo << std::endl;
 
     //内部パラメータを読み込み
     cv::Mat matIntrinsic;
     ReadIntrinsicsParams("intrinsic.txt",matIntrinsic);
     std::cout << "Camera matrix:\n" << matIntrinsic << "\n" <<  std::endl;
+    double fx = matIntrinsic.at<double>(0,0);
+    double fy = matIntrinsic.at<double>(1,1);
+    double cx = matIntrinsic.at<double>(0,2);
+    double cy = matIntrinsic.at<double>(1,2);
+
 
     //歪パラメータの読み込み
     cv::Mat matDist;
@@ -298,6 +234,183 @@ int main(int argc, char** argv){
 
     //動画の読み込み
     Capture >> img;
+
+    //角速度データを読み込み
+    std::vector<cv::Vec3d> angularVelocityIn60Hz;
+    ReadCSV(angularVelocityIn60Hz,csvPass);
+
+    //軸の定義方向の入れ替え
+    //TODO:将来的に、CSVファイルに順番を揃えて、ゲインも揃えた値を書き込んでおくべき
+    for(auto &el:angularVelocityIn60Hz){
+            auto temp = el;
+            el[0] = temp[1]/16.4*M_PI/180.0;//16.4はジャイロセンサが感度[LSB/(degree/s)]で2000[degrees/second]の時のもの。ジャイロセンサの種類や感度を変更した時は値を変更する;
+            el[1] = temp[0]/16.4*M_PI/180.0;
+            el[2] = -temp[2]/16.4*M_PI/180.0;
+    }
+    double Tav = 1/60.0;//Sampling period of angular velocity
+
+    //動画のサンプリング周期に合わせて、角速度を得られるようにする関数を定義
+    //線形補間
+    auto angularVelocity = [&angularVelocityIn60Hz, Tvideo, Tav](uint32_t frame){
+        double dframe = frame * Tav / Tvideo;
+        int i = floor(dframe);
+        double decimalPart = dframe - (double)i;
+        return angularVelocityIn60Hz[i]*(1.0-decimalPart)+angularVelocityIn60Hz[i+1]*decimalPart;
+    };
+
+    cout << "angular Velocity" << endl;
+    for(int i=0;i<1000;i++){
+        cout << angularVelocity(i) << endl;
+    }
+
+
+
+    //動画のオプティカルフローと内部パラメータと解像度から角速度推定値を計算
+    vector<cv::Vec3d> estimatedAngularVelocity;
+    cout << "estimated AngularVelocity" << endl;
+    for(auto el:opticShift){
+        estimatedAngularVelocity.push_back(cv::Vec3d(-atan(el[1]/fy),atan(el[0]/fx),el[2])/Tvideo*-1);
+        cout << estimatedAngularVelocity.back() << endl;
+    }
+
+
+    t1 = std::chrono::system_clock::now() ;
+
+    int32_t lengthDiff = angularVelocityIn60Hz.size() * Tvideo / Tav - estimatedAngularVelocity.size();
+    cout << "lengthDiff:" << lengthDiff << endl;
+    vector<double> correlationCoefficients(lengthDiff);
+    double minCC = DBL_MAX;
+    for(int32_t offset = 0; offset < lengthDiff; offset++){
+        double sum = 0.0;
+        for(int32_t i=0; i<estimatedAngularVelocity.size();i++){
+            sum +=   abs(angularVelocity(i+offset)[0]-estimatedAngularVelocity[i][0])
+                   + abs(angularVelocity(i+offset)[1]-estimatedAngularVelocity[i][1])
+                   + abs(angularVelocity(i+offset)[2]-estimatedAngularVelocity[i][2]);
+            if(sum > minCC){
+                break;
+            }
+        }
+        if(sum < minCC){
+            minCC = sum;
+        }
+        correlationCoefficients[offset] = sum;
+    }
+
+
+
+//    cout << "correlationCoefficients" << endl;
+//    for(auto el:correlationCoefficients) cout << el << endl;
+
+    //最小となる要素を取得
+    int32_t minPosition = std::distance(correlationCoefficients.begin(),min_element(correlationCoefficients.begin(),correlationCoefficients.end()));
+
+    //正しくサブピクセル推定するために、最小となった要素の次の要素を計算し直す
+    {
+        double sum = 0.0;
+        for(int32_t i=0; i<estimatedAngularVelocity.size();i++){
+            sum +=   abs(angularVelocity(i+minPosition+1)[0]-estimatedAngularVelocity[i][0])
+                   + abs(angularVelocity(i+minPosition+1)[1]-estimatedAngularVelocity[i][1])
+                   + abs(angularVelocity(i+minPosition+1)[2]-estimatedAngularVelocity[i][2]);
+        }
+        correlationCoefficients[minPosition+1] = sum;
+    }
+
+    t2 = std::chrono::system_clock::now() ;
+    // 処理の経過時間
+    elapsed = t2 - t1 ;
+    std::cout << "Elapsed time@search minimum: " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << " ms\n";
+
+
+    //最小値サブピクセル推定
+    double subframeOffset;
+    if(minPosition == 0){	//位置が最初のフレームで一致している場合
+        subframeOffset = 0.0;
+    }else if(minPosition == (lengthDiff-1)){//末尾
+        subframeOffset = (double)(lengthDiff -1);
+    }else{					//その他
+        if(correlationCoefficients[minPosition-1] >= correlationCoefficients[minPosition+1]){
+            subframeOffset = (correlationCoefficients[minPosition-1] - correlationCoefficients[minPosition+1])/(2*correlationCoefficients[minPosition-1]-2*correlationCoefficients[minPosition]);
+        }else{
+            subframeOffset = -(correlationCoefficients[minPosition+1]-correlationCoefficients[minPosition-1])/(2*correlationCoefficients[minPosition+1]-2*correlationCoefficients[minPosition]);
+        }
+    }
+
+    cout << "minPosition" << minPosition << endl;
+    cout << "subframe minposition :" << minPosition+subframeOffset << endl;
+
+    auto angularVelocity_double = [&angularVelocityIn60Hz, Tvideo, Tav](double frame){
+        double dframe = frame * Tav / Tvideo;
+        int i = floor(dframe);
+        double decimalPart = dframe - (double)i;
+        return angularVelocityIn60Hz[i]*(1.0-decimalPart)+angularVelocityIn60Hz[i+1]*decimalPart;
+    };
+    for(double d=-0.5;d<=0.5;d+=0.01)
+    {
+
+        double sum = 0.0;
+        for(int32_t i=0; i<estimatedAngularVelocity.size();i++){
+            sum +=   abs(angularVelocity_double(i+minPosition+subframeOffset+d)[0]-estimatedAngularVelocity[i][0])
+                   + abs(angularVelocity_double(i+minPosition+subframeOffset+d)[1]-estimatedAngularVelocity[i][1])
+                   + abs(angularVelocity_double(i+minPosition+subframeOffset+d)[2]-estimatedAngularVelocity[i][2]);
+//            if(sum > minCC){
+//                break;
+//            }
+        }
+        cout << "position"<<minPosition+subframeOffset+d<<" minimum correlationCoefficients:" << sum << endl;
+    }
+
+    //同期が取れている角速度を出力する関数を定義
+    auto angularVelocitySync = [&angularVelocityIn60Hz, Tvideo, Tav, minPosition, subframeOffset](int32_t frame){
+        double dframe = frame * Tav / Tvideo;
+        dframe += (minPosition + subframeOffset);
+        int i = floor(dframe);
+        double decimalPart = dframe - (double)i;
+        return angularVelocityIn60Hz[i]*(1.0-decimalPart)+angularVelocityIn60Hz[i+1]*decimalPart;
+    };
+
+    {
+
+        double sum = 0.0;
+        for(int32_t i=0; i<estimatedAngularVelocity.size();i++){
+            sum +=   abs(angularVelocitySync(i)[0]-estimatedAngularVelocity[i][0])
+                   + abs(angularVelocitySync(i)[1]-estimatedAngularVelocity[i][1])
+                   + abs(angularVelocitySync(i)[2]-estimatedAngularVelocity[i][2]);
+        }
+        cout << " Sync correlationCoefficients:" << sum << endl;
+    }
+
+    //平滑済みクォータニオンの計算//////////////////////////
+    vector<quaternion<double>> QuatAngle;
+    QuatAngle.push_back(quaternion<double>(1,0,0,0));
+
+
+    //-------------------//
+
+
+//    cv::VideoCapture Capture(argv[1]);//動画をオープン
+//    assert(Capture.isOpened());
+//    cv::Size imageSize = cv::Size(Capture.get(CV_CAP_PROP_FRAME_WIDTH),Capture.get(CV_CAP_PROP_FRAME_HEIGHT));//解像度を読む
+//    double samplingPeriod = 1.0/Capture.get(CV_CAP_PROP_FPS);
+//    std::cout << "resolution" << imageSize << std::endl;
+//    std::cout << "samplingPeriod" << samplingPeriod << std::endl;
+
+//    //内部パラメータを読み込み
+//    cv::Mat matIntrinsic;
+//    ReadIntrinsicsParams("intrinsic.txt",matIntrinsic);
+//    std::cout << "Camera matrix:\n" << matIntrinsic << "\n" <<  std::endl;
+
+//    //歪パラメータの読み込み
+//    cv::Mat matDist;
+//    ReadDistortionParams("distortion.txt",matDist);
+//    std::cout << "Distortion Coeff:\n" << matDist << "\n" << std::endl;
+
+//    cv::Mat img;
+
+//    //試しに先に進む
+//    Capture.set(cv::CAP_PROP_POS_FRAMES,1000);
+
+//    //動画の読み込み
+//    Capture >> img;
     cv::Size textureSize = cv::Size(2048,2048);
 //    const int TEXTURE_W = 2048;//テクスチャ。TODO:ビデオのサイズに合わせて拡大縮小
 //    const int TEXTURE_H = 2048;
