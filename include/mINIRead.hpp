@@ -42,7 +42,7 @@ extern const char *INICheckerBoardValueNames[];
 int ReadStereoExtrinsicParams(const char FileName[], cv::Mat &Values);
 int ReadIntrinsicsParams(const char *FileName, cv::Mat &Values);
 int ReadDistortionParams(const char FileName[], cv::Mat &Values);
-void ReadCoeff(std::vector<double> &coeff, const char* filename);
+int ReadCoeff(std::vector<double> &coeff, const char* filename);
 void ReadCSV(std::vector<cv::Vec3d> &w, const char* filename);
 
 #ifdef __cplusplus

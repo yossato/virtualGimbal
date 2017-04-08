@@ -175,11 +175,11 @@ int ReadDistortionParams(const char FileName[], cv::Mat &Values){
 /**
  * @brief FIRフィルタの係数ファイルを読み込み
  **/
-void ReadCoeff(std::vector<double> &coeff, const char* filename){
+int ReadCoeff(std::vector<double> &coeff, const char* filename){
                 std::ifstream ifs(filename);//CSVファイルを開く
         if(!ifs){
                 std::cout << "エラー：係数が記録されているファイルが見つかりません\n" << std::endl;
-                return;
+                return 1;
         }
         std::string str;
         coeff.clear();
@@ -189,7 +189,7 @@ void ReadCoeff(std::vector<double> &coeff, const char* filename){
                 //~ std::cout << coeff.back() << std::endl;
         }
         printf("length of coeff is %ld\n",coeff.size());
-        return;
+        return 0;
 }
 
 /**

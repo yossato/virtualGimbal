@@ -33,6 +33,46 @@ using namespace glm;
 #include "mINIRead.hpp"
 using namespace std;
 
+/**
+ * @param 回転を表すクォータニオンをシングルローテーションをあらわすベクトルへ変換
+ **/
+template <typename T_num> cv::Vec3d Quaternion2Vector(quaternion<T_num> &q){
+    double denom = sqrt(1-q.R_component_1()*q.R_component_1());
+    if(denom==0.0){//まったく回転しない時は０割になるので、場合分けする
+        return cv::Vec3d(0,0,0);//return zero vector
+    }
+    return cv::Vec3d(q.R_component_2(),q.R_component_3(),q.R_component_4())*2.0*atan2(denom,q.R_component_1())/denom;
+}
+
+/**
+ * @param シングルローテーションを表すベクトルを回転を表すクォータニオンへ変換
+ **/
+template <typename T_num> quaternion<T_num> Vector2Quaternion(cv::Vec3d &w){
+    double theta = sqrt(w[0]*w[0]+w[1]*w[1]+w[2]*w[2]);//回転角度を計算、normと等しい
+    auto n = w * (1.0/theta);//単位ベクトルに変換
+    double sin_theta_2 = sin(theta*0.5);
+    return quaternion<double>(cos(theta*0.5),n[0]*sin_theta_2,n[1]*sin_theta_2,n[2]*sin_theta_2);
+}
+
+/**
+ * @param 回転を表すクォータニオンをシングルローテーションを表すベクトルへ変換。前回算出したベクトルを引数として受け取ることで、アンラッピングする。
+ * */
+template <typename T_num> cv::Vec3d Quaternion2Vector(quaternion<T_num> &q, cv::Vec3d prev){
+    double denom = sqrt(1-q.R_component_1()*q.R_component_1());
+    if(denom==0.0){//まったく回転しない時は０割になるので、場合分けする
+        return cv::Vec3d(0,0,0);//return zero vector
+    }
+    double theta_2 = atan2(denom,q.R_component_1());
+    double prev_theta_2 = cv::norm(prev)/2;
+    double diff = theta_2 - prev_theta_2;
+    theta_2 -= 2.0*M_PI*(double)(static_cast<int>(diff/(2.0*M_PI)));//マイナスの符号に注意
+    //~ printf("Theta_2:%4.3f sc:%d\n",theta_2,static_cast<int>(diff/(2.0*M_PI)));
+    if(static_cast<int>(diff/(2.0*M_PI))!=0){
+        printf("\n###########Unwrapping %d\n",static_cast<int>(diff/(2.0*M_PI)));
+    }
+
+    return cv::Vec3d(q.R_component_2(),q.R_component_3(),q.R_component_4())*2.0*theta_2/denom;
+}
 
 /**
  * @brief 球面線形補間関数
@@ -388,12 +428,12 @@ int main(int argc, char** argv){
         int i = floor(dframe);
         double decimalPart = dframe - (double)i;
         //領域外にはみ出した時は、末端の値で埋める
-        if((0<=i)&&((i+1)<angularVelocityIn60Hz.size())){
-            return angularVelocityIn60Hz[i]*(1.0-decimalPart)+angularVelocityIn60Hz[i+1]*decimalPart;
-        }else if(i<0){
+        if(i<0){
             return angularVelocityIn60Hz[0];
-        }else{
+        }else if(angularVelocityIn60Hz.size()<=(i+1)){
             return angularVelocityIn60Hz.back();
+        }else{
+            return angularVelocityIn60Hz[i]*(1.0-decimalPart)+angularVelocityIn60Hz[i+1]*decimalPart;
         }
     };
 
@@ -425,24 +465,54 @@ int main(int argc, char** argv){
     };
 
     std::vector<std::vector<double>> FIRcoeffs;
+    int32_t filterNumber = 11;
     for(int i=0;i<12;i++){
         std::vector<double> temp;
-        ReadCoeff(temp,coeffs[i]);
+        if(ReadCoeff(temp,coeffs[i])){
+            return 1;
+        }
         FIRcoeffs.push_back(temp);
     }
 
 
     //平滑済みクォータニオンの計算//////////////////////////
-    vector<quaternion<double>> Qa;
-    Qa.push_back(quaternion<double>(1,0,0,0));
+    vector<quaternion<double>> angleQuaternion;
+    angleQuaternion.push_back(quaternion<double>(1,0,0,0));
+
     //FIRフィルタに食わせやすいように位置を合わせて角度を計算する
-    int32_t hl = floor(FIRcoeffs[0].size()/2);
-    for(int frame=-hl;frame<(FIRcoeffs[0].size()-1-hl);frame++){
-        Qa.push_back(Qa.back()*RotationQuaternion(angularVelocitySync(frame)*Tvideo));
-        Qa.back() = Qa.back() * (1.0 / norm(Qa.back()));
+    int32_t halfLength = floor(FIRcoeffs[filterNumber].size()/2);
+    for(int frame=-halfLength,e=halfLength;frame<e;frame++){
+        angleQuaternion.push_back(angleQuaternion.back()*RotationQuaternion(angularVelocitySync(frame)*Tvideo));
+        angleQuaternion.back() = angleQuaternion.back() * (1.0 / norm(angleQuaternion.back()));
     }
+
+
+    //動画の最初から最後まで
+    printf(",sx,sy,sz,ax,ay,az,dx,dy,dz\r\n");
     for(int32_t i=0,e=Capture.get(CV_CAP_PROP_FRAME_COUNT);i<e;++i){
 
+        //IIR平滑化
+        cv::Vec3d prevVec = Quaternion2Vector(angleQuaternion[0]);
+        cv::Vec3d sum(0.0, 0.0, 0.0);
+        for(int32_t j=0,f=FIRcoeffs[filterNumber].size();j<f;++j){
+            cv::Vec3d curVec = Quaternion2Vector(angleQuaternion[j],prevVec);
+            sum += FIRcoeffs[filterNumber][j]*curVec;
+            prevVec = curVec;
+        }
+        quaternion<double> smoothedAngularAuaternion = Vector2Quaternion<double>(sum);
+
+        //試しに表示
+        static int framen=0;
+        cv::Vec3d s = Quaternion2Vector(smoothedAngularAuaternion);
+        cv::Vec3d a = Quaternion2Vector(angleQuaternion[halfLength]);
+        auto dq = conj(smoothedAngularAuaternion)*angleQuaternion[halfLength];
+        cv::Vec3d d = Quaternion2Vector(dq);
+        printf("%d,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f\r\n",framen,s[0],s[1],s[2],a[0],a[1],a[2],d[0],d[1],d[2]);
+        framen++;
+
+
+        angleQuaternion.erase(angleQuaternion.begin());
+        angleQuaternion.push_back(angleQuaternion.back()*RotationQuaternion(angularVelocitySync(i+halfLength)*Tvideo));
     }
 
     //-------------------//
