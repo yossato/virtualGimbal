@@ -191,9 +191,8 @@ template <typename _Tp> quaternion<_Tp> Slerp(quaternion<_Tp> Qfrom, quaternion<
  * @param [in]	T	ジャイロ角度のサンプリング周期
  * @param [in]	IK	"逆"歪係数(k1,k2,p1,p2)
  * @param [in]	matIntrinsic	カメラ行列(fx,fy,cx,cy) [pixel]
- * @param [in]	imagesize	フレーム画像のサイズ[pixel]
- * @param [in]	textureSize	テクスチャの大きさ[pixel]
- * @param [out]	vecPorigonn_uv	OpenGLのポリゴン座標(u',v')座標(0~1)の組、歪補正後の画面を分割した時の一つ一つのポリゴンの頂点の組
+ * @param [in]	imageSize	フレーム画像のサイズ[pixel]
+ * @param [out]	vecPorigonn_uv	OpenGLのポリゴン座標(u',v')座標(-1~1)の組、歪補正後の画面を分割した時の一つ一つのポリゴンの頂点の組
  * @param [in]	zoom	倍率[]。拡大縮小しないなら1を指定すること。省略可
  **/
 template <typename _Tp, typename _Tx> void getDistortUnrollingMap(
@@ -210,8 +209,7 @@ template <typename _Tp, typename _Tx> void getDistortUnrollingMap(
         //    double T,
         cv::Mat &IK,
         cv::Mat &matIntrinsic,
-        cv::Size imgSize,
-        cv::Size textureSize,
+        cv::Size imageSize,
         std::vector<_Tx> &vecPorigonn_uv,
         double zoom
         ){
@@ -241,9 +239,9 @@ template <typename _Tp, typename _Tx> void getDistortUnrollingMap(
         //W(t1,t2)を計算
         cv::Mat R;
         //1
-        double v = (double)j/division_y*imgSize.height;
+        double v = (double)j/division_y*imageSize.height;
 
-        double exposureTimingInEachRow = TRollingShutter*v/imgSize.height;	//ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
+        double exposureTimingInEachRow = TRollingShutter*v/imageSize.height;	//ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
 
         quaternion<_Tp> slerpedAngleAuaternion;
         if(exposureTimingInEachRow >= 0){
@@ -265,7 +263,7 @@ template <typename _Tp, typename _Tx> void getDistortUnrollingMap(
         Quaternion2Matrix(slerpedAngleAuaternion,R);
 
         for(int i=0;i<=division_x;++i){
-            double u = (double)i/division_x*imgSize.width;
+            double u = (double)i/division_x*imageSize.width;
             //後々の行列演算に備えて、画像上の座標を同次座標で表現しておく。(x座標、y座標,1)T
             cv::Mat p = (cv::Mat_<double>(3,1) << (u- cx)/fx, (v - cy)/fy, 1.0);	//1のポリゴン座標に、K^-1を掛けた結果の３x１行列
             //2
@@ -282,8 +280,10 @@ template <typename _Tp, typename _Tx> void getDistortUnrollingMap(
             double mapy = y2*fy*zoom+cy;
             //~ return ;
             //結果をmapに保存
-            map.at<cv::Vec2d>(j,i)[0] = mapx/textureSize.width;
-            map.at<cv::Vec2d>(j,i)[1] = mapy/textureSize.height;
+//            map.at<cv::Vec2d>(j,i)[0] = mapx/textureSize.width;
+//            map.at<cv::Vec2d>(j,i)[1] = mapy/textureSize.height;
+            map.at<cv::Vec2d>(j,i)[0] = mapx*2.0/imageSize.width-1.0;
+            map.at<cv::Vec2d>(j,i)[1] = mapy*2.0/imageSize.height-1.0;
             //~ printf("i:%d,j:%d,mapx:%4.3f,mapy:%4.3f\n",i,j,mapx,mapy);
         }
     }
@@ -689,8 +689,8 @@ int main(int argc, char** argv){
 
 
         getDistortUnrollingMap(prevDiffAngleQuaternion,currDiffAngleQuaternion,nextDiffAngleQuaternion,
-                               division_x,division_y,0,matInvDistort, matIntrinsic, imageSize, textureSize, vecVtx,1.0);
-        //        for(auto el:vecVtx) cout << el << endl;
+                               division_x,division_y,0,matInvDistort, matIntrinsic, imageSize, vecVtx,1.0);
+//                for(auto el:vecVtx) cout << el << endl;
 
         //角度配列の先頭を削除
         angleQuaternion.erase(angleQuaternion.begin());
@@ -875,37 +875,37 @@ int main(int argc, char** argv){
             double u	= (double)i/division_x*imageSize.width;
             double u1	= (double)(i+1)/division_x*imageSize.width;
             //OpenGL側へ送信するテクスチャの頂点座標を準備
-            //            vecTexture.push_back((GLfloat)u/imageSize.width);//x座標
-            //            vecTexture.push_back((GLfloat)v/imageSize.height);//y座標
-            //            vecTexture.push_back((GLfloat)u/imageSize.width);//x座標
-            //            vecTexture.push_back((GLfloat)v1/imageSize.height);//y座標
-            //            vecTexture.push_back((GLfloat)u1/imageSize.width);//x座標
-            //            vecTexture.push_back((GLfloat)v1/imageSize.height);//y座標
-            //            vecTexture.push_back((GLfloat)u1/imageSize.width);//x座標
-            //            vecTexture.push_back((GLfloat)v/imageSize.height);//y座標
+            //            vecTexture.push_back((GLfloat)u/textureSize.width);//x座標
+            //            vecTexture.push_back((GLfloat)v/textureSize.height);//y座標
+            //            vecTexture.push_back((GLfloat)u/textureSize.width);//x座標
+            //            vecTexture.push_back((GLfloat)v1/textureSize.height);//y座標
+            //            vecTexture.push_back((GLfloat)u1/textureSize.width);//x座標
+            //            vecTexture.push_back((GLfloat)v1/textureSize.height);//y座標
+            //            vecTexture.push_back((GLfloat)u1/textureSize.width);//x座標
+            //            vecTexture.push_back((GLfloat)v/textureSize.height);//y座標
 
-            //            vecTexture.push_back((GLfloat)u/imageSize.width);//x座標
-            //            vecTexture.push_back((GLfloat)v/imageSize.height);//y座標
-            //            vecTexture.push_back((GLfloat)u/imageSize.width);//x座標
-            //            vecTexture.push_back((GLfloat)v1/imageSize.height);//y座標
-            //            vecTexture.push_back((GLfloat)u1/imageSize.width);//x座標
-            //            vecTexture.push_back((GLfloat)v1/imageSize.height);//y座標
-            //            vecTexture.push_back((GLfloat)u1/imageSize.width);//x座標
-            //            vecTexture.push_back((GLfloat)v/imageSize.height);//y座標
-            vecTexture.push_back((GLfloat)u/imageSize.width);//x座標
-            vecTexture.push_back((GLfloat)v/imageSize.height);//y座標
-            vecTexture.push_back((GLfloat)u1/imageSize.width);//x座標
-            vecTexture.push_back((GLfloat)v/imageSize.height);//y座標
-            vecTexture.push_back((GLfloat)u/imageSize.width);//x座標
-            vecTexture.push_back((GLfloat)v1/imageSize.height);//y座標
+            //            vecTexture.push_back((GLfloat)u/textureSize.width);//x座標
+            //            vecTexture.push_back((GLfloat)v/textureSize.height);//y座標
+            //            vecTexture.push_back((GLfloat)u/textureSize.width);//x座標
+            //            vecTexture.push_back((GLfloat)v1/textureSize.height);//y座標
+            //            vecTexture.push_back((GLfloat)u1/textureSize.width);//x座標
+            //            vecTexture.push_back((GLfloat)v1/textureSize.height);//y座標
+            //            vecTexture.push_back((GLfloat)u1/textureSize.width);//x座標
+            //            vecTexture.push_back((GLfloat)v/textureSize.height);//y座標
+            vecTexture.push_back((GLfloat)u/textureSize.width);//x座標
+            vecTexture.push_back((GLfloat)v/textureSize.height);//y座標
+            vecTexture.push_back((GLfloat)u1/textureSize.width);//x座標
+            vecTexture.push_back((GLfloat)v/textureSize.height);//y座標
+            vecTexture.push_back((GLfloat)u/textureSize.width);//x座標
+            vecTexture.push_back((GLfloat)v1/textureSize.height);//y座標
 
 
-            vecTexture.push_back((GLfloat)u/imageSize.width);//x座標
-            vecTexture.push_back((GLfloat)v1/imageSize.height);//y座標
-            vecTexture.push_back((GLfloat)u1/imageSize.width);//x座標
-            vecTexture.push_back((GLfloat)v/imageSize.height);//y座標
-            vecTexture.push_back((GLfloat)u1/imageSize.width);//x座標
-            vecTexture.push_back((GLfloat)v1/imageSize.height);//y座標
+            vecTexture.push_back((GLfloat)u/textureSize.width);//x座標
+            vecTexture.push_back((GLfloat)v1/textureSize.height);//y座標
+            vecTexture.push_back((GLfloat)u1/textureSize.width);//x座標
+            vecTexture.push_back((GLfloat)v/textureSize.height);//y座標
+            vecTexture.push_back((GLfloat)u1/textureSize.width);//x座標
+            vecTexture.push_back((GLfloat)v1/textureSize.height);//y座標
 
 
         }
