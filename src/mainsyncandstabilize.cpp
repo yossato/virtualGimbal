@@ -675,7 +675,7 @@ int main(int argc, char** argv){
         std::vector<GLfloat> vecVtx;					//頂点座標
         getDistortUnrollingMap(prevDiffAngleQuaternion,currDiffAngleQuaternion,nextDiffAngleQuaternion,
                                division_x,division_y,0,matInvDistort, matIntrinsic, imageSize, textureSize, vecVtx,1.0);
-        for(auto el:vecVtx) cout << el << endl;
+//        for(auto el:vecVtx) cout << el << endl;
 
         //角度配列の先頭を削除
         angleQuaternion.erase(angleQuaternion.begin());
@@ -817,15 +817,22 @@ int main(int argc, char** argv){
         // Our vertices. Tree consecutive floats give a 3D vertex; Three consecutive vertices give a triangle.
         // A cube has 6 faces with 2 triangles each, so this makes 6*2=12 triangles, and 12*3 vertices
         static const GLfloat g_vertex_buffer_data[] = {
-            -1.0f,  1.0f, 0.0f,
-            -1.0f, -1.0f, 0.0f,
-             1.0f, 1.0f, 0.0f,
+//            -1.0f,  1.0f, 0.0f,
+//            -1.0f, -1.0f, 0.0f,
+//             1.0f, 1.0f, 0.0f,
 
 
-            -1.0f, -1.0f, 0.0f,
-            1.0f,  -1.0f, 0.0f,
-             1.0f, 1.0f, 0.0f,
+//            -1.0f, -1.0f, 0.0f,
+//            1.0f,  -1.0f, 0.0f,
+//             1.0f, 1.0f, 0.0f,
+            -1.0f,  1.0f,
+            -1.0f, -1.0f,
+             1.0f, 1.0f,
 
+
+            -1.0f, -1.0f,
+            1.0f,  -1.0f,
+             1.0f, 1.0f,
         };
 
         // Two UV coordinatesfor each vertex. They were created with Blender.
@@ -942,7 +949,7 @@ int main(int argc, char** argv){
             glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
             glVertexAttribPointer(
                 0,                  // attribute. No particular reason for 0, but must match the layout in the shader.
-                3,                  // size
+                2,                  // size
                 GL_FLOAT,           // type
                 GL_FALSE,           // normalized?
                 0,                  // stride
@@ -962,7 +969,7 @@ int main(int argc, char** argv){
             );
 
             // Draw the triangle !
-            glDrawArrays(GL_TRIANGLES, 0, 12*3); // 12*3 indices starting at 0 -> 12 triangles
+            glDrawArrays(GL_TRIANGLES, 0, 2*3); // 12*3 indices starting at 0 -> 12 triangles
 
             glDisableVertexAttribArray(0);
             glDisableVertexAttribArray(1);
