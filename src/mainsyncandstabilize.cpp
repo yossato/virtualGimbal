@@ -31,12 +31,76 @@ using namespace glm;
 #include <chrono>
 
 #include "mINIRead.hpp"
+
+//Numetric optimization
+#include "levenbergMarquardt.hpp"
+
 using namespace std;
+
+void calcDistortCoeff(const cv::Mat &matIntrinsic, const cv::Mat &matDistort, const cv::Size &imageSize, cv::Mat &matInvDistort){
+    //逆歪パラメータを求める
+    std::vector<double> refPointsX;
+    std::vector<double> refPointsY;
+    Matrix3d intrinsic;
+    intrinsic << 	matIntrinsic.at<double>(0,0),matIntrinsic.at<double>(0,1),matIntrinsic.at<double>(0,2),
+                    matIntrinsic.at<double>(1,0),matIntrinsic.at<double>(1,1),matIntrinsic.at<double>(1,2),
+                    matIntrinsic.at<double>(2,0),matIntrinsic.at<double>(2,1),matIntrinsic.at<double>(2,2);
+
+    std::cout << intrinsic << std::endl;
+    VectorXd distortionCoeff(4);
+    distortionCoeff << matDistort.at<double>(0,0),matDistort.at<double>(0,1),matDistort.at<double>(0,2),matDistort.at<double>(0,3);
+    std::cout << distortionCoeff << std::endl;
+    int step = 20;
+    for(int v=0;v<=imageSize.height;v+=step){
+        for(int u=0;u<=imageSize.width;u+=step){
+            refPointsX.push_back((double)u);
+            refPointsY.push_back((double)v);
+        }
+    }
+    //歪補正
+    std::vector<double> undistortedPointsX;
+    std::vector<double> undistortedPointsY;
+    double fx = intrinsic(0, 0);
+    double fy = intrinsic(1, 1);
+    double cx = intrinsic(0, 2);
+    double cy = intrinsic(1, 2);
+    double k1 = distortionCoeff(0);
+    double k2 = distortionCoeff(1);
+    double p1 = distortionCoeff(2);
+    double p2 = distortionCoeff(3);
+    for(int i=0,e=refPointsX.size();i<e;i++){
+        double u = refPointsX[i];
+        double v = refPointsY[i];
+
+        double x1 = (u - cx)/fx;
+        double y1 = (v - cy)/fy;
+
+        double r = sqrt(x1*x1+y1*y1);
+
+        double x2 = x1*(1.0+k1*r*r+k2*r*r*r*r)+2.0*p1*x1*y1+p2*(r*r+2.0*x1*x1);
+        double y2 = y1*(1.0+k1*r*r+k2*r*r*r*r)+p1*(r*r+2.0*y1*y1)+2.0*p2*x1*y1;
+        double mapx = x2*fx+cx;
+        double mapy = y2*fy+cy;
+        undistortedPointsX.push_back(mapx);
+        undistortedPointsY.push_back(mapy);
+    }
+    //最適化
+    printf("Before:\t%f,%f,%f,%f\r\n",distortionCoeff[0],distortionCoeff[1],distortionCoeff[2],distortionCoeff[3]);
+    calc_invert_distortion_coeff functor2(distortionCoeff.size(),refPointsX.size(), undistortedPointsX, undistortedPointsY,
+    refPointsX, refPointsY, intrinsic);
+
+    NumericalDiff<calc_invert_distortion_coeff> numDiff2(functor2);
+    LevenbergMarquardt<NumericalDiff<calc_invert_distortion_coeff> > lm2(numDiff2);
+    int info = lm2.minimize(distortionCoeff);
+    printf("After:\t%f,%f,%f,%f\r\n",distortionCoeff[0],distortionCoeff[1],distortionCoeff[2],distortionCoeff[3]);
+
+    matInvDistort = (cv::Mat_<double>(1, 4) << distortionCoeff[0],distortionCoeff[1],distortionCoeff[2],distortionCoeff[3]);
+}
 
 /**
  * @param 回転を表すクォータニオンをシングルローテーションをあらわすベクトルへ変換
  **/
-template <typename T_num> cv::Vec3d Quaternion2Vector(quaternion<T_num> &q){
+template <typename T_num> cv::Vec3d Quaternion2Vector(quaternion<T_num> q){
     double denom = sqrt(1-q.R_component_1()*q.R_component_1());
     if(denom==0.0){//まったく回転しない時は０割になるので、場合分けする
         return cv::Vec3d(0,0,0);//return zero vector
@@ -57,7 +121,7 @@ template <typename T_num> quaternion<T_num> Vector2Quaternion(cv::Vec3d &w){
 /**
  * @param 回転を表すクォータニオンをシングルローテーションを表すベクトルへ変換。前回算出したベクトルを引数として受け取ることで、アンラッピングする。
  * */
-template <typename T_num> cv::Vec3d Quaternion2Vector(quaternion<T_num> &q, cv::Vec3d prev){
+template <typename T_num> cv::Vec3d Quaternion2Vector(quaternion<T_num> q, cv::Vec3d prev){
     double denom = sqrt(1-q.R_component_1()*q.R_component_1());
     if(denom==0.0){//まったく回転しない時は０割になるので、場合分けする
         return cv::Vec3d(0,0,0);//return zero vector
@@ -72,6 +136,18 @@ template <typename T_num> cv::Vec3d Quaternion2Vector(quaternion<T_num> &q, cv::
     }
 
     return cv::Vec3d(q.R_component_2(),q.R_component_3(),q.R_component_4())*2.0*theta_2/denom;
+}
+
+
+/**
+ * @param 回転を表すクォータニオンから回転を表す行列を生成
+ **/
+template <typename T_num> void Quaternion2Matrix(quaternion<T_num> q, cv::Mat &det){
+    det = (cv::Mat_<T_num>(3,3) <<
+        q.R_component_1()*q.R_component_1()+q.R_component_2()*q.R_component_2()-q.R_component_3()*q.R_component_3()-q.R_component_4()*q.R_component_4(), 2*(q.R_component_2()*q.R_component_3()-q.R_component_1()*q.R_component_4()),                  2*(q.R_component_2()*q.R_component_4()+q.R_component_1()*q.R_component_3()),
+         2*(q.R_component_2()*q.R_component_3()+q.R_component_1()*q.R_component_4()),                 q.R_component_1()*q.R_component_1()-q.R_component_2()*q.R_component_2()+q.R_component_3()*q.R_component_3()-q.R_component_4()*q.R_component_4(), 2*(q.R_component_3()*q.R_component_4()-q.R_component_1()*q.R_component_2()),
+         2*(q.R_component_2()*q.R_component_4()-q.R_component_1()*q.R_component_3()),                 2*(q.R_component_3()*q.R_component_4()+q.R_component_1()*q.R_component_2()),                  q.R_component_1()*q.R_component_1()-q.R_component_2()*q.R_component_2()-q.R_component_3()*q.R_component_3()+q.R_component_4()*q.R_component_4()
+        );
 }
 
 /**
@@ -119,13 +195,17 @@ template <typename _Tp> quaternion<_Tp> Slerp(quaternion<_Tp> Qfrom, quaternion<
  * @param [in]	zoom	倍率[]。拡大縮小しないなら1を指定すること。省略可
  **/
 template <typename _Tp, typename _Tx> void getDistortUnrollingMap(
-    std::vector<quaternion<_Tp>> &Qa,
-    std::vector<quaternion<_Tp>> &Qf,
-    unsigned int m,
-    unsigned int n,
-    double ti,
-    double ts,
-    double T,
+//    std::vector<quaternion<_Tp>> &Qa,
+//    std::vector<quaternion<_Tp>> &Qf,
+    quaternion<_Tp> prevAngleQuaternion,
+    quaternion<_Tp> currAngleQuaternion,
+    quaternion<_Tp> nextAngleQuaternion,
+    uint32_t division_x,
+    uint32_t division_y,
+    double TRollingShutter,
+//    double ti,
+//    double ts,
+//    double T,
     cv::Mat &IK,
     cv::Mat &matIntrinsic,
     cv::Size imgSize,
@@ -152,28 +232,38 @@ template <typename _Tp, typename _Tx> void getDistortUnrollingMap(
     double p1 = IK.at<double>(0,2);
     double p2 = IK.at<double>(0,3);
 
-    cv::Mat map(n+1,m+1,CV_64FC2);
+    cv::Mat map(division_y+1,division_x+1,CV_64FC2);
 
 
-    for(int j=0;j<=m;++j){
+    for(int j=0;j<=division_y;++j){
         //W(t1,t2)を計算
         cv::Mat R;
         //1
-        double v = (double)j/m*imgSize.height;
+        double v = (double)j/division_y*imgSize.height;
 
-        double tiy = ti + ts*v/imgSize.height;	//ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
-        unsigned int fi = (int)floor(tiy/T);	//ローリングシャッター補正を含むフレーム数の整数部[ ]
-        double ff = tiy/T - (double)fi;			//ローリングシャッター補正を含むフレーム数の浮動小数点数部[ ]
-        auto SQa = Slerp(Qa[fi],Qa[fi+1],ff);	//オリジナルの角度クウォータニオンに関して球面線形補間
+        double exposureTimingInEachRow = TRollingShutter*v/imgSize.height;	//ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
 
-        unsigned int gi = (int)floor(ti/T);		//フレーム数の整数部[ ]
-        double gf = ti/T - (double)gi;			//フレーム数の浮動小数点数部[ ]
-        auto SQf = Slerp(Qf[gi],Qf[gi+1],gf);	//フィルタ済みの角度クウォータニオンに関して球面線形補間
+        quaternion<_Tp> slerpedAngleAuaternion;
+        if(exposureTimingInEachRow >= 0){
+            slerpedAngleAuaternion = Slerp(currAngleQuaternion,nextAngleQuaternion,exposureTimingInEachRow);
+        }else{
+            slerpedAngleAuaternion = Slerp(prevAngleQuaternion,currAngleQuaternion,1+exposureTimingInEachRow);
+        }
 
-        Quaternion2Matrix(conj(SQf)*SQa,R);		//ローリングシャッター補正を含む回転行列を計算
+//        unsigned int fi = (int)floor(exposureTimingInEachRow/T);	//ローリングシャッター補正を含むフレーム数の整数部[ ]
+//        double ff = exposureTimingInEachRow/T - (double)fi;			//ローリングシャッター補正を含むフレーム数の浮動小数点数部[ ]
+//        auto SQa = Slerp(Qa[fi],Qa[fi+1],ff);	//オリジナルの角度クウォータニオンに関して球面線形補間
 
-        for(int i=0;i<=n;++i){
-            double u = (double)i/n*imgSize.width;
+//        unsigned int gi = (int)floor(ti/T);		//フレーム数の整数部[ ]
+//        double gf = ti/T - (double)gi;			//フレーム数の浮動小数点数部[ ]
+//        auto SQf = Slerp(Qf[gi],Qf[gi+1],gf);	//フィルタ済みの角度クウォータニオンに関して球面線形補間
+
+//        Quaternion2Matrix(conj(SQf)*SQa,R);		//ローリングシャッター補正を含む回転行列を計算
+
+        Quaternion2Matrix(slerpedAngleAuaternion,R);
+
+        for(int i=0;i<=division_x;++i){
+            double u = (double)i/division_x*imgSize.width;
             //後々の行列演算に備えて、画像上の座標を同次座標で表現しておく。(x座標、y座標,1)T
             cv::Mat p = (cv::Mat_<double>(3,1) << (u- cx)/fx, (v - cy)/fy, 1.0);	//1のポリゴン座標に、K^-1を掛けた結果の３x１行列
             //2
@@ -190,19 +280,28 @@ template <typename _Tp, typename _Tx> void getDistortUnrollingMap(
             double mapy = y2*fy*zoom+cy;
             //~ return ;
             //結果をmapに保存
-            map.at<cv::Vec2d>(j,i)[0] = mapx;
-            map.at<cv::Vec2d>(j,i)[1] = mapy;
+            map.at<cv::Vec2d>(j,i)[0] = mapx/textureSize.width;
+            map.at<cv::Vec2d>(j,i)[1] = mapy/textureSize.height;
             //~ printf("i:%d,j:%d,mapx:%4.3f,mapy:%4.3f\n",i,j,mapx,mapy);
         }
     }
 
     //3.ポリゴン座標をOpenGLの関数に渡すために順番を書き換える
     vecPorigonn_uv.clear();
-    for(int j=0;j<m;++j){//jは終了の判定が"<"であることに注意
-        for(int i=0;i<n;++i){
-            //GL_QUADでGL側へ送信するポリゴンの頂点座標を準備
+    for(int j=0;j<division_y;++j){//jは終了の判定が"<"であることに注意
+        for(int i=0;i<division_x;++i){
+            //GL_TRIANGLESでGL側へ送信するポリゴンの頂点座標を準備
             vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i)[0]);//x座標
             vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i)[1]);//y座標
+            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j+1,i)[0]);//x座標
+            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j+1,i)[1]);//y座標
+//            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j+1,i+1)[0]);//x座標
+//            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j+1,i+1)[1]);//y座標
+            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i+1)[0]);//x座標
+            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i+1)[1]);//y座標
+
+//            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i)[0]);//x座標
+//            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i)[1]);//y座標
             vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j+1,i)[0]);//x座標
             vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j+1,i)[1]);//y座標
             vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j+1,i+1)[0]);//x座標
@@ -241,6 +340,12 @@ template <typename _Tp, int cn> quaternion<_Tp> RotationQuaternion(cv::Vec<_Tp,c
 }
 
 int main(int argc, char** argv){
+
+    //テクスチャ座標の準備
+    int32_t division_x = 5; //画面の横の分割数
+    int32_t division_y = 5; //画面の縦の分割数
+    cv::Size textureSize = cv::Size(2048,2048);
+
     //引数の確認
     char *videoPass = NULL;
     char *csvPass = NULL;
@@ -288,6 +393,16 @@ int main(int argc, char** argv){
     cv::Mat matDist;
     ReadDistortionParams("distortion.txt",matDist);
     std::cout << "Distortion Coeff:\n" << matDist << "\n" << std::endl;
+
+    //逆歪パラメータの計算
+    cv::Mat matInvDistort;
+    calcDistortCoeff(matIntrinsic,matDist,imageSize,matInvDistort);
+
+    //逆歪パラメータ表示
+    if(PRINT_INV_DISTORT_COEFF){
+        cout << "distCoeff:" << matDist << endl;
+        cout << "invert distCoeff:" << matInvDistort << endl;
+    }
 
     cv::Mat img;
 
@@ -481,17 +596,14 @@ int main(int argc, char** argv){
 
     //FIRフィルタに食わせやすいように位置を合わせて角度を計算する
     int32_t halfLength = floor(FIRcoeffs[filterNumber].size()/2);
-    for(int frame=-halfLength,e=halfLength;frame<e;frame++){
+    for(int frame=-halfLength-1,e=halfLength;frame<=e;frame++){
         angleQuaternion.push_back(angleQuaternion.back()*RotationQuaternion(angularVelocitySync(frame)*Tvideo));
         angleQuaternion.back() = angleQuaternion.back() * (1.0 / norm(angleQuaternion.back()));
     }
 
 
-    //動画の最初から最後まで
-    printf(",sx,sy,sz,ax,ay,az,dx,dy,dz\r\n");
-    for(int32_t i=0,e=Capture.get(CV_CAP_PROP_FRAME_COUNT);i<e;++i){
-
-        //IIR平滑化
+    quaternion<double> prevSmoothedAngleQuaternion;
+    {   //IIR平滑化
         cv::Vec3d prevVec = Quaternion2Vector(angleQuaternion[0]);
         cv::Vec3d sum(0.0, 0.0, 0.0);
         for(int32_t j=0,f=FIRcoeffs[filterNumber].size();j<f;++j){
@@ -499,20 +611,65 @@ int main(int argc, char** argv){
             sum += FIRcoeffs[filterNumber][j]*curVec;
             prevVec = curVec;
         }
-        quaternion<double> smoothedAngularAuaternion = Vector2Quaternion<double>(sum);
+        quaternion<double> precSmoothedAngleQuaternion = Vector2Quaternion<double>(sum);
+    }
+
+    quaternion<double> currSmoothedAngleQuaternion;
+    {   //IIR平滑化
+        cv::Vec3d prevVec = Quaternion2Vector(angleQuaternion[1]);
+        cv::Vec3d sum(0.0, 0.0, 0.0);
+        for(int32_t j=0,f=FIRcoeffs[filterNumber].size();j<f;++j){
+            cv::Vec3d curVec = Quaternion2Vector(angleQuaternion[j+1],prevVec);
+            sum += FIRcoeffs[filterNumber][j]*curVec;
+            prevVec = curVec;
+        }
+        quaternion<double> currSmoothedAngleQuaternion = Vector2Quaternion<double>(sum);
+    }
+
+    quaternion<double> nextSmoothedAngleQuaternion;
+
+    quaternion<double> prevDiffAngleQuaternion = conj(prevSmoothedAngleQuaternion)*angleQuaternion[halfLength];
+    quaternion<double> currDiffAngleQuaternion = conj(currSmoothedAngleQuaternion)*angleQuaternion[halfLength+1];
+    quaternion<double> nextDiffAngleQuaternion;
+
+    //動画の最初から最後まで
+    printf(",sx,sy,sz,ax,ay,az,dx,dy,dz\r\n");
+
+
+    for(int32_t i=0,e=Capture.get(CV_CAP_PROP_FRAME_COUNT);i<e;++i){
+
+        //IIR平滑化
+        cv::Vec3d prevVec = Quaternion2Vector(angleQuaternion[2]);
+        cv::Vec3d sum(0.0, 0.0, 0.0);
+        for(int32_t j=0,f=FIRcoeffs[filterNumber].size();j<f;++j){
+            cv::Vec3d curVec = Quaternion2Vector(angleQuaternion[j+2],prevVec);
+            sum += FIRcoeffs[filterNumber][j]*curVec;
+            prevVec = curVec;
+        }
+        quaternion<double> nextSmoothedAngleQuaternion = Vector2Quaternion<double>(sum);
+
+        nextDiffAngleQuaternion = conj(nextSmoothedAngleQuaternion)*angleQuaternion[halfLength+2];
 
         //試しに表示
-        static int framen=0;
-        cv::Vec3d s = Quaternion2Vector(smoothedAngularAuaternion);
-        cv::Vec3d a = Quaternion2Vector(angleQuaternion[halfLength]);
-        auto dq = conj(smoothedAngularAuaternion)*angleQuaternion[halfLength];
-        cv::Vec3d d = Quaternion2Vector(dq);
-        printf("%d,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f\r\n",framen,s[0],s[1],s[2],a[0],a[1],a[2],d[0],d[1],d[2]);
-        framen++;
+        if(1){
+            static int framen=0;
+            cv::Vec3d s = Quaternion2Vector(currSmoothedAngleQuaternion);
+            cv::Vec3d a = Quaternion2Vector(angleQuaternion[halfLength+1]);
+            cv::Vec3d d = Quaternion2Vector(conj(currSmoothedAngleQuaternion)*angleQuaternion[halfLength+1]);
+            printf("%d,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f\r\n",framen,s[0],s[1],s[2],a[0],a[1],a[2],d[0],d[1],d[2]);
+            currSmoothedAngleQuaternion = nextSmoothedAngleQuaternion;
+            framen++;
+        }
 
+        std::vector<GLfloat> vecVtx;					//頂点座標
+        getDistortUnrollingMap(prevDiffAngleQuaternion,currDiffAngleQuaternion,nextDiffAngleQuaternion,
+                               division_x,division_y,0,matInvDistort, matIntrinsic, imageSize, textureSize, vecVtx,1.0);
 
         angleQuaternion.erase(angleQuaternion.begin());
-        angleQuaternion.push_back(angleQuaternion.back()*RotationQuaternion(angularVelocitySync(i+halfLength)*Tvideo));
+        angleQuaternion.push_back(angleQuaternion.back()*RotationQuaternion(angularVelocitySync(i+halfLength+2)*Tvideo));
+
+        prevDiffAngleQuaternion = currDiffAngleQuaternion;
+        currDiffAngleQuaternion = nextDiffAngleQuaternion;
     }
 
     //-------------------//
@@ -542,7 +699,7 @@ int main(int argc, char** argv){
 
 //    //動画の読み込み
 //    Capture >> img;
-    cv::Size textureSize = cv::Size(2048,2048);
+//    cv::Size textureSize = cv::Size(2048,2048);
 //    const int TEXTURE_W = 2048;//テクスチャ。TODO:ビデオのサイズに合わせて拡大縮小
 //    const int TEXTURE_H = 2048;
     cv::Mat buff(textureSize.height,textureSize.width,CV_8UC3);//テクスチャ用Matを準備
@@ -701,9 +858,7 @@ int main(int argc, char** argv){
 //        float distcoeffFloat[] = {(float)(matIntrinsic.at<double>(0,0)),(float)(matIntrinsic.at<double>(0,1)),(float)(matIntrinsic.at<double>(0,2)),(float)(matIntrinsic.at<double>(0,3))};
 //        glUniform4fv(distCoeffID, 1, distcoeffFloat);
 
-        //テクスチャ座標の準備
-        int32_t division_x = 5; //画面の横の分割数
-        int32_t division_y = 5; //画面の縦の分割数
+
         std::vector<GLfloat> vecTexture;
         for(int j=0;j<division_y;++j){							//jは終了の判定が"<"であることに注意
             double v	= (double)j/division_y*imageSize.height;

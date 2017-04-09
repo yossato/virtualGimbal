@@ -42,6 +42,7 @@ include_directories(
         .
 )
 include_directories(include)
+include_directories(/usr/local/include/eigen3)
 set(ALL_LIBS
         ${OPENGL_LIBRARY}
         ${OpenCV_LIBS}
