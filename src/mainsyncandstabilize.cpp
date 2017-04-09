@@ -35,6 +35,8 @@ using namespace glm;
 //Numetric optimization
 #include "levenbergMarquardt.hpp"
 
+#include "settings.h"
+
 using namespace std;
 
 void calcDistortCoeff(const cv::Mat &matIntrinsic, const cv::Mat &matDistort, const cv::Size &imageSize, cv::Mat &matInvDistort){
@@ -596,12 +598,16 @@ int main(int argc, char** argv){
 
     //FIRフィルタに食わせやすいように位置を合わせて角度を計算する
     int32_t halfLength = floor(FIRcoeffs[filterNumber].size()/2);
-    for(int frame=-halfLength-1,e=halfLength;frame<=e;frame++){
+    for(int frame=-halfLength-1,e=halfLength-1;frame<e;frame++){//-1しているのは、previousを計算するため、全体を1個前方へ移動しているため
         angleQuaternion.push_back(angleQuaternion.back()*RotationQuaternion(angularVelocitySync(frame)*Tvideo));
         angleQuaternion.back() = angleQuaternion.back() * (1.0 / norm(angleQuaternion.back()));
     }
+//    printf("p1:%lu\n",angleQuaternion.size());
 
 
+    quaternion<double> prevDiffAngleQuaternion;
+    quaternion<double> currDiffAngleQuaternion;
+    quaternion<double> nextDiffAngleQuaternion;
     quaternion<double> prevSmoothedAngleQuaternion;
     {   //IIR平滑化
         cv::Vec3d prevVec = Quaternion2Vector(angleQuaternion[0]);
@@ -611,26 +617,32 @@ int main(int argc, char** argv){
             sum += FIRcoeffs[filterNumber][j]*curVec;
             prevVec = curVec;
         }
-        quaternion<double> precSmoothedAngleQuaternion = Vector2Quaternion<double>(sum);
+        prevSmoothedAngleQuaternion = Vector2Quaternion<double>(sum);
+        prevDiffAngleQuaternion = conj(prevSmoothedAngleQuaternion)*angleQuaternion[halfLength];
+        angleQuaternion.erase(angleQuaternion.begin());
+        angleQuaternion.push_back(angleQuaternion.back()*RotationQuaternion(angularVelocitySync(halfLength-1)*Tvideo));
     }
+
+//    printf("p2:%lu\n",angleQuaternion.size());
 
     quaternion<double> currSmoothedAngleQuaternion;
     {   //IIR平滑化
-        cv::Vec3d prevVec = Quaternion2Vector(angleQuaternion[1]);
+        cv::Vec3d prevVec = Quaternion2Vector(angleQuaternion[0]);
         cv::Vec3d sum(0.0, 0.0, 0.0);
         for(int32_t j=0,f=FIRcoeffs[filterNumber].size();j<f;++j){
-            cv::Vec3d curVec = Quaternion2Vector(angleQuaternion[j+1],prevVec);
+            cv::Vec3d curVec = Quaternion2Vector(angleQuaternion[j],prevVec);
             sum += FIRcoeffs[filterNumber][j]*curVec;
             prevVec = curVec;
         }
-        quaternion<double> currSmoothedAngleQuaternion = Vector2Quaternion<double>(sum);
+        currSmoothedAngleQuaternion = Vector2Quaternion<double>(sum);
+        currDiffAngleQuaternion = conj(currSmoothedAngleQuaternion)*angleQuaternion[halfLength];
+        angleQuaternion.erase(angleQuaternion.begin());
+        angleQuaternion.push_back(angleQuaternion.back()*RotationQuaternion(angularVelocitySync(halfLength)*Tvideo));
     }
 
-    quaternion<double> nextSmoothedAngleQuaternion;
+//    printf("p3:%lu\n",angleQuaternion.size());
 
-    quaternion<double> prevDiffAngleQuaternion = conj(prevSmoothedAngleQuaternion)*angleQuaternion[halfLength];
-    quaternion<double> currDiffAngleQuaternion = conj(currSmoothedAngleQuaternion)*angleQuaternion[halfLength+1];
-    quaternion<double> nextDiffAngleQuaternion;
+    quaternion<double> nextSmoothedAngleQuaternion;
 
     //動画の最初から最後まで
     printf(",sx,sy,sz,ax,ay,az,dx,dy,dz\r\n");
@@ -639,23 +651,22 @@ int main(int argc, char** argv){
     for(int32_t i=0,e=Capture.get(CV_CAP_PROP_FRAME_COUNT);i<e;++i){
 
         //IIR平滑化
-        cv::Vec3d prevVec = Quaternion2Vector(angleQuaternion[2]);
+        cv::Vec3d prevVec = Quaternion2Vector(angleQuaternion[0]);
         cv::Vec3d sum(0.0, 0.0, 0.0);
         for(int32_t j=0,f=FIRcoeffs[filterNumber].size();j<f;++j){
-            cv::Vec3d curVec = Quaternion2Vector(angleQuaternion[j+2],prevVec);
+            cv::Vec3d curVec = Quaternion2Vector(angleQuaternion[j],prevVec);
             sum += FIRcoeffs[filterNumber][j]*curVec;
             prevVec = curVec;
         }
-        quaternion<double> nextSmoothedAngleQuaternion = Vector2Quaternion<double>(sum);
-
-        nextDiffAngleQuaternion = conj(nextSmoothedAngleQuaternion)*angleQuaternion[halfLength+2];
+        nextSmoothedAngleQuaternion = Vector2Quaternion<double>(sum);
+        nextDiffAngleQuaternion = conj(nextSmoothedAngleQuaternion)*angleQuaternion[halfLength];
 
         //試しに表示
         if(1){
             static int framen=0;
             cv::Vec3d s = Quaternion2Vector(currSmoothedAngleQuaternion);
-            cv::Vec3d a = Quaternion2Vector(angleQuaternion[halfLength+1]);
-            cv::Vec3d d = Quaternion2Vector(conj(currSmoothedAngleQuaternion)*angleQuaternion[halfLength+1]);
+            cv::Vec3d a = Quaternion2Vector(angleQuaternion[halfLength]);
+            cv::Vec3d d = Quaternion2Vector(currDiffAngleQuaternion);
             printf("%d,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f\r\n",framen,s[0],s[1],s[2],a[0],a[1],a[2],d[0],d[1],d[2]);
             currSmoothedAngleQuaternion = nextSmoothedAngleQuaternion;
             framen++;
