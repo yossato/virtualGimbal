@@ -675,10 +675,14 @@ int main(int argc, char** argv){
         std::vector<GLfloat> vecVtx;					//頂点座標
         getDistortUnrollingMap(prevDiffAngleQuaternion,currDiffAngleQuaternion,nextDiffAngleQuaternion,
                                division_x,division_y,0,matInvDistort, matIntrinsic, imageSize, textureSize, vecVtx,1.0);
+        for(auto el:vecVtx) cout << el << endl;
 
+        //角度配列の先頭を削除
         angleQuaternion.erase(angleQuaternion.begin());
+        //末尾に角度を追加
         angleQuaternion.push_back(angleQuaternion.back()*RotationQuaternion(angularVelocitySync(i+halfLength+2)*Tvideo));
 
+        //補正量を保存
         prevDiffAngleQuaternion = currDiffAngleQuaternion;
         currDiffAngleQuaternion = nextDiffAngleQuaternion;
     }
