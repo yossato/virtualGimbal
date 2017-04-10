@@ -383,7 +383,7 @@ int main(int argc, char** argv){
 
     //動画からオプティカルフローを計算する
     auto t1 = std::chrono::system_clock::now() ;
-    std::vector<cv::Vec3d> opticShift = CalcShiftFromVideo(videoPass,100);//ビデオからオプティカルフローを用いてシフト量を算出
+    std::vector<cv::Vec3d> opticShift = CalcShiftFromVideo(videoPass,1000);//ビデオからオプティカルフローを用いてシフト量を算出
     auto t2 = std::chrono::system_clock::now() ;
     // 処理の経過時間
     auto elapsed = t2 - t1 ;
@@ -958,15 +958,15 @@ int main(int argc, char** argv){
         nextDiffAngleQuaternion = conj(nextSmoothedAngleQuaternion)*angleQuaternion[halfLength];
 
         //試しに表示
-        if(0){
-            static int framen=0;
-            cv::Vec3d s = Quaternion2Vector(currSmoothedAngleQuaternion);
-            cv::Vec3d a = Quaternion2Vector(angleQuaternion[halfLength]);
-            cv::Vec3d d = Quaternion2Vector(currDiffAngleQuaternion);
-            printf("%d,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f\r\n",framen,s[0],s[1],s[2],a[0],a[1],a[2],d[0],d[1],d[2]);
-            currSmoothedAngleQuaternion = nextSmoothedAngleQuaternion;
-            framen++;
-        }
+//        if(0){
+//            static int framen=0;
+//            cv::Vec3d s = Quaternion2Vector(currSmoothedAngleQuaternion);
+//            cv::Vec3d a = Quaternion2Vector(angleQuaternion[halfLength]);
+//            cv::Vec3d d = Quaternion2Vector(currDiffAngleQuaternion);
+//            printf("%d,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f\r\n",framen,s[0],s[1],s[2],a[0],a[1],a[2],d[0],d[1],d[2]);
+//            currSmoothedAngleQuaternion = nextSmoothedAngleQuaternion;
+//            framen++;
+//        }
 
 
         getDistortUnrollingMap(prevDiffAngleQuaternion,currDiffAngleQuaternion,nextDiffAngleQuaternion,
@@ -981,14 +981,17 @@ int main(int argc, char** argv){
         //補正量を保存
         prevDiffAngleQuaternion = currDiffAngleQuaternion;
         currDiffAngleQuaternion = nextDiffAngleQuaternion;
-
+//glDeleteBuffers(1, &vertexbuffer);
+//glGenBuffers(1, &vertexbuffer);
         glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-        //    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
-        glBufferData(GL_ARRAY_BUFFER, vecVtx.size()*sizeof(GLfloat), vecVtx.data(), GL_DYNAMIC_DRAW);
+//            glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+//        glBufferSubData(GL_ARRAY_BUFFER, 0, vecVtx.size()*sizeof(GLfloat), vecVtx.data());
+        glBufferData(GL_ARRAY_BUFFER, vecVtx.size()*sizeof(GLfloat), vecVtx.data(),GL_DYNAMIC_DRAW);
 
         //動画の読み込み
         Capture >> img;
-        glTexSubImage2D(GL_TEXTURE_2D,0,0,0,img.cols,img.rows,GL_BGR,GL_UNSIGNED_BYTE,img.data);
+//        glBindTexture(GL_TEXTURE_2D,textureID_0);
+//        glTexSubImage2D(GL_TEXTURE_2D,0,0,0,img.cols,img.rows,GL_BGR,GL_UNSIGNED_BYTE,img.data);
 
         // Clear the screen
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1011,6 +1014,8 @@ int main(int argc, char** argv){
         // Bind our texture in Texture Unit 0
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureID_0);//            glBindTexture(GL_TEXTURE_2D, Texture);
+        glTexSubImage2D(GL_TEXTURE_2D,0,0,0,img.cols,img.rows,GL_BGR,GL_UNSIGNED_BYTE,img.data);
+        glGenerateMipmap(GL_TEXTURE_2D);
         // Set our "myTextureSampler" sampler to user Texture Unit 0
         glUniform1i(TextureID, 0);
 
