@@ -383,7 +383,7 @@ int main(int argc, char** argv){
 
     //動画からオプティカルフローを計算する
     auto t1 = std::chrono::system_clock::now() ;
-    std::vector<cv::Vec3d> opticShift = CalcShiftFromVideo(videoPass,1000);//ビデオからオプティカルフローを用いてシフト量を算出
+    std::vector<cv::Vec3d> opticShift = CalcShiftFromVideo(videoPass,SYNC_LENGTH);//ビデオからオプティカルフローを用いてシフト量を算出
     auto t2 = std::chrono::system_clock::now() ;
     // 処理の経過時間
     auto elapsed = t2 - t1 ;
@@ -970,7 +970,7 @@ int main(int argc, char** argv){
 
 
         getDistortUnrollingMap(prevDiffAngleQuaternion,currDiffAngleQuaternion,nextDiffAngleQuaternion,
-                               division_x,division_y,0,matInvDistort, matIntrinsic, imageSize, vecVtx,1.0);
+                               division_x,division_y,0,matInvDistort, matIntrinsic, imageSize, vecVtx,0.5);
 //                for(auto el:vecVtx) cout << el << endl;
 
         //角度配列の先頭を削除
@@ -1012,7 +1012,7 @@ int main(int argc, char** argv){
         glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
 
         // Bind our texture in Texture Unit 0
-        glActiveTexture(GL_TEXTURE0);
+//        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureID_0);//            glBindTexture(GL_TEXTURE_2D, Texture);
         glTexSubImage2D(GL_TEXTURE_2D,0,0,0,img.cols,img.rows,GL_BGR,GL_UNSIGNED_BYTE,img.data);
         glGenerateMipmap(GL_TEXTURE_2D);

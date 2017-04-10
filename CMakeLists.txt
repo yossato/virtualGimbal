@@ -98,6 +98,7 @@ add_executable(virtualGimbal src/mainsyncandstabilize.cpp
 
         src/calcShift.cpp
         src/mINIRead.cpp
+        include/settings.h
         TransformVertexShader.vertexshader
         TextureFragmentShader.fragmentshader
 )
