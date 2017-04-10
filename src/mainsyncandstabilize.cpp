@@ -424,7 +424,7 @@ int main(int argc, char** argv){
     cv::Mat img;
 
     //試しに先に進む
-    Capture.set(cv::CAP_PROP_POS_FRAMES,1000);
+    Capture.set(cv::CAP_PROP_POS_FRAMES,500);
 
     //動画の読み込み
     Capture >> img;
@@ -662,7 +662,7 @@ int main(int argc, char** argv){
     //動画の最初から最後まで
     printf(",sx,sy,sz,ax,ay,az,dx,dy,dz\r\n");
 
-    std::vector<GLfloat> vecVtx;					//頂点座標
+/*    std::vector<GLfloat> vecVtx;					//頂点座標
     for(int32_t i=0,e=Capture.get(CV_CAP_PROP_FRAME_COUNT);i<e;++i){
 
         //IIR平滑化
@@ -700,38 +700,10 @@ int main(int argc, char** argv){
         //補正量を保存
         prevDiffAngleQuaternion = currDiffAngleQuaternion;
         currDiffAngleQuaternion = nextDiffAngleQuaternion;
-    }
+    }*/
 
     //-------------------//
 
-
-    //    cv::VideoCapture Capture(argv[1]);//動画をオープン
-    //    assert(Capture.isOpened());
-    //    cv::Size imageSize = cv::Size(Capture.get(CV_CAP_PROP_FRAME_WIDTH),Capture.get(CV_CAP_PROP_FRAME_HEIGHT));//解像度を読む
-    //    double samplingPeriod = 1.0/Capture.get(CV_CAP_PROP_FPS);
-    //    std::cout << "resolution" << imageSize << std::endl;
-    //    std::cout << "samplingPeriod" << samplingPeriod << std::endl;
-
-    //    //内部パラメータを読み込み
-    //    cv::Mat matIntrinsic;
-    //    ReadIntrinsicsParams("intrinsic.txt",matIntrinsic);
-    //    std::cout << "Camera matrix:\n" << matIntrinsic << "\n" <<  std::endl;
-
-    //    //歪パラメータの読み込み
-    //    cv::Mat matDist;
-    //    ReadDistortionParams("distortion.txt",matDist);
-    //    std::cout << "Distortion Coeff:\n" << matDist << "\n" << std::endl;
-
-    //    cv::Mat img;
-
-    //    //試しに先に進む
-    //    Capture.set(cv::CAP_PROP_POS_FRAMES,1000);
-
-    //    //動画の読み込み
-    //    Capture >> img;
-    //    cv::Size textureSize = cv::Size(2048,2048);
-    //    const int TEXTURE_W = 2048;//テクスチャ。TODO:ビデオのサイズに合わせて拡大縮小
-    //    const int TEXTURE_H = 2048;
 
     cv::Mat buff(textureSize.height,textureSize.width,CV_8UC3);//テクスチャ用Matを準備
     img.copyTo(buff(cv::Rect(0,0,img.cols,img.rows)));
@@ -754,8 +726,8 @@ int main(int argc, char** argv){
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Open a window and create its OpenGL context
-    window = glfwCreateWindow( 1280, 720, "Tutorial 0 - Keyboard and Mouse", NULL, NULL);
-    //        window = glfwCreateWindow( 1920, 1080, "Tutorial 0 - Keyboard and Mouse", NULL, NULL);
+//    window = glfwCreateWindow( 1280, 720, "Tutorial 0 - Keyboard and Mouse", NULL, NULL);
+            window = glfwCreateWindow( 1920, 1080, "Tutorial 0 - Keyboard and Mouse", NULL, NULL);
     if( window == NULL ){
         fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
         getchar();
@@ -911,17 +883,19 @@ int main(int argc, char** argv){
         }
     }
 
+    std::vector<GLfloat> vecVtx(vecTexture.size());					//頂点座標
+
     GLuint vertexbuffer;
     glGenBuffers(1, &vertexbuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
     //    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
-    glBufferData(GL_ARRAY_BUFFER, vecVtx.size()*sizeof(GLfloat), vecVtx.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vecVtx.size()*sizeof(GLfloat), vecVtx.data(), GL_DYNAMIC_DRAW);
 
     GLuint uvbuffer;
     glGenBuffers(1, &uvbuffer);
     glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
     //    glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
-    glBufferData(GL_ARRAY_BUFFER, vecTexture.size()*sizeof(GLfloat), vecTexture.data(), GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vecTexture.size()*sizeof(GLfloat), vecTexture.data(), GL_STATIC_DRAW);
 
     cout << "vecVtx" << endl;
     for(auto it=vecVtx.begin(),e=vecVtx.end();it!=e;it+=2) cout << *it << "," << *(it+1)  << endl;
@@ -968,8 +942,53 @@ int main(int argc, char** argv){
         }
     }*/
 
+    //動画の位置を修正
+    Capture.set(cv::CAP_PROP_POS_FRAMES,0);
+//    do{
+    for(int32_t i=0,e=Capture.get(CV_CAP_PROP_FRAME_COUNT);i<e;++i){
+        //IIR平滑化
+        cv::Vec3d prevVec = Quaternion2Vector(angleQuaternion[0]);
+        cv::Vec3d sum(0.0, 0.0, 0.0);
+        for(int32_t j=0,f=FIRcoeffs[filterNumber].size();j<f;++j){
+            cv::Vec3d curVec = Quaternion2Vector(angleQuaternion[j],prevVec);
+            sum += FIRcoeffs[filterNumber][j]*curVec;
+            prevVec = curVec;
+        }
+        nextSmoothedAngleQuaternion = Vector2Quaternion<double>(sum);
+        nextDiffAngleQuaternion = conj(nextSmoothedAngleQuaternion)*angleQuaternion[halfLength];
 
-    do{
+        //試しに表示
+        if(0){
+            static int framen=0;
+            cv::Vec3d s = Quaternion2Vector(currSmoothedAngleQuaternion);
+            cv::Vec3d a = Quaternion2Vector(angleQuaternion[halfLength]);
+            cv::Vec3d d = Quaternion2Vector(currDiffAngleQuaternion);
+            printf("%d,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f\r\n",framen,s[0],s[1],s[2],a[0],a[1],a[2],d[0],d[1],d[2]);
+            currSmoothedAngleQuaternion = nextSmoothedAngleQuaternion;
+            framen++;
+        }
+
+
+        getDistortUnrollingMap(prevDiffAngleQuaternion,currDiffAngleQuaternion,nextDiffAngleQuaternion,
+                               division_x,division_y,0,matInvDistort, matIntrinsic, imageSize, vecVtx,1.0);
+//                for(auto el:vecVtx) cout << el << endl;
+
+        //角度配列の先頭を削除
+        angleQuaternion.erase(angleQuaternion.begin());
+        //末尾に角度を追加
+        angleQuaternion.push_back(angleQuaternion.back()*RotationQuaternion(angularVelocitySync(i+halfLength+2)*Tvideo));
+
+        //補正量を保存
+        prevDiffAngleQuaternion = currDiffAngleQuaternion;
+        currDiffAngleQuaternion = nextDiffAngleQuaternion;
+
+        glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+        //    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, vecVtx.size()*sizeof(GLfloat), vecVtx.data(), GL_DYNAMIC_DRAW);
+
+        //動画の読み込み
+        Capture >> img;
+        glTexSubImage2D(GL_TEXTURE_2D,0,0,0,img.cols,img.rows,GL_BGR,GL_UNSIGNED_BYTE,img.data);
 
         // Clear the screen
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1000,7 +1019,8 @@ int main(int argc, char** argv){
         glUniform2fv(nFxyID, 1, nfxy);
         float ncxy[] = {(float)(matIntrinsic.at<double>(0,2)/imageSize.width), (float)(matIntrinsic.at<double>(1,2)/imageSize.height)};
         glUniform2fv(nCxyID, 1, ncxy);
-        float distcoeffFloat[] = {(float)(matDist.at<double>(0,0)),(float)(matDist.at<double>(0,1)),(float)(matDist.at<double>(0,2)),(float)(matDist.at<double>(0,3))};
+//        float distcoeffFloat[] = {(float)(matDist.at<double>(0,0)),(float)(matDist.at<double>(0,1)),(float)(matDist.at<double>(0,2)),(float)(matDist.at<double>(0,3))};
+        float distcoeffFloat[] = {(float)(matInvDistort.at<double>(0,0)),(float)(matInvDistort.at<double>(0,1)),(float)(matInvDistort.at<double>(0,2)),(float)(matInvDistort.at<double>(0,3))};
         glUniform4fv(distCoeffID, 1, distcoeffFloat);
 
         // 1rst attribute buffer : vertices
@@ -1037,9 +1057,14 @@ int main(int argc, char** argv){
         glfwSwapBuffers(window);
         glfwPollEvents();
 
+        if(glfwGetKey(window, GLFW_KEY_ESCAPE ) == GLFW_PRESS ||
+                   glfwWindowShouldClose(window) != 0 ){
+            break;
+        }
+
     } // Check if the ESC key was pressed or the window was closed
-    while( glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
-           glfwWindowShouldClose(window) == 0 );
+//    while( glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
+//           glfwWindowShouldClose(window) == 0 );
 
     // Cleanup VBO and shader
     glDeleteBuffers(1, &vertexbuffer);
