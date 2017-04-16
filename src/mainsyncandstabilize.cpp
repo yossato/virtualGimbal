@@ -289,8 +289,8 @@ template <typename _Tp, typename _Tx> void getDistortUnrollingMap(
 //            map.at<cv::Vec2d>(j,i)[1] = mapy/textureSize.height;
 //            map.at<cv::Vec2d>(j,i)[0] = (mapx-cx)/imageSize.width*2.0;
 //            map.at<cv::Vec2d>(j,i)[1] = (mapy-cy)/imageSize.height*2.0;
-            map.at<cv::Vec2d>(j,i)[0] = x2*fx/imageSize.width;
-            map.at<cv::Vec2d>(j,i)[1] = y2*fy/imageSize.height;
+            map.at<cv::Vec2d>(j,i)[0] = x2*fx/imageSize.width*2.0;
+            map.at<cv::Vec2d>(j,i)[1] = y2*fy/imageSize.height*2.0;
             //~ printf("i:%d,j:%d,mapx:%4.3f,mapy:%4.3f\n",i,j,mapx,mapy);
         }
     }
@@ -565,7 +565,7 @@ if(SUBTRACT_OFFSET){
         subframeOffset = -(correlationCoefficients[minPosition+1]-correlationCoefficients[minPosition-1])/(2*correlationCoefficients[minPosition-1]-4*correlationCoefficients[minPosition]+2*correlationCoefficients[minPosition+1]);
     }
 
-//    minPosition += -2;//マジックナンバーｗｗｗｗ
+    minPosition += 30;//マジックナンバーｗｗｗｗ
 
     cout << "minPosition" << minPosition << endl;
     cout << "subframe minposition :" << minPosition+subframeOffset << endl;
