@@ -171,10 +171,15 @@ template <typename _Tp> quaternion<_Tp> Slerp(quaternion<_Tp> Qfrom, quaternion<
         cosom = -cosom;
         Qto = -Qto;
     }
-    omega = acos(cosom);
-    sinom = sin(omega);
-    scale0 = sin((1.0 - t) * omega) / sinom;
-    scale1 = sin(t * omega) / sinom;
+    if((1.0-cosom)>1e^4){
+        omega = acos(cosom);
+        sinom = sin(omega);
+        scale0 = sin((1.0 - t) * omega) / sinom;
+        scale1 = sin(t * omega) / sinom;
+    }else{
+        scale0 = 1.0 -t;
+        scale1 = t;
+    }
 
     return scale0 * Qfrom + scale1 * Qto;
 
@@ -198,9 +203,9 @@ template <typename _Tp> quaternion<_Tp> Slerp(quaternion<_Tp> Qfrom, quaternion<
 template <typename _Tp, typename _Tx> void getDistortUnrollingMap(
         //    std::vector<quaternion<_Tp>> &Qa,
         //    std::vector<quaternion<_Tp>> &Qf,
-        quaternion<_Tp> prevAngleQuaternion,
-        quaternion<_Tp> currAngleQuaternion,
-        quaternion<_Tp> nextAngleQuaternion,
+        quaternion<_Tp> &prevAngleQuaternion,
+        quaternion<_Tp> &currAngleQuaternion,
+        quaternion<_Tp> &nextAngleQuaternion,
         uint32_t division_x,
         uint32_t division_y,
         double TRollingShutter,
@@ -243,11 +248,11 @@ template <typename _Tp, typename _Tx> void getDistortUnrollingMap(
 
         double exposureTimingInEachRow = TRollingShutter*v/imageSize.height;	//ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
 
-        quaternion<_Tp> slerpedAngleAuaternion;
+        quaternion<_Tp> slerpedAngleQuaternion;
         if(exposureTimingInEachRow >= 0){
-            slerpedAngleAuaternion = Slerp(currAngleQuaternion,nextAngleQuaternion,exposureTimingInEachRow);
+            slerpedAngleQuaternion = Slerp(currAngleQuaternion,nextAngleQuaternion,exposureTimingInEachRow);
         }else{
-            slerpedAngleAuaternion = Slerp(prevAngleQuaternion,currAngleQuaternion,1+exposureTimingInEachRow);
+            slerpedAngleQuaternion = Slerp(prevAngleQuaternion,currAngleQuaternion,1+exposureTimingInEachRow);
         }
 
         //        unsigned int fi = (int)floor(exposureTimingInEachRow/T);	//ローリングシャッター補正を含むフレーム数の整数部[ ]
@@ -260,7 +265,7 @@ template <typename _Tp, typename _Tx> void getDistortUnrollingMap(
 
         //        Quaternion2Matrix(conj(SQf)*SQa,R);		//ローリングシャッター補正を含む回転行列を計算
 
-        Quaternion2Matrix(slerpedAngleAuaternion,R);
+        Quaternion2Matrix(slerpedAngleQuaternion,R);
 
         for(int i=0;i<=division_x;++i){
             double u = (double)i/division_x*imageSize.width;
@@ -282,8 +287,10 @@ template <typename _Tp, typename _Tx> void getDistortUnrollingMap(
             //結果をmapに保存
 //            map.at<cv::Vec2d>(j,i)[0] = mapx/textureSize.width;
 //            map.at<cv::Vec2d>(j,i)[1] = mapy/textureSize.height;
-            map.at<cv::Vec2d>(j,i)[0] = mapx*2.0/imageSize.width-1.0;
-            map.at<cv::Vec2d>(j,i)[1] = mapy*2.0/imageSize.height-1.0;
+//            map.at<cv::Vec2d>(j,i)[0] = (mapx-cx)/imageSize.width*2.0;
+//            map.at<cv::Vec2d>(j,i)[1] = (mapy-cy)/imageSize.height*2.0;
+            map.at<cv::Vec2d>(j,i)[0] = x2*fx/imageSize.width;
+            map.at<cv::Vec2d>(j,i)[1] = y2*fy/imageSize.height;
             //~ printf("i:%d,j:%d,mapx:%4.3f,mapy:%4.3f\n",i,j,mapx,mapy);
         }
     }
@@ -359,8 +366,8 @@ template <typename _Tp, int cn> quaternion<_Tp> RotationQuaternion(cv::Vec<_Tp,c
 int main(int argc, char** argv){
 
     //テクスチャ座標の準備
-    int32_t division_x = 5; //画面の横の分割数
-    int32_t division_y = 5; //画面の縦の分割数
+    int32_t division_x = 7; //画面の横の分割数
+    int32_t division_y = 7; //画面の縦の分割数
     cv::Size textureSize = cv::Size(2048,2048);
 
     //引数の確認
@@ -441,6 +448,25 @@ int main(int argc, char** argv){
         el[1] = temp[0]/16.4*M_PI/180.0;
         el[2] = -temp[2]/16.4*M_PI/180.0;
     }
+
+	//ジャイロのDCオフセット（いわゆる温度ドリフトと等価）を計算。単純にフレームの平均値を計算
+if(SUBTRACT_OFFSET){
+	cv::Vec3d dc(0,0,0);
+	for(auto el:angularVelocityIn60Hz){
+		dc[0] += el[0];
+		dc[1] += el[1];
+		dc[2] += el[2];
+	}
+	dc[0]/=angularVelocityIn60Hz.size();
+	dc[1]/=angularVelocityIn60Hz.size();
+	dc[2]/=angularVelocityIn60Hz.size();
+	for(auto el:angularVelocityIn60Hz){
+		el[0] -= dc[0];
+		el[1] -= dc[1];
+		el[2] -= dc[2];
+	}
+}
+
     double Tav = 1/60.0;//Sampling period of angular velocity
 
     //動画のサンプリング周期に合わせて、角速度を得られるようにする関数を定義
@@ -452,19 +478,20 @@ int main(int argc, char** argv){
         return angularVelocityIn60Hz[i]*(1.0-decimalPart)+angularVelocityIn60Hz[i+1]*decimalPart;
     };
 
-    cout << "angular Velocity" << endl;
-    for(int i=0;i<1000;i++){
-        cout << angularVelocity(i) << endl;
-    }
+//    cout << "angular Velocity" << endl;
+//    for(int i=0;i<1000;i++){
+//        cout << angularVelocity(i) << endl;
+//    }
 
 
 
     //動画のオプティカルフローと内部パラメータと解像度から角速度推定値を計算
     vector<cv::Vec3d> estimatedAngularVelocity;
-    cout << "estimated AngularVelocity" << endl;
+//    cout << "estimated AngularVelocity" << endl;
     for(auto el:opticShift){
         estimatedAngularVelocity.push_back(cv::Vec3d(-atan(el[1]/fy),atan(el[0]/fx),el[2])/Tvideo*-1);
-        cout << estimatedAngularVelocity.back() << endl;
+//        cout << estimatedAngularVelocity.back() << endl;
+//        printf("%f,%f,%f\n",estimatedAngularVelocity.back()[0],estimatedAngularVelocity.back()[1],estimatedAngularVelocity.back()[2]);
     }
 
 
@@ -480,6 +507,10 @@ int main(int argc, char** argv){
             sum +=   abs(angularVelocity(i+offset)[0]-estimatedAngularVelocity[i][0])
                     + abs(angularVelocity(i+offset)[1]-estimatedAngularVelocity[i][1])
                     + abs(angularVelocity(i+offset)[2]-estimatedAngularVelocity[i][2]);
+//            double diff = abs(angularVelocity(i+offset)[0]-estimatedAngularVelocity[i][0])
+//                        + abs(angularVelocity(i+offset)[1]-estimatedAngularVelocity[i][1]);
+//                        + abs(angularVelocity(i+offset)[2]-estimatedAngularVelocity[i][2]);
+//            sum += (diff < 0.05) ? diff : 0.05;
             if(sum > minCC){
                 break;
             }
@@ -505,6 +536,10 @@ int main(int argc, char** argv){
             sum +=   abs(angularVelocity(i+minPosition+1)[0]-estimatedAngularVelocity[i][0])
                     + abs(angularVelocity(i+minPosition+1)[1]-estimatedAngularVelocity[i][1])
                     + abs(angularVelocity(i+minPosition+1)[2]-estimatedAngularVelocity[i][2]);
+//            double diff = abs(angularVelocity(i+minPosition+1)[0]-estimatedAngularVelocity[i][0])
+//                        + abs(angularVelocity(i+minPosition+1)[1]-estimatedAngularVelocity[i][1]);
+//                        + abs(angularVelocity(i+minPosition+1)[2]-estimatedAngularVelocity[i][2]);
+//            sum += (diff < 0.05) ? diff : 0.05;
         }
         correlationCoefficients[minPosition+1] = sum;
     }
@@ -529,6 +564,8 @@ int main(int argc, char** argv){
         //        }
         subframeOffset = -(correlationCoefficients[minPosition+1]-correlationCoefficients[minPosition-1])/(2*correlationCoefficients[minPosition-1]-4*correlationCoefficients[minPosition]+2*correlationCoefficients[minPosition+1]);
     }
+
+//    minPosition -= 1;//マジックナンバーｗｗｗｗ
 
     cout << "minPosition" << minPosition << endl;
     cout << "subframe minposition :" << minPosition+subframeOffset << endl;
@@ -569,7 +606,7 @@ int main(int argc, char** argv){
         }
     };
 
-    {
+    if(0){
         double sum = 0.0;
         for(int32_t i=0; i<estimatedAngularVelocity.size();i++){
             sum +=   abs(angularVelocitySync(i)[0]-estimatedAngularVelocity[i][0])
@@ -606,6 +643,11 @@ int main(int argc, char** argv){
         FIRcoeffs.push_back(temp);
     }
 
+    cout << "estimated AngularVelocity and angularVelocitySync" << endl;
+    cout << "i,rex,rey,rez,rx,ry,rz" << endl;
+//    for(int i = 0,e=opticShift.size();i<e;++i){
+//        printf("%d,%f,%f,%f,%f,%f,%f\n",i,estimatedAngularVelocity[i][0],estimatedAngularVelocity[i][1],estimatedAngularVelocity[i][2],angularVelocitySync(i)[0],angularVelocitySync(i)[1],angularVelocitySync(i)[2]);
+//    }
 
     //平滑済みクォータニオンの計算//////////////////////////
     vector<quaternion<double>> angleQuaternion;
@@ -970,13 +1012,13 @@ int main(int argc, char** argv){
 
 
         getDistortUnrollingMap(prevDiffAngleQuaternion,currDiffAngleQuaternion,nextDiffAngleQuaternion,
-                               division_x,division_y,0,matInvDistort, matIntrinsic, imageSize, vecVtx,0.5);
+                               division_x,division_y,0,matInvDistort, matIntrinsic, imageSize, vecVtx,ZOOM_RATIO);
 //                for(auto el:vecVtx) cout << el << endl;
 
         //角度配列の先頭を削除
         angleQuaternion.erase(angleQuaternion.begin());
         //末尾に角度を追加
-        angleQuaternion.push_back(angleQuaternion.back()*RotationQuaternion(angularVelocitySync(i+halfLength+2)*Tvideo));
+        angleQuaternion.push_back(angleQuaternion.back()*RotationQuaternion(angularVelocitySync(i+halfLength+1)*Tvideo));
 
         //補正量を保存
         prevDiffAngleQuaternion = currDiffAngleQuaternion;

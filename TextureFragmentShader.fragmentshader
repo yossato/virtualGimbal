@@ -48,7 +48,7 @@ uniform sampler2D myTextureSampler;
     w.w =  x3;
     return w / 6.f;
 }*/
-/*
+
 // Catmull-Rom spline actually passes through control points
 vec4 cubic(float x) // cubic_catmullrom(float x)
 {
@@ -101,7 +101,7 @@ void main(){
 
         // Output color = color of the texture at the specified UV
         color = textureBicubic( myTextureSampler, UV ).rgb;
-}*/
+}
 //////////////////////////////////////
 
 //uniform float fWidth;
@@ -110,93 +110,93 @@ void main(){
 // Function returns a floating point value between 0 and 1.
 // This function returns higher value for nearest values of 0.
 // And returns lower values for far values( near to 1 ).
-float BSpline( float x )
-{
-        float f = x;
-        if( f < 0.0 )
-        {
-                f = -f;
-        }
+//float BSpline( float x )
+//{
+//        float f = x;
+//        if( f < 0.0 )
+//        {
+//                f = -f;
+//        }
 
-        if( f >= 0.0 && f <= 1.0 )
-        {
-                return ( 2.0 / 3.0 ) + ( 0.5 ) * ( f* f * f ) - (f*f);
-        }
-        else if( f > 1.0 && f <= 2.0 )
-        {
-                return 1.0 / 6.0 * pow( ( 2.0 - f  ), 3.0 );
-        }
-        return 1.0;
-}
-vec4 BiCubic( sampler2D textureSampler, vec2 TexCoord )
-{
-    vec2 texSize = textureSize(textureSampler, 0);//This is failure.
-    float fWidth = texSize.x*3;
-    float fHeight = texSize.y*3;
-    float texelSizeX = 1.0 / fWidth; //size of one texel
-    float texelSizeY = 1.0 / fHeight; //size of one texel
-    vec4 nSum = vec4( 0.0, 0.0, 0.0, 0.0 );
-    vec4 nDenom = vec4( 0.0, 0.0, 0.0, 0.0 );
-    float a = fract( TexCoord.x * fWidth ); // get the decimal part
-    float b = fract( TexCoord.y * fHeight ); // get the decimal part
-        int nX = int(TexCoord.x * fWidth);
-        int nY = int(TexCoord.y * fHeight);
-        vec2 TexCoord1 = vec2( float(nX) / fWidth + 0.5 / fWidth,
-                                               float(nY) / fHeight + 0.5 / fHeight );
+//        if( f >= 0.0 && f <= 1.0 )
+//        {
+//                return ( 2.0 / 3.0 ) + ( 0.5 ) * ( f* f * f ) - (f*f);
+//        }
+//        else if( f > 1.0 && f <= 2.0 )
+//        {
+//                return 1.0 / 6.0 * pow( ( 2.0 - f  ), 3.0 );
+//        }
+//        return 1.0;
+//}
+//vec4 BiCubic( sampler2D textureSampler, vec2 TexCoord )
+//{
+//    vec2 texSize = textureSize(textureSampler, 0);//This is failure.
+//    float fWidth = texSize.x*3;
+//    float fHeight = texSize.y*3;
+//    float texelSizeX = 1.0 / fWidth; //size of one texel
+//    float texelSizeY = 1.0 / fHeight; //size of one texel
+//    vec4 nSum = vec4( 0.0, 0.0, 0.0, 0.0 );
+//    vec4 nDenom = vec4( 0.0, 0.0, 0.0, 0.0 );
+//    float a = fract( TexCoord.x * fWidth ); // get the decimal part
+//    float b = fract( TexCoord.y * fHeight ); // get the decimal part
+//        int nX = int(TexCoord.x * fWidth);
+//        int nY = int(TexCoord.y * fHeight);
+//        vec2 TexCoord1 = vec2( float(nX) / fWidth + 0.5 / fWidth,
+//                                               float(nY) / fHeight + 0.5 / fHeight );
 
-    for( int m = -1; m <=2; m++ )
-    {
-        for( int n =-1; n<= 2; n++)
-        {
-                        vec4 vecData = texture(textureSampler, TexCoord1 + vec2(texelSizeX * float( m ), texelSizeY * float( n )));
-                        float f  = BSpline( float( m ) - a );
-                        vec4 vecCooef1 = vec4( f,f,f,f );
-                        float f1 = BSpline( -( float( n ) - b ) );
-                        vec4 vecCoeef2 = vec4( f1, f1, f1, f1 );
-            nSum = nSum + ( vecData * vecCoeef2 * vecCooef1  );
-            nDenom = nDenom + (( vecCoeef2 * vecCooef1 ));
-        }
-    }
-    return nSum / nDenom;
-}
+//    for( int m = -1; m <=2; m++ )
+//    {
+//        for( int n =-1; n<= 2; n++)
+//        {
+//                        vec4 vecData = texture(textureSampler, TexCoord1 + vec2(texelSizeX * float( m ), texelSizeY * float( n )));
+//                        float f  = BSpline( float( m ) - a );
+//                        vec4 vecCooef1 = vec4( f,f,f,f );
+//                        float f1 = BSpline( -( float( n ) - b ) );
+//                        vec4 vecCoeef2 = vec4( f1, f1, f1, f1 );
+//            nSum = nSum + ( vecData * vecCoeef2 * vecCooef1  );
+//            nDenom = nDenom + (( vecCoeef2 * vecCooef1 ));
+//        }
+//    }
+//    return nSum / nDenom;
+//}
 
-/**
- * @brief Undistort
- * @param TexCoord
- * @return
- */
-vec2 Undistort(vec2 uv, vec2 f, vec2 c, vec4 kp){
+///**
+// * @brief Undistort
+// * @param TexCoord
+// * @return
+// */
+//vec2 Undistort(vec2 uv, vec2 f, vec2 c, vec4 kp){
 
-    vec2 p1 = (uv - c)/f;
-    float r = length(p1);
-    // vec4 kp = (k1, k2, p1, p2)としておく
-    vec2 p2 = p1*(1.0+kp[0]*r*r+kp[1]*r*r*r*r) + 2.0*kp.zw*p1.x*p1.y + kp.wz*(r*r+2.0*p1*p1);
-    return p2*f+c;
+//    vec2 p1 = (uv - c)/f;
+//    float r = length(p1);
+//    // vec4 kp = (k1, k2, p1, p2)としておく
+//    vec2 p2 = p1*(1.0+kp[0]*r*r+kp[1]*r*r*r*r) + 2.0*kp.zw*p1.x*p1.y + kp.wz*(r*r+2.0*p1*p1);
+//    return p2*f+c;
 
-    /*double u = refPointsX[i];
-    double v = refPointsY[i];
+//    /*double u = refPointsX[i];
+//    double v = refPointsY[i];
 
-    double x1 = (u - cx)/fx;
-    double y1 = (v - cy)/fy;
+//    double x1 = (u - cx)/fx;
+//    double y1 = (v - cy)/fy;
 
-    double r = sqrt(x1*x1+y1*y1);
+//    double r = sqrt(x1*x1+y1*y1);
 
-    double x2 = x1*(1.0+k1*r*r+k2*r*r*r*r)+2.0*p1*x1*y1+p2*(r*r+2.0*x1*x1);
-    double y2 = y1*(1.0+k1*r*r+k2*r*r*r*r)+p1*(r*r+2.0*y1*y1)+2.0*p2*x1*y1;
-    double mapx = x2*fx+cx;
-    double mapy = y2*fy+cy;
-    undistortedPointsX.push_back(mapx);
-    undistortedPointsY.push_back(mapy);*/
-}
+//    double x2 = x1*(1.0+k1*r*r+k2*r*r*r*r)+2.0*p1*x1*y1+p2*(r*r+2.0*x1*x1);
+//    double y2 = y1*(1.0+k1*r*r+k2*r*r*r*r)+p1*(r*r+2.0*y1*y1)+2.0*p2*x1*y1;
+//    double mapx = x2*fx+cx;
+//    double mapy = y2*fy+cy;
+//    undistortedPointsX.push_back(mapx);
+//    undistortedPointsY.push_back(mapy);*/
+//}
 
-uniform vec2 normalizedFocalLength;
-uniform vec2 normalizedOpticalCenter;
-uniform vec4 distortionCoeffs;
+//uniform vec2 normalizedFocalLength;
+//uniform vec2 normalizedOpticalCenter;
+//uniform vec4 distortionCoeffs;
 
-void main(){
+//void main(){
 
-        // Output color = color of the texture at the specified UV
-//        color = BiCubic( myTextureSampler, UV ).rgb;
-//    color = vec3(UV.r,UV.g,0.0f);
-    color = BiCubic( myTextureSampler, Undistort(UV,normalizedFocalLength,normalizedOpticalCenter,distortionCoeffs) ).rgb;
-}
+//        // Output color = color of the texture at the specified UV
+////        color = BiCubic( myTextureSampler, UV ).rgb;
+////    color = vec3(UV.r,UV.g,0.0f);
+//    color = BiCubic( myTextureSampler, Undistort(UV,normalizedFocalLength,normalizedOpticalCenter,distortionCoeffs) ).rgb;
+//}
