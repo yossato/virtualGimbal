@@ -565,7 +565,7 @@ if(SUBTRACT_OFFSET){
         subframeOffset = -(correlationCoefficients[minPosition+1]-correlationCoefficients[minPosition-1])/(2*correlationCoefficients[minPosition-1]-4*correlationCoefficients[minPosition]+2*correlationCoefficients[minPosition+1]);
     }
 
-//    minPosition += 60;//マジックナンバーｗｗｗｗ
+//    minPosition += -2;//マジックナンバーｗｗｗｗ
 
     cout << "minPosition" << minPosition << endl;
     cout << "subframe minposition :" << minPosition+subframeOffset << endl;
@@ -590,6 +590,13 @@ if(SUBTRACT_OFFSET){
         }
         cout << "position"<<minPosition+subframeOffset+d<<" minimum correlationCoefficients:" << sum << endl;
     }
+////試行錯誤的に入れ替える
+//    for(auto &el:angularVelocityIn60Hz){
+//        auto temp = el;
+//        el[0] = temp[0];
+//        el[1] = temp[1];
+//        el[2] = temp[2];
+//    }
 
     //同期が取れている角速度を出力する関数を定義
     auto angularVelocitySync = [&angularVelocityIn60Hz, Tvideo, Tav, minPosition, subframeOffset](int32_t frame){
@@ -662,10 +669,12 @@ if(SUBTRACT_OFFSET){
     //    printf("p1:%lu\n",angleQuaternion.size());
 
     //計算した角度をhyouzi
-    for(auto el:angleQuaternion){
-        static int cn = 0;
-        printf("%d ",cn++);
-        cout << Quaternion2Vector(el) << endl;
+    if(0){
+        for(auto el:angleQuaternion){
+            static int cn = 0;
+            printf("%d ",cn++);
+            cout << Quaternion2Vector(el) << endl;
+        }
     }
 
     quaternion<double> prevDiffAngleQuaternion;
@@ -681,8 +690,8 @@ if(SUBTRACT_OFFSET){
             prevVec = curVec;
         }
         prevSmoothedAngleQuaternion = Vector2Quaternion<double>(sum);
-//        prevDiffAngleQuaternion = conj(prevSmoothedAngleQuaternion)*angleQuaternion[halfLength];
-        prevDiffAngleQuaternion = conj(quaternion<double>(1,0,0,0))*angleQuaternion[halfLength];
+        prevDiffAngleQuaternion = conj(prevSmoothedAngleQuaternion)*angleQuaternion[halfLength];
+//        prevDiffAngleQuaternion = conj(quaternion<double>(1,0,0,0))*angleQuaternion[halfLength];
         angleQuaternion.erase(angleQuaternion.begin());
         angleQuaternion.push_back(angleQuaternion.back()*RotationQuaternion(angularVelocitySync(halfLength-1)*Tvideo));
     }
@@ -699,8 +708,8 @@ if(SUBTRACT_OFFSET){
             prevVec = curVec;
         }
         currSmoothedAngleQuaternion = Vector2Quaternion<double>(sum);
-//        currDiffAngleQuaternion = conj(currSmoothedAngleQuaternion)*angleQuaternion[halfLength];
-        currDiffAngleQuaternion = conj(quaternion<double>(1,0,0,0))*angleQuaternion[halfLength];
+        currDiffAngleQuaternion = conj(currSmoothedAngleQuaternion)*angleQuaternion[halfLength];
+//        currDiffAngleQuaternion = conj(quaternion<double>(1,0,0,0))*angleQuaternion[halfLength];
         angleQuaternion.erase(angleQuaternion.begin());
         angleQuaternion.push_back(angleQuaternion.back()*RotationQuaternion(angularVelocitySync(halfLength)*Tvideo));
     }
@@ -710,7 +719,7 @@ if(SUBTRACT_OFFSET){
     quaternion<double> nextSmoothedAngleQuaternion;
 
     //動画の最初から最後まで
-    printf(",sx,sy,sz,ax,ay,az,dx,dy,dz\r\n");
+//    printf(",sx,sy,sz,ax,ay,az,dx,dy,dz\r\n");
 
 /*    std::vector<GLfloat> vecVtx;					//頂点座標
     for(int32_t i=0,e=Capture.get(CV_CAP_PROP_FRAME_COUNT);i<e;++i){
@@ -992,6 +1001,15 @@ if(SUBTRACT_OFFSET){
         }
     }*/
 
+
+    //画像から得た角速度を角度クォータニオンに変換してみる
+    //estimatedAngularVelocity
+    vector<quaternion<double>> estimatedAngleQuaternion;
+    estimatedAngleQuaternion.push_back(quaternion<double>(1,0,0,0));
+
+
+    printf(",sx,sy,sz,ax,ay,az,dx,dy,dz,ex,ey,ez\r\n");
+
     //動画の位置を修正
     Capture.set(cv::CAP_PROP_POS_FRAMES,0);
 //    do{
@@ -1005,20 +1023,21 @@ if(SUBTRACT_OFFSET){
             prevVec = curVec;
         }
         nextSmoothedAngleQuaternion = Vector2Quaternion<double>(sum);
-//        nextDiffAngleQuaternion = conj(nextSmoothedAngleQuaternion)*angleQuaternion[halfLength];
-        nextDiffAngleQuaternion = conj(quaternion<double>(1,0,0,0))*angleQuaternion[halfLength];
+        nextDiffAngleQuaternion = conj(nextSmoothedAngleQuaternion)*angleQuaternion[halfLength];
+//        nextDiffAngleQuaternion = conj(quaternion<double>(1,0,0,0))*angleQuaternion[halfLength];
 
         //試しに表示
-//        if(0){
-//            static int framen=0;
-//            cv::Vec3d s = Quaternion2Vector(currSmoothedAngleQuaternion);
-//            cv::Vec3d a = Quaternion2Vector(angleQuaternion[halfLength]);
-//            cv::Vec3d d = Quaternion2Vector(currDiffAngleQuaternion);
-//            printf("%d,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f\r\n",framen,s[0],s[1],s[2],a[0],a[1],a[2],d[0],d[1],d[2]);
-//            currSmoothedAngleQuaternion = nextSmoothedAngleQuaternion;
-//            framen++;
-//        }
-
+        if(1){
+            static int framen=0;
+            cv::Vec3d s = Quaternion2Vector(currSmoothedAngleQuaternion);
+            cv::Vec3d a = Quaternion2Vector(angleQuaternion[halfLength]);
+            cv::Vec3d d = Quaternion2Vector(currDiffAngleQuaternion);
+            cv::Vec3d e = Quaternion2Vector(estimatedAngleQuaternion.back());
+            printf("%d,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f\r\n",framen,s[0],s[1],s[2],a[0],a[1],a[2],d[0],d[1],d[2],e[0],e[1],e[2]);
+            currSmoothedAngleQuaternion = nextSmoothedAngleQuaternion;
+            framen++;
+        }
+        estimatedAngleQuaternion.push_back(estimatedAngleQuaternion.back()*RotationQuaternion(estimatedAngularVelocity[i]*Tvideo));
 
         getDistortUnrollingMap(prevDiffAngleQuaternion,currDiffAngleQuaternion,nextDiffAngleQuaternion,
                                division_x,division_y,0,matInvDistort, matIntrinsic, imageSize, vecVtx,ZOOM_RATIO);
