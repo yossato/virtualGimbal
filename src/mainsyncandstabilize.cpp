@@ -171,7 +171,7 @@ template <typename _Tp> quaternion<_Tp> Slerp(quaternion<_Tp> Qfrom, quaternion<
         cosom = -cosom;
         Qto = -Qto;
     }
-    if((1.0-cosom)>1e^4){
+    if((1.0-cosom)>1e-4){
         omega = acos(cosom);
         sinom = sin(omega);
         scale0 = sin((1.0 - t) * omega) / sinom;
@@ -452,15 +452,15 @@ int main(int argc, char** argv){
 	//ジャイロのDCオフセット（いわゆる温度ドリフトと等価）を計算。単純にフレームの平均値を計算
 if(SUBTRACT_OFFSET){
 	cv::Vec3d dc(0,0,0);
-	for(auto el:angularVelocityIn60Hz){
-		dc[0] += el[0];
-		dc[1] += el[1];
-		dc[2] += el[2];
+    for(auto el:angularVelocityIn60Hz){
+        dc[0] += el[0];
+        dc[1] += el[1];
+        dc[2] += el[2];
 	}
 	dc[0]/=angularVelocityIn60Hz.size();
 	dc[1]/=angularVelocityIn60Hz.size();
 	dc[2]/=angularVelocityIn60Hz.size();
-	for(auto el:angularVelocityIn60Hz){
+    for(auto &el:angularVelocityIn60Hz){
 		el[0] -= dc[0];
 		el[1] -= dc[1];
 		el[2] -= dc[2];
@@ -565,7 +565,7 @@ if(SUBTRACT_OFFSET){
         subframeOffset = -(correlationCoefficients[minPosition+1]-correlationCoefficients[minPosition-1])/(2*correlationCoefficients[minPosition-1]-4*correlationCoefficients[minPosition]+2*correlationCoefficients[minPosition+1]);
     }
 
-//    minPosition -= 1;//マジックナンバーｗｗｗｗ
+//    minPosition += 60;//マジックナンバーｗｗｗｗ
 
     cout << "minPosition" << minPosition << endl;
     cout << "subframe minposition :" << minPosition+subframeOffset << endl;
@@ -661,6 +661,12 @@ if(SUBTRACT_OFFSET){
     }
     //    printf("p1:%lu\n",angleQuaternion.size());
 
+    //計算した角度をhyouzi
+    for(auto el:angleQuaternion){
+        static int cn = 0;
+        printf("%d ",cn++);
+        cout << Quaternion2Vector(el) << endl;
+    }
 
     quaternion<double> prevDiffAngleQuaternion;
     quaternion<double> currDiffAngleQuaternion;
@@ -675,7 +681,8 @@ if(SUBTRACT_OFFSET){
             prevVec = curVec;
         }
         prevSmoothedAngleQuaternion = Vector2Quaternion<double>(sum);
-        prevDiffAngleQuaternion = conj(prevSmoothedAngleQuaternion)*angleQuaternion[halfLength];
+//        prevDiffAngleQuaternion = conj(prevSmoothedAngleQuaternion)*angleQuaternion[halfLength];
+        prevDiffAngleQuaternion = conj(quaternion<double>(1,0,0,0))*angleQuaternion[halfLength];
         angleQuaternion.erase(angleQuaternion.begin());
         angleQuaternion.push_back(angleQuaternion.back()*RotationQuaternion(angularVelocitySync(halfLength-1)*Tvideo));
     }
@@ -692,7 +699,8 @@ if(SUBTRACT_OFFSET){
             prevVec = curVec;
         }
         currSmoothedAngleQuaternion = Vector2Quaternion<double>(sum);
-        currDiffAngleQuaternion = conj(currSmoothedAngleQuaternion)*angleQuaternion[halfLength];
+//        currDiffAngleQuaternion = conj(currSmoothedAngleQuaternion)*angleQuaternion[halfLength];
+        currDiffAngleQuaternion = conj(quaternion<double>(1,0,0,0))*angleQuaternion[halfLength];
         angleQuaternion.erase(angleQuaternion.begin());
         angleQuaternion.push_back(angleQuaternion.back()*RotationQuaternion(angularVelocitySync(halfLength)*Tvideo));
     }
@@ -997,7 +1005,8 @@ if(SUBTRACT_OFFSET){
             prevVec = curVec;
         }
         nextSmoothedAngleQuaternion = Vector2Quaternion<double>(sum);
-        nextDiffAngleQuaternion = conj(nextSmoothedAngleQuaternion)*angleQuaternion[halfLength];
+//        nextDiffAngleQuaternion = conj(nextSmoothedAngleQuaternion)*angleQuaternion[halfLength];
+        nextDiffAngleQuaternion = conj(quaternion<double>(1,0,0,0))*angleQuaternion[halfLength];
 
         //試しに表示
 //        if(0){
