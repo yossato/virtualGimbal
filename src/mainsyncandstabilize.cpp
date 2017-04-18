@@ -472,7 +472,8 @@ if(SUBTRACT_OFFSET){
     //動画のサンプリング周期に合わせて、角速度を得られるようにする関数を定義
     //線形補間
     auto angularVelocity = [&angularVelocityIn60Hz, Tvideo, Tav](uint32_t frame){
-        double dframe = frame * Tav / Tvideo;
+//        double dframe = frame * Tav / Tvideo;
+        double dframe = frame * Tvideo / Tav;
         int i = floor(dframe);
         double decimalPart = dframe - (double)i;
         return angularVelocityIn60Hz[i]*(1.0-decimalPart)+angularVelocityIn60Hz[i+1]*decimalPart;
@@ -497,7 +498,8 @@ if(SUBTRACT_OFFSET){
 
     t1 = std::chrono::system_clock::now() ;
 
-    int32_t lengthDiff = angularVelocityIn60Hz.size() * Tvideo / Tav - estimatedAngularVelocity.size();
+//    int32_t lengthDiff = angularVelocityIn60Hz.size() * Tvideo / Tav - estimatedAngularVelocity.size();
+    int32_t lengthDiff = angularVelocityIn60Hz.size() * Tav / Tvideo - estimatedAngularVelocity.size();
     cout << "lengthDiff:" << lengthDiff << endl;
     vector<double> correlationCoefficients(lengthDiff);
     double minCC = DBL_MAX;
@@ -600,7 +602,8 @@ if(SUBTRACT_OFFSET){
 
     //同期が取れている角速度を出力する関数を定義
     auto angularVelocitySync = [&angularVelocityIn60Hz, Tvideo, Tav, minPosition, subframeOffset](int32_t frame){
-        double dframe = (frame + minPosition + subframeOffset) * Tav / Tvideo;
+//        double dframe = (frame + minPosition + subframeOffset) * Tav / Tvideo;
+        double dframe = (frame + minPosition + subframeOffset) * Tvideo / Tav;
         int i = floor(dframe);
         double decimalPart = dframe - (double)i;
         //領域外にはみ出した時は、末端の値で埋める
