@@ -289,8 +289,8 @@ template <typename _Tp, typename _Tx> void getDistortUnrollingMap(
 //            map.at<cv::Vec2d>(j,i)[1] = mapy/textureSize.height;
 //            map.at<cv::Vec2d>(j,i)[0] = (mapx-cx)/imageSize.width*2.0;
 //            map.at<cv::Vec2d>(j,i)[1] = (mapy-cy)/imageSize.height*2.0;
-            map.at<cv::Vec2d>(j,i)[0] = x2*fx/imageSize.width*2.0;
-            map.at<cv::Vec2d>(j,i)[1] = y2*fy/imageSize.height*2.0;
+            map.at<cv::Vec2d>(j,i)[0] = x2*fx/imageSize.width;
+            map.at<cv::Vec2d>(j,i)[1] = y2*fy/imageSize.height;
             //~ printf("i:%d,j:%d,mapx:%4.3f,mapy:%4.3f\n",i,j,mapx,mapy);
         }
     }
@@ -1027,7 +1027,7 @@ if(SUBTRACT_OFFSET){
 //        nextDiffAngleQuaternion = conj(quaternion<double>(1,0,0,0))*angleQuaternion[halfLength];
 
         //試しに表示
-        if(1){
+        if(0){
             static int framen=0;
             cv::Vec3d s = Quaternion2Vector(currSmoothedAngleQuaternion);
             cv::Vec3d a = Quaternion2Vector(angleQuaternion[halfLength]);
