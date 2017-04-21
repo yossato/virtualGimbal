@@ -496,7 +496,7 @@ if(SUBTRACT_OFFSET){
     }
 
 //sync test
-#if 1
+#if 0
     Tav = Tvideo;
     for(int i=0;i<estimatedAngularVelocity.size();i++){
         angularVelocityIn60Hz[i] = estimatedAngularVelocity[i];
@@ -1092,8 +1092,8 @@ if(SUBTRACT_OFFSET){
         Capture >> img;
 
         //ここで文字を書く
-        string text = std::to_string(i);
-        cv::putText(img,text,cv::Point(640,640),cv::FONT_HERSHEY_SCRIPT_SIMPLEX,5,cv::Scalar(0,0,255));
+//        string text = std::to_string(i);
+//        cv::putText(img,text,cv::Point(640,640),cv::FONT_HERSHEY_SCRIPT_SIMPLEX,5,cv::Scalar(0,0,255));
 
 //        glBindTexture(GL_TEXTURE_2D,textureID_0);
 //        glTexSubImage2D(GL_TEXTURE_2D,0,0,0,img.cols,img.rows,GL_BGR,GL_UNSIGNED_BYTE,img.data);
