@@ -428,13 +428,13 @@ int main(int argc, char** argv){
         cout << "invert distCoeff:" << matInvDistort << endl;
     }
 
-    cv::Mat img;
+//    cv::Mat img;
 
     //試しに先に進む
 //    Capture.set(cv::CAP_PROP_POS_FRAMES,500);
 
     //動画の読み込み
-    Capture >> img;
+//    Capture >> img;
 
     //角速度データを読み込み
     std::vector<cv::Vec3d> angularVelocityIn60Hz;
@@ -495,6 +495,14 @@ if(SUBTRACT_OFFSET){
 //        printf("%f,%f,%f\n",estimatedAngularVelocity.back()[0],estimatedAngularVelocity.back()[1],estimatedAngularVelocity.back()[2]);
     }
 
+//sync test
+#if 1
+    Tav = Tvideo;
+    for(int i=0;i<estimatedAngularVelocity.size();i++){
+        angularVelocityIn60Hz[i] = estimatedAngularVelocity[i];
+    }
+
+#endif
 
     t1 = std::chrono::system_clock::now() ;
 
@@ -567,7 +575,7 @@ if(SUBTRACT_OFFSET){
         subframeOffset = -(correlationCoefficients[minPosition+1]-correlationCoefficients[minPosition-1])/(2*correlationCoefficients[minPosition-1]-4*correlationCoefficients[minPosition]+2*correlationCoefficients[minPosition+1]);
     }
 
-    minPosition += 30;//マジックナンバーｗｗｗｗ
+//    minPosition += 30;//マジックナンバーｗｗｗｗ
 
     cout << "minPosition" << minPosition << endl;
     cout << "subframe minposition :" << minPosition+subframeOffset << endl;
@@ -667,8 +675,15 @@ if(SUBTRACT_OFFSET){
     //FIRフィルタに食わせやすいように位置を合わせて角度を計算する
     int32_t halfLength = floor(FIRcoeffs[filterNumber].size()/2);
     for(int frame=-halfLength-1,e=halfLength-1;frame<e;frame++){//-1しているのは、previousを計算するため、全体を1個前方へ移動しているため
+        cout << "frame:" << frame << "av:" << angularVelocitySync(frame) << endl;
         angleQuaternion.push_back(angleQuaternion.back()*RotationQuaternion(angularVelocitySync(frame)*Tvideo));
         angleQuaternion.back() = angleQuaternion.back() * (1.0 / norm(angleQuaternion.back()));
+    }
+    for(int i=0;i<halfLength-1;++i){
+        cout << "i:" << i << " 60Hz:" << angularVelocityIn60Hz[i] << endl;
+    }
+    for(int i=0;i<angleQuaternion.size();i++){
+        cout << "i:" << i << " " << Quaternion2Vector( angleQuaternion[i]) << endl;
     }
     //    printf("p1:%lu\n",angleQuaternion.size());
 
@@ -690,6 +705,7 @@ if(SUBTRACT_OFFSET){
         cv::Vec3d sum(0.0, 0.0, 0.0);
         for(int32_t j=0,f=FIRcoeffs[filterNumber].size();j<f;++j){
             cv::Vec3d curVec = Quaternion2Vector(angleQuaternion[j],prevVec);
+//            cout << "j:" << j << "curVec:" << curVec << endl;
             sum += FIRcoeffs[filterNumber][j]*curVec;
             prevVec = curVec;
         }
@@ -769,7 +785,7 @@ if(SUBTRACT_OFFSET){
 
 
     cv::Mat buff(textureSize.height,textureSize.width,CV_8UC3);//テクスチャ用Matを準備
-    img.copyTo(buff(cv::Rect(0,0,img.cols,img.rows)));
+//    img.copyTo(buff(cv::Rect(0,0,img.cols,img.rows)));
 
 
 
@@ -966,10 +982,10 @@ if(SUBTRACT_OFFSET){
     //    glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
     glBufferData(GL_ARRAY_BUFFER, vecTexture.size()*sizeof(GLfloat), vecTexture.data(), GL_STATIC_DRAW);
 
-    cout << "vecVtx" << endl;
+/*    cout << "vecVtx" << endl;
     for(auto it=vecVtx.begin(),e=vecVtx.end();it!=e;it+=2) cout << *it << "," << *(it+1)  << endl;
     cout << "vecTexture" << endl;
-    for(auto it=vecTexture.begin(),e=vecTexture.end();it!=e;it+=2) cout << *it << "," << *(it+1) << endl;
+    for(auto it=vecTexture.begin(),e=vecTexture.end();it!=e;it+=2) cout << *it << "," << *(it+1) << endl;*/
 
     //歪補正の準備
     GLuint nFxyID       = glGetUniformLocation(programID, "normalizedFocalLength");
@@ -1021,10 +1037,12 @@ if(SUBTRACT_OFFSET){
     printf(",sx,sy,sz,ax,ay,az,dx,dy,dz,ex,ey,ez\r\n");
 
     //動画の位置を修正
-    Capture.set(cv::CAP_PROP_POS_FRAMES,0);
+    cv::Mat img;
+//    Capture.set(cv::CAP_PROP_POS_FRAMES,0);
 
 //    do{
     for(int32_t i=0,e=Capture.get(CV_CAP_PROP_FRAME_COUNT);i<e;++i){
+//        cout << "i:" << i <<" POS:" << Capture.get(cv::CAP_PROP_POS_FRAMES) << endl;
         //IIR平滑化
         cv::Vec3d prevVec = Quaternion2Vector(angleQuaternion[0]);
         cv::Vec3d sum(0.0, 0.0, 0.0);
@@ -1038,15 +1056,15 @@ if(SUBTRACT_OFFSET){
 //        nextDiffAngleQuaternion = conj(quaternion<double>(1,0,0,0))*angleQuaternion[halfLength];
 
         //試しに表示
-        if(0){
-            static int framen=0;
+        if(1){
+//            static int framen=0;
             cv::Vec3d s = Quaternion2Vector(currSmoothedAngleQuaternion);
-            cv::Vec3d a = Quaternion2Vector(angleQuaternion[halfLength]);
+            cv::Vec3d a = Quaternion2Vector(angleQuaternion[halfLength-1]);//-1はcurrentを表示するために必要
             cv::Vec3d d = Quaternion2Vector(currDiffAngleQuaternion);
             cv::Vec3d e = Quaternion2Vector(estimatedAngleQuaternion.back());
-            printf("%d,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f\r\n",framen,s[0],s[1],s[2],a[0],a[1],a[2],d[0],d[1],d[2],e[0],e[1],e[2]);
+            printf("%d,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f\r\n",i,s[0],s[1],s[2],a[0],a[1],a[2],d[0],d[1],d[2],e[0],e[1],e[2]);
             currSmoothedAngleQuaternion = nextSmoothedAngleQuaternion;
-            framen++;
+//            framen++;
         }
         estimatedAngleQuaternion.push_back(estimatedAngleQuaternion.back()*RotationQuaternion(estimatedAngularVelocity[i]*Tvideo));
 
@@ -1070,7 +1088,13 @@ if(SUBTRACT_OFFSET){
         glBufferData(GL_ARRAY_BUFFER, vecVtx.size()*sizeof(GLfloat), vecVtx.data(),GL_DYNAMIC_DRAW);
 
         //動画の読み込み
+
         Capture >> img;
+
+        //ここで文字を書く
+        string text = std::to_string(i);
+        cv::putText(img,text,cv::Point(640,640),cv::FONT_HERSHEY_SCRIPT_SIMPLEX,5,cv::Scalar(0,0,255));
+
 //        glBindTexture(GL_TEXTURE_2D,textureID_0);
 //        glTexSubImage2D(GL_TEXTURE_2D,0,0,0,img.cols,img.rows,GL_BGR,GL_UNSIGNED_BYTE,img.data);
 
