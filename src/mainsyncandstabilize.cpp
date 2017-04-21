@@ -289,8 +289,8 @@ template <typename _Tp, typename _Tx> void getDistortUnrollingMap(
 //            map.at<cv::Vec2d>(j,i)[1] = mapy/textureSize.height;
 //            map.at<cv::Vec2d>(j,i)[0] = (mapx-cx)/imageSize.width*2.0;
 //            map.at<cv::Vec2d>(j,i)[1] = (mapy-cy)/imageSize.height*2.0;
-            map.at<cv::Vec2d>(j,i)[0] = x2*fx/imageSize.width;
-            map.at<cv::Vec2d>(j,i)[1] = y2*fy/imageSize.height;
+            map.at<cv::Vec2d>(j,i)[0] = x2*fx/imageSize.width*2.0;
+            map.at<cv::Vec2d>(j,i)[1] = y2*fy/imageSize.height*2.0;
             //~ printf("i:%d,j:%d,mapx:%4.3f,mapy:%4.3f\n",i,j,mapx,mapy);
         }
     }
@@ -366,8 +366,8 @@ template <typename _Tp, int cn> quaternion<_Tp> RotationQuaternion(cv::Vec<_Tp,c
 int main(int argc, char** argv){
 
     //テクスチャ座標の準備
-    int32_t division_x = 7; //画面の横の分割数
-    int32_t division_y = 7; //画面の縦の分割数
+    int32_t division_x = 9; //画面の横の分割数
+    int32_t division_y = 9; //画面の縦の分割数
     cv::Size textureSize = cv::Size(2048,2048);
 
     //引数の確認
@@ -431,7 +431,7 @@ int main(int argc, char** argv){
     cv::Mat img;
 
     //試しに先に進む
-    Capture.set(cv::CAP_PROP_POS_FRAMES,500);
+//    Capture.set(cv::CAP_PROP_POS_FRAMES,500);
 
     //動画の読み込み
     Capture >> img;
@@ -573,7 +573,8 @@ if(SUBTRACT_OFFSET){
     cout << "subframe minposition :" << minPosition+subframeOffset << endl;
 
     auto angularVelocity_double = [&angularVelocityIn60Hz, Tvideo, Tav](double frame){
-        double dframe = frame * Tav / Tvideo;
+//        double dframe = frame * Tav / Tvideo;
+        double dframe = frame *  Tvideo / Tav;
         int i = floor(dframe);
         double decimalPart = dframe - (double)i;
         return angularVelocityIn60Hz[i]*(1.0-decimalPart)+angularVelocityIn60Hz[i+1]*decimalPart;
@@ -855,9 +856,15 @@ if(SUBTRACT_OFFSET){
     //        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glGenerateMipmap(GL_TEXTURE_2D);
+
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+//    glGenerateMipmap(GL_TEXTURE_2D);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+
     // Load the texture
     //        GLuint Texture = loadDDS("uvtemplate.DDS");
 
@@ -1015,6 +1022,7 @@ if(SUBTRACT_OFFSET){
 
     //動画の位置を修正
     Capture.set(cv::CAP_PROP_POS_FRAMES,0);
+
 //    do{
     for(int32_t i=0,e=Capture.get(CV_CAP_PROP_FRAME_COUNT);i<e;++i){
         //IIR平滑化
@@ -1088,7 +1096,7 @@ if(SUBTRACT_OFFSET){
 //        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureID_0);//            glBindTexture(GL_TEXTURE_2D, Texture);
         glTexSubImage2D(GL_TEXTURE_2D,0,0,0,img.cols,img.rows,GL_BGR,GL_UNSIGNED_BYTE,img.data);
-        glGenerateMipmap(GL_TEXTURE_2D);
+//        glGenerateMipmap(GL_TEXTURE_2D);
         // Set our "myTextureSampler" sampler to user Texture Unit 0
         glUniform1i(TextureID, 0);
 

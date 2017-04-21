@@ -5,6 +5,6 @@
 #define SUBTRACT_OFFSET false
 
 #define SYNC_LENGTH 1000
-#define ZOOM_RATIO  0.5
+#define ZOOM_RATIO  1.0
 #endif // SETTINGS_H
 
