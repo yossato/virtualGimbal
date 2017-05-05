@@ -1056,7 +1056,7 @@ if(SUBTRACT_OFFSET){
 //        nextDiffAngleQuaternion = conj(quaternion<double>(1,0,0,0))*angleQuaternion[halfLength];
 
         //試しに表示
-        if(1){
+        if(0){
 //            static int framen=0;
             cv::Vec3d s = Quaternion2Vector(currSmoothedAngleQuaternion);
             cv::Vec3d a = Quaternion2Vector(angleQuaternion[halfLength-1]);//-1はcurrentを表示するために必要
