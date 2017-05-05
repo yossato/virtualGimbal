@@ -36,7 +36,7 @@ using namespace glm;
 #include "levenbergMarquardt.hpp"
 
 #include "settings.h"
-
+#include "seekablevideocapture.h"
 using namespace std;
 
 void calcDistortCoeff(const cv::Mat &matIntrinsic, const cv::Mat &matDistort, const cv::Size &imageSize, cv::Mat &matInvDistort){
@@ -1052,10 +1052,12 @@ if(SUBTRACT_OFFSET){
 
     //動画の位置を修正
     cv::Mat img;
-//    Capture->set(cv::CAP_PROP_POS_FRAMES,0);
 
-//    do{
-    for(int32_t i=0,e=Capture->get(CV_CAP_PROP_FRAME_COUNT);i<e;++i){
+    //一度動画を閉じて、seek可能版に置き換える
+    int32_t e=Capture->get(CV_CAP_PROP_FRAME_COUNT);
+    delete Capture;
+    seekableVideoCapture sCapture(videoPass,200);
+    for(int32_t i=0;i<e;++i){
 //        cout << "i:" << i <<" POS:" << Capture->get(cv::CAP_PROP_POS_FRAMES) << endl;
         nextDiffAngleQuaternion = conj(smoothedAngleQuaternion)*angleQuaternion[halfLength+1];
 
@@ -1106,7 +1108,8 @@ if(SUBTRACT_OFFSET){
 
         //動画の読み込み
 
-        *Capture >> img;
+//        *Capture >> img;
+        sCapture.getFrame(i,img);
 
         //ここで文字を書く
 //        string text = std::to_string(i);

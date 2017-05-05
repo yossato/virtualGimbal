@@ -8,10 +8,13 @@
 seekableVideoCapture::seekableVideoCapture(char *videoFileName, int32_t buffLength){
     capture.open(videoFileName);
     assert(capture.isOpened());
-    cv::Mat frame;
     for(int32_t i=0;i<buffLength;++i){
-        capture >> frame;
-        buff.push_back(frame);
+        if(capture.get(CV_CAP_PROP_POS_FRAMES)<capture.get(CV_CAP_PROP_FRAME_COUNT)){
+            buff.push_back(cv::Mat());
+            capture >> buff.back();
+        }else{
+            break;
+        }
     }
     //framePosition = 0;
     buffLen = buffLength;
@@ -40,7 +43,7 @@ bool seekableVideoCapture::getFrame(int32_t position, cv::Mat &frame){
             }
         }
 
-        std::cout << "buff.size()" << buff.size() << std::endl;
+//        std::cout << "buff.size()" << buff.size() << std::endl;
 
 
     }
