@@ -396,10 +396,10 @@ int main(int argc, char** argv){
     auto elapsed = t2 - t1 ;
     std::cout << "Elapsed time: " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << " ms\n";
 
-    cv::VideoCapture Capture(videoPass);//動画をオープン
-    assert(Capture.isOpened());
-    cv::Size imageSize = cv::Size(Capture.get(CV_CAP_PROP_FRAME_WIDTH),Capture.get(CV_CAP_PROP_FRAME_HEIGHT));//解像度を読む
-    double Tvideo = 1.0/Capture.get(CV_CAP_PROP_FPS);
+    cv::VideoCapture *Capture = new cv::VideoCapture(videoPass);//動画をオープン
+    assert(Capture->isOpened());
+    cv::Size imageSize = cv::Size(Capture->get(CV_CAP_PROP_FRAME_WIDTH),Capture->get(CV_CAP_PROP_FRAME_HEIGHT));//解像度を読む
+    double Tvideo = 1.0/Capture->get(CV_CAP_PROP_FPS);
     std::cout << "resolution" << imageSize << std::endl;
     std::cout << "samplingPeriod" << Tvideo << std::endl;
 
@@ -431,7 +431,7 @@ int main(int argc, char** argv){
 //    cv::Mat img;
 
     //試しに先に進む
-//    Capture.set(cv::CAP_PROP_POS_FRAMES,500);
+//    Capture->set(cv::CAP_PROP_POS_FRAMES,500);
 
     //動画の読み込み
 //    Capture >> img;
@@ -756,7 +756,7 @@ if(SUBTRACT_OFFSET){
 //    printf(",sx,sy,sz,ax,ay,az,dx,dy,dz\r\n");
 
 /*    std::vector<GLfloat> vecVtx;					//頂点座標
-    for(int32_t i=0,e=Capture.get(CV_CAP_PROP_FRAME_COUNT);i<e;++i){
+    for(int32_t i=0,e=Capture->get(CV_CAP_PROP_FRAME_COUNT);i<e;++i){
 
         //IIR平滑化
         cv::Vec3d prevVec = Quaternion2Vector(angleQuaternion[0]);
@@ -1052,11 +1052,11 @@ if(SUBTRACT_OFFSET){
 
     //動画の位置を修正
     cv::Mat img;
-//    Capture.set(cv::CAP_PROP_POS_FRAMES,0);
+//    Capture->set(cv::CAP_PROP_POS_FRAMES,0);
 
 //    do{
-    for(int32_t i=0,e=Capture.get(CV_CAP_PROP_FRAME_COUNT);i<e;++i){
-//        cout << "i:" << i <<" POS:" << Capture.get(cv::CAP_PROP_POS_FRAMES) << endl;
+    for(int32_t i=0,e=Capture->get(CV_CAP_PROP_FRAME_COUNT);i<e;++i){
+//        cout << "i:" << i <<" POS:" << Capture->get(cv::CAP_PROP_POS_FRAMES) << endl;
         nextDiffAngleQuaternion = conj(smoothedAngleQuaternion)*angleQuaternion[halfLength+1];
 
 
@@ -1106,7 +1106,7 @@ if(SUBTRACT_OFFSET){
 
         //動画の読み込み
 
-        Capture >> img;
+        *Capture >> img;
 
         //ここで文字を書く
 //        string text = std::to_string(i);
