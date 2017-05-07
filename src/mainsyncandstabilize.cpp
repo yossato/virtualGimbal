@@ -1044,8 +1044,8 @@ if(SUBTRACT_OFFSET){
 
     //画像から得た角速度を角度クォータニオンに変換してみる
     //estimatedAngularVelocity
-    vector<quaternion<double>> estimatedAngleQuaternion;
-    estimatedAngleQuaternion.push_back(quaternion<double>(1,0,0,0));
+    //vector<quaternion<double>> estimatedAngleQuaternion;
+    //estimatedAngleQuaternion.push_back(quaternion<double>(1,0,0,0));
 
 
     printf(",sx,sy,sz,ax,ay,az,dx,dy,dz,ex,ey,ez\r\n");
@@ -1056,11 +1056,28 @@ if(SUBTRACT_OFFSET){
     //一度動画を閉じて、seek可能版に置き換える
     int32_t e=Capture->get(CV_CAP_PROP_FRAME_COUNT);
     delete Capture;
-    seekableVideoCapture sCapture(videoPass,200);
+    seekableVideoCapture sCapture(videoPass,PREFETCH_LENGTH);
     for(int32_t i=0;i<e;++i){
 //        cout << "i:" << i <<" POS:" << Capture->get(cv::CAP_PROP_POS_FRAMES) << endl;
         nextDiffAngleQuaternion = conj(smoothedAngleQuaternion)*angleQuaternion[halfLength+1];
+		
+		//モーションインペインティング用の位置を検索
+        int32_t mipFrame = 0;//0は適するフレームがないことを示す
+        for(int32_t j=1;j<PREFETCH_LENGTH/2;++j){//1から開始することに注意
+            double pnorm = cv::norm(Quaternion2Vector(conj(smoothedAngleQuaternion)*angleQuaternion[halfLength+j]));
+            if(pnorm < MIP_ANGLE_THRES){
+                mipFrame = j;
+                break;
+            }
 
+            double nnorm = cv::norm(Quaternion2Vector(conj(smoothedAngleQuaternion)*angleQuaternion[halfLength-j]));
+            if(nnorm < MIP_ANGLE_THRES){
+                mipFrame = -j;
+                break;
+            }
+		}
+        quaternion<double> mipDiffAngleQuaternion = conj(smoothedAngleQuaternion)*angleQuaternion[halfLength+mipFrame];
+        cout << "mipFrame:" << mipFrame << endl;
 
 //        nextDiffAngleQuaternion = conj(quaternion<double>(1,0,0,0))*angleQuaternion[halfLength];
 
@@ -1070,12 +1087,13 @@ if(SUBTRACT_OFFSET){
             cv::Vec3d s = Quaternion2Vector(smoothedAngleQuaternion);
             cv::Vec3d a = Quaternion2Vector(angleQuaternion[halfLength]);
             cv::Vec3d d = Quaternion2Vector(currDiffAngleQuaternion);
-            cv::Vec3d e = Quaternion2Vector(estimatedAngleQuaternion.back());
-            printf("%d,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f\r\n",i,s[0],s[1],s[2],a[0],a[1],a[2],d[0],d[1],d[2],e[0],e[1],e[2]);
+            //cv::Vec3d e = Quaternion2Vector(estimatedAngleQuaternion.back());
+//            printf("%d,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f\r\n",i,s[0],s[1],s[2],a[0],a[1],a[2],d[0],d[1],d[2],e[0],e[1],e[2]);
+            printf("%d,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f\r\n",i,s[0],s[1],s[2],a[0],a[1],a[2],d[0],d[1],d[2]);
 //            currSmoothedAngleQuaternion = nextSmoothedAngleQuaternion;
 //            framen++;
         }
-        estimatedAngleQuaternion.push_back(estimatedAngleQuaternion.back()*RotationQuaternion(estimatedAngularVelocity[i]*Tvideo));
+        //estimatedAngleQuaternion.push_back(estimatedAngleQuaternion.back()*RotationQuaternion(estimatedAngularVelocity[i]*Tvideo));
 
         getDistortUnrollingMap(prevDiffAngleQuaternion,currDiffAngleQuaternion,nextDiffAngleQuaternion,
                                division_x,division_y,0,matInvDistort, matIntrinsic, imageSize, vecVtx,ZOOM_RATIO);
