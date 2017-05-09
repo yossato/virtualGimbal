@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.2.1, 2017-05-07T18:55:05. -->
+<!-- Written by QtCreator 4.2.1, 2017-05-07T23:32:22. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -1590,7 +1590,7 @@
    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">Desktop Qt 5.8.0 GCC 64bit</value>
    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">Desktop Qt 5.8.0 GCC 64bit</value>
    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">qt.58.gcc_64_kit</value>
-   <value type="int" key="ProjectExplorer.Target.ActiveBuildConfiguration">1</value>
+   <value type="int" key="ProjectExplorer.Target.ActiveBuildConfiguration">2</value>
    <value type="int" key="ProjectExplorer.Target.ActiveDeployConfiguration">0</value>
    <value type="int" key="ProjectExplorer.Target.ActiveRunConfiguration">2</value>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.BuildConfiguration.0">
@@ -1868,7 +1868,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">biCubic</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments">-i ~/videos/2017-02-25_12.19.18.mts -c ~/videos/2017-02-25_12.19.18.csv</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-デバッグ</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-リリース</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">biCubic</value>
@@ -1924,7 +1924,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">sync</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-デバッグ</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-リリース</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">sync</value>
@@ -1980,7 +1980,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">windows</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-デバッグ/external/glfw-3.1.2/tests</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-リリース/external/glfw-3.1.2/tests</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">windows</value>
@@ -2036,7 +2036,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">sharing</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-デバッグ/external/glfw-3.1.2/tests</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-リリース/external/glfw-3.1.2/tests</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">sharing</value>
@@ -2092,7 +2092,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">title</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-デバッグ/external/glfw-3.1.2/tests</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-リリース/external/glfw-3.1.2/tests</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">title</value>
@@ -2148,7 +2148,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">threads</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-デバッグ/external/glfw-3.1.2/tests</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-リリース/external/glfw-3.1.2/tests</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">threads</value>
@@ -2204,7 +2204,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">empty</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-デバッグ/external/glfw-3.1.2/tests</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-リリース/external/glfw-3.1.2/tests</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">empty</value>
@@ -2260,7 +2260,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">msaa</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-デバッグ/external/glfw-3.1.2/tests</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-リリース/external/glfw-3.1.2/tests</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">msaa</value>
@@ -2316,7 +2316,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">tearing</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-デバッグ/external/glfw-3.1.2/tests</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-リリース/external/glfw-3.1.2/tests</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">tearing</value>
@@ -2372,7 +2372,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">events</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-デバッグ/external/glfw-3.1.2/tests</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-リリース/external/glfw-3.1.2/tests</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">events</value>
@@ -2428,7 +2428,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">gamma</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-デバッグ/external/glfw-3.1.2/tests</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-リリース/external/glfw-3.1.2/tests</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">gamma</value>
@@ -2484,7 +2484,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">glfwinfo</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-デバッグ/external/glfw-3.1.2/tests</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-リリース/external/glfw-3.1.2/tests</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">glfwinfo</value>
@@ -2540,7 +2540,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">virtualGimbal</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments">-i ~/videos/2017-02-25_12.19.18.mts -c ~/videos/all.csv</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-デバッグ</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-リリース</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">virtualGimbal</value>
@@ -2596,7 +2596,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">iconify</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-デバッグ/external/glfw-3.1.2/tests</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-リリース/external/glfw-3.1.2/tests</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">iconify</value>
@@ -2652,7 +2652,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">monitors</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-デバッグ/external/glfw-3.1.2/tests</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-リリース/external/glfw-3.1.2/tests</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">monitors</value>
@@ -2708,7 +2708,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">cursor</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-デバッグ/external/glfw-3.1.2/tests</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-リリース/external/glfw-3.1.2/tests</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">cursor</value>
@@ -2764,7 +2764,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">joysticks</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-デバッグ/external/glfw-3.1.2/tests</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-リリース/external/glfw-3.1.2/tests</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">joysticks</value>
@@ -2820,7 +2820,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">clipboard</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-デバッグ/external/glfw-3.1.2/tests</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-リリース/external/glfw-3.1.2/tests</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">clipboard</value>
@@ -2876,7 +2876,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">reopen</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-デバッグ/external/glfw-3.1.2/tests</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-リリース/external/glfw-3.1.2/tests</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">reopen</value>
@@ -2932,7 +2932,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">heightmap</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-デバッグ/external/glfw-3.1.2/examples</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-リリース/external/glfw-3.1.2/examples</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">heightmap</value>
@@ -2988,7 +2988,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">gears</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-デバッグ/external/glfw-3.1.2/examples</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-リリース/external/glfw-3.1.2/examples</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">gears</value>
@@ -3044,7 +3044,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">particles</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-デバッグ/external/glfw-3.1.2/examples</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-リリース/external/glfw-3.1.2/examples</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">particles</value>
@@ -3100,7 +3100,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">wave</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-デバッグ/external/glfw-3.1.2/examples</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-リリース/external/glfw-3.1.2/examples</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">wave</value>
@@ -3156,7 +3156,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">boing</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-デバッグ/external/glfw-3.1.2/examples</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-リリース/external/glfw-3.1.2/examples</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">boing</value>
@@ -3212,7 +3212,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">simple</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-デバッグ/external/glfw-3.1.2/examples</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-リリース/external/glfw-3.1.2/examples</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">simple</value>
@@ -3268,7 +3268,7 @@
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">splitview</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments"></value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-デバッグ/external/glfw-3.1.2/examples</value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/media/yoshiaki/dataDrive/Dropbox/_SymbolicLinkSources/UsingROBOFiles/12th_virtualGimbal_2/projects/build-biCubic-Desktop_Qt_5_8_0_GCC_64bit-リリース/external/glfw-3.1.2/examples</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">splitview</value>

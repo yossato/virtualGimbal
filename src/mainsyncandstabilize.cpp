@@ -1205,6 +1205,8 @@ if(SUBTRACT_OFFSET){
 
 #if 1   //モーションインペインティング
         if(mipFrame!=0){
+            t1 = std::chrono::system_clock::now() ;
+
             std::vector<GLfloat> vecVtx4MIP(vecTexture.size());					//頂点座標
 
             getDistortUnrollingMap(mipDiffAngleQuaternion,mipDiffAngleQuaternion,mipDiffAngleQuaternion,
@@ -1257,6 +1259,12 @@ if(SUBTRACT_OFFSET){
                 glDisableVertexAttribArray(0);
                 glDisableVertexAttribArray(1);
             }
+
+            t2 = std::chrono::system_clock::now();
+            // 処理の経過時間
+            elapsed = t2 - t1 ;
+            std::cout << "Elapsed time: " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << " ms\n";
+
         }
 
 #endif

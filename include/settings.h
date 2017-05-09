@@ -5,7 +5,7 @@
 #define SUBTRACT_OFFSET false
 
 #define SYNC_LENGTH 1000
-#define ZOOM_RATIO  1.0
+#define ZOOM_RATIO  0.5
 #define PREFETCH_LENGTH 200
 #define MIP_ANGLE_THRES 0.05
 #endif // SETTINGS_H
