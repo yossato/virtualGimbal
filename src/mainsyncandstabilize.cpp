@@ -1063,7 +1063,7 @@ if(SUBTRACT_OFFSET){
 		
 		//モーションインペインティング用の位置を検索
         int32_t mipFrame = 0;//0は適するフレームがないことを示す
-        for(int32_t j=1;j<PREFETCH_LENGTH/2;++j){//1から開始することに注意
+        /*for(int32_t j=1;j<PREFETCH_LENGTH/2;++j){//1から開始することに注意
             double pnorm = cv::norm(Quaternion2Vector(conj(smoothedAngleQuaternion)*angleQuaternion[halfLength+j]));
             if(pnorm < MIP_ANGLE_THRES){
                 mipFrame = j;
@@ -1075,9 +1075,15 @@ if(SUBTRACT_OFFSET){
                 mipFrame = -j;
                 break;
             }
-		}
-        quaternion<double> mipDiffAngleQuaternion = conj(smoothedAngleQuaternion)*angleQuaternion[halfLength+mipFrame];
+        }*/
+        std::vector<float> norms(PREFETCH_LENGTH);
+        //まずすべてのnormを計算
+        for(int32_t j=0;j<PREFETCH_LENGTH;++j){
+            norms[j] = cv::norm(Quaternion2Vector(conj(smoothedAngleQuaternion)*angleQuaternion[j]));
+        }
+        mipFrame = std::distance(norms.begin(),std::min_element(norms.begin(),norms.end()))-PREFETCH_LENGTH/2;
         cout << "mipFrame:" << mipFrame << endl;
+
 
 //        nextDiffAngleQuaternion = conj(quaternion<double>(1,0,0,0))*angleQuaternion[halfLength];
 
@@ -1206,60 +1212,67 @@ if(SUBTRACT_OFFSET){
 #if 1   //モーションインペインティング
         if(mipFrame!=0){
             t1 = std::chrono::system_clock::now() ;
-
-            std::vector<GLfloat> vecVtx4MIP(vecTexture.size());					//頂点座標
-
-            getDistortUnrollingMap(mipDiffAngleQuaternion,mipDiffAngleQuaternion,mipDiffAngleQuaternion,
-                                   division_x,division_y,0,matInvDistort, matIntrinsic, imageSize, vecVtx4MIP,ZOOM_RATIO);
-
-            if(sCapture.getFrameForMIP(i+mipFrame,img)){
-                glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-                glBufferData(GL_ARRAY_BUFFER, vecVtx4MIP.size()*sizeof(GLfloat), vecVtx4MIP.data(),GL_DYNAMIC_DRAW);
+            int32_t divNum = 5;
+            for(int32_t k=mipFrame/divNum;abs(k)<=abs(mipFrame);k+=mipFrame/divNum){
 
 
-                glBindTexture(GL_TEXTURE_2D, textureID_0);
-                glTexSubImage2D(GL_TEXTURE_2D,0,0,0,img.cols,img.rows,GL_BGR,GL_UNSIGNED_BYTE,img.data);
-                glUniform1i(TextureID, 0);
 
-                //歪補正の準備
-                float nfxy[] = {(float)(matIntrinsic.at<double>(0,0)/imageSize.width), (float)(matIntrinsic.at<double>(1,1)/imageSize.height)};
-                glUniform2fv(nFxyID, 1, nfxy);
-                float ncxy[] = {(float)(matIntrinsic.at<double>(0,2)/imageSize.width), (float)(matIntrinsic.at<double>(1,2)/imageSize.height)};
-                glUniform2fv(nCxyID, 1, ncxy);
-                //        float distcoeffFloat[] = {(float)(matDist.at<double>(0,0)),(float)(matDist.at<double>(0,1)),(float)(matDist.at<double>(0,2)),(float)(matDist.at<double>(0,3))};
-                float distcoeffFloat[] = {(float)(matInvDistort.at<double>(0,0)),(float)(matInvDistort.at<double>(0,1)),(float)(matInvDistort.at<double>(0,2)),(float)(matInvDistort.at<double>(0,3))};
-                glUniform4fv(distCoeffID, 1, distcoeffFloat);
+                quaternion<double> mipDiffAngleQuaternion = conj(smoothedAngleQuaternion)*angleQuaternion[halfLength+k];
 
-                // 1rst attribute buffer : vertices
-                glEnableVertexAttribArray(0);
-                glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-                glVertexAttribPointer(
-                            0,                  // attribute. No particular reason for 0, but must match the layout in the shader.
-                            2,                  // size
-                            GL_FLOAT,           // type
-                            GL_FALSE,           // normalized?
-                            0,                  // stride
-                            (void*)0            // array buffer offset
-                            );
 
-                // 2nd attribute buffer : UVs
-                glEnableVertexAttribArray(1);
-                glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-                glVertexAttribPointer(
-                            1,                                // attribute. No particular reason for 1, but must match the layout in the shader.
-                            2,                                // size : U+V => 2
-                            GL_FLOAT,                         // type
-                            GL_FALSE,                         // normalized?
-                            0,                                // stride
-                            (void*)0                          // array buffer offset
-                            );
+                std::vector<GLfloat> vecVtx4MIP(vecTexture.size());					//頂点座標
 
-                // Draw the triangle !
-                glDrawArrays(GL_TRIANGLES, 0, vecVtx4MIP.size()*2); // 12*3 indices starting at 0 -> 12 triangles
-                glDisableVertexAttribArray(0);
-                glDisableVertexAttribArray(1);
+                getDistortUnrollingMap(mipDiffAngleQuaternion,mipDiffAngleQuaternion,mipDiffAngleQuaternion,
+                                       division_x,division_y,0,matInvDistort, matIntrinsic, imageSize, vecVtx4MIP,ZOOM_RATIO);
+
+                if(sCapture.getFrameForMIP(i+k,img)){
+                    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+                    glBufferData(GL_ARRAY_BUFFER, vecVtx4MIP.size()*sizeof(GLfloat), vecVtx4MIP.data(),GL_DYNAMIC_DRAW);
+
+
+                    glBindTexture(GL_TEXTURE_2D, textureID_0);
+                    glTexSubImage2D(GL_TEXTURE_2D,0,0,0,img.cols,img.rows,GL_BGR,GL_UNSIGNED_BYTE,img.data);
+                    glUniform1i(TextureID, 0);
+
+                    //歪補正の準備
+                    float nfxy[] = {(float)(matIntrinsic.at<double>(0,0)/imageSize.width), (float)(matIntrinsic.at<double>(1,1)/imageSize.height)};
+                    glUniform2fv(nFxyID, 1, nfxy);
+                    float ncxy[] = {(float)(matIntrinsic.at<double>(0,2)/imageSize.width), (float)(matIntrinsic.at<double>(1,2)/imageSize.height)};
+                    glUniform2fv(nCxyID, 1, ncxy);
+                    //        float distcoeffFloat[] = {(float)(matDist.at<double>(0,0)),(float)(matDist.at<double>(0,1)),(float)(matDist.at<double>(0,2)),(float)(matDist.at<double>(0,3))};
+                    float distcoeffFloat[] = {(float)(matInvDistort.at<double>(0,0)),(float)(matInvDistort.at<double>(0,1)),(float)(matInvDistort.at<double>(0,2)),(float)(matInvDistort.at<double>(0,3))};
+                    glUniform4fv(distCoeffID, 1, distcoeffFloat);
+
+                    // 1rst attribute buffer : vertices
+                    glEnableVertexAttribArray(0);
+                    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+                    glVertexAttribPointer(
+                                0,                  // attribute. No particular reason for 0, but must match the layout in the shader.
+                                2,                  // size
+                                GL_FLOAT,           // type
+                                GL_FALSE,           // normalized?
+                                0,                  // stride
+                                (void*)0            // array buffer offset
+                                );
+
+                    // 2nd attribute buffer : UVs
+                    glEnableVertexAttribArray(1);
+                    glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
+                    glVertexAttribPointer(
+                                1,                                // attribute. No particular reason for 1, but must match the layout in the shader.
+                                2,                                // size : U+V => 2
+                                GL_FLOAT,                         // type
+                                GL_FALSE,                         // normalized?
+                                0,                                // stride
+                                (void*)0                          // array buffer offset
+                                );
+
+                    // Draw the triangle !
+                    glDrawArrays(GL_TRIANGLES, 0, vecVtx4MIP.size()*2); // 12*3 indices starting at 0 -> 12 triangles
+                    glDisableVertexAttribArray(0);
+                    glDisableVertexAttribArray(1);
+                }
             }
-
             t2 = std::chrono::system_clock::now();
             // 処理の経過時間
             elapsed = t2 - t1 ;
