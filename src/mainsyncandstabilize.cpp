@@ -653,7 +653,7 @@ if(SUBTRACT_OFFSET){
                         };
 
     std::vector<std::vector<double>> FIRcoeffs;
-    int32_t filterNumber = 11;
+    int32_t filterNumber = 3;
     for(int i=0;i<12;i++){
         std::vector<double> temp;
         if(ReadCoeff(temp,coeffs[i])){
@@ -879,7 +879,7 @@ if(SUBTRACT_OFFSET){
     glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,buff.cols,buff.rows,0,GL_BGR,GL_UNSIGNED_BYTE,buff.data);
     //////////////////
 
-    static const GLfloat border[] = { 0.0, 1.0, 0.0, 1.0 };//背景色
+    static const GLfloat border[] = { 0.0, 0.0, 0.0, 0.0 };//背景色
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border);//テクスチャの境界色
     //テクスチャの繰り返しの設定
     //        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -1102,7 +1102,7 @@ if(SUBTRACT_OFFSET){
         //estimatedAngleQuaternion.push_back(estimatedAngleQuaternion.back()*RotationQuaternion(estimatedAngularVelocity[i]*Tvideo));
 
         getDistortUnrollingMap(prevDiffAngleQuaternion,currDiffAngleQuaternion,nextDiffAngleQuaternion,
-                               division_x,division_y,0,matInvDistort, matIntrinsic, imageSize, vecVtx,ZOOM_RATIO);
+                               division_x,division_y,0.5,matInvDistort, matIntrinsic, imageSize, vecVtx,ZOOM_RATIO);
 //                for(auto el:vecVtx) cout << el << endl;
 
         //角度配列の先頭を削除
@@ -1209,8 +1209,8 @@ if(SUBTRACT_OFFSET){
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
 
-#if 1   //モーションインペインティング
-        if(mipFrame!=0){
+#if 0   //モーションインペインティング
+        if(abs(mipFrame)>6){
             t1 = std::chrono::system_clock::now() ;
             int32_t divNum = 5;
             for(int32_t k=mipFrame/divNum;abs(k)<=abs(mipFrame);k+=mipFrame/divNum){
@@ -1226,6 +1226,7 @@ if(SUBTRACT_OFFSET){
                                        division_x,division_y,0,matInvDistort, matIntrinsic, imageSize, vecVtx4MIP,ZOOM_RATIO);
 
                 if(sCapture.getFrameForMIP(i+k,img)){
+//                    glDeleteBuffers(1, &vertexbuffer);
                     glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
                     glBufferData(GL_ARRAY_BUFFER, vecVtx4MIP.size()*sizeof(GLfloat), vecVtx4MIP.data(),GL_DYNAMIC_DRAW);
 
@@ -1269,6 +1270,9 @@ if(SUBTRACT_OFFSET){
 
                     // Draw the triangle !
                     glDrawArrays(GL_TRIANGLES, 0, vecVtx4MIP.size()*2); // 12*3 indices starting at 0 -> 12 triangles
+
+                    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
                     glDisableVertexAttribArray(0);
                     glDisableVertexAttribArray(1);
                 }
