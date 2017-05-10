@@ -107,13 +107,13 @@ target_link_libraries(virtualGimbal ${ALL_LIBS})
 
 
 #~ # デバッグビルドする場合は以下3行のコメントを解除する
-set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_C_FLAGS_DEBUG "-O0 -g")
-add_definitions(-DDEBUG)
+#set(CMAKE_BUILD_TYPE Debug)
+#set(CMAKE_C_FLAGS_DEBUG "-O0 -g")
+#add_definitions(-DDEBUG)
 
 #~ # リリースビルドする場合は以下の2行のコメントを解除する
-# set(CMAKE_BUILD_TYPE Release)
-# set(CMAKE_C_FLAGS_RELEASE "-O3 -lm")
+ set(CMAKE_BUILD_TYPE Release)
+ set(CMAKE_C_FLAGS_RELEASE "-O3 -lm")
 
 
 #以下は変更しない

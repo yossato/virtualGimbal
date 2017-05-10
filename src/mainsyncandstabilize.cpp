@@ -1150,8 +1150,9 @@ if(SUBTRACT_OFFSET){
         //            glm::mat4 ViewMatrix = getViewMatrix();
         //            glm::mat4 ModelMatrix = glm::mat4(1.0);
         //            glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
-        //            glm::mat4 MVP = glm::mat4(1.0f);//動画保存用
-        glm::mat4 MVP = glm::rotate<float>(glm::mat4x4(),(float)M_PI,glm::vec3(0.0f,0.0f,1.0f));//画面表示用
+
+                    glm::mat4 MVP = glm::mat4(1.0f);//動画保存用
+//        glm::mat4 MVP = glm::rotate<float>(glm::mat4x4(),(float)M_PI,glm::vec3(0.0f,0.0f,1.0f));//画面表示用
         // Send our transformation to the currently bound shader,
         // in the "MVP" uniform
         glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
@@ -1285,6 +1286,37 @@ if(SUBTRACT_OFFSET){
         }
 
 #endif
+
+////////////////////
+        cv::Mat simg(imageSize,CV_8UC3);
+        //~ glReadBuffer(GL_FRONT);//読み取るOpenGLのバッファを指定 GL_FRONT:フロントバッファ GL_BACK:バックバッファ
+        glReadBuffer(GL_BACK);//読み取るOpenGLのバッファを指定 GL_FRONT:フロントバッファ GL_BACK:バックバッファ
+         // OpenGLで画面に描画されている内容をバッファに格納
+        glReadPixels(
+        0,					//読み取る領域の左下隅のx座標
+        0,					//読み取る領域の左下隅のy座標 //0 or getCurrentWidth() - 1
+        imageSize.width,				//読み取る領域の幅
+        imageSize.height,				//読み取る領域の高さ
+        GL_BGR,				//it means GL_BGR,           //取得したい色情報の形式
+        GL_UNSIGNED_BYTE,	//読み取ったデータを保存する配列の型
+        simg.data			//ビットマップのピクセルデータ（実際にはバイト配列）へのポインタ
+        );
+
+        cv::Mat simg2;
+        cv::resize(simg,simg2,cv::Size(),0.5,0.5,cv::INTER_NEAREST);
+        cv::imshow("Stabilized Image2",simg2);
+        char key =cv::waitKey(1);
+
+        //video writer
+        std::string outputPass= videoPass;
+        outputPass = outputPass + "_deblured.avi";
+        static cv::VideoWriter writer(outputPass,CV_FOURCC('F', 'M', 'P', '4'),1/Tvideo,cv::Size(imageSize.width,imageSize.height),true);
+        if(!writer.isOpened()){
+            printf("Error:Can't Open Video Writer.");
+            return -1;
+        }
+        writer << simg;
+/////////////////////
 
         // Swap buffers
         glfwSwapBuffers(window);
