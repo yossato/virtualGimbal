@@ -1131,7 +1131,7 @@ if(SUBTRACT_OFFSET){
             norms[j] = cv::norm(Quaternion2Vector(conj(smoothedAngleQuaternion)*angleQuaternion[j]));
         }
         mipFrame = std::distance(norms.begin(),std::min_element(norms.begin(),norms.end()))-PREFETCH_LENGTH/2;
-        cout << "mipFrame:" << mipFrame << endl;
+//        cout << "mipFrame:" << mipFrame << endl;
 
 
 //        nextDiffAngleQuaternion = conj(quaternion<double>(1,0,0,0))*angleQuaternion[halfLength];
@@ -1384,6 +1384,19 @@ if(SUBTRACT_OFFSET){
                    glfwWindowShouldClose(window) != 0 ){
             break;
         }
+
+        //Show fps
+        auto t4 = std::chrono::system_clock::now();
+        static auto t3 = t4;
+        // 処理の経過時間
+        double elapsedmicroseconds = std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count() ;
+        static double fps = 0.0;
+        if(elapsedmicroseconds != 0.0){
+            fps = 0.05*(1e6/elapsedmicroseconds) +  0.95*fps;
+        }
+        t3 = t4;
+        printf("fps:%4.2f\r",fps);
+        fflush(stdout);
 
     } // Check if the ESC key was pressed or the window was closed
 //    while( glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
