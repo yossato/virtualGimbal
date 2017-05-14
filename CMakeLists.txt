@@ -107,14 +107,17 @@ target_link_libraries(virtualGimbal ${ALL_LIBS})
 
 
 #~ # デバッグビルドする場合は以下3行のコメントを解除する
+IF(CMAKE_BUILD_TYPE MATCHES DEBUG)
 #set(CMAKE_BUILD_TYPE Debug)
-#set(CMAKE_C_FLAGS_DEBUG "-O0 -g")
-#add_definitions(-DDEBUG)
+set(CMAKE_C_FLAGS_DEBUG "-O0 -g")
+add_definitions(-DDEBUG)
+ENDIF(CMAKE_BUILD_TYPE MATCHES DEBUG)
 
 #~ # リリースビルドする場合は以下の2行のコメントを解除する
+IF(CMAKE_BUILD_TYPE MATCHES RELEASE)
  set(CMAKE_BUILD_TYPE Release)
  set(CMAKE_C_FLAGS_RELEASE "-O3 -lm")
-
+ENDIF(CMAKE_BUILD_TYPE MATCHES RELEASE)
 
 #以下は変更しない
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -lm -L/usr/lib -lpthread -pthread -march=native -pthread")

@@ -37,7 +37,21 @@ using namespace glm;
 
 #include "settings.h"
 #include "seekablevideocapture.h"
+
+#include <mutex>
+#include <thread>         // std::this_thread::sleep_for
+#include <chrono>         // std::chrono::seconds
 using namespace std;
+
+struct videoBufferAndWriter{
+    std::mutex mtx;
+    volatile bool isWriting;
+    std::deque<cv::Mat> images;
+//    std::string videoPass;
+    cv::VideoWriter vw;
+};
+
+videoBufferAndWriter buffer;
 
 void calcDistortCoeff(const cv::Mat &matIntrinsic, const cv::Mat &matDistort, const cv::Size &imageSize, cv::Mat &matInvDistort){
     //逆歪パラメータを求める
@@ -363,6 +377,31 @@ template <typename _Tp, int cn> quaternion<_Tp> RotationQuaternion(cv::Vec<_Tp,c
     return RotationQuaternion(theta, n);
 }
 
+void videoWriterProcess(){
+    cv::Mat _buf;
+    while(1){//繰り返し書き込み
+        {
+            std::lock_guard<std::mutex> lock(buffer.mtx);
+            //bufferにデータがあるか確認
+            if(buffer.images.size()!=0){
+                //先頭をコピー
+                _buf = buffer.images.front().clone();
+                //先頭を削除
+                buffer.images.pop_front();
+            }else if(!buffer.isWriting){
+                return;
+            }
+        }
+        //mutexがunlockされたあとにゆっくりvideoWriterに書き込み
+        if(!_buf.empty()){
+            buffer.vw << _buf;
+            _buf = cv::Mat();
+        }else{
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+    }
+}
+
 int main(int argc, char** argv){
 
     //テクスチャ座標の準備
@@ -412,6 +451,16 @@ int main(int argc, char** argv){
     double cx = matIntrinsic.at<double>(0,2);
     double cy = matIntrinsic.at<double>(1,2);
 
+    //動画書き出しのマルチスレッド処理の準備
+    buffer.isWriting = true;
+    std::string outputPass= videoPass;
+    outputPass = outputPass + "_deblured.avi";
+    buffer.vw = cv::VideoWriter(outputPass,CV_FOURCC('F', 'M', 'P', '4'),1/Tvideo,cv::Size(imageSize.width,imageSize.height),true);
+    if(!buffer.vw.isOpened()){
+        printf("Error:Can't Open Video Writer.");
+        return -1;
+    }
+    std::thread th1(videoWriterProcess);//スレッド起動
 
     //歪パラメータの読み込み
     cv::Mat matDist;
@@ -1287,6 +1336,7 @@ if(SUBTRACT_OFFSET){
 
 #endif
 
+
 ////////////////////
         cv::Mat simg(imageSize,CV_8UC3);
         //~ glReadBuffer(GL_FRONT);//読み取るOpenGLのバッファを指定 GL_FRONT:フロントバッファ GL_BACK:バックバッファ
@@ -1308,14 +1358,22 @@ if(SUBTRACT_OFFSET){
         char key =cv::waitKey(1);
 
         //video writer
-        std::string outputPass= videoPass;
+        /*std::string outputPass= videoPass;
         outputPass = outputPass + "_deblured.avi";
         static cv::VideoWriter writer(outputPass,CV_FOURCC('F', 'M', 'P', '4'),1/Tvideo,cv::Size(imageSize.width,imageSize.height),true);
         if(!writer.isOpened()){
             printf("Error:Can't Open Video Writer.");
             return -1;
         }
-        writer << simg;
+        writer << simg;*/
+
+        {
+            std::lock_guard<std::mutex> lock(buffer.mtx);
+            buffer.images.push_back(cv::Mat());
+            buffer.images.back() = simg.clone();
+        }
+
+
 /////////////////////
 
         // Swap buffers
@@ -1341,8 +1399,13 @@ if(SUBTRACT_OFFSET){
     // Close OpenGL window and terminate GLFW
     glfwTerminate();
 
-
-
+    //動画書き出しのマルチスレッド処理の終了処理
+    //書き込みが終わっているか確認
+    {
+        cout << "Waiting for videoWriter." << endl;
+        buffer.isWriting = false;
+        th1.join();
+    }
 
     return 0;
 }
