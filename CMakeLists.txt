@@ -106,19 +106,20 @@ add_executable(virtualGimbal src/mainsyncandstabilize.cpp
 target_link_libraries(virtualGimbal ${ALL_LIBS})
 
 
-#~ # デバッグビルドする場合は以下3行のコメントを解除する
+# デバッグビルド
 IF(CMAKE_BUILD_TYPE MATCHES DEBUG)
-#set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_C_FLAGS_DEBUG "-O0 -g")
-add_definitions(-DDEBUG)
+#set(CMAKE_C_FLAGS_DEBUG "-O0 -pg")
+#set(CMAKE_CXX_FLAGS "-pg") #gprof
 ENDIF(CMAKE_BUILD_TYPE MATCHES DEBUG)
 
-#~ # リリースビルドする場合は以下の2行のコメントを解除する
+# リリースビルド
 IF(CMAKE_BUILD_TYPE MATCHES RELEASE)
- set(CMAKE_BUILD_TYPE Release)
- set(CMAKE_C_FLAGS_RELEASE "-O3 -lm")
+    set(CMAKE_BUILD_TYPE Release)
+    set(CMAKE_C_FLAGS_RELEASE "-O3 -lm")
+    add_definitions(-DEIGEN_NO_DEBUG)
 ENDIF(CMAKE_BUILD_TYPE MATCHES RELEASE)
 
-#以下は変更しない
+#gprof使う場合は以下２行の最後に-pgをつけると良いみたい
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -lm -L/usr/lib -lpthread -pthread -march=native -pthread")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lm -L/usr/lib -lpthread -pthread -march=native -std=c++0x -pthread")

@@ -404,6 +404,8 @@ void videoWriterProcess(){
 
 int main(int argc, char** argv){
 
+    cv::namedWindow("Stabilized Image2",cv::WINDOW_NORMAL);
+
     //テクスチャ座標の準備
     int32_t division_x = 9; //画面の横の分割数
     int32_t division_y = 9; //画面の縦の分割数
@@ -861,15 +863,20 @@ if(SUBTRACT_OFFSET){
         return -1;
     }
 
+
     glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+    //glfwWindowHint( GLFW_VISIBLE, 0 );//オフスクリーンレンダリング。
+
+
     // Open a window and create its OpenGL context
-//    window = glfwCreateWindow( 1280, 720, "Tutorial 0 - Keyboard and Mouse", NULL, NULL);
-            window = glfwCreateWindow( 1920, 1080, "Tutorial 0 - Keyboard and Mouse", NULL, NULL);
+    //    window = glfwCreateWindow( 1280, 720, "Tutorial 0 - Keyboard and Mouse", NULL, NULL);
+    window = glfwCreateWindow( 1920, 1080, "Tutorial 0 - Keyboard and Mouse", glfwGetPrimaryMonitor(), NULL);
+//    window = glfwCreateWindow( 640, 480, "Tutorial 0 - Keyboard and Mouse", glfwGetPrimaryMonitor(), NULL);
     if( window == NULL ){
         fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
         getchar();
@@ -886,6 +893,9 @@ if(SUBTRACT_OFFSET){
         glfwTerminate();
         return -1;
     }
+
+    glfwIconifyWindow(window);
+//    glfwHideWindow(window);
 
     // Ensure we can capture the escape key being pressed below
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
@@ -1106,7 +1116,11 @@ if(SUBTRACT_OFFSET){
     int32_t e=Capture->get(CV_CAP_PROP_FRAME_COUNT);
     delete Capture;
     seekableVideoCapture sCapture(videoPass,PREFETCH_LENGTH);
+
+
     for(int32_t i=0;i<e;++i){
+
+
 //        cout << "i:" << i <<" POS:" << Capture->get(cv::CAP_PROP_POS_FRAMES) << endl;
         nextDiffAngleQuaternion = conj(smoothedAngleQuaternion)*angleQuaternion[halfLength+1];
 		
@@ -1168,6 +1182,8 @@ if(SUBTRACT_OFFSET){
             prevVec = curVec;
         }
         smoothedAngleQuaternion = Vector2Quaternion<double>(sum);
+
+
 
         //補正量を保存
         prevDiffAngleQuaternion = currDiffAngleQuaternion;
@@ -1258,6 +1274,8 @@ if(SUBTRACT_OFFSET){
 
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
+
+
 
 #if 0   //モーションインペインティング
         if(abs(mipFrame)>6){
@@ -1354,9 +1372,9 @@ if(SUBTRACT_OFFSET){
 
         cv::Mat simg2;
         cv::resize(simg,simg2,cv::Size(),0.5,0.5,cv::INTER_NEAREST);
+
         cv::imshow("Stabilized Image2",simg2);
         char key =cv::waitKey(1);
-
         //video writer
         /*std::string outputPass= videoPass;
         outputPass = outputPass + "_deblured.avi";
@@ -1398,6 +1416,7 @@ if(SUBTRACT_OFFSET){
         printf("fps:%4.2f\r",fps);
         fflush(stdout);
 
+
     } // Check if the ESC key was pressed or the window was closed
 //    while( glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
 //           glfwWindowShouldClose(window) == 0 );
@@ -1419,6 +1438,8 @@ if(SUBTRACT_OFFSET){
         buffer.isWriting = false;
         th1.join();
     }
+
+    cv::destroyAllWindows();
 
     return 0;
 }
