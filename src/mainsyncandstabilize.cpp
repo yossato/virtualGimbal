@@ -51,8 +51,15 @@ struct videoBufferAndWriter{
     cv::VideoWriter vw;
 };
 
-videoBufferAndWriter buffer;
+struct strMultiThreadVideoCapture{
+    std::mutex mtx;
+    std::deque<cv::Mat> images;
+    int32_t maxLength;
+    cv::VideoCapture vc;
+};
 
+videoBufferAndWriter buffer;
+strMultiThreadVideoCapture mtvc;
 void calcDistortCoeff(const cv::Mat &matIntrinsic, const cv::Mat &matDistort, const cv::Size &imageSize, cv::Mat &matInvDistort){
     //逆歪パラメータを求める
     std::vector<double> refPointsX;
@@ -402,6 +409,34 @@ void videoWriterProcess(){
     }
 }
 
+/**
+ * @brief ひたすらビデオを読み込み
+ */
+void videoCaptureProcess(){
+    cv::Mat _buf;
+    while(1){
+        if(_buf.empty()){
+            mtvc.vc >> _buf;//読み出し
+        }else{
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            printf("\r\nmtvc.images.size():%ld\r\n",mtvc.images.size());
+        }
+        std::lock_guard<std::mutex> lock(mtvc.mtx);
+        if(mtvc.images.size()<mtvc.maxLength){
+            //bufferに画像をコピー
+            mtvc.images.push_back(cv::Mat());
+            //コピー
+            mtvc.images.back() = _buf.clone();
+            //もしも空なら動画の読み込みを終了する
+            if(mtvc.images.back().empty()){
+                return;
+            }
+            _buf = cv::Mat();
+        }
+
+    }
+}
+
 int main(int argc, char** argv){
 
     cv::namedWindow("Stabilized Image2",cv::WINDOW_NORMAL);
@@ -463,6 +498,11 @@ int main(int argc, char** argv){
         return -1;
     }
     std::thread th1(videoWriterProcess);//スレッド起動
+
+    //動画読み込みのマルチスレッド処理の準備
+    mtvc.maxLength = 500;
+    mtvc.vc = cv::VideoCapture(videoPass);//動画をオープン
+    std::thread th2(videoCaptureProcess);
 
     //歪パラメータの読み込み
     cv::Mat matDist;
@@ -1227,7 +1267,14 @@ if(SUBTRACT_OFFSET){
         glBufferData(GL_ARRAY_BUFFER, vecVtx.size()*sizeof(GLfloat), vecVtx.data(),GL_DYNAMIC_DRAW);
 
 
-        sCapture.getFrame(i,img);
+        //sCapture.getFrame(i,img);
+
+        {
+            std::lock_guard<std::mutex> lock(mtvc.mtx);
+            img = mtvc.images.front().clone();
+            mtvc.images.pop_front();//先頭を削除
+        }
+
         // Bind our texture in Texture Unit 0
 //        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureID_0);//            glBindTexture(GL_TEXTURE_2D, Texture);
@@ -1437,6 +1484,11 @@ if(SUBTRACT_OFFSET){
         cout << "Waiting for videoWriter." << endl;
         buffer.isWriting = false;
         th1.join();
+    }
+
+    {
+        cout << "Wainting for videoCapture." << endl;
+        th2.join();
     }
 
     cv::destroyAllWindows();
