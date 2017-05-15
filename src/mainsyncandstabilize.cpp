@@ -904,7 +904,7 @@ if(SUBTRACT_OFFSET){
 
     // Set the mouse at the center of the screen
     glfwPollEvents();
-    glfwSetCursorPos(window, 1024/2, 768/2);
+//    glfwSetCursorPos(window, 1024/2, 768/2);
 
     // Dark blue background
     glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
@@ -1371,9 +1371,9 @@ if(SUBTRACT_OFFSET){
         );
 
         cv::Mat simg2;
-        cv::resize(simg,simg2,cv::Size(),0.5,0.5,cv::INTER_NEAREST);
-
-        cv::imshow("Stabilized Image2",simg2);
+//        cv::resize(simg,simg2,cv::Size(),0.5,0.5,cv::INTER_NEAREST);
+//        cv::imshow("Stabilized Image2",simg2);
+        cv::imshow("Stabilized Image2",simg);
         char key =cv::waitKey(1);
         //video writer
         /*std::string outputPass= videoPass;
@@ -1395,7 +1395,7 @@ if(SUBTRACT_OFFSET){
 /////////////////////
 
         // Swap buffers
-        glfwSwapBuffers(window);
+//        glfwSwapBuffers(window);
         glfwPollEvents();
 
         if(glfwGetKey(window, GLFW_KEY_ESCAPE ) == GLFW_PRESS ||
@@ -1410,7 +1410,7 @@ if(SUBTRACT_OFFSET){
         double elapsedmicroseconds = std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count() ;
         static double fps = 0.0;
         if(elapsedmicroseconds != 0.0){
-            fps = 0.05*(1e6/elapsedmicroseconds) +  0.95*fps;
+            fps = 0.03*(1e6/elapsedmicroseconds) +  0.97*fps;
         }
         t3 = t4;
         printf("fps:%4.2f\r",fps);
