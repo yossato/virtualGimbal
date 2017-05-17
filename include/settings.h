@@ -3,7 +3,7 @@
 
 #define PRINT_INV_DISTORT_COEFF false
 #define SUBTRACT_OFFSET false
-
+#define MULTITHREAD_CAPTURE false
 #define SYNC_LENGTH 1000
 #define ZOOM_RATIO  1.1
 #define PREFETCH_LENGTH 200

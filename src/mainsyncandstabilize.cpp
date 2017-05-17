@@ -418,7 +418,7 @@ void videoCaptureProcess(){
         if(_buf.empty()){
             mtvc.vc >> _buf;//読み出し
         }else{
-            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            std::this_thread::sleep_for(std::chrono::milliseconds(300));
             printf("\r\nmtvc.images.size():%ld\r\n",mtvc.images.size());
         }
         std::lock_guard<std::mutex> lock(mtvc.mtx);
@@ -500,9 +500,11 @@ int main(int argc, char** argv){
     std::thread th1(videoWriterProcess);//スレッド起動
 
     //動画読み込みのマルチスレッド処理の準備
+#if MULTITHREAD_CAPTURE
     mtvc.maxLength = 500;
     mtvc.vc = cv::VideoCapture(videoPass);//動画をオープン
     std::thread th2(videoCaptureProcess);
+#endif
 
     //歪パラメータの読み込み
     cv::Mat matDist;
@@ -1267,13 +1269,16 @@ if(SUBTRACT_OFFSET){
         glBufferData(GL_ARRAY_BUFFER, vecVtx.size()*sizeof(GLfloat), vecVtx.data(),GL_DYNAMIC_DRAW);
 
 
-        //sCapture.getFrame(i,img);
 
+#if MULTITHREAD_CAPTURE
         {
             std::lock_guard<std::mutex> lock(mtvc.mtx);
             img = mtvc.images.front().clone();
             mtvc.images.pop_front();//先頭を削除
         }
+#else
+        sCapture.getFrame(i,img);
+#endif
 
         // Bind our texture in Texture Unit 0
 //        glActiveTexture(GL_TEXTURE0);
@@ -1486,11 +1491,12 @@ if(SUBTRACT_OFFSET){
         th1.join();
     }
 
+#if MULTITHREAD_CAPTURE
     {
         cout << "Wainting for videoCapture." << endl;
         th2.join();
     }
-
+#endif
     cv::destroyAllWindows();
 
     return 0;

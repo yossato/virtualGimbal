@@ -105,6 +105,8 @@ add_executable(virtualGimbal src/mainsyncandstabilize.cpp
 )
 target_link_libraries(virtualGimbal ${ALL_LIBS})
 
+add_executable(audioEdit src/audioedit.cpp)
+target_link_libraries(audioEdit ${ALL_LIBS})
 
 # デバッグビルド
 IF(CMAKE_BUILD_TYPE MATCHES DEBUG)
