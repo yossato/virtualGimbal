@@ -16,6 +16,6 @@ virtualGimbal is an electronic stabilize device for videos that were taken by ha
 
 ## Licence
 
-[MIT](https://github.com/tcnksm/tool/blob/master/LICENCE)
+
 
 ## Author
