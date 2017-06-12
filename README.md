@@ -19,10 +19,10 @@ OpenGL 3.3 or later
 
 ## Usage
 Demo:  
-    ./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/anglarVelocity.csv  
+`./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/anglarVelocity.csv`  
   
 Generating stabilized video:  
-    ./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/anglarVelocity.csv -o
+`./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/anglarVelocity.csv -o`  
 
 ## Install
 
