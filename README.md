@@ -29,13 +29,14 @@ Install system dependencies:
     sudo apt-get install cmake make g++ libx11-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxrandr-dev libxext-dev  
     cd  
 Install lame:  
-    wget -O lame-3.99.5.tar.gz http://downloads.sourceforge.net/project/lame/lame/3.99/lame-3.99.5.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Flame%2Ffiles%2Flame%2F3.99%2F&ts=1438787999&use_mirror=jaist  
+```    wget -O lame-3.99.5.tar.gz http://downloads.sourceforge.net/project/lame/lame/3.99/lame-3.99.5.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Flame%2Ffiles%2Flame%2F3.99%2F&ts=1438787999&use_mirror=jaist  
     tar zxvf lame-3.99.5.tar.gz  
     cd lame-3.99.5  
     ./configure  
     make -j4  
     sudo make install  
-    sudo ldconfig  
+    sudo ldconfig
+```
 Install ffmpeg:  
     cd  
     git clone --depth 1 git://source.ffmpeg.org/ffmpeg.git  
