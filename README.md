@@ -64,6 +64,20 @@ Generating stabilized video:
     cd build  
     make -j4  
     sudo make install  
+    
+    テキストエディタで次の空ファイルに一行追加  
+    sudo nano /etc/ld.so.conf.d/opencv.conf  
+    --------------  
+    /usr/local/lib  
+    --------------  
+  
+    テキストエディタで次のファイルの最後に2行追加  
+    sudo nano /etc/bash.bashrc  
+    --------------  
+    PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig  
+    export PKG_CONFIG_PATH  
+    ---------------  
+    
 ```
 ## Contribution
 
