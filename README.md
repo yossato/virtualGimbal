@@ -7,9 +7,9 @@ virtualGimbal consists of an SD card and a Post processing software. This reposi
 <https://youtu.be/E9JKbxqoJcY>
 
 ## Features 
-1.Post processing video stabilization software on PC.
-2.Real-time up to 1920 x 1080 at 30 fps.
-3.Stabilization based on angular velocity data.
+1.Post processing video stabilization software on PC.  
+2.Real-time up to 1920 x 1080 at 30 fps.  
+3.Stabilization based on angular velocity data.  
 
 ## Requirement
 Ubuntu 16.04  
