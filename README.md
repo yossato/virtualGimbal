@@ -25,10 +25,10 @@ Generating stabilized video:
 `./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/anglarVelocity.csv -o`  
 
 ## Install
-Install system dependencies:  
+## Install system dependencies:  
     sudo apt-get install cmake make g++ libx11-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxrandr-dev libxext-dev  
     cd  
-Install lame:  
+### Install lame:  
 ```    wget -O lame-3.99.5.tar.gz http://downloads.sourceforge.net/project/lame/lame/3.99/lame-3.99.5.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Flame%2Ffiles%2Flame%2F3.99%2F&ts=1438787999&use_mirror=jaist  
     tar zxvf lame-3.99.5.tar.gz  
     cd lame-3.99.5  
@@ -37,17 +37,34 @@ Install lame:
     sudo make install  
     sudo ldconfig
 ```
-Install ffmpeg:  
-    cd  
+### Install ffmpeg:  
+```    cd  
     git clone --depth 1 git://source.ffmpeg.org/ffmpeg.git  
     cd ffmpeg  
     ./configure --enable-gpl --enable-libmp3lame --disable-yasm --enable-ffmpeg --enable-ffmpeg --enable-pic --enable-shared --enable-swscale --enable-avresample  
     make all -j4  
     sudo make install  
     sudo ldconfig  
-Install QT:  
-    sudo apt-get install qt5-default  
-    
+```
+### Install QT:  
+`    sudo apt-get install qt5-default`  
+  
+### Install OpenCV  
+```    cd  
+    sudo apt-get install build-essential module-assistant  
+    sudo m-a prepare  
+    git clone --depth 1 https://github.com/Itseez/opencv.git  
+    cd opencv/  
+  
+    以下の手順に従いOpenCVをCmake guiで、qtにチェックを入れて、build以下にConfigure and generate  
+  
+    mkdir build  
+    sudo apt-get install cmake-qt-gui  
+    cmake-gui  
+    cd build  
+    make -j4  
+    sudo make install  
+```
 ## Contribution
 
 ## Licence
