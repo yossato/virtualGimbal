@@ -50,6 +50,8 @@ Generating stabilized video:
 ```
 ### Install QT:  
 `    sudo apt-get install qt5-default`  
+### Install cmake:
+`    sudo apt-get install cmake
   
 ### Install OpenCV  
 ```    cd  
