@@ -62,7 +62,7 @@ Generating stabilized video:
   
     mkdir build  
     cd build  
-    cmake -D WITH_TBB=ON -D WITH_QT=ON -D WITH_OPENGL=ON -D WITH_VTK=ON  
+    cmake .. -DWITH_TBB=ON -DWITH_QT=ON -DWITH_OPENGL=ON -DWITH_VTK=ON  
     make -j4  
     sudo make install  
  
