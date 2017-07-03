@@ -58,28 +58,15 @@ Generating stabilized video:
     git clone --depth 1 https://github.com/Itseez/opencv.git  
     cd opencv/  
   
-    以下の手順に従いOpenCVをCmake guiで、qtにチェックを入れて、build以下にConfigure and generate  
-  
     mkdir build  
-    sudo apt-get install cmake-qt-gui  
-    cmake-gui  
     cd build  
+    cmake -D WITH_TBB=ON -D WITH_QT=ON -D WITH_OPENGL=ON -D WITH_VTK=ON  
     make -j4  
     sudo make install  
-    
-    テキストエディタで次の空ファイルに一行追加  
-    sudo nano /etc/ld.so.conf.d/opencv.conf  
-    --------------  
-    /usr/local/lib  
-    --------------  
-  
-    テキストエディタで次のファイルの最後に2行追加  
-    sudo nano /etc/bash.bashrc  
-    --------------  
-    PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig  
-    export PKG_CONFIG_PATH  
-    ---------------  
-    
+ 
+    sudo echo /usr/local/lib >> /etc/ld.so.conf.d/opencv.conf  
+    sudo echo "PKG_CONFIG_PATH=\$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig" >> /etc/bash.bashrc  
+    sudo echo "export PKG_CONFIG_PATH" >> /etc/bash.bashrc  
 ```
 
 ### Install Boost
