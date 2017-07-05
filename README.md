@@ -26,7 +26,7 @@ Generating stabilized video:
 
 ## Install dependencies
 ### Install system dependencies:  
-`sudo apt-get install cmake make g++ libx11-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxrandr-dev libxext-dev`  
+`sudo apt-get install cmake make g++ libx11-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxrandr-dev libxext-dev xorg-dev`  
 ### Install lame:  
 ```
 cd  
@@ -69,6 +69,18 @@ sudo make install
     sudo sh -c "echo /usr/local/lib >> /etc/ld.so.conf.d/opencv.conf"  
 sudo sh -c "echo PKG_CONFIG_PATH=\\\$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig >> /etc/bash.bashrc"  
 sudo sh -c "echo export PKG_CONFIG_PATH >> /etc/bash.bashrc"  
+```
+
+### Install Eigen
+```cd  
+wget -O Eigen3.2.10.tar.gz http://bitbucket.org/eigen/eigen/get/3.2.10.tar.gz  
+tar zxvf Eigen3.2.10.tar.gz  
+cd eigen-*  
+mkdir build  
+cd build  
+cmake ..  
+make -j4  
+sudo make install  
 ```
 
 ### Install Boost
