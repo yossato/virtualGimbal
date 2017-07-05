@@ -26,61 +26,61 @@ Generating stabilized video:
 
 ## Install dependencies
 ### Install system dependencies:  
-`    sudo apt-get install cmake make g++ libx11-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxrandr-dev libxext-dev`  
+`sudo apt-get install cmake make g++ libx11-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxrandr-dev libxext-dev`  
 ### Install lame:  
 ```
-    cd  
-    wget -O lame-3.99.5.tar.gz http://downloads.sourceforge.net/project/lame/lame/3.99/lame-3.99.5.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Flame%2Ffiles%2Flame%2F3.99%2F&ts=1438787999&use_mirror=jaist  
-    tar zxvf lame-3.99.5.tar.gz  
-    cd lame-3.99.5  
-    ./configure  
-    make -j4  
-    sudo make install  
-    sudo ldconfig
+cd  
+wget -O lame-3.99.5.tar.gz http://downloads.sourceforge.net/project/lame/lame/3.99/lame-3.99.5.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Flame%2Ffiles%2Flame%2F3.99%2F&ts=1438787999&use_mirror=jaist  
+tar zxvf lame-3.99.5.tar.gz  
+cd lame-3.99.5  
+./configure  
+make -j4  
+sudo make install  
+sudo ldconfig
 ```
 ### Install ffmpeg:  
 ```
-    cd  
-    git clone --depth 1 git://source.ffmpeg.org/ffmpeg.git  
-    cd ffmpeg  
-    ./configure --enable-gpl --enable-libmp3lame --disable-yasm --enable-ffmpeg --enable-ffmpeg --enable-pic --enable-shared --enable-swscale --enable-avresample  
-    make all -j4  
-    sudo make install  
-    sudo ldconfig  
+cd  
+git clone --depth 1 git://source.ffmpeg.org/ffmpeg.git  
+cd ffmpeg  
+./configure --enable-gpl --enable-libmp3lame --disable-yasm --enable-ffmpeg --enable-ffmpeg --enable-pic --enable-shared --enable-swscale --enable-avresample  
+make all -j4  
+sudo make install  
+sudo ldconfig  
 ```
 ### Install QT:  
-`    sudo apt-get install qt5-default`  
+`sudo apt-get install qt5-default`  
 ### Install cmake:
-`    sudo apt-get install cmake
+`sudo apt-get install cmake`
   
 ### Install OpenCV  
-```    cd  
-    sudo apt-get install build-essential module-assistant  
-    sudo m-a prepare  
-    git clone --depth 1 https://github.com/Itseez/opencv.git  
-    cd opencv/  
+```cd  
+sudo apt-get install build-essential module-assistant  
+sudo m-a prepare  
+git clone --depth 1 https://github.com/Itseez/opencv.git  
+cd opencv/  
   
-    mkdir build  
-    cd build  
-    cmake .. -DWITH_TBB=ON -DWITH_QT=ON -DWITH_OPENGL=ON -DWITH_VTK=ON  
-    make -j4  
-    sudo make install  
+mkdir build  
+cd build  
+cmake .. -DWITH_TBB=ON -DWITH_QT=ON -DWITH_OPENGL=ON -DWITH_VTK=ON  
+make -j4  
+sudo make install  
  
     sudo sh -c "echo /usr/local/lib >> /etc/ld.so.conf.d/opencv.conf"  
-    sudo sh -c "echo PKG_CONFIG_PATH=\\\$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig >> /etc/bash.bashrc"  
-    sudo sh -c "echo export PKG_CONFIG_PATH >> /etc/bash.bashrc"  
+sudo sh -c "echo PKG_CONFIG_PATH=\\\$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig >> /etc/bash.bashrc"  
+sudo sh -c "echo export PKG_CONFIG_PATH >> /etc/bash.bashrc"  
 ```
 
 ### Install Boost
 `sudo apt-get install libboost-dev`
 
 ## Build
-```    git clone http://github.com/yossato/virtualGimbal  
-    cd virtualGimbal  
-    mkdir build  
-    cd build  
-    cmake ..  
-    make  
+```git clone http://github.com/yossato/virtualGimbal  
+cd virtualGimbal  
+mkdir build  
+cd build  
+cmake ..  
+make  
 ```
 ## Contribution
 
