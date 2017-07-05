@@ -543,12 +543,12 @@ int main(int argc, char** argv){
 
     //軸の定義方向の入れ替え
     //TODO:将来的に、CSVファイルに順番を揃えて、ゲインも揃えた値を書き込んでおくべき
-    for(auto &el:angularVelocityIn60Hz){
-        auto temp = el;
-        el[0] = temp[1]/16.4*M_PI/180.0;//16.4はジャイロセンサが感度[LSB/(degree/s)]で2000[degrees/second]の時のもの。ジャイロセンサの種類や感度を変更した時は値を変更する;
-        el[1] = temp[0]/16.4*M_PI/180.0;
-        el[2] = -temp[2]/16.4*M_PI/180.0;
-    }
+//    for(auto &el:angularVelocityIn60Hz){
+//        auto temp = el;
+//        el[0] = temp[1]/16.4*M_PI/180.0;//16.4はジャイロセンサが感度[LSB/(degree/s)]で2000[degrees/second]の時のもの。ジャイロセンサの種類や感度を変更した時は値を変更する;
+//        el[1] = temp[0]/16.4*M_PI/180.0;
+//        el[2] = -temp[2]/16.4*M_PI/180.0;
+//    }
 
 	//ジャイロのDCオフセット（いわゆる温度ドリフトと等価）を計算。単純にフレームの平均値を計算
 if(SUBTRACT_OFFSET){

@@ -31,7 +31,6 @@ int main(int argc, char** argv){
         sInputVideoPass.insert(pos,"\\");
         pos+=2;
     }
-ipadからの変更テスト
 
     std::cout << "音声を分離" << std::endl;
     std::string command = "ffmpeg -i " + sInputVideoPass +  " -vn -acodec copy output-audio.aac";
