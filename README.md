@@ -24,7 +24,7 @@ Demo:
 Generating stabilized video:  
 `./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/anglarVelocity.csv -o`  
 
-## Install
+## Install dependencies
 ### Install system dependencies:  
 `    sudo apt-get install cmake make g++ libx11-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxrandr-dev libxext-dev`  
 ### Install lame:  
@@ -74,6 +74,14 @@ Generating stabilized video:
 ### Install Boost
 `sudo apt-get install libboost-dev`
 
+## Build
+```    git clone http://github.com/yossato/virtualGimbal  
+    cd virtualGimbal  
+    mkdir build  
+    cd build  
+    cmake ..  
+    make  
+```
 ## Contribution
 
 ## Licence
