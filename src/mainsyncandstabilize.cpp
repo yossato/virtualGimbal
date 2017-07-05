@@ -302,6 +302,12 @@ template <typename _Tp, typename _Tx> void getDistortUnrollingMap(
 
             double x2 = x1*(1.0+k1*r*r+k2*r*r*r*r)+2.0*p1*x1*y1+p2*(r*r+2.0*x1*x1);
             double y2 = y1*(1.0+k1*r*r+k2*r*r*r*r)+p1*(r*r+2.0*y1*y1)+2.0*p2*x1*y1;
+            //変な折り返しを防止
+            if((pow(x2-x1,2)>1.0)||(pow(y2-y1,2)>1.0)){
+//                printf("折り返し防止\r\n");
+                x2 = x1;
+                y2 = y1;
+            }
 //            double mapx = x2*fx*zoom+cx;
 //            double mapy = y2*fy*zoom+cy;
             //~ return ;
@@ -315,6 +321,8 @@ template <typename _Tp, typename _Tx> void getDistortUnrollingMap(
             //~ printf("i:%d,j:%d,mapx:%4.3f,mapy:%4.3f\n",i,j,mapx,mapy);
         }
     }
+
+//    cout << map << "\r\n" << endl;
 
     //3.ポリゴン座標をOpenGLの関数に渡すために順番を書き換える
     vecPorigonn_uv.clear();
@@ -1208,8 +1216,6 @@ if(SUBTRACT_OFFSET){
 
         getDistortUnrollingMap(prevDiffAngleQuaternion,currDiffAngleQuaternion,nextDiffAngleQuaternion,
                                division_x,division_y,0.5,matInvDistort, matIntrinsic, imageSize, vecVtx,ZOOM_RATIO);
-//                for(auto el:vecVtx) cout << el << endl;
-
         //角度配列の先頭を削除
         angleQuaternion.erase(angleQuaternion.begin());
         //末尾に角度を追加
@@ -1499,6 +1505,28 @@ if(SUBTRACT_OFFSET){
 #endif
     cv::destroyAllWindows();
 
+    //音声を付加
+    //inputVideoPassにスペースがあったらエスケープシーケンスを追加
+    std::string::size_type pos = 0;
+    std::string sInputVideoPass = videoPass;
+    while(pos=sInputVideoPass.find(" ",pos), pos!=std::string::npos){
+        sInputVideoPass.insert(pos,"\\");
+        pos+=2;
+    }
+
+//#define OUTPUTVIDEO
+#ifdef OUTPUTVIDEO
+    std::cout << "音声を分離" << std::endl;
+    std::string command = "ffmpeg -i " + sInputVideoPass +  " -vn -acodec copy output-audio.aac";
+    system(command.c_str());
+    std::cout << "音声を結合" << std::endl;
+    command = "ffmpeg -i " + sInputVideoPass + "_deblured.avi -i output-audio.aac -codec copy " + sInputVideoPass + "_deblured_audio.avi";
+    system(command.c_str());
+
+    system("rm output-audio.aac");
+    command = "rm " + sInputVideoPass + "_deblured.avi";
+    system(command.c_str());
+#endif
     return 0;
 }
 

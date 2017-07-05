@@ -24,12 +24,24 @@ int main(int argc, char** argv){
         return 1;
     }
 
+    //inputVideoPassにスペースがあったらエスケープシーケンスを追加
+    std::string::size_type pos = 0;
+   std::string sInputVideoPass = inputVideoPass;
+    while(pos=sInputVideoPass.find(" ",pos), pos!=std::string::npos){
+        sInputVideoPass.insert(pos,"\\");
+        pos+=2;
+    }
+ipadからの変更テスト
+
     std::cout << "音声を分離" << std::endl;
-    std::string command = "ffmpeg -i " + (std::string)inputVideoPass +  " -vn -acodec copy output-audio.aac";
+    std::string command = "ffmpeg -i " + sInputVideoPass +  " -vn -acodec copy output-audio.aac";
     system(command.c_str());
     std::cout << "音声を結合" << std::endl;
-    command = "ffmpeg -i " + (std::string)inputVideoPass + "_deblured.avi -i output-audio.aac -codec copy " + (std::string)inputVideoPass + "_deblured_audio.avi";
+    command = "ffmpeg -i " + sInputVideoPass + "_deblured.avi -i output-audio.aac -codec copy " + sInputVideoPass + "_deblured_audio.avi";
     system(command.c_str());
+
     system("rm output-audio.aac");
+    command = "rm " + sInputVideoPass + "_deblured.avi";
+    system(command.c_str());
     return 0;
 }
