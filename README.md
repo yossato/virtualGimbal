@@ -77,9 +77,8 @@ Generating stabilized video:
 ## Contribution
 
 ## Licence
-virtualGimbal is licensed under the GNU General Public License Version 3 (GPLv3), see http://www.gnu.org/licenses/gpl.html.
-
-For commercial purposes, we also offer a professional version under different licencing terms. Please contact me if you need.
+virtualGimbal is licensed under the GNU General Public License Version 3 (GPLv3), see http://www.gnu.org/licenses/gpl.html.  
+For commercial purposes, we also offer a professional version under different licencing terms. Please contact me if you need.  
 
 
 ## Author
