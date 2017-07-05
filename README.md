@@ -54,7 +54,8 @@ sudo ldconfig
 `sudo apt-get install cmake`
   
 ### Install OpenCV  
-```cd  
+```
+cd  
 sudo apt-get install build-essential module-assistant  
 sudo m-a prepare  
 git clone --depth 1 https://github.com/Itseez/opencv.git  
@@ -72,7 +73,8 @@ sudo sh -c "echo export PKG_CONFIG_PATH >> /etc/bash.bashrc"
 ```
 
 ### Install Eigen
-```cd  
+```
+cd  
 wget -O Eigen3.2.10.tar.gz http://bitbucket.org/eigen/eigen/get/3.2.10.tar.gz  
 tar zxvf Eigen3.2.10.tar.gz  
 cd eigen-*  
@@ -87,7 +89,8 @@ sudo make install
 `sudo apt-get install libboost-dev`
 
 ## Build
-```git clone http://github.com/yossato/virtualGimbal  
+```
+git clone http://github.com/yossato/virtualGimbal  
 cd virtualGimbal  
 mkdir build  
 cd build  
