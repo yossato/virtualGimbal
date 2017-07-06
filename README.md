@@ -18,6 +18,8 @@ FFMpeg
 OpenGL 3.3 or later
 
 ## Usage
+Download [Example Video](https://drive.google.com/open?id=0B9nCHvB3LdAxZWNKdmdxMTFzam8) and [Angular Velocity data](https://drive.google.com/open?id=0B9nCHvB3LdAxTHB1dk0zMkZWbDQ).
+
 Demo:  
 `./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/anglarVelocity.csv`  
   
