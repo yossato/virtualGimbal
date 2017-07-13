@@ -457,14 +457,20 @@ int main(int argc, char** argv){
     //引数の確認
     char *videoPass = NULL;
     char *csvPass = NULL;
+//    char *outputPass = NULL;
+    bool outputStabilizedVideo = false;
     int opt;
-    while((opt = getopt(argc, argv, "i:c:")) != -1){
+    while((opt = getopt(argc, argv, "i:c:o::")) != -1){
         switch (opt) {
         case 'i':
             videoPass = optarg;
             break;
         case 'c':
             csvPass = optarg;
+            break;
+        case 'o':
+//            outputPass = optarg;//NULLの可能性大
+            outputStabilizedVideo = true;
             break;
         default :
             printf("Use options. -i videofilepass -c csvfilepass.\r\n");
@@ -498,14 +504,19 @@ int main(int argc, char** argv){
 
     //動画書き出しのマルチスレッド処理の準備
     buffer.isWriting = true;
-    std::string outputPass= videoPass;
-    outputPass = outputPass + "_deblured.avi";
-    buffer.vw = cv::VideoWriter(outputPass,CV_FOURCC('F', 'M', 'P', '4'),1/Tvideo,cv::Size(imageSize.width,imageSize.height),true);
-    if(!buffer.vw.isOpened()){
-        printf("Error:Can't Open Video Writer.");
-        return -1;
+    if(outputStabilizedVideo){
+        std::string outputPass= videoPass;
+        outputPass = outputPass + "_deblured.avi";
+        buffer.vw = cv::VideoWriter(outputPass,CV_FOURCC('F', 'M', 'P', '4'),1/Tvideo,cv::Size(imageSize.width,imageSize.height),true);
+        if(!buffer.vw.isOpened()){
+            printf("Error:Can't Open Video Writer.");
+            return -1;
+        }
     }
-    std::thread th1(videoWriterProcess);//スレッド起動
+    std::thread th1;
+    if(outputStabilizedVideo){
+        th1 = std::thread(videoWriterProcess);//スレッド起動
+    }
 
     //動画読み込みのマルチスレッド処理の準備
 #if MULTITHREAD_CAPTURE
@@ -1443,7 +1454,7 @@ if(SUBTRACT_OFFSET){
         }
         writer << simg;*/
 
-        {
+        if(outputStabilizedVideo){
             std::lock_guard<std::mutex> lock(buffer.mtx);
             buffer.images.push_back(cv::Mat());
             buffer.images.back() = simg.clone();
@@ -1491,7 +1502,7 @@ if(SUBTRACT_OFFSET){
 
     //動画書き出しのマルチスレッド処理の終了処理
     //書き込みが終わっているか確認
-    {
+    if(outputStabilizedVideo){
         cout << "Waiting for videoWriter." << endl;
         buffer.isWriting = false;
         th1.join();
