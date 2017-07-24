@@ -134,7 +134,7 @@ template <typename T_num> cv::Vec3d Quaternion2Vector(quaternion<T_num> q){
 /**
  * @param シングルローテーションを表すベクトルを回転を表すクォータニオンへ変換
  **/
-template <typename T_num> quaternion<T_num> Vector2Quaternion(cv::Vec3d &w){
+template <typename T_num> quaternion<T_num> Vector2Quaternion(cv::Vec3d w){
     double theta = sqrt(w[0]*w[0]+w[1]*w[1]+w[2]*w[2]);//回転角度を計算、normと等しい
     auto n = w * (1.0/theta);//単位ベクトルに変換
     double sin_theta_2 = sin(theta*0.5);
@@ -218,6 +218,7 @@ template <typename _Tp> quaternion<_Tp> Slerp(quaternion<_Tp> Qfrom, quaternion<
  * @param [in]	IK	"逆"歪係数(k1,k2,p1,p2)
  * @param [in]	matIntrinsic	カメラ行列(fx,fy,cx,cy) [pixel]
  * @param [in]	imageSize	フレーム画像のサイズ[pixel]
+ * @param [in]  adjustmentQuaternion 画面方向を微調整するクォータニオン[rad]
  * @param [out]	vecPorigonn_uv	OpenGLのポリゴン座標(u',v')座標(-1~1)の組、歪補正後の画面を分割した時の一つ一つのポリゴンの頂点の組
  * @param [in]	zoom	倍率[]。拡大縮小しないなら1を指定すること。省略可
  **/
@@ -236,6 +237,7 @@ template <typename _Tp, typename _Tx> void getDistortUnrollingMap(
         cv::Mat &IK,
         cv::Mat &matIntrinsic,
         cv::Size imageSize,
+        quaternion<_Tp> adjustmentQuaternion,
         std::vector<_Tx> &vecPorigonn_uv,
         double zoom
         ){
@@ -285,6 +287,8 @@ template <typename _Tp, typename _Tx> void getDistortUnrollingMap(
         //        auto SQf = Slerp(Qf[gi],Qf[gi+1],gf);	//フィルタ済みの角度クウォータニオンに関して球面線形補間
 
         //        Quaternion2Matrix(conj(SQf)*SQa,R);		//ローリングシャッター補正を含む回転行列を計算
+
+        slerpedAngleQuaternion = adjustmentQuaternion * slerpedAngleQuaternion;
 
         Quaternion2Matrix(slerpedAngleQuaternion,R);
 
@@ -454,13 +458,18 @@ int main(int argc, char** argv){
     int32_t division_y = 9; //画面の縦の分割数
     cv::Size textureSize = cv::Size(2048,2048);
 
+    //画面の補正量
+    float vAngle = 0.f;
+    float hAngle = 0.f;
+    float zoomRatio = 1.f;
     //引数の確認
     char *videoPass = NULL;
     char *csvPass = NULL;
 //    char *outputPass = NULL;
     bool outputStabilizedVideo = false;
     int opt;
-    while((opt = getopt(argc, argv, "i:c:o::")) != -1){
+    while((opt = getopt(argc, argv, "i:c:o::v:h:z:")) != -1){
+        string value1 = optarg;
         switch (opt) {
         case 'i':
             videoPass = optarg;
@@ -471,6 +480,15 @@ int main(int argc, char** argv){
         case 'o':
 //            outputPass = optarg;//NULLの可能性大
             outputStabilizedVideo = true;
+            break;
+        case 'v':
+            vAngle = std::stof(value1);
+            break;
+        case 'h':
+            hAngle = std::stof(value1);
+            break;
+        case 'z':
+            zoomRatio = std::stof(value1);
             break;
         default :
             printf("Use options. -i videofilepass -c csvfilepass.\r\n");
@@ -931,12 +949,13 @@ if(SUBTRACT_OFFSET){
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    //glfwWindowHint( GLFW_VISIBLE, 0 );//オフスクリーンレンダリング。
+    glfwWindowHint( GLFW_VISIBLE, 0 );//オフスクリーンレンダリング。
 
 
     // Open a window and create its OpenGL context
     //    window = glfwCreateWindow( 1280, 720, "Tutorial 0 - Keyboard and Mouse", NULL, NULL);
-    window = glfwCreateWindow( 1920, 1080, "Tutorial 0 - Keyboard and Mouse", glfwGetPrimaryMonitor(), NULL);
+//    window = glfwCreateWindow( 1920, 1080, "Tutorial 0 - Keyboard and Mouse", glfwGetPrimaryMonitor(), NULL);
+    window = glfwCreateWindow( 1920, 1080, "Tutorial 0 - Keyboard and Mouse", NULL, NULL);
 //    window = glfwCreateWindow( 640, 480, "Tutorial 0 - Keyboard and Mouse", glfwGetPrimaryMonitor(), NULL);
     if( window == NULL ){
         fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
@@ -955,8 +974,8 @@ if(SUBTRACT_OFFSET){
         return -1;
     }
 
-    glfwIconifyWindow(window);
-//    glfwHideWindow(window);
+//    glfwIconifyWindow(window);
+    glfwHideWindow(window);
 
     // Ensure we can capture the escape key being pressed below
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
@@ -1225,8 +1244,11 @@ if(SUBTRACT_OFFSET){
         }
         //estimatedAngleQuaternion.push_back(estimatedAngleQuaternion.back()*RotationQuaternion(estimatedAngularVelocity[i]*Tvideo));
 
+        //調整用のクォータニオンを準備
+        quaternion<double> adjustmentQuaternion = Vector2Quaternion<double>(cv::Vec3d(vAngle,hAngle,0.0));
+
         getDistortUnrollingMap(prevDiffAngleQuaternion,currDiffAngleQuaternion,nextDiffAngleQuaternion,
-                               division_x,division_y,0.5,matInvDistort, matIntrinsic, imageSize, vecVtx,ZOOM_RATIO);
+                               division_x,division_y,0.5,matInvDistort, matIntrinsic, imageSize, adjustmentQuaternion,vecVtx,zoomRatio);
         //角度配列の先頭を削除
         angleQuaternion.erase(angleQuaternion.begin());
         //末尾に角度を追加
