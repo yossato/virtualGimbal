@@ -851,8 +851,12 @@ int main(int argc, char** argv){
 
 
     // Open a window and create its OpenGL context
+#define TEST2D
+#ifndef TEST2D
     window = glfwCreateWindow( 1920, 1080, "Tutorial 0 - Keyboard and Mouse", glfwGetPrimaryMonitor(), NULL);
-
+#else
+    window = glfwCreateWindow( 1920, 1080, "Tutorial 0 - Keyboard and Mouse", NULL, NULL);
+#endif
     if( window == NULL ){
         fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
         getchar();
@@ -869,8 +873,9 @@ int main(int argc, char** argv){
         glfwTerminate();
         return -1;
     }
-
+#ifndef TEST2D
     glfwIconifyWindow(window);
+#endif
 //    glfwHideWindow(window);
 
     // Ensure we can capture the escape key being pressed below
@@ -902,7 +907,7 @@ int main(int argc, char** argv){
 
     // Get a handle for our "MVP" uniform
     GLuint MatrixID = glGetUniformLocation(programID, "MVP");
-#define TEST2D
+
 
 #ifndef TEST2D
     // Create one OpenGL texture
@@ -923,8 +928,8 @@ int main(int argc, char** argv){
 
     GLuint textures[2];
     glGenTextures(2, textures);
-    renderedTexture = textures[1];
-    GLuint textureID_0 = textures[0];
+    renderedTexture = textures[0];
+    GLuint textureID_0 = textures[1];
 
     glBindTexture(GL_TEXTURE_2D,textureID_0);
     glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,buff.cols,buff.rows,0,GL_BGR,GL_UNSIGNED_BYTE,buff.data);
@@ -940,6 +945,31 @@ int main(int argc, char** argv){
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
+#ifdef TEST2D
+    // "Bind" the newly created texture : all future texture functions will modify this texture
+    glBindTexture(GL_TEXTURE_2D, renderedTexture);
+
+    // Give an empty image to OpenGL ( the last "0" means "empty" )
+    glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, imageSize.width, imageSize.height, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
+
+    // Poor filtering
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    // Set "renderedTexture" as our colour attachement #0
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, renderedTexture, 0);
+
+    // Set the list of draw buffers.
+    GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+    glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+
+    // Always check that our framebuffer is ok
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
+        return false;
+    }
+#endif
 
     // Load the texture
     //        GLuint Texture = loadDDS("uvtemplate.DDS");
