@@ -902,17 +902,34 @@ int main(int argc, char** argv){
 
     // Get a handle for our "MVP" uniform
     GLuint MatrixID = glGetUniformLocation(programID, "MVP");
+#define TEST2D
 
-    //////////////////
-    ///
+#ifndef TEST2D
     // Create one OpenGL texture
     GLuint textureID_0;
     glGenTextures(1, &textureID_0);
-//    OpenGLに「これから、テクスチャ識別子idに対して指示を与えます」と指示
+    //OpenGLに「これから、テクスチャ識別子idに対して指示を与えます」と指示
     glBindTexture(GL_TEXTURE_2D,textureID_0);
     //テクスチャをここで作成
     glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,buff.cols,buff.rows,0,GL_BGR,GL_UNSIGNED_BYTE,buff.data);
-    //////////////////
+#else
+    // The framebuffer, which regroups 0, 1, or more textures, and 0 or 1 depth buffer.
+    GLuint FramebufferName = 0;
+    glGenFramebuffers(1, &FramebufferName);
+    glBindFramebuffer(GL_FRAMEBUFFER, FramebufferName);
+
+    // The texture we're going to render to
+    GLuint renderedTexture;
+
+    GLuint textures[2];
+    glGenTextures(2, textures);
+    renderedTexture = textures[1];
+    GLuint textureID_0 = textures[0];
+
+    glBindTexture(GL_TEXTURE_2D,textureID_0);
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,buff.cols,buff.rows,0,GL_BGR,GL_UNSIGNED_BYTE,buff.data);
+#endif
+
 
     static const GLfloat border[] = { 0.0, 0.0, 0.0, 0.0 };//背景色
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border);//テクスチャの境界色
