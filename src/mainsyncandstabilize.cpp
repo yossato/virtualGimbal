@@ -457,7 +457,7 @@ int main(int argc, char** argv){
     bool outputStabilizedVideo = false;
     int opt;
     while((opt = getopt(argc, argv, "i:c:o::v:h:z:")) != -1){
-        string value1 = optarg;
+        string value1 ;//= optarg;
         switch (opt) {
         case 'i':
             videoPass = optarg;
@@ -470,12 +470,15 @@ int main(int argc, char** argv){
             outputStabilizedVideo = true;
             break;
         case 'v':
+            value1 = optarg;
             vAngle = std::stof(value1);
             break;
         case 'h':
+            value1 = optarg;
             hAngle = std::stof(value1);
             break;
         case 'z':
+            value1 = optarg;
             zoomRatio = std::stof(value1);
             break;
         default :
