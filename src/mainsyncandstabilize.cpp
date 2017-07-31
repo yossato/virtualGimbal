@@ -338,23 +338,6 @@ template <typename _Tp, typename _Tx> void getDistortUnrollingMap(
     for(int j=0;j<division_y;++j){//jは終了の判定が"<"であることに注意
         for(int i=0;i<division_x;++i){
             //GL_TRIANGLESでGL側へ送信するポリゴンの頂点座標を準備
-            //            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i)[0]);//x座標
-            //            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i)[1]);//y座標
-            //            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j+1,i)[0]);//x座標
-            //            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j+1,i)[1]);//y座標
-            //            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j+1,i+1)[0]);//x座標
-            //            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j+1,i+1)[1]);//y座標
-            //            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i+1)[0]);//x座標
-            //            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i+1)[1]);//y座標
-
-            //            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i)[0]);//x座標
-            //            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i)[1]);//y座標
-            //            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j+1,i)[0]);//x座標
-            //            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j+1,i)[1]);//y座標
-            //            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j+1,i+1)[0]);//x座標
-            //            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j+1,i+1)[1]);//y座標
-            //            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i+1)[0]);//x座標
-            //            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i+1)[1]);//y座標
             vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i)[0]);//x座標
             vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i)[1]);//y座標
             vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i+1)[0]);//x座標
@@ -702,11 +685,6 @@ int main(int argc, char** argv){
     }else if(minPosition == (lengthDiff-1)){//末尾
         subframeOffset = (double)(lengthDiff -1);
     }else{					//その他
-        //        if(correlationCoefficients[minPosition-1] >= correlationCoefficients[minPosition+1]){
-        //            subframeOffset = (correlationCoefficients[minPosition-1] - correlationCoefficients[minPosition+1])/(2*correlationCoefficients[minPosition-1]-2*correlationCoefficients[minPosition]);
-        //        }else{
-        //            subframeOffset = -(correlationCoefficients[minPosition+1]-correlationCoefficients[minPosition-1])/(2*correlationCoefficients[minPosition+1]-2*correlationCoefficients[minPosition]);
-        //        }
         subframeOffset = -(correlationCoefficients[minPosition+1]-correlationCoefficients[minPosition-1])/(2*correlationCoefficients[minPosition-1]-4*correlationCoefficients[minPosition]+2*correlationCoefficients[minPosition+1]);
     }
 
@@ -737,12 +715,6 @@ int main(int argc, char** argv){
         cout << "position"<<minPosition+subframeOffset+d<<" minimum correlationCoefficients:" << sum << endl;
     }
     ////試行錯誤的に入れ替える
-    //    for(auto &el:angularVelocityIn60Hz){
-    //        auto temp = el;
-    //        el[0] = temp[0];
-    //        el[1] = temp[1];
-    //        el[2] = temp[2];
-    //    }
 
     //同期が取れている角速度を出力する関数を定義
     auto angularVelocitySync = [&angularVelocityIn60Hz, Tvideo, Tav, minPosition, subframeOffset](int32_t frame){
@@ -848,89 +820,10 @@ int main(int argc, char** argv){
             prevVec = curVec;
         }
         smoothedAngleQuaternion = Vector2Quaternion<double>(sum);
-        //currDiffAngleQuaternion = conj(smoothedAngleQuaternion)*angleQuaternion[halfLength];
-        //        currDiffAngleQuaternion = conj(quaternion<double>(1,0,0,0))*angleQuaternion[halfLength];
-        //angleQuaternion.erase(angleQuaternion.begin());
-        //angleQuaternion.push_back(angleQuaternion.back()*RotationQuaternion(angularVelocitySync(halfLength)*Tvideo));
     }
 
     prevDiffAngleQuaternion = conj(smoothedAngleQuaternion)*angleQuaternion[halfLength];
     currDiffAngleQuaternion = conj(smoothedAngleQuaternion)*angleQuaternion[halfLength];
-
-    /*    quaternion<double> prevSmoothedAngleQuaternion;
-    {   //IIR平滑化
-        cv::Vec3d prevVec = Quaternion2Vector(angleQuaternion[0]);
-        cv::Vec3d sum(0.0, 0.0, 0.0);
-        for(int32_t j=0,f=FIRcoeffs[filterNumber].size();j<f;++j){
-            cv::Vec3d curVec = Quaternion2Vector(angleQuaternion[j],prevVec);
-            sum += FIRcoeffs[filterNumber][j]*curVec;
-            prevVec = curVec;
-        }
-        prevSmoothedAngleQuaternion = Vector2Quaternion<double>(sum);
-        prevDiffAngleQuaternion = conj(prevSmoothedAngleQuaternion)*angleQuaternion[halfLength];
-        angleQuaternion.erase(angleQuaternion.begin());
-        angleQuaternion.push_back(angleQuaternion.back()*RotationQuaternion(angularVelocitySync(halfLength-1)*Tvideo));
-    }
-    quaternion<double> currSmoothedAngleQuaternion;
-    {   //IIR平滑化
-        cv::Vec3d prevVec = Quaternion2Vector(angleQuaternion[0]);
-        cv::Vec3d sum(0.0, 0.0, 0.0);
-        for(int32_t j=0,f=FIRcoeffs[filterNumber].size();j<f;++j){
-            cv::Vec3d curVec = Quaternion2Vector(angleQuaternion[j],prevVec);
-            sum += FIRcoeffs[filterNumber][j]*curVec;
-            prevVec = curVec;
-        }
-        currSmoothedAngleQuaternion = Vector2Quaternion<double>(sum);
-        currDiffAngleQuaternion = conj(currSmoothedAngleQuaternion)*angleQuaternion[halfLength];
-        angleQuaternion.erase(angleQuaternion.begin());
-        angleQuaternion.push_back(angleQuaternion.back()*RotationQuaternion(angularVelocitySync(halfLength)*Tvideo));
-    }
-    quaternion<double> nextSmoothedAngleQuaternion;*/
-
-    //動画の最初から最後まで
-    //    printf(",sx,sy,sz,ax,ay,az,dx,dy,dz\r\n");
-
-    /*    std::vector<GLfloat> vecVtx;					//頂点座標
-    for(int32_t i=0,e=Capture->get(CV_CAP_PROP_FRAME_COUNT);i<e;++i){
-
-        //IIR平滑化
-        cv::Vec3d prevVec = Quaternion2Vector(angleQuaternion[0]);
-        cv::Vec3d sum(0.0, 0.0, 0.0);
-        for(int32_t j=0,f=FIRcoeffs[filterNumber].size();j<f;++j){
-            cv::Vec3d curVec = Quaternion2Vector(angleQuaternion[j],prevVec);
-            sum += FIRcoeffs[filterNumber][j]*curVec;
-            prevVec = curVec;
-        }
-        nextSmoothedAngleQuaternion = Vector2Quaternion<double>(sum);
-        nextDiffAngleQuaternion = conj(nextSmoothedAngleQuaternion)*angleQuaternion[halfLength];
-
-        //試しに表示
-        if(1){
-            static int framen=0;
-            cv::Vec3d s = Quaternion2Vector(currSmoothedAngleQuaternion);
-            cv::Vec3d a = Quaternion2Vector(angleQuaternion[halfLength]);
-            cv::Vec3d d = Quaternion2Vector(currDiffAngleQuaternion);
-            printf("%d,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f\r\n",framen,s[0],s[1],s[2],a[0],a[1],a[2],d[0],d[1],d[2]);
-            currSmoothedAngleQuaternion = nextSmoothedAngleQuaternion;
-            framen++;
-        }
-
-
-        getDistortUnrollingMap(prevDiffAngleQuaternion,currDiffAngleQuaternion,nextDiffAngleQuaternion,
-                               division_x,division_y,0,matInvDistort, matIntrinsic, imageSize, vecVtx,1.0);
-//                for(auto el:vecVtx) cout << el << endl;
-
-        //角度配列の先頭を削除
-        angleQuaternion.erase(angleQuaternion.begin());
-        //末尾に角度を追加
-        angleQuaternion.push_back(angleQuaternion.back()*RotationQuaternion(angularVelocitySync(i+halfLength+2)*Tvideo));
-
-        //補正量を保存
-        prevDiffAngleQuaternion = currDiffAngleQuaternion;
-        currDiffAngleQuaternion = nextDiffAngleQuaternion;
-    }*/
-
-    //-------------------//
 
 
     cv::Mat buff(textureSize.height,textureSize.width,CV_8UC3);//テクスチャ用Matを準備
@@ -958,11 +851,7 @@ int main(int argc, char** argv){
 
 
     // Open a window and create its OpenGL context
-    //    window = glfwCreateWindow( 1280, 720, "Tutorial 0 - Keyboard and Mouse", NULL, NULL);
-
     window = glfwCreateWindow( 1920, 1080, "Tutorial 0 - Keyboard and Mouse", glfwGetPrimaryMonitor(), NULL);
-//    window = glfwCreateWindow( 1920, 1080, "Tutorial 0 - Keyboard and Mouse", NULL, NULL);
-//    window = glfwCreateWindow( 640, 480, "Tutorial 0 - Keyboard and Mouse", glfwGetPrimaryMonitor(), NULL);
 
     if( window == NULL ){
         fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
@@ -1014,63 +903,6 @@ int main(int argc, char** argv){
     // Get a handle for our "MVP" uniform
     GLuint MatrixID = glGetUniformLocation(programID, "MVP");
 
-    /////////////////////
-    //Render to Texture//
-    /////////////////////
-
-    // The framebuffer, which regroups 0, 1, or more textures, and 0 or 1 depth buffer.
-    GLuint FramebufferName = 0;
-    glGenFramebuffers(1, &FramebufferName);
-    glBindFramebuffer(GL_FRAMEBUFFER, FramebufferName);
-
-    // The texture we're going to render to
-    GLuint renderedTexture;
-    glGenTextures(1, &renderedTexture);
-
-    // "Bind" the newly created texture : all future texture functions will modify this texture
-    glBindTexture(GL_TEXTURE_2D, renderedTexture);
-
-    // Give an empty image to OpenGL ( the last "0" means "empty" )
-    glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, imageSize.width, imageSize.height, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
-
-    // Poor filtering
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-    // The depth buffer
-    GLuint depthrenderbuffer;
-    glGenRenderbuffers(1, &depthrenderbuffer);
-    glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, imageSize.width, imageSize.height);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
-
-    //// Alternative : Depth texture. Slower, but you can sample it later in your shader
-    //GLuint depthTexture;
-    //glGenTextures(1, &depthTexture);
-    //glBindTexture(GL_TEXTURE_2D, depthTexture);
-    //glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT24, 1024, 768, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-    // Set "renderedTexture" as our colour attachement #0
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, renderedTexture, 0);
-
-    //// Depth texture alternative :
-    //glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthTexture, 0);
-
-
-    // Set the list of draw buffers.
-    GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
-    glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
-
-    // Always check that our framebuffer is ok
-    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        return false;
-
     //////////////////
     ///
     // Create one OpenGL texture
@@ -1085,14 +917,8 @@ int main(int argc, char** argv){
     static const GLfloat border[] = { 0.0, 0.0, 0.0, 0.0 };//背景色
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border);//テクスチャの境界色
     //テクスチャの繰り返しの設定
-    //        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    //        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-
-    //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    //    glGenerateMipmap(GL_TEXTURE_2D);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -1104,42 +930,6 @@ int main(int argc, char** argv){
     // Get a handle for our "myTextureSampler" uniform
     GLuint TextureID  = glGetUniformLocation(programID, "myTextureSampler");
 
-    // Our vertices. Tree consecutive floats give a 3D vertex; Three consecutive vertices give a triangle.
-    // A cube has 6 faces with 2 triangles each, so this makes 6*2=12 triangles, and 12*3 vertices
-    /*static const GLfloat g_vertex_buffer_data[] = {
-        -1.0f,  1.0f,
-        -1.0f, -1.0f,
-        1.0f, 1.0f,
-
-
-        -1.0f, -1.0f,
-        1.0f,  -1.0f,
-        1.0f, 1.0f,
-    };*/
-
-    // Two UV coordinatesfor each vertex. They were created with Blender.
-    //    static const GLfloat g_uv_buffer_data[] = {
-    //        0.0f, (float)imageSize.height/(float)textureSize.height,
-    //        0.0f, 0.0f,
-    //        (float)imageSize.width/(float)textureSize.width, (float)imageSize.height/(float)textureSize.height,
-
-
-    //        0.0f, 0.0f,
-    //        (float)imageSize.width/(float)textureSize.width, 0.0f,
-    //        (float)imageSize.width/(float)textureSize.width, (float)imageSize.height/(float)textureSize.height,
-
-    //    };
-    //        static const GLfloat g_uv_buffer_data[] = {
-    //            0.0f, 1.0f,
-    //            0.0f, 0.0f,
-    //            1.0f, 1.0f,
-
-
-    //            0.0f, 0.0f,
-    //            1.0f, 0.0f,
-    //            1.0f, 1.0f,
-
-    //        };
 
     std::vector<GLfloat> vecTexture;
     for(int j=0;j<division_y;++j){							//jは終了の判定が"<"であることに注意
@@ -1149,23 +939,6 @@ int main(int argc, char** argv){
             double u	= (double)i/division_x*imageSize.width;
             double u1	= (double)(i+1)/division_x*imageSize.width;
             //OpenGL側へ送信するテクスチャの頂点座標を準備
-            //            vecTexture.push_back((GLfloat)u/textureSize.width);//x座標
-            //            vecTexture.push_back((GLfloat)v/textureSize.height);//y座標
-            //            vecTexture.push_back((GLfloat)u/textureSize.width);//x座標
-            //            vecTexture.push_back((GLfloat)v1/textureSize.height);//y座標
-            //            vecTexture.push_back((GLfloat)u1/textureSize.width);//x座標
-            //            vecTexture.push_back((GLfloat)v1/textureSize.height);//y座標
-            //            vecTexture.push_back((GLfloat)u1/textureSize.width);//x座標
-            //            vecTexture.push_back((GLfloat)v/textureSize.height);//y座標
-
-            //            vecTexture.push_back((GLfloat)u/textureSize.width);//x座標
-            //            vecTexture.push_back((GLfloat)v/textureSize.height);//y座標
-            //            vecTexture.push_back((GLfloat)u/textureSize.width);//x座標
-            //            vecTexture.push_back((GLfloat)v1/textureSize.height);//y座標
-            //            vecTexture.push_back((GLfloat)u1/textureSize.width);//x座標
-            //            vecTexture.push_back((GLfloat)v1/textureSize.height);//y座標
-            //            vecTexture.push_back((GLfloat)u1/textureSize.width);//x座標
-            //            vecTexture.push_back((GLfloat)v/textureSize.height);//y座標
             vecTexture.push_back((GLfloat)u/textureSize.width);//x座標
             vecTexture.push_back((GLfloat)v/textureSize.height);//y座標
             vecTexture.push_back((GLfloat)u1/textureSize.width);//x座標
@@ -1232,19 +1005,7 @@ int main(int argc, char** argv){
 
         //モーションインペインティング用の位置を検索
         int32_t mipFrame = 0;//0は適するフレームがないことを示す
-        /*for(int32_t j=1;j<PREFETCH_LENGTH/2;++j){//1から開始することに注意
-            double pnorm = cv::norm(Quaternion2Vector(conj(smoothedAngleQuaternion)*angleQuaternion[halfLength+j]));
-            if(pnorm < MIP_ANGLE_THRES){
-                mipFrame = j;
-                break;
-            }
 
-            double nnorm = cv::norm(Quaternion2Vector(conj(smoothedAngleQuaternion)*angleQuaternion[halfLength-j]));
-            if(nnorm < MIP_ANGLE_THRES){
-                mipFrame = -j;
-                break;
-            }
-        }*/
         std::vector<float> norms(PREFETCH_LENGTH);
         //まずすべてのnormを計算
         for(int32_t j=0;j<PREFETCH_LENGTH;++j){
@@ -1272,9 +1033,9 @@ int main(int argc, char** argv){
 
         //調整用のクォータニオンを準備
         quaternion<double> adjustmentQuaternion = Vector2Quaternion<double>(cv::Vec3d(vAngle,hAngle,0.0));
-        cout << "adjustmentQuaternion:" << adjustmentQuaternion << endl;
-        cout << "vAngle:" << vAngle << endl;
-        cout << "hAngle:" << hAngle << endl;
+//        cout << "adjustmentQuaternion:" << adjustmentQuaternion << endl;
+//        cout << "vAngle:" << vAngle << endl;
+//        cout << "hAngle:" << hAngle << endl;
         getDistortUnrollingMap(prevDiffAngleQuaternion,currDiffAngleQuaternion,nextDiffAngleQuaternion,
                                division_x,division_y,0.5,matInvDistort, matIntrinsic, imageSize, adjustmentQuaternion,vecVtx,zoomRatio);
         //角度配列の先頭を削除
@@ -1293,32 +1054,9 @@ int main(int argc, char** argv){
         smoothedAngleQuaternion = Vector2Quaternion<double>(sum);
 
 
-        ///////////////////
-        //Rander to Texture
-        ///////////////////
-
-        // Render to our framebuffer
-        glBindFramebuffer(GL_FRAMEBUFFER, FramebufferName);
-        glViewport(0,0,imageSize.width,imageSize.height); // Render on the whole framebuffer, complete from the lower left corner to the upper right
-
-
         //補正量を保存
         prevDiffAngleQuaternion = currDiffAngleQuaternion;
         currDiffAngleQuaternion = nextDiffAngleQuaternion;
-        //glDeleteBuffers(1, &vertexbuffer);
-        //glGenBuffers(1, &vertexbuffer);
-
-        //動画の読み込み
-
-        //        *Capture >> img;
-        //sCapture.getFrame(i,img);
-
-        //ここで文字を書く
-        //        string text = std::to_string(i);
-        //        cv::putText(img,text,cv::Point(640,640),cv::FONT_HERSHEY_SCRIPT_SIMPLEX,5,cv::Scalar(0,0,255));
-
-        //        glBindTexture(GL_TEXTURE_2D,textureID_0);
-        //        glTexSubImage2D(GL_TEXTURE_2D,0,0,0,img.cols,img.rows,GL_BGR,GL_UNSIGNED_BYTE,img.data);
 
         // Clear the screen
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1326,15 +1064,8 @@ int main(int argc, char** argv){
         // Use our shader
         glUseProgram(programID);
 
-        // Compute the MVP matrix from keyboard and mouse input
-        //            computeMatricesFromInputs();
-        //            glm::mat4 ProjectionMatrix = getProjectionMatrix();
-        //            glm::mat4 ViewMatrix = getViewMatrix();
-        //            glm::mat4 ModelMatrix = glm::mat4(1.0);
-        //            glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
         glm::mat4 MVP = glm::mat4(1.0f);//動画保存用
-        //        glm::mat4 MVP = glm::rotate<float>(glm::mat4x4(),(float)M_PI,glm::vec3(0.0f,0.0f,1.0f));//画面表示用
         // Send our transformation to the currently bound shader,
         // in the "MVP" uniform
         glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
@@ -1503,20 +1234,8 @@ int main(int argc, char** argv){
       glGetTexImage(GL_TEXTURE_2D,0,GL_BGR,GL_UNSIGNED_BYTE,simg.data);
 #endif
 
-        cv::Mat simg2;
-        //        cv::resize(simg,simg2,cv::Size(),0.5,0.5,cv::INTER_NEAREST);
-        //        cv::imshow("Stabilized Image2",simg2);
         cv::imshow("Stabilized Image2",simg);
         char key =cv::waitKey(1);
-        //video writer
-        /*std::string outputPass= videoPass;
-        outputPass = outputPass + "_deblured.avi";
-        static cv::VideoWriter writer(outputPass,CV_FOURCC('F', 'M', 'P', '4'),1/Tvideo,cv::Size(imageSize.width,imageSize.height),true);
-        if(!writer.isOpened()){
-            printf("Error:Can't Open Video Writer.");
-            return -1;
-        }
-        writer << simg;*/
 
         if(outputStabilizedVideo){
             std::lock_guard<std::mutex> lock(buffer.mtx);
