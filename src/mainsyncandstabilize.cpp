@@ -840,6 +840,7 @@ int main(int argc, char** argv){
         return -1;
     }
 
+#define TEST2D
 
     glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -847,11 +848,15 @@ int main(int argc, char** argv){
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+#ifdef TEST2D
+    glfwWindowHint( GLFW_VISIBLE, 0 );//オフスクリーンレンダリング。
+#endif
+
 //    glfwWindowHint( GLFW_VISIBLE, 0 );//オフスクリーンレンダリング。
 
 
     // Open a window and create its OpenGL context
-#define TEST2D
+
 #ifndef TEST2D
     window = glfwCreateWindow( 1920, 1080, "Tutorial 0 - Keyboard and Mouse", glfwGetPrimaryMonitor(), NULL);
 #else
@@ -1143,6 +1148,11 @@ int main(int argc, char** argv){
         sCapture.getFrame(i,img);
 #endif
 
+#ifdef TEST2D
+        // Bind our texture in Texture Unit 0
+        glActiveTexture(GL_TEXTURE0);
+#endif
+
         // Bind our texture in Texture Unit 0
         //        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureID_0);//            glBindTexture(GL_TEXTURE_2D, Texture);
@@ -1187,8 +1197,7 @@ int main(int argc, char** argv){
         // Draw the triangle !
         glDrawArrays(GL_TRIANGLES, 0, vecVtx.size()*2); // 12*3 indices starting at 0 -> 12 triangles
 
-        glDisableVertexAttribArray(0);
-        glDisableVertexAttribArray(1);
+
 
 
 
@@ -1290,6 +1299,9 @@ int main(int argc, char** argv){
       cv::Mat simg(textureSize,CV_8UC3);
       glGetTexImage(GL_TEXTURE_2D,0,GL_BGR,GL_UNSIGNED_BYTE,simg.data);
 #endif
+
+      glDisableVertexAttribArray(0);
+      glDisableVertexAttribArray(1);
 
         cv::imshow("Stabilized Image2",simg);
         char key =cv::waitKey(1);
