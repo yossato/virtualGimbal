@@ -1016,12 +1016,60 @@ int main(int argc, char** argv){
     glGenFramebuffers(1, &FramebufferName);
     glBindFramebuffer(GL_FRAMEBUFFER, FramebufferName);
 
+    // The texture we're going to render to
+    GLuint renderedTexture;
+    glGenTextures(1, &renderedTexture);
+
+    // "Bind" the newly created texture : all future texture functions will modify this texture
+    glBindTexture(GL_TEXTURE_2D, renderedTexture);
+
+    // Give an empty image to OpenGL ( the last "0" means "empty" )
+    glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, imageSize.width, imageSize.height, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
+
+    // Poor filtering
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    // The depth buffer
+    GLuint depthrenderbuffer;
+    glGenRenderbuffers(1, &depthrenderbuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, imageSize.width, imageSize.height);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
+
+    //// Alternative : Depth texture. Slower, but you can sample it later in your shader
+    //GLuint depthTexture;
+    //glGenTextures(1, &depthTexture);
+    //glBindTexture(GL_TEXTURE_2D, depthTexture);
+    //glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT24, 1024, 768, 0,GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    // Set "renderedTexture" as our colour attachement #0
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, renderedTexture, 0);
+
+    //// Depth texture alternative :
+    //glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthTexture, 0);
+
+
+    // Set the list of draw buffers.
+    GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+    glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+
+    // Always check that our framebuffer is ok
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        return false;
+
     //////////////////
     ///
     // Create one OpenGL texture
     GLuint textureID_0;
     glGenTextures(1, &textureID_0);
-    //OpenGLに「これから、テクスチャ識別子idに対して指示を与えます」と指示
+//    OpenGLに「これから、テクスチャ識別子idに対して指示を与えます」と指示
     glBindTexture(GL_TEXTURE_2D,textureID_0);
     //テクスチャをここで作成
     glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,buff.cols,buff.rows,0,GL_BGR,GL_UNSIGNED_BYTE,buff.data);
@@ -1156,47 +1204,6 @@ int main(int argc, char** argv){
     GLuint nFxyID       = glGetUniformLocation(programID, "normalizedFocalLength");
     GLuint nCxyID       = glGetUniformLocation(programID, "normalizedOpticalCenter");
     GLuint distCoeffID  = glGetUniformLocation(programID, "distortionCoeffs");
-    //        float nfxy[] = {(float)(matIntrinsic.at<double>(0,0)/imageSize.width), (float)(matIntrinsic.at<double>(1,1)/imageSize.height)};
-    //        glUniform2fv(nFxyID, 1, nfxy);
-    //        float ncxy[] = {(float)(matIntrinsic.at<double>(0,2)/imageSize.width), (float)(matIntrinsic.at<double>(1,2)/imageSize.height)};
-    //        glUniform2fv(nCxyID, 1, ncxy);
-    //        float distcoeffFloat[] = {(float)(matIntrinsic.at<double>(0,0)),(float)(matIntrinsic.at<double>(0,1)),(float)(matIntrinsic.at<double>(0,2)),(float)(matIntrinsic.at<double>(0,3))};
-    //        glUniform4fv(distCoeffID, 1, distcoeffFloat);
-
-
-    /*std::vector<GLfloat> vecTexture;
-    for(int j=0;j<division_y;++j){							//jは終了の判定が"<"であることに注意
-        double v	= (double)j/division_y*imageSize.height;
-        double v1	= (double)(j+1)/division_y*imageSize.height;
-        for(int i=0;i<division_x;++i){
-            double u	= (double)i/division_x*imageSize.width;
-            double u1	= (double)(i+1)/division_x*imageSize.width;
-            //OpenGL側へ送信するテクスチャの頂点座標を準備
-            vecTexture.push_back((GLfloat)u/imageSize.width);//x座標
-            vecTexture.push_back((GLfloat)v/imageSize.height);//y座標
-            vecTexture.push_back((GLfloat)u/imageSize.width);//x座標
-            vecTexture.push_back((GLfloat)v1/imageSize.height);//y座標
-            //                vecTexture.push_back((GLfloat)u1/TEXTURE_W);//x座標
-            //                vecTexture.push_back((GLfloat)v1/imageSize.height);//y座標
-            vecTexture.push_back((GLfloat)u1/imageSize.width);//x座標
-            vecTexture.push_back((GLfloat)v/imageSize.height);//y座標
-
-            //                vecTexture.push_back((GLfloat)u/TEXTURE_W);//x座標
-            //                vecTexture.push_back((GLfloat)v/TEXTURE_H);//y座標
-            vecTexture.push_back((GLfloat)u/imageSize.width);//x座標
-            vecTexture.push_back((GLfloat)v1/imageSize.height);//y座標
-            vecTexture.push_back((GLfloat)u1/imageSize.width);//x座標
-            vecTexture.push_back((GLfloat)v1/imageSize.height);//y座標
-            vecTexture.push_back((GLfloat)u1/imageSize.width);//x座標
-            vecTexture.push_back((GLfloat)v/imageSize.height);//y座標
-        }
-    }*/
-
-
-    //画像から得た角速度を角度クォータニオンに変換してみる
-    //estimatedAngularVelocity
-    //vector<quaternion<double>> estimatedAngleQuaternion;
-    //estimatedAngleQuaternion.push_back(quaternion<double>(1,0,0,0));
 
 
     printf(",sx,sy,sz,ax,ay,az,dx,dy,dz,ex,ey,ez\r\n");
@@ -1465,13 +1472,13 @@ int main(int argc, char** argv){
 
 #endif
 
-#if 0
+#if 1
         ////////////////////
         cv::Mat simg(imageSize,CV_8UC3);
         //~ glReadBuffer(GL_FRONT);//読み取るOpenGLのバッファを指定 GL_FRONT:フロントバッファ GL_BACK:バックバッファ
 
 
-        glReadBuffer(GL_BACK);//読み取るOpenGLのバッファを指定 GL_FRONT:フロントバッファ GL_BACK:バックバッファ
+//        glReadBuffer(GL_BACK);//読み取るOpenGLのバッファを指定 GL_FRONT:フロントバッファ GL_BACK:バックバッファ
         // OpenGLで画面に描画されている内容をバッファに格納
         glReadPixels(
                     0,					//読み取る領域の左下隅のx座標
