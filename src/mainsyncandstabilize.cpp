@@ -136,9 +136,14 @@ template <typename T_num> cv::Vec3d Quaternion2Vector(quaternion<T_num> q){
  **/
 template <typename T_num> quaternion<T_num> Vector2Quaternion(cv::Vec3d w){
     double theta = sqrt(w[0]*w[0]+w[1]*w[1]+w[2]*w[2]);//回転角度を計算、normと等しい
-    auto n = w * (1.0/theta);//単位ベクトルに変換
-    double sin_theta_2 = sin(theta*0.5);
-    return quaternion<double>(cos(theta*0.5),n[0]*sin_theta_2,n[1]*sin_theta_2,n[2]*sin_theta_2);
+    //0割を回避するためにマクローリン展開
+    if(theta > EPS){
+        auto n = w * (1.0/theta);//単位ベクトルに変換
+        double sin_theta_2 = sin(theta*0.5);
+        return quaternion<double>(cos(theta*0.5),n[0]*sin_theta_2,n[1]*sin_theta_2,n[2]*sin_theta_2);
+    }else{
+        return quaternion<double>(1.0,0.5*w[0],0.5*w[1],0.5*w[2]);
+    }
 }
 
 /**
@@ -949,14 +954,16 @@ int main(int argc, char** argv){
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    glfwWindowHint( GLFW_VISIBLE, 0 );//オフスクリーンレンダリング。
+//    glfwWindowHint( GLFW_VISIBLE, 0 );//オフスクリーンレンダリング。
 
 
     // Open a window and create its OpenGL context
     //    window = glfwCreateWindow( 1280, 720, "Tutorial 0 - Keyboard and Mouse", NULL, NULL);
-    //    window = glfwCreateWindow( 1920, 1080, "Tutorial 0 - Keyboard and Mouse", glfwGetPrimaryMonitor(), NULL);
-    window = glfwCreateWindow( 1920, 1080, "Tutorial 0 - Keyboard and Mouse", NULL, NULL);
-    //    window = glfwCreateWindow( 640, 480, "Tutorial 0 - Keyboard and Mouse", glfwGetPrimaryMonitor(), NULL);
+
+    window = glfwCreateWindow( 1920, 1080, "Tutorial 0 - Keyboard and Mouse", glfwGetPrimaryMonitor(), NULL);
+//    window = glfwCreateWindow( 1920, 1080, "Tutorial 0 - Keyboard and Mouse", NULL, NULL);
+//    window = glfwCreateWindow( 640, 480, "Tutorial 0 - Keyboard and Mouse", glfwGetPrimaryMonitor(), NULL);
+
     if( window == NULL ){
         fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
         getchar();
@@ -974,8 +981,8 @@ int main(int argc, char** argv){
         return -1;
     }
 
-    //    glfwIconifyWindow(window);
-    glfwHideWindow(window);
+    glfwIconifyWindow(window);
+//    glfwHideWindow(window);
 
     // Ensure we can capture the escape key being pressed below
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
@@ -1265,7 +1272,9 @@ int main(int argc, char** argv){
 
         //調整用のクォータニオンを準備
         quaternion<double> adjustmentQuaternion = Vector2Quaternion<double>(cv::Vec3d(vAngle,hAngle,0.0));
-
+        cout << "adjustmentQuaternion:" << adjustmentQuaternion << endl;
+        cout << "vAngle:" << vAngle << endl;
+        cout << "hAngle:" << hAngle << endl;
         getDistortUnrollingMap(prevDiffAngleQuaternion,currDiffAngleQuaternion,nextDiffAngleQuaternion,
                                division_x,division_y,0.5,matInvDistort, matIntrinsic, imageSize, adjustmentQuaternion,vecVtx,zoomRatio);
         //角度配列の先頭を削除
