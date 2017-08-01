@@ -21,7 +21,7 @@ OpenGL 3.3 or later
 Download [Example Video](https://drive.google.com/open?id=0B9nCHvB3LdAxZWNKdmdxMTFzam8) and [Angular Velocity data](https://drive.google.com/open?id=0B9nCHvB3LdAxTHB1dk0zMkZWbDQ).
 
 Demo:  
-`./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/anglarVelocity.csv`  
+`./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/angularVelocity.csv`
   
 Generating stabilized video:  
 `./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/anglarVelocity.csv -o`  
@@ -69,7 +69,7 @@ cmake .. -DWITH_TBB=ON -DWITH_QT=ON -DWITH_OPENGL=ON -DWITH_VTK=ON
 make -j4  
 sudo make install  
  
-    sudo sh -c "echo /usr/local/lib >> /etc/ld.so.conf.d/opencv.conf"  
+    sudo sh -c "echo /usr/local/lib >> /etc/ld.so.conf.d/opencv.conf"  
 sudo sh -c "echo PKG_CONFIG_PATH=\\\$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig >> /etc/bash.bashrc"  
 sudo sh -c "echo export PKG_CONFIG_PATH >> /etc/bash.bashrc"  
 ```
