@@ -13,6 +13,7 @@ template <typename _Tp> extern double SSD_Quaternion(double ti, double ts, std::
 template <typename _Tp> extern quaternion<_Tp> Slerp(quaternion<_Tp> Qfrom, quaternion<_Tp> Qto, _Tp t);
 template <typename T_num> extern cv::Vec3d Quaternion2Vector(quaternion<T_num> q);
 template <typename T_num> extern cv::Vec3d Quaternion2Vector(quaternion<T_num> q, cv::Vec3d prev);
+template <typename T_num> quaternion<T_num> Vector2Quaternion(cv::Vec3d w);
 template <typename T_num> extern void Quaternion2Matrix(quaternion<T_num> q, cv::Mat &det);
 // Generic functor
 template<typename _Scalar, int NX=Dynamic, int NY=Dynamic>
