@@ -92,13 +92,21 @@ sudo make install
 
 ## Build
 ```
+cd
 git clone http://github.com/yossato/virtualGimbal  
 cd virtualGimbal  
 mkdir build  
 cd build  
 cmake ..  
-make  
+make
 ```
+
+### Copy setting files
+```
+cd ~/virtualGimbal
+cp *.txt *.fragmentshader *.vertexshader build/
+```
+
 ## Contribution
 
 ## Licence

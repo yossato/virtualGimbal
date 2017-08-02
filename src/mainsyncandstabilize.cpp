@@ -2,7 +2,8 @@
 #include <iostream>
 #include <string>
 #include <opencv2/opencv.hpp>
-
+#include <sstream>
+#include <iomanip>
 //Quartanion
 #include <boost/math/quaternion.hpp>
 using namespace boost::math;
@@ -450,39 +451,58 @@ int main(int argc, char** argv){
     float vAngle = 0.f;
     float hAngle = 0.f;
     float zoomRatio = 1.f;
+    double rollingShutterDuration = 0; //rolling shutter duration [frame]
+    int32_t lowPassFilterStrength = 3;
     //引数の確認
     char *videoPass = NULL;
     char *csvPass = NULL;
     //    char *outputPass = NULL;
     bool outputStabilizedVideo = false;
     int opt;
-    while((opt = getopt(argc, argv, "i:c:o::v:h:z:")) != -1){
+    while((opt = getopt(argc, argv, "i:c:o::v:h:z:r:f:")) != -1){
         string value1 ;//= optarg;
         switch (opt) {
-        case 'i':
+        case 'i':       //input video file pass
             videoPass = optarg;
             break;
-        case 'c':
+        case 'c':       //input angular velocity csv file pass
             csvPass = optarg;
             break;
-        case 'o':
-            //            outputPass = optarg;//NULLの可能性大
+        case 'o':       //output
             outputStabilizedVideo = true;
             break;
-        case 'v':
+        case 'v':       //vertical position adjustment [rad], default 0
             value1 = optarg;
             vAngle = std::stof(value1);
             break;
-        case 'h':
+        case 'h':       //horizontal position adjustment [rad], default 0
             value1 = optarg;
             hAngle = std::stof(value1);
             break;
-        case 'z':
+        case 'z':       //zoom ratio, dafault 1.0
             value1 = optarg;
             zoomRatio = std::stof(value1);
             break;
+        case 'r':       //rolling shutter duration [frame]. This should be between -1 and 1.
+            value1 = optarg;
+            rollingShutterDuration = std::stof(value1);
+            if(rollingShutterDuration > 1.0){
+                rollingShutterDuration = 1.0;
+            }else if(rollingShutterDuration < -1.0){
+                rollingShutterDuration = -1.0;
+            }
+            break;
+        case 'f':       //Low pass filter strength of a camera shake reduction.
+                        //Larger is strong filter. This parameter must be integer.
+                        //Default 3.
+            value1 = optarg;
+            lowPassFilterStrength = std::stoi(value1);
+            break;
         default :
-            printf("Use options. -i videofilepass -c csvfilepass.\r\n");
+            printf(     "virtualGimbal\r\n"
+                        "Hyper fast video stabilizer\r\n\r\n"
+                        "usage: virtualGimbal [-i video] [-f angularVelocity] [[output option] -o] [options]\r\n"
+                        );
             return 1;
         }
     }
@@ -763,7 +783,7 @@ int main(int argc, char** argv){
                         };
 
     std::vector<std::vector<double>> FIRcoeffs;
-    int32_t filterNumber = 3;
+//    int32_t lowPassFilterStrength = 3;
     for(int i=0;i<12;i++){
         std::vector<double> temp;
         if(ReadCoeff(temp,coeffs[i])){
@@ -783,7 +803,7 @@ int main(int argc, char** argv){
     angleQuaternion.push_back(quaternion<double>(1,0,0,0));
 
     //FIRフィルタに食わせやすいように位置を合わせて角度を計算する
-    int32_t halfLength = floor(FIRcoeffs[filterNumber].size()/2);
+    int32_t halfLength = floor(FIRcoeffs[lowPassFilterStrength].size()/2);
     for(int frame=-halfLength,e=halfLength;frame<e;frame++){
         cout << "frame:" << frame << "av:" << angularVelocitySync(frame) << endl;
         angleQuaternion.push_back(angleQuaternion.back()*RotationQuaternion(angularVelocitySync(frame)*Tvideo));
@@ -817,9 +837,9 @@ int main(int argc, char** argv){
     {   //IIR平滑化
         cv::Vec3d prevVec = Quaternion2Vector(angleQuaternion[0]);
         cv::Vec3d sum(0.0, 0.0, 0.0);
-        for(int32_t j=0,f=FIRcoeffs[filterNumber].size();j<f;++j){
+        for(int32_t j=0,f=FIRcoeffs[lowPassFilterStrength].size();j<f;++j){
             cv::Vec3d curVec = Quaternion2Vector(angleQuaternion[j],prevVec);
-            sum += FIRcoeffs[filterNumber][j]*curVec;
+            sum += FIRcoeffs[lowPassFilterStrength][j]*curVec;
             prevVec = curVec;
         }
         smoothedAngleQuaternion = Vector2Quaternion<double>(sum);
@@ -1096,7 +1116,7 @@ int main(int argc, char** argv){
 //        cout << "vAngle:" << vAngle << endl;
 //        cout << "hAngle:" << hAngle << endl;
         getDistortUnrollingMap(prevDiffAngleQuaternion,currDiffAngleQuaternion,nextDiffAngleQuaternion,
-                               division_x,division_y,0.5,matInvDistort, matIntrinsic, imageSize, adjustmentQuaternion,vecVtx,zoomRatio);
+                               division_x,division_y,rollingShutterDuration,matInvDistort, matIntrinsic, imageSize, adjustmentQuaternion,vecVtx,zoomRatio);
         //角度配列の先頭を削除
         angleQuaternion.erase(angleQuaternion.begin());
         //末尾に角度を追加
@@ -1105,9 +1125,9 @@ int main(int argc, char** argv){
         //IIR平滑化、次回の分を計算しておく
         cv::Vec3d prevVec = Quaternion2Vector(angleQuaternion[0]);
         cv::Vec3d sum(0.0, 0.0, 0.0);
-        for(int32_t j=0,f=FIRcoeffs[filterNumber].size();j<f;++j){
+        for(int32_t j=0,f=FIRcoeffs[lowPassFilterStrength].size();j<f;++j){
             cv::Vec3d curVec = Quaternion2Vector(angleQuaternion[j],prevVec);
-            sum += FIRcoeffs[filterNumber][j]*curVec;
+            sum += FIRcoeffs[lowPassFilterStrength][j]*curVec;
             prevVec = curVec;
         }
         smoothedAngleQuaternion = Vector2Quaternion<double>(sum);
@@ -1381,18 +1401,20 @@ int main(int argc, char** argv){
     }
 
     //#define OUTPUTVIDEO
-#ifdef OUTPUTVIDEO
-    std::cout << "音声を分離" << std::endl;
-    std::string command = "ffmpeg -i " + sInputVideoPass +  " -vn -acodec copy output-audio.aac";
-    system(command.c_str());
-    std::cout << "音声を結合" << std::endl;
-    command = "ffmpeg -i " + sInputVideoPass + "_deblured.avi -i output-audio.aac -codec copy " + sInputVideoPass + "_deblured_audio.avi";
-    system(command.c_str());
+//#ifdef OUTPUTVIDEO
+    if(outputStabilizedVideo){
+        std::cout << "音声を分離" << std::endl;
+        std::string command = "ffmpeg -i " + sInputVideoPass +  " -vn -acodec copy output-audio.aac";
+        system(command.c_str());
+        std::cout << "音声を結合" << std::endl;
+        command = "ffmpeg -i " + sInputVideoPass + "_deblured.avi -i output-audio.aac -codec copy " + sInputVideoPass + "_deblured_audio.avi";
+        system(command.c_str());
 
-    system("rm output-audio.aac");
-    command = "rm " + sInputVideoPass + "_deblured.avi";
-    system(command.c_str());
-#endif
+        system("rm output-audio.aac");
+        command = "rm " + sInputVideoPass + "_deblured.avi";
+        system(command.c_str());
+    }
+//#endif
     return 0;
 }
 
