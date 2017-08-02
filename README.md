@@ -24,7 +24,7 @@ Demo:
 `./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/angularVelocity.csv -z 1.1 -f 3 -r 0.5`
 
 Generating stabilized video:  
-`./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/anglarVelocity.csv  -z 1.1 -f 3 -r 0.5 -o`
+`./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/angularVelocity.csv  -z 1.1 -f 3 -r 0.5 -o`
 
 ## Install dependencies
 ### Install system dependencies:  
