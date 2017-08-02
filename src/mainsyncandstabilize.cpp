@@ -440,7 +440,7 @@ void videoCaptureProcess(){
 
 int main(int argc, char** argv){
 
-    cv::namedWindow("Stabilized Image2",cv::WINDOW_NORMAL);
+
 
     //テクスチャ座標の準備
     int32_t division_x = 9; //画面の横の分割数
@@ -497,6 +497,15 @@ int main(int argc, char** argv){
                         //Default 3.
             value1 = optarg;
             lowPassFilterStrength = std::stoi(value1);
+            if(lowPassFilterStrength < 0){
+                cout << "Low pass filter strength must be greater than or equal to 0.\r\n" <<
+                     "It is set as 0 automatically." << endl;
+                lowPassFilterStrength = 0;
+            }else if(lowPassFilterStrength > 11){
+                cout << "Low pass filter strength must be less than 12.\r\n" <<
+                     "It is set as 11 automatically." << endl;
+                lowPassFilterStrength = 1;
+            }
             break;
         default :
             printf(     "virtualGimbal\r\n"
@@ -1075,6 +1084,7 @@ int main(int argc, char** argv){
     delete Capture;
     seekableVideoCapture sCapture(videoPass,PREFETCH_LENGTH);
 
+    cv::namedWindow("Preview",cv::WINDOW_NORMAL);
 
     for(int32_t i=0;i<e;++i){
 
