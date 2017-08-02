@@ -59,7 +59,7 @@ add_definitions(
 )
 
 
-add_executable(virtualGimbal src/undistortGL.cpp
+add_executable(biCubic src/undistortGL.cpp
         common/shader.cpp
         common/shader.hpp
         common/controls.cpp
@@ -70,7 +70,7 @@ add_executable(virtualGimbal src/undistortGL.cpp
         TransformVertexShader.vertexshader
         TextureFragmentShader.fragmentshader
 )
-target_link_libraries(virtualGimbal ${ALL_LIBS})
+target_link_libraries(biCubic ${ALL_LIBS})
 
 add_executable(sync src/mainsync.cpp
                     src/calcShift.cpp
