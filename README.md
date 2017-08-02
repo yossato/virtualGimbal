@@ -101,7 +101,7 @@ cmake ..
 make
 ```
 
-### Copy setting files
+## Copy setting files
 ```
 cd ~/virtualGimbal
 cp *.txt *.fragmentshader *.vertexshader build/
