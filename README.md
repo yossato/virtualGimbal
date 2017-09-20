@@ -30,7 +30,7 @@ Here, `i` option is an input video file. `c` is a csv file which contains angula
 `z` is zooming ratio. `f` is low pass filter strength of a camera shake reduction. Larger is strong filter.
 This parameter must be integer, default value is 3. It should be between 0 and 11.
 `v` is vertical video position adjustment [rad], default value is 0.00.
-`h` is horizontal video position adjustment [rad], default value is 0.00.
+`h` is horizontal video position adjustment [rad], default value is 0.00. `o` option generates output video.
 
 ## Install dependencies
 ### Install system dependencies:  
