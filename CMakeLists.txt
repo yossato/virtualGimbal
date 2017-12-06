@@ -4,7 +4,7 @@ project (virtualGimbal)
 
 find_package(OpenGL REQUIRED)
 find_package(OpenCV REQUIRED )
-
+find_package(PythonLibs REQUIRED)
 if( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
     message( FATAL_ERROR "Please select another Build Directory ! (and give it a clever name, like bin_Visual2012_64bits/)" )
 endif()
@@ -43,6 +43,7 @@ include_directories(
 )
 include_directories(include)
 include_directories(/usr/local/include/eigen3)
+include_directories(${PYTHON_INCLUDE_DIRS})
 set(ALL_LIBS
         ${OPENGL_LIBRARY}
         ${OpenCV_LIBS}
@@ -104,6 +105,9 @@ add_executable(virtualGimbal src/mainsyncandstabilize.cpp
         TextureFragmentShader.fragmentshader
 )
 target_link_libraries(virtualGimbal ${ALL_LIBS})
+
+add_executable(vectorCorrecter src/vectorCorrecter.cpp)
+target_link_libraries(vectorCorrecter ${ALL_LIBS} ${PYTHON_LIBRARIES})
 
 add_executable(audioEdit src/audioedit.cpp)
 target_link_libraries(audioEdit ${ALL_LIBS})
