@@ -364,28 +364,28 @@ template <typename T_num> cv::Vec3d Quaternion2Vector(quaternion<T_num> q, cv::V
 
 //}
 
-/**
- * @brief 回転を表すクォータニオンを生成する関数
- **/
-template <typename T_num,typename T_vec> quaternion<T_num> RotationQuaternion(T_num theta, T_vec n){
-    //nを規格化する
-    double tmp = 1.0/sqrt(n[0]*n[0]+n[1]*n[1]+n[2]*n[2]);
-    n = n * tmp;
-    return quaternion<T_num>(cos(theta/2),n[0]*sin(theta/2),n[1]*sin(theta/2),n[2]*sin(theta/2));
-}
+///**
+// * @brief 回転を表すクォータニオンを生成する関数
+// **/
+//template <typename T_num,typename T_vec> quaternion<T_num> RotationQuaternion(T_num theta, T_vec n){
+//    //nを規格化する
+//    double tmp = 1.0/sqrt(n[0]*n[0]+n[1]*n[1]+n[2]*n[2]);
+//    n = n * tmp;
+//    return quaternion<T_num>(cos(theta/2),n[0]*sin(theta/2),n[1]*sin(theta/2),n[2]*sin(theta/2));
+//}
 
-/**
- * @brief 微小回転を表す回転ベクトルから四元数を作る関数
- **/
+///**
+// * @brief 微小回転を表す回転ベクトルから四元数を作る関数
+// **/
 
-template <typename _Tp, int cn> quaternion<_Tp> RotationQuaternion(cv::Vec<_Tp,cn> w){
-    double theta = sqrt(w[0]*w[0]+w[1]*w[1]+w[2]*w[2]);	//!<回転角
-    if(theta == 0){
-        return quaternion<_Tp>(1,0,0,0);
-    }
-    auto n = w*(1.0/theta);								//!<回転軸を表す単位ベクトル
-    return RotationQuaternion(theta, n);
-}
+//template <typename _Tp, int cn> quaternion<_Tp> RotationQuaternion(cv::Vec<_Tp,cn> w){
+//    double theta = sqrt(w[0]*w[0]+w[1]*w[1]+w[2]*w[2]);	//!<回転角
+//    if(theta == 0){
+//        return quaternion<_Tp>(1,0,0,0);
+//    }
+//    auto n = w*(1.0/theta);								//!<回転軸を表す単位ベクトル
+//    return RotationQuaternion(theta, n);
+//}
 
 void videoWriterProcess(){
     cv::Mat _buf;

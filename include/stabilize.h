@@ -51,6 +51,29 @@ template <typename _Tp> quaternion<_Tp> Slerp(quaternion<_Tp> Qfrom, quaternion<
 
 }
 
+/**
+ * @brief 回転を表すクォータニオンを生成する関数
+ **/
+template <typename T_num,typename T_vec> quaternion<T_num> RotationQuaternion(T_num theta, T_vec n){
+    //nを規格化する
+    double tmp = 1.0/sqrt(n[0]*n[0]+n[1]*n[1]+n[2]*n[2]);
+    n = n * tmp;
+    return quaternion<T_num>(cos(theta/2),n[0]*sin(theta/2),n[1]*sin(theta/2),n[2]*sin(theta/2));
+}
+
+/**
+ * @brief 微小回転を表す回転ベクトルから四元数を作る関数
+ **/
+
+template <typename _Tp, int cn> quaternion<_Tp> RotationQuaternion(cv::Vec<_Tp,cn> w){
+    double theta = sqrt(w[0]*w[0]+w[1]*w[1]+w[2]*w[2]);	//!<回転角
+    if(theta == 0){
+        return quaternion<_Tp>(1,0,0,0);
+    }
+    auto n = w*(1.0/theta);								//!<回転軸を表す単位ベクトル
+    return RotationQuaternion(theta, n);
+}
+
 /** @brief 補正前の画像座標から、補正後のポリゴンの頂点の位置を表す座標の組を作成
  * @param [in]	Qa	ジャイロの角速度から計算したカメラの方向を表す回転クウォータニオン時系列データ、参照渡し
  * @param [in]	Qf	LPFを掛けて平滑化した回転クウォータニオンの時系列データ、参照渡し
@@ -186,6 +209,212 @@ template <typename _Tp, typename _Tx> void getDistortUnrollingMap(
 
         }
     }
+
+
+
+
+}
+
+/** @brief 補正前の画像座標から、補正後のポリゴンの頂点を作成
+ * @param [in]	Qa	ジャイロの角速度から計算したカメラの方向を表す回転クウォータニオン時系列データ、参照渡し
+ * @param [in]	Qf	LPFを掛けて平滑化した回転クウォータニオンの時系列データ、参照渡し
+ * @param [in]	m	画面の縦の分割数[ ]
+ * @param [in]	n	画面の横の分割数[ ]
+ * @param [in]	IK	"逆"歪係数(k1,k2,p1,p2)
+ * @param [in]	matIntrinsic	カメラ行列(fx,fy,cx,cy) [pixel]
+ * @param [in]	imageSize	フレーム画像のサイズ[pixel]
+ * @param [in]  adjustmentQuaternion 画面方向を微調整するクォータニオン[rad]
+ * @param [out]	vecPorigonn_uv	OpenGLのポリゴン座標(u',v')座標(-1~1)の組、歪補正後の画面を分割した時の一つ一つのポリゴンの頂点の組
+ * @param [in]	zoom	倍率[]。拡大縮小しないなら1を指定すること。省略可
+ **/
+template <typename _Tp, typename _Tx> void getDistortUnrollingContour(
+        quaternion<_Tp> &prevAngleQuaternion,
+        quaternion<_Tp> &currAngleQuaternion,
+        quaternion<_Tp> &nextAngleQuaternion,
+        uint32_t division_x,
+        uint32_t division_y,
+        double TRollingShutter,
+        cv::Mat &IK,
+        cv::Mat &matIntrinsic,
+        cv::Size imageSize,
+        quaternion<_Tp> adjustmentQuaternion,
+        std::vector<_Tx> &vecPorigonn_uv,
+        double zoom
+        ){
+
+    //Matの型をdoubleに強制。
+    assert(IK.type() == CV_64F);
+    assert(matIntrinsic.type() == CV_64F);
+
+    //手順
+    //1.補正前画像を分割した時の分割点の座標(pixel)を計算
+    //2.1の座標を入力として、各行毎のW(t1,t2)を計算
+    //3.補正後の画像上のポリゴン座標(pixel)を計算、歪み補正も含める
+
+    double fx = matIntrinsic.at<double>(0, 0);
+    double fy = matIntrinsic.at<double>(1, 1);
+    double cx = matIntrinsic.at<double>(0, 2);
+    double cy = matIntrinsic.at<double>(1, 2);
+    double k1 = IK.at<double>(0,0);
+    double k2 = IK.at<double>(0,1);
+    double p1 = IK.at<double>(0,2);
+    double p2 = IK.at<double>(0,3);
+
+    cv::Mat map(division_y+1,division_x+1,CV_64FC2);
+
+    vecPorigonn_uv.clear();
+
+    //top
+//    for(int j=0;j<=division_y;++j){
+    {
+        int j=0;
+        //W(t1,t2)を計算
+        cv::Mat R;
+        //1
+        double v = (double)j/division_y*imageSize.height;
+
+        double exposureTimingInEachRow = TRollingShutter*v/imageSize.height;	//ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
+
+        quaternion<_Tp> slerpedAngleQuaternion;
+        if(exposureTimingInEachRow >= 0){
+            slerpedAngleQuaternion = Slerp(currAngleQuaternion,nextAngleQuaternion,exposureTimingInEachRow);
+        }else{
+            slerpedAngleQuaternion = Slerp(prevAngleQuaternion,currAngleQuaternion,1+exposureTimingInEachRow);
+        }
+        slerpedAngleQuaternion = adjustmentQuaternion * slerpedAngleQuaternion;
+        Quaternion2Matrix(slerpedAngleQuaternion,R);
+        for(int i=0;i<=division_x;++i){
+            double u = (double)i/division_x*imageSize.width;
+            //後々の行列演算に備えて、画像上の座標を同次座標で表現しておく。(x座標、y座標,1)T
+            cv::Mat p = (cv::Mat_<double>(3,1) << (u- cx)/fx, (v - cy)/fy, 1.0);	//1のポリゴン座標に、K^-1を掛けた結果の３x１行列
+            //2
+            cv::Mat XYW = R * p;//inv()なし
+
+            double x1 = XYW.at<double>(0, 0)/XYW.at<double>(2, 0);
+            double y1 = XYW.at<double>(1, 0)/XYW.at<double>(2, 0);
+
+            double r = sqrt(x1*x1+y1*y1);
+
+            double x2 = x1*(1.0+k1*r*r+k2*r*r*r*r)+2.0*p1*x1*y1+p2*(r*r+2.0*x1*x1);
+            double y2 = y1*(1.0+k1*r*r+k2*r*r*r*r)+p1*(r*r+2.0*y1*y1)+2.0*p2*x1*y1;
+            //変な折り返しを防止
+            if((pow(x2-x1,2)>1.0)||(pow(y2-y1,2)>1.0)){
+                //                printf("折り返し防止\r\n");
+                x2 = x1;
+                y2 = y1;
+            }
+            vecPorigonn_uv.push_back(x2*fx*zoom/imageSize.width*2.0);
+            vecPorigonn_uv.push_back(y2*fy*zoom/imageSize.height*2.0);
+        }
+    }
+
+    //middle
+    for(int j=1;j<division_y;++j){
+        //W(t1,t2)を計算
+        cv::Mat R;
+        //1
+        double v = (double)j/division_y*imageSize.height;
+
+        double exposureTimingInEachRow = TRollingShutter*v/imageSize.height;	//ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
+
+        quaternion<_Tp> slerpedAngleQuaternion;
+        if(exposureTimingInEachRow >= 0){
+            slerpedAngleQuaternion = Slerp(currAngleQuaternion,nextAngleQuaternion,exposureTimingInEachRow);
+        }else{
+            slerpedAngleQuaternion = Slerp(prevAngleQuaternion,currAngleQuaternion,1+exposureTimingInEachRow);
+        }
+        slerpedAngleQuaternion = adjustmentQuaternion * slerpedAngleQuaternion;
+        Quaternion2Matrix(slerpedAngleQuaternion,R);
+        for(int i=0;i<=division_x;i+=division_x){
+            double u = (double)i/division_x*imageSize.width;
+            //後々の行列演算に備えて、画像上の座標を同次座標で表現しておく。(x座標、y座標,1)T
+            cv::Mat p = (cv::Mat_<double>(3,1) << (u- cx)/fx, (v - cy)/fy, 1.0);	//1のポリゴン座標に、K^-1を掛けた結果の３x１行列
+            //2
+            cv::Mat XYW = R * p;//inv()なし
+
+            double x1 = XYW.at<double>(0, 0)/XYW.at<double>(2, 0);
+            double y1 = XYW.at<double>(1, 0)/XYW.at<double>(2, 0);
+
+            double r = sqrt(x1*x1+y1*y1);
+
+            double x2 = x1*(1.0+k1*r*r+k2*r*r*r*r)+2.0*p1*x1*y1+p2*(r*r+2.0*x1*x1);
+            double y2 = y1*(1.0+k1*r*r+k2*r*r*r*r)+p1*(r*r+2.0*y1*y1)+2.0*p2*x1*y1;
+            //変な折り返しを防止
+            if((pow(x2-x1,2)>1.0)||(pow(y2-y1,2)>1.0)){
+                //                printf("折り返し防止\r\n");
+                x2 = x1;
+                y2 = y1;
+            }
+            vecPorigonn_uv.push_back(x2*fx*zoom/imageSize.width*2.0);
+            vecPorigonn_uv.push_back(y2*fy*zoom/imageSize.height*2.0);
+        }
+    }
+
+    //bottom
+    {
+        int j=division_y;
+        //W(t1,t2)を計算
+        cv::Mat R;
+        //1
+        double v = (double)j/division_y*imageSize.height;
+
+        double exposureTimingInEachRow = TRollingShutter*v/imageSize.height;	//ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
+
+        quaternion<_Tp> slerpedAngleQuaternion;
+        if(exposureTimingInEachRow >= 0){
+            slerpedAngleQuaternion = Slerp(currAngleQuaternion,nextAngleQuaternion,exposureTimingInEachRow);
+        }else{
+            slerpedAngleQuaternion = Slerp(prevAngleQuaternion,currAngleQuaternion,1+exposureTimingInEachRow);
+        }
+        slerpedAngleQuaternion = adjustmentQuaternion * slerpedAngleQuaternion;
+        Quaternion2Matrix(slerpedAngleQuaternion,R);
+        for(int i=0;i<=division_x;++i){
+            double u = (double)i/division_x*imageSize.width;
+            //後々の行列演算に備えて、画像上の座標を同次座標で表現しておく。(x座標、y座標,1)T
+            cv::Mat p = (cv::Mat_<double>(3,1) << (u- cx)/fx, (v - cy)/fy, 1.0);	//1のポリゴン座標に、K^-1を掛けた結果の３x１行列
+            //2
+            cv::Mat XYW = R * p;//inv()なし
+
+            double x1 = XYW.at<double>(0, 0)/XYW.at<double>(2, 0);
+            double y1 = XYW.at<double>(1, 0)/XYW.at<double>(2, 0);
+
+            double r = sqrt(x1*x1+y1*y1);
+
+            double x2 = x1*(1.0+k1*r*r+k2*r*r*r*r)+2.0*p1*x1*y1+p2*(r*r+2.0*x1*x1);
+            double y2 = y1*(1.0+k1*r*r+k2*r*r*r*r)+p1*(r*r+2.0*y1*y1)+2.0*p2*x1*y1;
+            //変な折り返しを防止
+            if((pow(x2-x1,2)>1.0)||(pow(y2-y1,2)>1.0)){
+                //                printf("折り返し防止\r\n");
+                x2 = x1;
+                y2 = y1;
+            }
+            vecPorigonn_uv.push_back(x2*fx*zoom/imageSize.width*2.0);
+            vecPorigonn_uv.push_back(y2*fy*zoom/imageSize.height*2.0);
+        }
+    }
+
+    //3.ポリゴン座標をOpenGLの関数に渡すために順番を書き換える
+//    vecPorigonn_uv.clear();
+//    for(int j=0;j<division_y;++j){//jは終了の判定が"<"であることに注意
+//        for(int i=0;i<division_x;++i){
+//            //GL_TRIANGLESでGL側へ送信するポリゴンの頂点座標を準備
+//            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i)[0]);//x座標
+//            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i)[1]);//y座標
+//            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i+1)[0]);//x座標
+//            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i+1)[1]);//y座標
+//            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j+1,i)[0]);//x座標
+//            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j+1,i)[1]);//y座標
+
+//            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j+1,i)[0]);//x座標
+//            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j+1,i)[1]);//y座標
+//            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i+1)[0]);//x座標
+//            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i+1)[1]);//y座標
+//            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j+1,i+1)[0]);//x座標
+//            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j+1,i+1)[1]);//y座標
+
+
+//        }
+//    }
 
 
 
