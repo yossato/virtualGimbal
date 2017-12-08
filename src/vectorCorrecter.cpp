@@ -2,6 +2,9 @@
 #include <iostream>
 #include "matplotlib-cpp/matplotlibcpp.h"
 #include <opencv2/opencv.hpp>
+#include "stabilize.h"
+#include "distortion.h"
+#include "mINIRead.hpp"
 namespace plt = matplotlibcpp;
 using namespace std;
 
@@ -37,6 +40,76 @@ int main(int argc, char** argv){
     }
 //cout << "size" << contour_x.size() << endl;
     plt::plot(contour_x,contour_y, "xr");
+    plt::show();
+
+
+//cout << prevDiffAngleQuaternion << endl;
+
+    //内部パラメータを読み込み
+    cv::Mat matIntrinsic;
+    ReadIntrinsicsParams("intrinsic.txt",matIntrinsic);
+    std::cout << "Camera matrix:\n" << matIntrinsic << "\n" <<  std::endl;
+    double fx = matIntrinsic.at<double>(0,0);
+    double fy = matIntrinsic.at<double>(1,1);
+    double cx = matIntrinsic.at<double>(0,2);
+    double cy = matIntrinsic.at<double>(1,2);
+
+    //歪パラメータの読み込み
+    cv::Mat matDist;
+    ReadDistortionParams("distortion.txt",matDist);
+    std::cout << "Distortion Coeff:\n" << matDist << "\n" << std::endl;
+
+    //逆歪パラメータの計算
+    cv::Mat matInvDistort;
+    calcDistortCoeff(matIntrinsic,matDist,imageSize,matInvDistort);
+    std::vector<float> vecVtx;
+    quaternion<double> prevDiffAngleQuaternion(1,0,0,0);
+    quaternion<double> currDiffAngleQuaternion(1,0,0,0);
+    quaternion<double> nextDiffAngleQuaternion(1,0,0,0);
+    quaternion<double> adjustmentQuaternion(1,0,0,0);
+
+    getDistortUnrollingMap(prevDiffAngleQuaternion,
+                           currDiffAngleQuaternion,
+                           nextDiffAngleQuaternion,
+                           division_x,
+                           division_y,
+                           0.0,
+                           matInvDistort,
+                           matIntrinsic,
+                           imageSize,
+                           adjustmentQuaternion,
+                           vecVtx,
+                           1.0);
+
+    for(auto el:vecVtx){
+        cout << el << endl;
+    }
+
+    auto func = [&vecVtx](string s){
+      vector<double> retval;
+      if(s == string("x")){
+          for(int i=0;i<vecVtx.size();i+=2){
+            retval.push_back(vecVtx[i]);
+          }
+      }else if(s == string("y")){
+          for(int i=1;i<vecVtx.size();i+=2){
+            retval.push_back(vecVtx[i]);
+          }
+      }else{
+          abort();
+      }
+      return retval;
+    };
+
+    vector<double> vx,vy;
+    vx = func("x");
+    vy = func("y");
+    plt::plot(vx, vy, "xr");
+
+    vector<double> sx={-1,1,1,-1,-1};
+    vector<double> sy={1,1,-1,-1,1};
+    plt::plot(sx,sy);
+
     plt::show();
 
     return 0;

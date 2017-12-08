@@ -1,3 +1,6 @@
+#ifndef LEVENBERGMARQUARDT_HPP
+#define LEVENBERGMARQUARDT_HPP
+
 #include <iostream>
 
 #include "Eigen/Dense"
@@ -315,3 +318,4 @@ struct calc_invert_distortion_coeff : Functor<double>
         return 0;
     }
 };
+#endif

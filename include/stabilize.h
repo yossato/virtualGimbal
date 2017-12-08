@@ -56,9 +56,6 @@ template <typename _Tp> quaternion<_Tp> Slerp(quaternion<_Tp> Qfrom, quaternion<
  * @param [in]	Qf	LPFを掛けて平滑化した回転クウォータニオンの時系列データ、参照渡し
  * @param [in]	m	画面の縦の分割数[ ]
  * @param [in]	n	画面の横の分割数[ ]
- * @param [in]	ti	角度時系列データのサンプル時間[sec]
- * @param [in]	ts	ローリングシャッターの全行取得時間[sec]
- * @param [in]	T	ジャイロ角度のサンプリング周期
  * @param [in]	IK	"逆"歪係数(k1,k2,p1,p2)
  * @param [in]	matIntrinsic	カメラ行列(fx,fy,cx,cy) [pixel]
  * @param [in]	imageSize	フレーム画像のサイズ[pixel]
@@ -67,17 +64,12 @@ template <typename _Tp> quaternion<_Tp> Slerp(quaternion<_Tp> Qfrom, quaternion<
  * @param [in]	zoom	倍率[]。拡大縮小しないなら1を指定すること。省略可
  **/
 template <typename _Tp, typename _Tx> void getDistortUnrollingMap(
-        //    std::vector<quaternion<_Tp>> &Qa,
-        //    std::vector<quaternion<_Tp>> &Qf,
         quaternion<_Tp> &prevAngleQuaternion,
         quaternion<_Tp> &currAngleQuaternion,
         quaternion<_Tp> &nextAngleQuaternion,
         uint32_t division_x,
         uint32_t division_y,
         double TRollingShutter,
-        //    double ti,
-        //    double ts,
-        //    double T,
         cv::Mat &IK,
         cv::Mat &matIntrinsic,
         cv::Size imageSize,

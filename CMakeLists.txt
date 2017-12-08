@@ -101,13 +101,18 @@ add_executable(virtualGimbal src/mainsyncandstabilize.cpp
         src/mINIRead.cpp
         src/seekablevideocapture.cpp
         src/stabilize.cpp
+        src/distortion.cpp
         include/settings.h
+        include/distortion.h
         TransformVertexShader.vertexshader
         TextureFragmentShader.fragmentshader
 )
 target_link_libraries(virtualGimbal ${ALL_LIBS})
 
-add_executable(vectorCorrecter src/vectorCorrecter.cpp
+add_executable(vectorCorrecter
+    src/vectorCorrecter.cpp
+    src/mINIRead.cpp
+    src/distortion.cpp
         include/matplotlib-cpp/matplotlibcpp.h
 )
 target_link_libraries(vectorCorrecter ${ALL_LIBS} ${PYTHON_LIBRARIES})
