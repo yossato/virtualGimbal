@@ -100,6 +100,7 @@ add_executable(virtualGimbal src/mainsyncandstabilize.cpp
         src/calcShift.cpp
         src/mINIRead.cpp
         src/seekablevideocapture.cpp
+        src/stabilize.cpp
         include/settings.h
         TransformVertexShader.vertexshader
         TextureFragmentShader.fragmentshader
