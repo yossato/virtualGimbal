@@ -226,8 +226,9 @@ template <typename _Tp, typename _Tx> void getDistortUnrollingMap(
  * @param [in]  adjustmentQuaternion 画面方向を微調整するクォータニオン[rad]
  * @param [out]	vecPorigonn_uv	OpenGLのポリゴン座標(u',v')座標(-1~1)の組、歪補正後の画面を分割した時の一つ一つのポリゴンの頂点の組
  * @param [in]	zoom	倍率[]。拡大縮小しないなら1を指定すること。省略可
+ * @retval true:成功 false:折り返し発生で失敗
  **/
-template <typename _Tp, typename _Tx> void getDistortUnrollingContour(
+template <typename _Tp, typename _Tx> bool getDistortUnrollingContour(
         quaternion<_Tp> &prevAngleQuaternion,
         quaternion<_Tp> &currAngleQuaternion,
         quaternion<_Tp> &nextAngleQuaternion,
@@ -241,6 +242,8 @@ template <typename _Tp, typename _Tx> void getDistortUnrollingContour(
         std::vector<_Tx> &vecPorigonn_uv,
         double zoom
         ){
+
+    bool retval = true;
 
     //Matの型をdoubleに強制。
     assert(IK.type() == CV_64F);
@@ -290,21 +293,27 @@ template <typename _Tp, typename _Tx> void getDistortUnrollingContour(
             //2
             cv::Mat XYW = R * p;//inv()なし
 
+            if(XYW.at<double>(2,0) < 0.0){
+                retval = false;
+            }
+
             double x1 = XYW.at<double>(0, 0)/XYW.at<double>(2, 0);
             double y1 = XYW.at<double>(1, 0)/XYW.at<double>(2, 0);
 
             double r = sqrt(x1*x1+y1*y1);
 
-            double x2 = x1*(1.0+k1*r*r+k2*r*r*r*r)+2.0*p1*x1*y1+p2*(r*r+2.0*x1*x1);
-            double y2 = y1*(1.0+k1*r*r+k2*r*r*r*r)+p1*(r*r+2.0*y1*y1)+2.0*p2*x1*y1;
-            //変な折り返しを防止
-            if((pow(x2-x1,2)>1.0)||(pow(y2-y1,2)>1.0)){
-                //                printf("折り返し防止\r\n");
-                x2 = x1;
-                y2 = y1;
-            }
-            vecPorigonn_uv.push_back(x2*fx*zoom/imageSize.width*2.0);
-            vecPorigonn_uv.push_back(y2*fy*zoom/imageSize.height*2.0);
+//            double x2 = x1*(1.0+k1*r*r+k2*r*r*r*r)+2.0*p1*x1*y1+p2*(r*r+2.0*x1*x1);
+//            double y2 = y1*(1.0+k1*r*r+k2*r*r*r*r)+p1*(r*r+2.0*y1*y1)+2.0*p2*x1*y1;
+//            //変な折り返しを防止
+//            if((pow(x2-x1,2)>1.0)||(pow(y2-y1,2)>1.0)){
+//                //                printf("折り返し防止\r\n");
+//                x2 = x1;
+//                y2 = y1;
+//            }
+//            vecPorigonn_uv.push_back(x2*fx*zoom/imageSize.width*2.0);
+//            vecPorigonn_uv.push_back(y2*fy*zoom/imageSize.height*2.0);
+            vecPorigonn_uv.push_back(x1*fx*zoom/imageSize.width*2.0);
+                        vecPorigonn_uv.push_back(y1*fy*zoom/imageSize.height*2.0);
         }
     }
 
@@ -331,6 +340,10 @@ template <typename _Tp, typename _Tx> void getDistortUnrollingContour(
             cv::Mat p = (cv::Mat_<double>(3,1) << (u- cx)/fx, (v - cy)/fy, 1.0);	//1のポリゴン座標に、K^-1を掛けた結果の３x１行列
             //2
             cv::Mat XYW = R * p;//inv()なし
+
+            if(XYW.at<double>(2,0) < 0.0){
+                retval = false;
+            }
 
             double x1 = XYW.at<double>(0, 0)/XYW.at<double>(2, 0);
             double y1 = XYW.at<double>(1, 0)/XYW.at<double>(2, 0);
@@ -375,6 +388,10 @@ template <typename _Tp, typename _Tx> void getDistortUnrollingContour(
             //2
             cv::Mat XYW = R * p;//inv()なし
 
+            if(XYW.at<double>(2,0) < 0.0){
+                retval = false;
+            }
+
             double x1 = XYW.at<double>(0, 0)/XYW.at<double>(2, 0);
             double y1 = XYW.at<double>(1, 0)/XYW.at<double>(2, 0);
 
@@ -393,32 +410,7 @@ template <typename _Tp, typename _Tx> void getDistortUnrollingContour(
         }
     }
 
-    //3.ポリゴン座標をOpenGLの関数に渡すために順番を書き換える
-//    vecPorigonn_uv.clear();
-//    for(int j=0;j<division_y;++j){//jは終了の判定が"<"であることに注意
-//        for(int i=0;i<division_x;++i){
-//            //GL_TRIANGLESでGL側へ送信するポリゴンの頂点座標を準備
-//            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i)[0]);//x座標
-//            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i)[1]);//y座標
-//            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i+1)[0]);//x座標
-//            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i+1)[1]);//y座標
-//            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j+1,i)[0]);//x座標
-//            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j+1,i)[1]);//y座標
-
-//            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j+1,i)[0]);//x座標
-//            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j+1,i)[1]);//y座標
-//            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i+1)[0]);//x座標
-//            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j,i+1)[1]);//y座標
-//            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j+1,i+1)[0]);//x座標
-//            vecPorigonn_uv.push_back(map.at<cv::Vec2d>(j+1,i+1)[1]);//y座標
-
-
-//        }
-//    }
-
-
-
-
+    return retval;
 }
 
 #endif // STABILIZE_H
