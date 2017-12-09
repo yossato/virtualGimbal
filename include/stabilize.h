@@ -302,18 +302,18 @@ template <typename _Tp, typename _Tx> bool getDistortUnrollingContour(
 
             double r = sqrt(x1*x1+y1*y1);
 
-//            double x2 = x1*(1.0+k1*r*r+k2*r*r*r*r)+2.0*p1*x1*y1+p2*(r*r+2.0*x1*x1);
-//            double y2 = y1*(1.0+k1*r*r+k2*r*r*r*r)+p1*(r*r+2.0*y1*y1)+2.0*p2*x1*y1;
-//            //変な折り返しを防止
-//            if((pow(x2-x1,2)>1.0)||(pow(y2-y1,2)>1.0)){
-//                //                printf("折り返し防止\r\n");
-//                x2 = x1;
-//                y2 = y1;
-//            }
-//            vecPorigonn_uv.push_back(x2*fx*zoom/imageSize.width*2.0);
-//            vecPorigonn_uv.push_back(y2*fy*zoom/imageSize.height*2.0);
-            vecPorigonn_uv.push_back(x1*fx*zoom/imageSize.width*2.0);
-                        vecPorigonn_uv.push_back(y1*fy*zoom/imageSize.height*2.0);
+            double x2 = x1*(1.0+k1*r*r+k2*r*r*r*r)+2.0*p1*x1*y1+p2*(r*r+2.0*x1*x1);
+            double y2 = y1*(1.0+k1*r*r+k2*r*r*r*r)+p1*(r*r+2.0*y1*y1)+2.0*p2*x1*y1;
+            //変な折り返しを防止
+            if((pow(x2-x1,2)>1.0)||(pow(y2-y1,2)>1.0)){
+                //                printf("折り返し防止\r\n");
+                x2 = x1;
+                y2 = y1;
+            }
+            vecPorigonn_uv.push_back(x2*fx*zoom/imageSize.width*2.0);
+            vecPorigonn_uv.push_back(y2*fy*zoom/imageSize.height*2.0);
+//            vecPorigonn_uv.push_back(x1*fx*zoom/imageSize.width*2.0);
+//                        vecPorigonn_uv.push_back(y1*fy*zoom/imageSize.height*2.0);
         }
     }
 
@@ -412,5 +412,37 @@ template <typename _Tp, typename _Tx> bool getDistortUnrollingContour(
 
     return retval;
 }
+
+/**
+ * @brief 画面の欠けを生み出している回転ベクトルのオーバーした長さを返す
+ * @param [in]	Qa	ジャイロの角速度から計算したカメラの方向を表す回転クウォータニオン時系列データ、参照渡し
+ * @param [in]	Qf	LPFを掛けて平滑化した回転クウォータニオンの時系列データ、参照渡し
+ * @param [in]	m	画面の縦の分割数[ ]
+ * @param [in]	n	画面の横の分割数[ ]
+ * @param [in]	IK	"逆"歪係数(k1,k2,p1,p2)
+ * @param [in]	matIntrinsic	カメラ行列(fx,fy,cx,cy) [pixel]
+ * @param [in]	imageSize	フレーム画像のサイズ[pixel]
+ * @param [in]  adjustmentQuaternion 画面方向を微調整するクォータニオン[rad]
+ * @param [in]	zoom	倍率[]。拡大縮小しないなら1を指定すること。省略可
+ * @param [out] error はみ出したノルムの長さ
+ **/
+template <typename _Tp, typename _Tx> void getRollingVectorError(
+        quaternion<_Tp> &prevAngleQuaternion,
+        quaternion<_Tp> &currAngleQuaternion,
+        quaternion<_Tp> &nextAngleQuaternion,
+        uint32_t division_x,
+        uint32_t division_y,
+        double TRollingShutter,
+        cv::Mat &IK,
+        cv::Mat &matIntrinsic,
+        cv::Size imageSize,
+        quaternion<_Tp> adjustmentQuaternion,
+        std::vector<_Tx> &vecPorigonn_uv,
+        double zoom,
+        double &error
+        ){
+
+}
+
 
 #endif // STABILIZE_H
