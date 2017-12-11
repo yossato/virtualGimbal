@@ -4,8 +4,55 @@
 
 #include <stdio.h>
 #include <boost/math/quaternion.hpp>
+#include "settings.h"
 using namespace std;
 using namespace boost::math;
+
+/**
+ * @param 回転を表すクォータニオンをシングルローテーションをあらわすベクトルへ変換
+ **/
+template <typename T_num> cv::Vec3d Quaternion2Vector(quaternion<T_num> q){
+    double denom = sqrt(1-q.R_component_1()*q.R_component_1());
+    if(denom==0.0){//まったく回転しない時は０割になるので、場合分けする
+        return cv::Vec3d(0,0,0);//return zero vector
+    }
+    return cv::Vec3d(q.R_component_2(),q.R_component_3(),q.R_component_4())*2.0*atan2(denom,q.R_component_1())/denom;
+}
+
+/**
+ * @param シングルローテーションを表すベクトルを回転を表すクォータニオンへ変換
+ **/
+template <typename T_num> quaternion<T_num> Vector2Quaternion(cv::Vec3d w){
+    double theta = sqrt(w[0]*w[0]+w[1]*w[1]+w[2]*w[2]);//回転角度を計算、normと等しい
+    //0割を回避するためにマクローリン展開
+    if(theta > EPS){
+        auto n = w * (1.0/theta);//単位ベクトルに変換
+        double sin_theta_2 = sin(theta*0.5);
+        return quaternion<double>(cos(theta*0.5),n[0]*sin_theta_2,n[1]*sin_theta_2,n[2]*sin_theta_2);
+    }else{
+        return quaternion<double>(1.0,0.5*w[0],0.5*w[1],0.5*w[2]);
+    }
+}
+
+/**
+ * @param 回転を表すクォータニオンをシングルローテーションを表すベクトルへ変換。前回算出したベクトルを引数として受け取ることで、アンラッピングする。
+ * */
+template <typename T_num> cv::Vec3d Quaternion2Vector(quaternion<T_num> q, cv::Vec3d prev){
+    double denom = sqrt(1-q.R_component_1()*q.R_component_1());
+    if(denom==0.0){//まったく回転しない時は０割になるので、場合分けする
+        return cv::Vec3d(0,0,0);//return zero vector
+    }
+    double theta_2 = atan2(denom,q.R_component_1());
+    double prev_theta_2 = cv::norm(prev)/2;
+    double diff = theta_2 - prev_theta_2;
+    theta_2 -= 2.0*M_PI*(double)(static_cast<int>(diff/(2.0*M_PI)));//マイナスの符号に注意
+    //~ printf("Theta_2:%4.3f sc:%d\n",theta_2,static_cast<int>(diff/(2.0*M_PI)));
+    if(static_cast<int>(diff/(2.0*M_PI))!=0){
+        printf("\n###########Unwrapping %d\n",static_cast<int>(diff/(2.0*M_PI)));
+    }
+
+    return cv::Vec3d(q.R_component_2(),q.R_component_3(),q.R_component_4())*2.0*theta_2/denom;
+}
 
 /**
  * @param 回転を表すクォータニオンから回転を表す行列を生成
@@ -414,6 +461,19 @@ template <typename _Tp, typename _Tx> bool getDistortUnrollingContour(
 }
 
 /**
+ * @brief ワープした時に欠けがないかチェックします
+ * @retval false:欠けあり true:ワープが良好
+ **/
+template <typename _Tp> bool check_warp(vector<_Tp> &contour){
+    for(int i=0;i<contour.size();i+=2){
+        if((abs(contour[i]) < 1.0)&&(abs(contour[i+1]) < 1.0)){
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
  * @brief 画面の欠けを生み出している回転ベクトルのオーバーした長さを返す
  * @param [in]	Qa	ジャイロの角速度から計算したカメラの方向を表す回転クウォータニオン時系列データ、参照渡し
  * @param [in]	Qf	LPFを掛けて平滑化した回転クウォータニオンの時系列データ、参照渡し
@@ -423,10 +483,10 @@ template <typename _Tp, typename _Tx> bool getDistortUnrollingContour(
  * @param [in]	matIntrinsic	カメラ行列(fx,fy,cx,cy) [pixel]
  * @param [in]	imageSize	フレーム画像のサイズ[pixel]
  * @param [in]  adjustmentQuaternion 画面方向を微調整するクォータニオン[rad]
- * @param [in]	zoom	倍率[]。拡大縮小しないなら1を指定すること。省略可
+  * @param [in]	zoom	倍率[]。拡大縮小しないなら1を指定すること。省略可
  * @param [out] error はみ出したノルムの長さ
  **/
-template <typename _Tp, typename _Tx> void getRollingVectorError(
+template <typename _Tp> void getRollingVectorError(
         quaternion<_Tp> &prevAngleQuaternion,
         quaternion<_Tp> &currAngleQuaternion,
         quaternion<_Tp> &nextAngleQuaternion,
@@ -437,11 +497,51 @@ template <typename _Tp, typename _Tx> void getRollingVectorError(
         cv::Mat &matIntrinsic,
         cv::Size imageSize,
         quaternion<_Tp> adjustmentQuaternion,
-        std::vector<_Tx> &vecPorigonn_uv,
         double zoom,
         double &error
         ){
+    double a=0.0;
+    double b=1.0;
+    double eps = 1.0e-5;
+    int count=0;
+    std::vector<float> vecPorigonn_uv;
+    auto func = [&](double ratio){
+        getDistortUnrollingContour(prevAngleQuaternion,
+                                   currAngleQuaternion,
+                                   nextAngleQuaternion,
+                                   division_x,
+                                   division_y,
+                                   TRollingShutter,
+                                   IK,
+                                   matIntrinsic,
+                                   imageSize,
+                                   Vector2Quaternion<double>(ratio*Quaternion2Vector(adjustmentQuaternion)),
+                                   vecPorigonn_uv,
+                                   zoom
+                                   );
+        return check_warp(vecPorigonn_uv);
+    };
+    if(func(1.0)==true){
+        error = 0.0;
+        return;
+    }
+double m;
+    do{
+        count++;
+        m=(a+b)/2.0;
+        if(func(m)^func(a)){
+            b=m;
+        }else{
+            a=m;
+        }
+        if(count == 1000){
+            cout << "収束失敗" << endl;
+           break;
+        }
+    }while(!(abs(a-b)<eps));
+    cout << count << "回で収束" << endl;
 
+    error = abs(adjustmentQuaternion)*(1-m);
 }
 
 

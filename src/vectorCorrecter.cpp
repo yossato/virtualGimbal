@@ -8,14 +8,7 @@
 namespace plt = matplotlibcpp;
 using namespace std;
 
-template <typename _Tp> bool check_warp(vector<_Tp> &contour){
-    for(int i=0;i<contour.size();i+=2){
-        if((abs(contour[i]) < 1.0)&&(abs(contour[i+1]) < 1.0)){
-            return false;
-        }
-    }
-    return true;
-}
+
 
 int main(int argc, char** argv){
     //define devisions
@@ -75,7 +68,7 @@ int main(int argc, char** argv){
     quaternion<double> prevDiffAngleQuaternion(1,0,0,0);
     quaternion<double> currDiffAngleQuaternion(1,0,0,0);
     quaternion<double> nextDiffAngleQuaternion(1,0,0,0);
-//    quaternion<double> adjustmentQuaternion(1,0,0,0);
+    //    quaternion<double> adjustmentQuaternion(1,0,0,0);
     quaternion<double> adjustmentQuaternion = RotationQuaternion(cv::Vec3d(0,0,0.1));
 
 
@@ -107,58 +100,77 @@ int main(int argc, char** argv){
                                               vecVtx,
                                               1.4)==true){
 
-//                    for(auto el:vecVtx){
-//                        cout << el << endl;
-//                    }
+                    //                    for(auto el:vecVtx){
+                    //                        cout << el << endl;
+                    //                    }
 
                     if(check_warp(vecVtx) == true){
-//                        cout << "成功" << endl;
-//                        cout << "rx:" << rx << " ry:" << ry << endl;
+                        //                        cout << "成功" << endl;
+                        //                        cout << "rx:" << rx << " ry:" << ry << endl;
                         xa.back().push_back(rx);
                         ya.back().push_back(ry);
                     }else{
-//                        cout << "失敗" << endl;
+                        //                        cout << "失敗" << endl;
                     }
                 }
             }
         }
     }
 
-//    plt::plot(xa[3*div/2],ya[3*div/2],"xr");
+    plt::plot(xa[3*div/2],ya[3*div/2],"xr");
 
-//    plt::show();
+    plt::show();
 
 
-    for(int i=0;i<20;i++){
-        plt::plot(xa[i*div/10],ya[i*div/10],"xr");
-        string title = "z:" + std::to_string(angle*(double)(i-10)/(double)10)+" [rad]";
+    //    for(int i=0;i<20;i++){
+    //        plt::plot(xa[i*div/10],ya[i*div/10],"xr");
+    //        string title = "z:" + std::to_string(angle*(double)(i-10)/(double)10)+" [rad]";
 
-        plt::title(title.c_str());
-        plt::xlabel("x");
-        plt::ylabel("y");
-        plt::show();
-    }
+    //        plt::title(title.c_str());
+    //        plt::xlabel("x");
+    //        plt::ylabel("y");
+    //        plt::show();
+    //    }
 
-cout << "xa.size():" << xa.size() << endl;
-//for(auto el:xa[div]){
-//    cout << el << endl;
-//}
+    adjustmentQuaternion = RotationQuaternion(cv::Vec3d(0.15,-0.15,0.0));
 
-//return 0;
+    double error;
+    getRollingVectorError(
+                prevDiffAngleQuaternion,
+                currDiffAngleQuaternion,
+                nextDiffAngleQuaternion,
+                division_x,
+                division_y,
+                0.0,
+                matInvDistort,
+                matIntrinsic,
+                imageSize,
+                adjustmentQuaternion,
+                1.4,
+                error
+                );
+    cout << "getRollingVectorError:" << error << endl;
+
+    //cout << "xa.size():" << xa.size() << endl;
+    //for(auto el:xa[div]){
+    //    cout << el << endl;
+    //}
+
+    //return 0;
 
     adjustmentQuaternion = RotationQuaternion(cv::Vec3d(0.0631,-0.15,0.0));
     getDistortUnrollingContour(prevDiffAngleQuaternion,
-                                                  currDiffAngleQuaternion,
-                                                  nextDiffAngleQuaternion,
-                                                  division_x,
-                                                  division_y,
-                                                  0.0,
-                                                  matInvDistort,
-                                                  matIntrinsic,
-                                                  imageSize,
-                                                  adjustmentQuaternion,
-                                                  vecVtx,
-                                                  1.4);
+                               currDiffAngleQuaternion,
+                               nextDiffAngleQuaternion,
+                               division_x,
+                               division_y,
+                               0.0,
+                               matInvDistort,
+                               matIntrinsic,
+                               imageSize,
+                               adjustmentQuaternion,
+                               vecVtx,
+                               1.4);
 
     auto func = [&vecVtx](string s){
         vector<double> retval;

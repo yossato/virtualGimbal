@@ -114,6 +114,7 @@ add_executable(vectorCorrecter
     src/mINIRead.cpp
     src/distortion.cpp
         include/matplotlib-cpp/matplotlibcpp.h
+        include/stabilize.h
 )
 target_link_libraries(vectorCorrecter ${ALL_LIBS} ${PYTHON_LIBRARIES})
 
