@@ -119,7 +119,7 @@ int main(int argc, char** argv){
 
     plt::plot(xa[3*div/2],ya[3*div/2],"xr");
 
-    plt::show();
+    plt::show(false);
 
 
     //    for(int i=0;i<20;i++){
@@ -219,4 +219,5 @@ int main(int argc, char** argv){
     plt::show();
 
     std::cout << "Hello world." << std::endl;
+    return 0;
 }

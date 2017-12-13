@@ -104,10 +104,11 @@ add_executable(virtualGimbal src/mainsyncandstabilize.cpp
         src/distortion.cpp
         include/settings.h
         include/distortion.h
+        include/visualizer.h
         TransformVertexShader.vertexshader
         TextureFragmentShader.fragmentshader
 )
-target_link_libraries(virtualGimbal ${ALL_LIBS})
+target_link_libraries(virtualGimbal ${ALL_LIBS} ${PYTHON_LIBRARIES})
 
 add_executable(vectorCorrecter
     src/vectorCorrecter.cpp

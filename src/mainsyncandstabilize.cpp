@@ -44,6 +44,9 @@ using namespace glm;
 #include <mutex>
 #include <thread>         // std::this_thread::sleep_for
 #include <chrono>         // std::chrono::seconds
+
+#include "visualizer.h"
+
 using namespace std;
 
 struct videoBufferAndWriter{
@@ -525,7 +528,7 @@ int main(int argc, char** argv){
     // 処理の経過時間
     auto elapsed = t2 - t1 ;
     std::cout << "Elapsed time: " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << " ms\n";
-
+//show(opticShift,"opticShift");
     cv::VideoCapture *Capture = new cv::VideoCapture(videoPass);//動画をオープン
     assert(Capture->isOpened());
     cv::Size imageSize = cv::Size(Capture->get(CV_CAP_PROP_FRAME_WIDTH),Capture->get(CV_CAP_PROP_FRAME_HEIGHT));//解像度を読む
