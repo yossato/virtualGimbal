@@ -84,4 +84,33 @@ void plot(vector<quaternion<double>> data, string title, string legend_x, string
     }
     plt::show();
 }
+
+void plot(vector<double> x,vector<double>  y,vector<double> z, string title, string legend_x, string legend_y, string legend_z){
+    vector<double> index;
+    index.resize(x.size());
+    for(int i=0;i<index.size();i++){
+        index[i] = static_cast<double>(i);
+    }
+    if(legend_x.empty()){
+        plt::named_plot("x",index,x);
+    }else{
+        plt::named_plot(legend_x.c_str(),index,x);
+    }
+    if(legend_y.empty()){
+        plt::named_plot("y",index,y);
+    }else{
+        plt::named_plot(legend_y.c_str(),index,y);
+    }
+
+    if(legend_z.empty()){
+        plt::named_plot("z",index,z);
+    }else{
+        plt::named_plot(legend_z.c_str(),index,z);
+    }
+    plt::legend();//enable legend
+    if(!title.empty()){
+        plt::title(title.c_str());
+    }
+    plt::show();
+}
 }

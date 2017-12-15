@@ -98,7 +98,7 @@ add_executable(virtualGimbal src/mainsyncandstabilize.cpp
         common/texture.hpp
 
         src/visualizer.cpp
-
+        src/vsp.cpp
         src/calcShift.cpp
         src/mINIRead.cpp
         src/seekablevideocapture.cpp
@@ -108,6 +108,7 @@ add_executable(virtualGimbal src/mainsyncandstabilize.cpp
         include/settings.h
         include/distortion.h
         include/visualizer.h
+        include/vsp.h
         TransformVertexShader.vertexshader
         TextureFragmentShader.fragmentshader
 )
