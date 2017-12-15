@@ -97,11 +97,14 @@ add_executable(virtualGimbal src/mainsyncandstabilize.cpp
         common/texture.cpp
         common/texture.hpp
 
+        src/visualizer.cpp
+
         src/calcShift.cpp
         src/mINIRead.cpp
         src/seekablevideocapture.cpp
         src/stabilize.cpp
         src/distortion.cpp
+        src/visualizer.cpp
         include/settings.h
         include/distortion.h
         include/visualizer.h
@@ -114,6 +117,7 @@ add_executable(vectorCorrecter
     src/vectorCorrecter.cpp
     src/mINIRead.cpp
     src/distortion.cpp
+
         include/matplotlib-cpp/matplotlibcpp.h
         include/stabilize.h
 )

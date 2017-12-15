@@ -3,30 +3,15 @@
 #include <stdio.h>
 #include <string>
 #include <opencv2/opencv.hpp>
-#include "matplotlib-cpp/matplotlibcpp.h"
-namespace plt = matplotlibcpp;
-using namespace std;
+//#include "matplotlib-cpp/matplotlibcpp.h"
+#include <boost/math/quaternion.hpp>
+//#include "stabilize.h"
 
-void show(vector<cv::Vec3d> data, string title = "", string legend_x = "", string legend_y = "", string legend_z = ""){
-    vector<double> x,y,z,index;
-    //Refill
-    for(auto el:data){
-        x.push_back(el[0]);
-        y.push_back(el[1]);
-        z.push_back(el[2]);
-    }
-    index.resize(x.size());
-    for(int i=0;i<index.size();i++){
-        index[i] = static_cast<double>(i);
-    }
-    plt::named_plot("x",index,x);
-    plt::named_plot("y",index,y);
-    plt::named_plot("z",index,z);
-    plt::legend();//enable legend
-    if(!title.empty()){
-        plt::title(title.c_str());
-    }
-    plt::show();
+namespace vgp
+{
+
+    void plot(std::vector<cv::Vec3d> data, std::string title = "", std::string legend_x = "", std::string legend_y = "", std::string legend_z = "");
+    void plot(std::vector<boost::math::quaternion<double>> data, std::string title = "", std::string legend_x = "", std::string legend_y = "", std::string legend_z = "");
 }
 
 #endif // VISUALIZER_H

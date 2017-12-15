@@ -816,7 +816,7 @@ int main(int argc, char** argv){
     vector<quaternion<double>> angleQuaternion;
     angleQuaternion.push_back(quaternion<double>(1,0,0,0));
 
-    //FIRフィルタに食わせやすいように位置を合わせて角度を計算する
+    //FIRフィルタに食わせやすいように、FIRフィルタのタップ数を考慮して位置を合わせつつ、先に角度を計算する
     int32_t halfLength = floor(FIRcoeffs[lowPassFilterStrength].size()/2);
     for(int frame=-halfLength,e=halfLength;frame<e;frame++){
         cout << "frame:" << frame << "av:" << angularVelocitySync(frame) << endl;
@@ -834,7 +834,9 @@ int main(int argc, char** argv){
     }
     //    printf("p1:%lu\n",angleQuaternion.size());
 
-    //計算した角度をhyouzi
+    //計算した角度を
+    vgp::plot(angleQuaternion,"angleQuaternion");
+
     if(0){
         for(auto el:angleQuaternion){
             static int cn = 0;

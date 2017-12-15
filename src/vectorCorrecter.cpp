@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include <iostream>
 #include "matplotlib-cpp/matplotlibcpp.h"
+#include "visualizer.h"
+
 #include <opencv2/opencv.hpp>
 #include "stabilize.h"
 #include "distortion.h"
 #include "mINIRead.hpp"
+
 namespace plt = matplotlibcpp;
 using namespace std;
 
