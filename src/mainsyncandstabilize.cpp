@@ -469,10 +469,12 @@ int main(int argc, char** argv){
         angleQuaternion_vsp.back() = angleQuaternion_vsp.back() * (1.0 / norm(angleQuaternion_vsp.back()));
     }
     vsp v(angleQuaternion_vsp);
-    vgp::plot(v.get_row(0),v.get_row(1),v.get_row(2),"Eigen");
-
-
-
+//    vgp::plot(v.get_row(0),v.get_row(1),v.get_row(2),"Eigen");
+    std::vector<string> legends = {"x","y","z"};
+    vgp::plot(v.data(),"Eigen",legends);
+    v.setFilterCoeff(FIRcoeffs[lowPassFilterStrength]);
+    //平滑化を試す
+    vgp::plot(v.filterdData(),"Filterd",legends);
 return 0;
 
     //計算した角度を
