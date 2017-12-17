@@ -14,6 +14,7 @@ class vsp
 public:
     vsp();
 
+    //TODO:コンストラクタでfilter coeffも受け取っといたほうがよさ気
     template <class T> vsp(vector<quaternion<T>> &angle_quaternion){
         raw_angle.resize(3,angle_quaternion.size());
 
@@ -28,7 +29,7 @@ public:
 
     vector<double> getRow(int r);
 
-    const Eigen::MatrixXd data();
+    const Eigen::MatrixXd &data();
 
     template <class T> void setFilterCoeff(T coeff){
         filter_coeff.resize(1,coeff.size());
@@ -37,11 +38,19 @@ public:
         }
     }
 
-    const Eigen::MatrixXd &filterdData();
+    const Eigen::MatrixXd &filteredData();
+
+    Eigen::Quaternion<double> toRawQuaternion(uint32_t frame);
+    Eigen::Quaternion<double> toFilteredQuaternion(uint32_t frame);
+    Eigen::Quaternion<double> toDiffQuaternion(uint32_t frame);
+
+
+
+//    const Eigen::Quaternion
 
 private:
     Eigen::MatrixXd raw_angle;
-    Eigen::MatrixXd filterd_angle;
+    Eigen::MatrixXd filtered_angle;
     Eigen::MatrixXd filter_coeff;
     bool is_filterd;
 };

@@ -474,7 +474,7 @@ int main(int argc, char** argv){
     vgp::plot(v.data(),"Eigen",legends);
     v.setFilterCoeff(FIRcoeffs[lowPassFilterStrength]);
     //平滑化を試す
-    vgp::plot(v.filterdData(),"Filterd",legends);
+    vgp::plot(v.filteredData(),"Filterd",legends);
 return 0;
 
     //計算した角度を
