@@ -462,10 +462,13 @@ int main(int argc, char** argv){
     }
 
     //Eigenによる信号処理のテスト
-    vector<quaternion<double>> angleQuaternion_vsp;
-    angleQuaternion_vsp.push_back(quaternion<double>(1,0,0,0));
+    vector<Eigen::Quaternion<double>> angleQuaternion_vsp;
+    angleQuaternion_vsp.push_back(Eigen::Quaternion<double>(1,0,0,0));
     for(int frame=-halfLength,e=halfLength+Capture->get(CV_CAP_PROP_FRAME_COUNT);frame<e;frame++){
-        angleQuaternion_vsp.push_back(angleQuaternion_vsp.back()*RotationQuaternion(angularVelocitySync(frame)*Tvideo));
+        //convert vector from boost to Eigen.
+        auto v_sync = angularVelocitySync(frame);
+        Eigen::Vector3d ve_sync(v_sync[0],v_sync[1],v_sync[2]);
+        angleQuaternion_vsp.push_back(angleQuaternion_vsp.back()*RotationQuaternion(ve_sync*Tvideo));
         angleQuaternion_vsp.back() = angleQuaternion_vsp.back() * (1.0 / norm(angleQuaternion_vsp.back()));
     }
     vsp v(angleQuaternion_vsp);

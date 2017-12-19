@@ -541,7 +541,7 @@ double m;
     }while(!(abs(a-b)<eps));
     cout << count << "回で収束" << endl;
 
-    error = abs(adjustmentQuaternion)*(1-m);
+    error = cv::norm(Quaternion2Vector(adjustmentQuaternion))*(1-m);
 }
 
 

@@ -15,7 +15,7 @@ public:
     vsp();
 
     //TODO:コンストラクタでfilter coeffも受け取っといたほうがよさ気
-    template <class T> vsp(vector<quaternion<T>> &angle_quaternion){
+    template <class T> vsp(vector<Eigen::Quaternion<T>> &angle_quaternion){
         raw_angle.resize(3,angle_quaternion.size());
 
         for(int i=0,e=angle_quaternion.size();i<e;++i){
@@ -79,7 +79,7 @@ public:
             return Eigen::Vector3d(0,0,0);//return zero vector
         }
         double theta_2 = atan2(denom,q.R_component_1());
-        double prev_theta_2 = cv::norm(prev)/2;
+        double prev_theta_2 = prev.norm()/2;
         double diff = theta_2 - prev_theta_2;
         theta_2 -= 2.0*M_PI*(double)(static_cast<int>(diff/(2.0*M_PI)));//マイナスの符号に注意
         //~ printf("Theta_2:%4.3f sc:%d\n",theta_2,static_cast<int>(diff/(2.0*M_PI)));
@@ -148,9 +148,9 @@ public:
      * @retval true:成功 false:折り返し発生で失敗
      **/
     template <typename _Tp, typename _Tx> bool getDistortUnrollingContour(
-            Eigen::Quaternion<double> &prevAngleQuaternion,
-            Eigen::Quaternion<double> &currAngleQuaternion,
-            Eigen::Quaternion<double> &nextAngleQuaternion,
+            Eigen::Quaternion<_Tp> &prevAngleQuaternion,
+            Eigen::Quaternion<_Tp> &currAngleQuaternion,
+            Eigen::Quaternion<_Tp> &nextAngleQuaternion,
             uint32_t division_x,
             uint32_t division_y,
             double TRollingShutter,
@@ -413,7 +413,7 @@ public:
         }while(!(abs(a-b)<eps));
         cout << count << "回で収束" << endl;
 
-        error = abs(adjustmentQuaternion)*(1-m);
+        error = (Quaternion2Vector(adjustmentQuaternion).norm())*(1-m);
     }
 
 //    const Eigen::Quaternion
