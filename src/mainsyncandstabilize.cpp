@@ -468,8 +468,8 @@ int main(int argc, char** argv){
         //convert vector from boost to Eigen.
         auto v_sync = angularVelocitySync(frame);
         Eigen::Vector3d ve_sync(v_sync[0],v_sync[1],v_sync[2]);
-        angleQuaternion_vsp.push_back(angleQuaternion_vsp.back()*RotationQuaternion(ve_sync*Tvideo));
-        angleQuaternion_vsp.back() = angleQuaternion_vsp.back() * (1.0 / norm(angleQuaternion_vsp.back()));
+        angleQuaternion_vsp.push_back(angleQuaternion_vsp.back()*vsp::RotationQuaternion(ve_sync*Tvideo));
+        angleQuaternion_vsp.back() = angleQuaternion_vsp.back().normalized();
     }
     vsp v(angleQuaternion_vsp);
 //    vgp::plot(v.get_row(0),v.get_row(1),v.get_row(2),"Eigen");

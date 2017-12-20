@@ -2,6 +2,7 @@
 #define VSP_H
 
 #include <stdio.h>
+#include <iostream>
 #include <boost/math/quaternion.hpp>
 #include "settings.h"
 #include <Eigen/Dense>
@@ -45,20 +46,31 @@ public:
     Eigen::Quaternion<double> toDiffQuaternion(uint32_t frame);
 
     /**
+     * @brief 回転を表すクォータニオンを生成する関数
+     **/
+    static Eigen::Quaternion<double> RotationQuaternion(double theta, Eigen::Vector3d n);
+
+    /**
+     * @brief 微小回転を表す回転ベクトルから四元数を作る関数
+     **/
+
+    static Eigen::Quaternion<double> RotationQuaternion(Eigen::Vector3d w);
+
+    /**
      * @param 回転を表すクォータニオンをシングルローテーションをあらわすベクトルへ変換
      **/
-    template <typename T_num> Eigen::Vector3d Quaternion2Vector(Eigen::Quaternion<T_num> q){
-        double denom = sqrt(1-q.R_component_1()*q.R_component_1());
+    template <typename T_num> static Eigen::Vector3d Quaternion2Vector(Eigen::Quaternion<T_num> q){
+        double denom = sqrt(1-q.w()*q.w());
         if(denom==0.0){//まったく回転しない時は０割になるので、場合分けする
             return Eigen::Vector3d(0,0,0);//return zero vector
         }
-        return Eigen::Vector3d(q.R_component_2(),q.R_component_3(),q.R_component_4())*2.0*atan2(denom,q.R_component_1())/denom;
+        return Eigen::Vector3d(q.x(),q.y(),q.z())*2.0*atan2(denom,q.w())/denom;
     }
 
     /**
      * @param シングルローテーションを表すベクトルを回転を表すクォータニオンへ変換
      **/
-    template <typename T_num> Eigen::Quaternion<T_num> Vector2Quaternion(Eigen::Vector3d w){
+    template <typename T_num> static Eigen::Quaternion<T_num> Vector2Quaternion(Eigen::Vector3d w){
         double theta = sqrt(w[0]*w[0]+w[1]*w[1]+w[2]*w[2]);//回転角度を計算、normと等しい
         //0割を回避するためにマクローリン展開
         if(theta > EPS){
@@ -73,7 +85,7 @@ public:
     /**
      * @param 回転を表すクォータニオンをシングルローテーションを表すベクトルへ変換。前回算出したベクトルを引数として受け取ることで、アンラッピングする。
      * */
-    template <typename T_num> Eigen::Vector3d Quaternion2Vector(Eigen::Quaternion<T_num> q, Eigen::Vector3d prev){
+    template <typename T_num> static Eigen::Vector3d Quaternion2Vector(Eigen::Quaternion<T_num> &q, Eigen::Vector3d &prev){
         double denom = sqrt(1-q.R_component_1()*q.R_component_1());
         if(denom==0.0){//まったく回転しない時は０割になるので、場合分けする
             return Eigen::Vector3d(0,0,0);//return zero vector
@@ -93,7 +105,7 @@ public:
     /**
      * @param 回転を表すクォータニオンから回転を表す行列を生成
      **/
-    template <typename T_num> void Quaternion2Matrix(Eigen::Quaternion<T_num> q, Eigen::MatrixXd &det){
+    template <typename T_num> static void Quaternion2Matrix(Eigen::Quaternion<T_num> &q, Eigen::MatrixXd &det){
         det = (Eigen::MatrixXd(3,3) <<
                q.R_component_1()*q.R_component_1()+q.R_component_2()*q.R_component_2()-q.R_component_3()*q.R_component_3()-q.R_component_4()*q.R_component_4(), 2*(q.R_component_2()*q.R_component_3()-q.R_component_1()*q.R_component_4()),                  2*(q.R_component_2()*q.R_component_4()+q.R_component_1()*q.R_component_3()),
                2*(q.R_component_2()*q.R_component_3()+q.R_component_1()*q.R_component_4()),                 q.R_component_1()*q.R_component_1()-q.R_component_2()*q.R_component_2()+q.R_component_3()*q.R_component_3()-q.R_component_4()*q.R_component_4(), 2*(q.R_component_3()*q.R_component_4()-q.R_component_1()*q.R_component_2()),
@@ -107,7 +119,7 @@ public:
      * @param [in]	Qto		四元数2
      * @param [in]	t		比率(0<=t<=1)
      **/
-    template <typename _Tp> Eigen::Quaternion<_Tp> Slerp(Eigen::Quaternion<_Tp> Qfrom, Eigen::Quaternion<_Tp> Qto, _Tp t){
+    template <typename _Tp> static Eigen::Quaternion<_Tp> Slerp(Eigen::Quaternion<_Tp> &Qfrom, Eigen::Quaternion<_Tp> &Qto, _Tp t){
         double cosom = Qfrom.R_component_1()*Qto.R_component_1()+Qfrom.R_component_2()*Qto.R_component_2()+Qfrom.R_component_3()*Qto.R_component_3()+Qfrom.R_component_4()*Qto.R_component_4();
         double sinom, omega, scale0, scale1;
 
@@ -147,7 +159,7 @@ public:
      * @param [in]	zoom	倍率[]。拡大縮小しないなら1を指定すること。省略可
      * @retval true:成功 false:折り返し発生で失敗
      **/
-    template <typename _Tp, typename _Tx> bool getDistortUnrollingContour(
+    template <typename _Tp, typename _Tx> static bool getDistortUnrollingContour(
             Eigen::Quaternion<_Tp> &prevAngleQuaternion,
             Eigen::Quaternion<_Tp> &currAngleQuaternion,
             Eigen::Quaternion<_Tp> &nextAngleQuaternion,
@@ -156,7 +168,8 @@ public:
             double TRollingShutter,
             Eigen::MatrixXd &IK,
             Eigen::MatrixXd &matIntrinsic,
-            cv::Size imageSize,
+            uint32_t image_width,
+            uint32_t image_height,
             Eigen::Quaternion<double> adjustmentQuaternion,
             std::vector<_Tx> &vecPorigonn_uv,
             double zoom
@@ -182,7 +195,7 @@ public:
         double p1 = IK(0,2);
         double p2 = IK(0,3);
 
-        Eigen::MatrixXd map(division_y+1,division_x+1,CV_64FC2);
+//        Eigen::MatrixXd map(division_y+1,division_x+1);
 
         vecPorigonn_uv.clear();
 
@@ -193,9 +206,9 @@ public:
             //W(t1,t2)を計算
             Eigen::MatrixXd R;
             //1
-            double v = (double)j/division_y*imageSize.height;
+            double v = (double)j/division_y*image_height;
 
-            double exposureTimingInEachRow = TRollingShutter*v/imageSize.height;	//ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
+            double exposureTimingInEachRow = TRollingShutter*v/image_height;	//ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
 
             Eigen::Quaternion<double> slerpedAngleQuaternion;
             if(exposureTimingInEachRow >= 0){
@@ -206,7 +219,7 @@ public:
             slerpedAngleQuaternion = adjustmentQuaternion * slerpedAngleQuaternion;
             Quaternion2Matrix(slerpedAngleQuaternion,R);
             for(int i=0;i<=division_x;++i){
-                double u = (double)i/division_x*imageSize.width;
+                double u = (double)i/division_x*image_width;
                 //後々の行列演算に備えて、画像上の座標を同次座標で表現しておく。(x座標、y座標,1)T
                 Eigen::MatrixXd p = (Eigen::MatrixXd(3,1) << (u- cx)/fx, (v - cy)/fy, 1.0);	//1のポリゴン座標に、K^-1を掛けた結果の３x１行列
                 //2
@@ -229,10 +242,10 @@ public:
                     x2 = x1;
                     y2 = y1;
                 }
-                vecPorigonn_uv.push_back(x2*fx*zoom/imageSize.width*2.0);
-                vecPorigonn_uv.push_back(y2*fy*zoom/imageSize.height*2.0);
-    //            vecPorigonn_uv.push_back(x1*fx*zoom/imageSize.width*2.0);
-    //                        vecPorigonn_uv.push_back(y1*fy*zoom/imageSize.height*2.0);
+                vecPorigonn_uv.push_back(x2*fx*zoom/image_width*2.0);
+                vecPorigonn_uv.push_back(y2*fy*zoom/image_height*2.0);
+    //            vecPorigonn_uv.push_back(x1*fx*zoom/image_width*2.0);
+    //                        vecPorigonn_uv.push_back(y1*fy*zoom/image_height*2.0);
             }
         }
 
@@ -241,9 +254,9 @@ public:
             //W(t1,t2)を計算
             Eigen::MatrixXd R;
             //1
-            double v = (double)j/division_y*imageSize.height;
+            double v = (double)j/division_y*image_height;
 
-            double exposureTimingInEachRow = TRollingShutter*v/imageSize.height;	//ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
+            double exposureTimingInEachRow = TRollingShutter*v/image_height;	//ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
 
             Eigen::Quaternion<double> slerpedAngleQuaternion;
             if(exposureTimingInEachRow >= 0){
@@ -254,7 +267,7 @@ public:
             slerpedAngleQuaternion = adjustmentQuaternion * slerpedAngleQuaternion;
             Quaternion2Matrix(slerpedAngleQuaternion,R);
             for(int i=0;i<=division_x;i+=division_x){
-                double u = (double)i/division_x*imageSize.width;
+                double u = (double)i/division_x*image_width;
                 //後々の行列演算に備えて、画像上の座標を同次座標で表現しておく。(x座標、y座標,1)T
                 Eigen::MatrixXd p = (Eigen::MatrixXd(3,1) << (u- cx)/fx, (v - cy)/fy, 1.0);	//1のポリゴン座標に、K^-1を掛けた結果の３x１行列
                 //2
@@ -277,8 +290,8 @@ public:
                     x2 = x1;
                     y2 = y1;
                 }
-                vecPorigonn_uv.push_back(x2*fx*zoom/imageSize.width*2.0);
-                vecPorigonn_uv.push_back(y2*fy*zoom/imageSize.height*2.0);
+                vecPorigonn_uv.push_back(x2*fx*zoom/image_width*2.0);
+                vecPorigonn_uv.push_back(y2*fy*zoom/image_height*2.0);
             }
         }
 
@@ -288,9 +301,9 @@ public:
             //W(t1,t2)を計算
             Eigen::MatrixXd R;
             //1
-            double v = (double)j/division_y*imageSize.height;
+            double v = (double)j/division_y*image_height;
 
-            double exposureTimingInEachRow = TRollingShutter*v/imageSize.height;	//ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
+            double exposureTimingInEachRow = TRollingShutter*v/image_height;	//ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
 
             Eigen::Quaternion<double> slerpedAngleQuaternion;
             if(exposureTimingInEachRow >= 0){
@@ -301,7 +314,7 @@ public:
             slerpedAngleQuaternion = adjustmentQuaternion * slerpedAngleQuaternion;
             Quaternion2Matrix(slerpedAngleQuaternion,R);
             for(int i=0;i<=division_x;++i){
-                double u = (double)i/division_x*imageSize.width;
+                double u = (double)i/division_x*image_width;
                 //後々の行列演算に備えて、画像上の座標を同次座標で表現しておく。(x座標、y座標,1)T
                 Eigen::MatrixXd p = (Eigen::MatrixXd(3,1) << (u- cx)/fx, (v - cy)/fy, 1.0);	//1のポリゴン座標に、K^-1を掛けた結果の３x１行列
                 //2
@@ -324,8 +337,8 @@ public:
                     x2 = x1;
                     y2 = y1;
                 }
-                vecPorigonn_uv.push_back(x2*fx*zoom/imageSize.width*2.0);
-                vecPorigonn_uv.push_back(y2*fy*zoom/imageSize.height*2.0);
+                vecPorigonn_uv.push_back(x2*fx*zoom/image_width*2.0);
+                vecPorigonn_uv.push_back(y2*fy*zoom/image_height*2.0);
             }
         }
 
@@ -336,7 +349,7 @@ public:
      * @brief ワープした時に欠けがないかチェックします
      * @retval false:欠けあり true:ワープが良好
      **/
-    template <typename _Tp> bool check_warp(vector<_Tp> &contour){
+    template <typename _Tp> static bool check_warp(vector<_Tp> &contour){
         for(int i=0;i<contour.size();i+=2){
             if((abs(contour[i]) < 1.0)&&(abs(contour[i+1]) < 1.0)){
                 return false;
@@ -358,7 +371,7 @@ public:
       * @param [in]	zoom	倍率[]。拡大縮小しないなら1を指定すること。省略可
      * @param [out] error はみ出したノルムの長さ
      **/
-    template <typename _Tp> void getRollingVectorError(
+    template <typename _Tp> static void getRollingVectorError(
             Eigen::Quaternion<double> &prevAngleQuaternion,
             Eigen::Quaternion<double> &currAngleQuaternion,
             Eigen::Quaternion<double> &nextAngleQuaternion,
@@ -367,7 +380,8 @@ public:
             double TRollingShutter,
             Eigen::MatrixXd &IK,
             Eigen::MatrixXd &matIntrinsic,
-            cv::Size imageSize,
+            uint32_t image_width,
+            uint32_t image_height,
             Eigen::Quaternion<double> adjustmentQuaternion,
             double zoom,
             double &error
@@ -386,7 +400,8 @@ public:
                                        TRollingShutter,
                                        IK,
                                        matIntrinsic,
-                                       imageSize,
+                                       image_width,
+                                       image_height,
                                        Vector2Quaternion<double>(ratio*Quaternion2Vector(adjustmentQuaternion)),
                                        vecPorigonn_uv,
                                        zoom
