@@ -127,6 +127,10 @@ target_link_libraries(vectorCorrecter ${ALL_LIBS} ${PYTHON_LIBRARIES})
 add_executable(audioEdit src/audioedit.cpp)
 target_link_libraries(audioEdit ${ALL_LIBS})
 
+add_executable(fft_test src/fft_test.cpp)
+target_link_libraries(fft_test ${ALL_LIBS}  ${PYTHON_LIBRARIES})
+
+
 # デバッグビルド
 IF(CMAKE_BUILD_TYPE MATCHES DEBUG)
 set(CMAKE_C_FLAGS_DEBUG "-O0 -g")
