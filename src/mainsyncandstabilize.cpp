@@ -48,6 +48,7 @@ using namespace glm;
 #include "visualizer.h"
 
 #include <Eigen/Dense>
+#include <unsupported/Eigen/FFT>
 #include "vsp.h"
 using namespace std;
 
@@ -471,6 +472,10 @@ int main(int argc, char** argv){
         angleQuaternion_vsp.push_back(angleQuaternion_vsp.back()*vsp::RotationQuaternion(ve_sync*Tvideo));
         angleQuaternion_vsp.back() = angleQuaternion_vsp.back().normalized();
     }
+    cout << "w:" << angleQuaternion_vsp[100].w()
+         << "x:" << angleQuaternion_vsp[100].x()
+         << "y:" << angleQuaternion_vsp[100].y()
+         << "z:" << angleQuaternion_vsp[100].z()<< endl;
     vsp v(angleQuaternion_vsp);
 //    vgp::plot(v.get_row(0),v.get_row(1),v.get_row(2),"Eigen");
     std::vector<string> legends = {"x","y","z"};
@@ -478,6 +483,64 @@ int main(int argc, char** argv){
     v.setFilterCoeff(FIRcoeffs[lowPassFilterStrength]);
     //平滑化を試す
     vgp::plot(v.filteredData(),"Filterd",legends);
+
+    //FFTを試す
+    {
+
+        std::vector<double> time(v.data().cols()),time_x(v.data().cols()),time_y(v.data().cols()),time_z(v.data().cols());
+//        Map<MatrixXd>(&time_x[0],1,v.cols()) = v.block(0,0,1,v.cols());
+        for(int i=0,e=v.data().cols();i<e;++i){
+            time[i] = i;
+            time_x[i] = v.data()(0,i);
+            time_y[i] = v.data()(1,i);
+            time_z[i] = v.data()(2,i);
+        }
+        cout << "time_x.size()" << time_x.size() << endl;
+        //FFT するまえになめらかに折り返して見る
+        {
+            double time_x_begin = time_x[0];
+            double time_x_end = time_x.back();
+            double time_y_begin = time_y[0];
+            double time_y_end = time_y.back();
+            double time_z_begin = time_z[0];
+            double time_z_end = time_z.back();
+            int liner_interpolate_length = v.data().cols()/2;
+            for(int i=1;i<liner_interpolate_length;++i){
+                time_x.push_back((time_x_begin*(double)i + time_x_end*(double)(liner_interpolate_length-i))/liner_interpolate_length);
+                time_y.push_back((time_y_begin*(double)i + time_y_end*(double)(liner_interpolate_length-i))/liner_interpolate_length);
+                time_z.push_back((time_z_begin*(double)i + time_z_end*(double)(liner_interpolate_length-i))/liner_interpolate_length);
+            }
+        }
+cout << "time_x.size()" << time_x.size() << endl;
+        //FFT
+        std::vector<std::complex<double>> freq_x,freq_y,freq_z;
+        Eigen::FFT<double> fft;
+        fft.fwd(freq_x,time_x);
+        fft.fwd(freq_y,time_y);
+        fft.fwd(freq_z,time_z);
+        vector<double> norm_x(freq_x.size());
+        vector<double> norm_y(freq_y.size());
+        vector<double> norm_z(freq_z.size());
+        for(int i=0,e=freq_x.size();i<e;++i){
+//            norm_x[i] = log(norm(freq_x[i]));
+//            norm_y[i] = log(norm(freq_y[i]));
+//            norm_z[i] = log(norm(freq_z[i]));
+            norm_x[i] = norm(freq_x[i]);
+            norm_y[i] = norm(freq_y[i]);
+            norm_z[i] = norm(freq_z[i]);
+        }
+        vgp::plot(norm_x,norm_y,norm_z,"norm");
+        //LPFかけてみる！
+        for(int i=80,e=freq_x.size()-80;i<e;++i){
+           freq_x[i] = std::complex<double>(0.0,0.0);
+           freq_y[i] = std::complex<double>(0.0,0.0);
+           freq_z[i] = std::complex<double>(0.0,0.0);
+        }
+        fft.inv(time_x,freq_x);
+        fft.inv(time_y,freq_y);
+        fft.inv(time_z,freq_z);
+        vgp::plot(time_x,time_y,time_z,"Low cut 80");
+    }
 return 0;
 
     //計算した角度を
