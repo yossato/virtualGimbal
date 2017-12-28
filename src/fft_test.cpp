@@ -4,6 +4,8 @@
 #include <unsupported/Eigen/FFT>
 #include "matplotlib-cpp/matplotlibcpp.h"
 #include <math.h>
+#include "vsp.h"
+
 namespace plt = matplotlibcpp;
 
 double coeff[] = {0.0000000028	,
@@ -408,6 +410,16 @@ double coeff[] = {0.0000000028	,
 };
 
 int main(int argc, char** argv){
+    //kaiser窓を表示
+    Eigen::VectorXd vector_kaiser = vsp::getKaiserWindow(400,4);
+    std::vector<double> kaiser(vector_kaiser.rows());
+    std::cout << vector_kaiser << std::endl;
+    Eigen::Map<Eigen::VectorXd>(&kaiser[0],vector_kaiser.rows(),1) = vector_kaiser;
+    plt::plot(kaiser,".-r");
+    plt::title("Kaiser window");
+    plt::show();
+return 0;
+
     int L = 300;
     int N = L*2;
     double t=1;
@@ -489,18 +501,18 @@ int main(int argc, char** argv){
     plt::show();*/
 
     //LPFを自分で設計
-    time_vec = std::vector<double>(3265,0.0);
+    time_vec = std::vector<double>(3265,pow(10,-200.0/20.0));
     vec_real.resize(time_vec.size());
     vec_imag.resize(time_vec.size());
     time.resize(time_vec.size());
-    for(int i=0,e=80;i<e;++i){
+    for(int i=0,e=700;i<e;++i){
         time_vec[i] = 1.0;
         time_vec[time_vec.size()-1-i] = 1.0;
     }
-//    for(int i=80,e=time_vec.size()/2;i<e;++i){
-//        time_vec[i] = 80.0/i;
-//        time_vec[time_vec.size()-1-i] = 80.0/i;
-//    }
+    for(int i=700,e=time_vec.size()/2;i<e;++i){
+        time_vec[i] = 700.0/i;
+        time_vec[time_vec.size()-1-i] = 700.0/i;
+    }
 
     fft.fwd(freq_vec,time_vec);
 //    fft.inv(time_vec,freq_vec);

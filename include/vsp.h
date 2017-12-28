@@ -41,6 +41,8 @@ public:
 
     const Eigen::MatrixXd &filteredData();
 
+    static Eigen::VectorXd getKaiserWindow(uint32_t tap_length, uint32_t alpha);
+
     Eigen::Quaternion<double> toRawQuaternion(uint32_t frame);
     Eigen::Quaternion<double> toFilteredQuaternion(uint32_t frame);
     Eigen::Quaternion<double> toDiffQuaternion(uint32_t frame);

@@ -1,5 +1,5 @@
 #include "vsp.h"
-
+#include <boost/math/special_functions/bessel.hpp>
 vsp::vsp()
 {
     is_filterd=false;
@@ -90,4 +90,25 @@ Eigen::Quaternion<double> vsp::toFilteredQuaternion(uint32_t frame){
 
 Eigen::Quaternion<double> vsp::toDiffQuaternion(uint32_t frame){
     return this->toFilteredQuaternion(frame).conjugate()*this->toRawQuaternion(frame);
+}
+
+Eigen::VectorXd vsp::getKaiserWindow(uint32_t tap_length, uint32_t alpha){
+    Eigen::VectorXd window = Eigen::VectorXd::Zero(tap_length);
+
+    if(tap_length % 2){ //奇数
+        int32_t L = tap_length/2;
+        for(int32_t n=-L,e=L;n<=e;++n){
+            window[n+L] = boost::math::cyl_bessel_i(0.0,alpha*sqrt(1.0-pow((double)n/(double)L,2.0)))
+                    /boost::math::cyl_bessel_i(0.0,alpha);
+//            std::cout << n+L << std::endl;
+        }
+    }else{  //偶数
+        int32_t L = tap_length/2;
+        for(int32_t n=-L,e=L;n<e;++n){//異なる終了条件
+            window[n+L] = boost::math::cyl_bessel_i(0.0,alpha*sqrt(1.0-pow((double)n/(double)L,2.0)))
+                    /boost::math::cyl_bessel_i(0.0,alpha);
+//            std::cout << n+L << std::endl;
+        }
+    }
+    return window;
 }

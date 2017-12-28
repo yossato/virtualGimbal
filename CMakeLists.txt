@@ -127,7 +127,8 @@ target_link_libraries(vectorCorrecter ${ALL_LIBS} ${PYTHON_LIBRARIES})
 add_executable(audioEdit src/audioedit.cpp)
 target_link_libraries(audioEdit ${ALL_LIBS})
 
-add_executable(fft_test src/fft_test.cpp)
+add_executable(fft_test src/fft_test.cpp
+    src/vsp.cpp)
 target_link_libraries(fft_test ${ALL_LIBS}  ${PYTHON_LIBRARIES})
 
 
