@@ -413,12 +413,12 @@ int main(int argc, char** argv){
     //kaiser窓を表示
     Eigen::VectorXd vector_kaiser = vsp::getKaiserWindow(400,4);
     std::vector<double> kaiser(vector_kaiser.rows());
-    std::cout << vector_kaiser << std::endl;
+//    std::cout << vector_kaiser << std::endl;
     Eigen::Map<Eigen::VectorXd>(&kaiser[0],vector_kaiser.rows(),1) = vector_kaiser;
     plt::plot(kaiser,".-r");
     plt::title("Kaiser window");
     plt::show();
-return 0;
+
 
     int L = 300;
     int N = L*2;
@@ -504,26 +504,34 @@ return 0;
     time_vec = std::vector<double>(3265,pow(10,-200.0/20.0));
     vec_real.resize(time_vec.size());
     vec_imag.resize(time_vec.size());
+    freq_vec.resize(time_vec.size());
     time.resize(time_vec.size());
-    for(int i=0,e=700;i<e;++i){
-        time_vec[i] = 1.0;
-        time_vec[time_vec.size()-1-i] = 1.0;
-    }
-    for(int i=700,e=time_vec.size()/2;i<e;++i){
-        time_vec[i] = 700.0/i;
-        time_vec[time_vec.size()-1-i] = 700.0/i;
+
+
+    for(auto &el:freq_vec){
+        el.imag(0.0);
+        el.real(0.0);
     }
 
-    fft.fwd(freq_vec,time_vec);
-//    fft.inv(time_vec,freq_vec);
+    for(int i=0,e=2;i<e;++i){
+//        time_vec[i] = 1.0;
+//        time_vec[time_vec.size()-1-i] = 1.0;
+        freq_vec[i].real(1.0);
+        freq_vec[time_vec.size()-1-i].real(1.0);
+    }
+
+
+
+//    fft.fwd(freq_vec,time_vec);
+    fft.inv(time_vec,freq_vec);
     for(int i=0,e=time_vec.size();i<e;++i){
         time[i] = i;
         vec_real[i] = freq_vec[i].real();
         vec_imag[i] = freq_vec[i].imag();
     }
-    for(int i=0,e=time_vec.size();i<e;++i){
-        time[i] = i;
-    }
+//    for(int i=0,e=time_vec.size();i<e;++i){
+//        time[i] = i;
+//    }
     plt::plot(time,time_vec,".-r");
     plt::title("DIY filter coeff");
     plt::show();
@@ -532,6 +540,29 @@ return 0;
     plt::title("DIY filter");
     plt::show();
 
+    //時間軸方向でkaiser窓掛ける
+    Eigen::VectorXd vector_time_vec = Eigen::Map<Eigen::VectorXd>(&time_vec[0],time_vec.size());
+    Eigen::VectorXd kaiser_window = vsp::getKaiserWindow(time_vec.size(),8).array();
+    Eigen::VectorXd buff2(kaiser_window.rows());
+    buff2.block(0,0,kaiser_window.rows()/2,1) = kaiser_window.block(kaiser_window.rows()/2,0,kaiser_window.rows()/2,1);
+    buff2.block(kaiser_window.rows()/2,0,kaiser_window.rows()-kaiser_window.rows()/2,1) = kaiser_window.block(0,0,kaiser_window.rows()-kaiser_window.rows()/2,1);
+//    vector_time_vec = vector_time_vec.array() * vsp::getKaiserWindow(time_vec.size(),8).array();
+    vector_time_vec = vector_time_vec.array() * buff2.array();
+    Eigen::Map<Eigen::VectorXd>(&time_vec[0],vector_time_vec.rows(),1) = vector_time_vec;
+    fft.fwd(freq_vec,time_vec);
+    for(int i=0,e=time_vec.size();i<e;++i){
+        vec_real[i] = freq_vec[i].real();
+        vec_imag[i] = freq_vec[i].imag();
+    }
+
+    plt::plot(time,time_vec,".-r");
+    plt::title("DIY filter coeff with kaiser");
+    plt::show();
+
+    plt::plot(time,vec_real,".-g");
+    plt::plot(time,vec_imag,".-b");
+    plt::title("DIY filter with kaiser");
+    plt::show();
 
     return 0;
 }
