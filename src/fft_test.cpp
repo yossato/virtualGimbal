@@ -411,13 +411,12 @@ double coeff[] = {0.0000000028	,
 
 int main(int argc, char** argv){
     //kaiser窓を表示
-    Eigen::VectorXd vector_kaiser = vsp::getKaiserWindow(400,4);
-    std::vector<double> kaiser(vector_kaiser.rows());
-//    std::cout << vector_kaiser << std::endl;
-    Eigen::Map<Eigen::VectorXd>(&kaiser[0],vector_kaiser.rows(),1) = vector_kaiser;
-    plt::plot(kaiser,".-r");
-    plt::title("Kaiser window");
-    plt::show();
+//    Eigen::VectorXd vector_kaiser = vsp::getKaiserWindow(400,4);
+//    std::vector<double> kaiser(vector_kaiser.rows());
+//    Eigen::Map<Eigen::VectorXd>(&kaiser[0],vector_kaiser.rows(),1) = vector_kaiser;
+//    plt::plot(kaiser,".-r");
+//    plt::title("Kaiser window");
+//    plt::show();
 
 
     int L = 300;
@@ -427,6 +426,25 @@ int main(int argc, char** argv){
     std::vector<double> time_vec(N),time(N);
     std::vector<std::complex<double>> freq_vec;
     std::vector<double> vec_real(N),vec_imag(N);
+
+
+    //LPFを関数で生成
+    freq_vec = vsp::getLPFFrequencyCoeff(3999,4,60,8);
+    vec_real.resize(freq_vec.size()/2);
+    vec_imag.resize(freq_vec.size()/2);
+    time.resize(freq_vec.size()/2);
+    for(int i=0,e=freq_vec.size()/2;i<e;++i){
+        time[i] = i;
+        vec_real[i] = freq_vec[i].real();
+        vec_imag[i] = freq_vec[i].imag();
+    }
+
+    plt::plot(time,vec_real,".-g");
+    plt::plot(time,vec_imag,".-b");
+    plt::title("getLPFFrequancyCoeff");
+    plt::show();
+    return 0;
+
 /*    for(int i=0,e=time_vec.size();i<e;++i){
         time[i] = i;
         time_vec[i] = 1.0;
@@ -543,11 +561,11 @@ int main(int argc, char** argv){
     //時間軸方向でkaiser窓掛ける
     Eigen::VectorXd vector_time_vec = Eigen::Map<Eigen::VectorXd>(&time_vec[0],time_vec.size());
     Eigen::VectorXd kaiser_window = vsp::getKaiserWindow(time_vec.size(),8).array();
-    Eigen::VectorXd buff2(kaiser_window.rows());
-    buff2.block(0,0,kaiser_window.rows()/2,1) = kaiser_window.block(kaiser_window.rows()/2,0,kaiser_window.rows()/2,1);
-    buff2.block(kaiser_window.rows()/2,0,kaiser_window.rows()-kaiser_window.rows()/2,1) = kaiser_window.block(0,0,kaiser_window.rows()-kaiser_window.rows()/2,1);
-//    vector_time_vec = vector_time_vec.array() * vsp::getKaiserWindow(time_vec.size(),8).array();
-    vector_time_vec = vector_time_vec.array() * buff2.array();
+//    Eigen::VectorXd buff2(kaiser_window.rows());
+//    buff2.block(0,0,kaiser_window.rows()/2,1) = kaiser_window.block(kaiser_window.rows()/2,0,kaiser_window.rows()/2,1);
+//    buff2.block(kaiser_window.rows()/2,0,kaiser_window.rows()-kaiser_window.rows()/2,1) = kaiser_window.block(0,0,kaiser_window.rows()-kaiser_window.rows()/2,1);
+
+    vector_time_vec = vector_time_vec.array() * kaiser_window.array();
     Eigen::Map<Eigen::VectorXd>(&time_vec[0],vector_time_vec.rows(),1) = vector_time_vec;
     fft.fwd(freq_vec,time_vec);
     for(int i=0,e=time_vec.size();i<e;++i){
@@ -563,6 +581,8 @@ int main(int argc, char** argv){
     plt::plot(time,vec_imag,".-b");
     plt::title("DIY filter with kaiser");
     plt::show();
+
+
 
     return 0;
 }

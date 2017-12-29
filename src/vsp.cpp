@@ -1,5 +1,6 @@
 #include "vsp.h"
 #include <boost/math/special_functions/bessel.hpp>
+
 vsp::vsp()
 {
     is_filterd=false;
@@ -110,5 +111,34 @@ Eigen::VectorXd vsp::getKaiserWindow(uint32_t tap_length, uint32_t alpha){
 //            std::cout << n+L << std::endl;
         }
     }
-    return window;
+
+    Eigen::VectorXd buff2(window.rows());
+    buff2.block(0,0,window.rows()/2,1) = window.block(window.rows()/2,0,window.rows()/2,1);
+    buff2.block(window.rows()/2,0,window.rows()-window.rows()/2,1) = window.block(0,0,window.rows()-window.rows()/2,1);
+
+    return buff2;
+}
+
+std::vector<std::complex<double>> vsp::getLPFFrequencyCoeff(uint32_t N, uint32_t alpha, double fs, double fc){
+    std::vector<double> time_vector(N,0.0);
+    std::vector<std::complex<double>> frequency_vector(N);
+    int32_t Nc = (int32_t)((double)N * fc / fs);
+    for(int i=0;i<(Nc-1);++i){
+        frequency_vector[i].real(1.0);
+        frequency_vector[N-1-i].real(1.0);
+    }
+    for(int i=(Nc-1);i<(N-Nc);++i){
+        frequency_vector[i].real(0.0);
+    }
+    for(auto &el:frequency_vector){
+        el.imag(0.0);
+    }
+    Eigen::FFT<double> fft;
+    fft.inv(time_vector,frequency_vector);
+    Eigen::VectorXd time_eigen_vector = Eigen::Map<Eigen::VectorXd>(&time_vector[0],time_vector.size());
+    time_eigen_vector = time_eigen_vector.array() * getKaiserWindow(N,alpha).array();
+    Eigen::Map<Eigen::VectorXd>(&time_vector[0],time_vector.size()) = time_eigen_vector;
+    fft.fwd(frequency_vector,time_vector);
+
+    return frequency_vector;
 }

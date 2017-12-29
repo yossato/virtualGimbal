@@ -6,7 +6,7 @@
 #include <boost/math/quaternion.hpp>
 #include "settings.h"
 #include <Eigen/Dense>
-
+#include <unsupported/Eigen/FFT>
 using namespace std;
 using namespace boost::math;
 
@@ -42,6 +42,8 @@ public:
     const Eigen::MatrixXd &filteredData();
 
     static Eigen::VectorXd getKaiserWindow(uint32_t tap_length, uint32_t alpha);
+
+    static std::vector<std::complex<double>> getLPFFrequencyCoeff(uint32_t N, uint32_t alpha, double fs, double fc);
 
     Eigen::Quaternion<double> toRawQuaternion(uint32_t frame);
     Eigen::Quaternion<double> toFilteredQuaternion(uint32_t frame);
