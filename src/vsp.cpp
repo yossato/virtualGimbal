@@ -57,6 +57,8 @@ const Eigen::MatrixXd &vsp::filteredData(){
     }
 }
 
+
+
 Eigen::Quaternion<double> vsp::toRawQuaternion(uint32_t frame){
     int half_tap_length = filter_coeff.cols()/2;
     Eigen::VectorXd w = raw_angle.block(0,frame+half_tap_length,3,1);
@@ -141,4 +143,8 @@ std::vector<std::complex<double>> vsp::getLPFFrequencyCoeff(uint32_t N, uint32_t
     fft.fwd(frequency_vector,time_vector);
 
     return frequency_vector;
+}
+
+const Eigen::MatrixXd &vsp::filteredDataDCT(){
+
 }
