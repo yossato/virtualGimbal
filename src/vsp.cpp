@@ -146,5 +146,10 @@ std::vector<std::complex<double>> vsp::getLPFFrequencyCoeff(uint32_t N, uint32_t
 }
 
 const Eigen::MatrixXd &vsp::filteredDataDCT(){
+  Eigen::VectorXcd freq_vector;
+  Eigen::fft<double> fft;
+  fft.fwd(freq_vector, raw_angle);
+  freq_vector =
 
+  raw_angle.block(0,i,3,full_tap_length)
 }
