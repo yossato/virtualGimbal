@@ -145,11 +145,17 @@ std::vector<std::complex<double>> vsp::getLPFFrequencyCoeff(uint32_t N, uint32_t
     return frequency_vector;
 }
 
-const Eigen::MatrixXd &vsp::filteredDataDCT(){
+const Eigen::MatrixXd &vsp::filteredDataDCT(double fs, double fc){
+//TODO: メンバ変数にraw_angle_2を定義する。これは前後にFIRフィルタの分の余白が付いていないものである。
+//TODO: VectorXcdを返すgetLPTFrequencyCoeffをメンバ関数に定義する
   Eigen::VectorXcd freq_vector;
   Eigen::fft<double> fft;
-  fft.fwd(freq_vector, raw_angle);
-  freq_vector =
-
-  raw_angle.block(0,i,3,full_tap_length)
+    //TODO:後ろにスムーズに接続するための余白をraw_angle_2の末尾に追加
+  for(int i=0;i<3;++i){//Each x, y, z row.
+    fft.fwd(freq_vector, raw_angle_2.block(i,0,1,raw_angle_2.cols().transpose());
+    freq_vector = getLPFFrequencyCoeff(raw_angle_2.cols(),8,fs,fc).array() * freq_vector;
+    fft.inv(raw_angle_2.block(i,0,1,raw_angle_2.cols()).transpose(),freq_vector); //transposeを左辺に持って行って大丈夫か？ダメなら一度VectorXdを定義
+  }
+    //TODO: ここで末尾の余白を削除
+  
 }
