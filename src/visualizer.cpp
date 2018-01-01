@@ -141,4 +141,8 @@ void plot(const Eigen::MatrixXd mat, std::string title, std::vector<std::string>
     plt::show();
 }
 
+//void plot(Eigen::VectorXd x, Eigen::VectorXd y, std::string style){
+//    plt::plot(x,y,style.c_str());
+//}
+
 }

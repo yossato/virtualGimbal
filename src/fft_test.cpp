@@ -409,6 +409,13 @@ double coeff[] = {0.0000000028	,
                0.0000000028	,
 };
 
+void plot_eigen(Eigen::VectorXd x, Eigen::VectorXd y, std::string style){
+    std::vector<double> vec_x(x.rows()),vec_y(x.rows());
+    Eigen::Map<Eigen::VectorXd>(&vec_x[0],x.rows())=x;
+    Eigen::Map<Eigen::VectorXd>(&vec_y[0],y.rows())=y;
+    plt::plot(vec_x,vec_y,style.c_str());
+}
+
 int main(int argc, char** argv){
     //kaiser窓を表示
 //    Eigen::VectorXd vector_kaiser = vsp::getKaiserWindow(400,4);
@@ -423,13 +430,13 @@ int main(int argc, char** argv){
     int N = L*2;
     double t=1;
     Eigen::FFT<double> fft;
-    std::vector<double> time_vec(N),time(N);
-    std::vector<std::complex<double>> freq_vec;
-    std::vector<double> vec_real(N),vec_imag(N);
+    Eigen::VectorXd time_vec(N),time(N);
+    Eigen::VectorXcd freq_vec;
+    Eigen::VectorXd vec_real(N),vec_imag(N);
 
 
     //LPFを関数で生成
-    freq_vec = vsp::getLPFFrequencyCoeff(3999,4,60,8);
+    freq_vec = vsp::getLPFFrequencyCoeff(3999,8,60,8);
     vec_real.resize(freq_vec.size()/2);
     vec_imag.resize(freq_vec.size()/2);
     time.resize(freq_vec.size()/2);
@@ -439,8 +446,8 @@ int main(int argc, char** argv){
         vec_imag[i] = freq_vec[i].imag();
     }
 
-    plt::plot(time,vec_real,".-g");
-    plt::plot(time,vec_imag,".-b");
+    plot_eigen(time,vec_real,".-g");
+    plot_eigen(time,vec_imag,".-b");
     plt::title("getLPFFrequancyCoeff");
     plt::show();
 
@@ -473,10 +480,14 @@ int main(int argc, char** argv){
     plt::show();*/
 
 //フィルタ係数
-    time_vec = std::vector<double>(coeff,std::end(coeff));
-    std::vector<double> buff;
-    std::copy(time_vec.begin()+time_vec.size()/2,time_vec.end(),std::back_inserter(buff));
-    std::copy(time_vec.begin(),time_vec.begin()+time_vec.size()/2-1,std::back_inserter(buff));
+//    time_vec = std::vector<double>(coeff,std::end(coeff));
+    std::vector<double> coeff_vec = std::vector<double>(coeff,std::end(coeff));
+    time_vec = Eigen::Map<Eigen::VectorXd>(&coeff_vec[0],coeff_vec.size());
+    Eigen::VectorXd buff(time_vec.rows());
+//    std::copy(time_vec.begin()+time_vec.size()/2,time_vec.end(),std::back_inserter(buff));
+//    std::copy(time_vec.begin(),time_vec.begin()+time_vec.size()/2-1,std::back_inserter(buff));
+    buff.block(0,0,time_vec.rows()/2,1) = time_vec.block(time_vec.rows()/2,0,time_vec.rows()/2,1);
+    buff.block(time_vec.rows()/2,0,time_vec.rows()-time_vec.rows()/2,1) = time_vec.block(0,0,time_vec.rows()-time_vec.rows()/2,1);
     time_vec = buff;
 //    time_vec.resize(time_vec.size());
     vec_real.resize(time_vec.size());
@@ -489,11 +500,11 @@ int main(int argc, char** argv){
         vec_real[i] = freq_vec[i].real();
         vec_imag[i] = freq_vec[i].imag();
     }
-    plt::plot(time,time_vec,".-r");
+    plot_eigen(time,time_vec,".-r");
     plt::title("filter coeff");
     plt::show();
-    plt::plot(time,vec_real,".-g");
-    plt::plot(time,vec_imag,".-b");
+    plot_eigen(time,vec_real,".-g");
+    plot_eigen(time,vec_imag,".-b");
     plt::title("filter coeff");
     plt::show();
 
@@ -520,17 +531,18 @@ int main(int argc, char** argv){
     plt::show();*/
 
     //LPFを自分で設計
-    time_vec = std::vector<double>(3265,pow(10,-200.0/20.0));
+    time_vec = Eigen::VectorXd::Zero(3265);//std::vector<double>(3265,pow(10,-200.0/20.0));
     vec_real.resize(time_vec.size());
     vec_imag.resize(time_vec.size());
     freq_vec.resize(time_vec.size());
     time.resize(time_vec.size());
 
 
-    for(auto &el:freq_vec){
-        el.imag(0.0);
-        el.real(0.0);
-    }
+//    for(auto &el:freq_vec){
+//        el.imag(0.0);
+//        el.real(0.0);
+//    }
+    freq_vec = Eigen::VectorXcd::Zero(3265);
 
     for(int i=0,e=2;i<e;++i){
 //        time_vec[i] = 1.0;
@@ -551,11 +563,11 @@ int main(int argc, char** argv){
 //    for(int i=0,e=time_vec.size();i<e;++i){
 //        time[i] = i;
 //    }
-    plt::plot(time,time_vec,".-r");
+    plot_eigen(time,time_vec,".-r");
     plt::title("DIY filter coeff");
     plt::show();
-    plt::plot(time,vec_real,".-g");
-    plt::plot(time,vec_imag,".-b");
+    plot_eigen(time,vec_real,".-g");
+    plot_eigen(time,vec_imag,".-b");
     plt::title("DIY filter");
     plt::show();
 
@@ -574,12 +586,12 @@ int main(int argc, char** argv){
         vec_imag[i] = freq_vec[i].imag();
     }
 
-    plt::plot(time,time_vec,".-r");
+    plot_eigen(time,time_vec,".-r");
     plt::title("DIY filter coeff with kaiser");
     plt::show();
 
-    plt::plot(time,vec_real,".-g");
-    plt::plot(time,vec_imag,".-b");
+    plot_eigen(time,vec_real,".-g");
+    plot_eigen(time,vec_imag,".-b");
     plt::title("DIY filter with kaiser");
     plt::show();
 

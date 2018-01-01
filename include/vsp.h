@@ -43,7 +43,8 @@ public:
 
     static Eigen::VectorXd getKaiserWindow(uint32_t tap_length, uint32_t alpha);
 
-    static std::vector<std::complex<double>> getLPFFrequencyCoeff(uint32_t N, uint32_t alpha, double fs, double fc);
+//    static std::vector<std::complex<double>> getLPFFrequencyCoeff(uint32_t N, uint32_t alpha, double fs, double fc);
+    static Eigen::VectorXcd getLPFFrequencyCoeff(uint32_t N, uint32_t alpha, double fs, double fc);
 
     const Eigen::MatrixXd &filteredDataDCT(double fs, double fc);
 
@@ -444,6 +445,7 @@ private:
     Eigen::MatrixXd filtered_angle;
     Eigen::MatrixXd filter_coeff;
     bool is_filterd;
+
 };
 
 #endif // VSP_H
