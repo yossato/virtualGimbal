@@ -154,28 +154,19 @@ const Eigen::MatrixXd &vsp::filteredDataDCT(double fs, double fc){
     //TODO: VectorXcdを返すgetLPTFrequencyCoeffをメンバ関数に定義する
     Eigen::VectorXcd freq_vector;
     Eigen::FFT<double> fft;
-    Eigen::VectorXd raw_angle_x = raw_angle.block(0,0,1,raw_angle.cols()).transpose();
-    Eigen::VectorXd raw_angle_y = raw_angle.block(1,0,1,raw_angle.cols()).transpose();
-    Eigen::VectorXd raw_angle_z = raw_angle.block(2,0,1,raw_angle.cols()).transpose();
+//    Eigen::VectorXd raw_angle_x = raw_angle.block(0,0,1,raw_angle.cols()).transpose();
+//    Eigen::VectorXd raw_angle_y = raw_angle.block(1,0,1,raw_angle.cols()).transpose();
+//    Eigen::VectorXd raw_angle_z = raw_angle.block(2,0,1,raw_angle.cols()).transpose();
     //TODO:後ろにスムーズに接続するための余白をraw_angle_2の末尾に追加
 
-    Eigen::VectorXcd filter_coeff_vector = getLPFFrequencyCoeff(raw_angle.cols(),8,fs,fc).array();
+    Eigen::VectorXcd filter_coeff_vector = getLPFFrequencyCoeff(raw_angle.rows(),8,fs,fc).array();
+    filtered_angle.resize(raw_angle.rows(),raw_angle.cols());
 
-    //angle x
-    fft.fwd(freq_vector, raw_angle_x);
-    freq_vector = filter_coeff_vector.array() * freq_vector.array();
-    fft.inv(raw_angle_x,freq_vector);
-
-    //angle y
-    fft.fwd(freq_vector, raw_angle_y);
-    freq_vector = filter_coeff_vector.array() * freq_vector.array();
-    fft.inv(raw_angle_y,freq_vector);
-
-    //angle z
-    fft.fwd(freq_vector, raw_angle_z);
-    freq_vector = filter_coeff_vector.array() * freq_vector.array();
-    fft.inv(raw_angle_z,freq_vector);
-
+    //Apply LPF to each x, y and z axis.
+    for(int i=0,e=raw_angle.cols();i<e;++i){
+        freq_vector = fft.fwd(raw_angle.col(i));
+        freq_vector = filter_coeff_vector.array() * freq_vector.array();
+        filtered_angle.col(i).noalias() = fft.inv(freq_vector);
+    }
     //TODO: ここで末尾の余白を削除
-    //TODO:filtered_angleに代入するべきだろ・・・
 }
