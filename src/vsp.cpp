@@ -146,26 +146,31 @@ Eigen::VectorXcd vsp::getLPFFrequencyCoeff(uint32_t N, uint32_t alpha, double fs
 
 
 
-const Eigen::MatrixXd &vsp::filteredDataDCT(double fs, double fc){
-    //TODO: メンバ変数にraw_angle_2を定義する。これは前後にFIRフィルタの分の余白が付いていないものである。
-    //TODO: VectorXcdを返すgetLPTFrequencyCoeffをメンバ関数に定義する
+const Eigen::MatrixXd &vsp::filteredDataDFT(double fs, double fc){
+    //TODO 最初に条件分岐を追加し、is_filterd == trueなら計算を回避させる
     Eigen::VectorXcd freq_vector;
     Eigen::FFT<double> fft;
-//    Eigen::VectorXd raw_angle_x = raw_angle.block(0,0,1,raw_angle.cols()).transpose();
-//    Eigen::VectorXd raw_angle_y = raw_angle.block(1,0,1,raw_angle.cols()).transpose();
-//    Eigen::VectorXd raw_angle_z = raw_angle.block(2,0,1,raw_angle.cols()).transpose();
-    //TODO:後ろにスムーズに接続するための余白をraw_angle_2の末尾に追加
+     
+    int32_t clerp_length = fs / fc;
 
-    Eigen::VectorXcd filter_coeff_vector = getLPFFrequencyCoeff(raw_angle.rows(),8,fs,fc).array();
-    filtered_angle.resize(raw_angle.rows(),raw_angle.cols());
+    //先頭と末尾は繰り返しで不連続になってしまうので、DFT LPFを適用する前に、CLerpでなめらかに繋いでおく
+    Eigen::MatrixXd raw_angle_2(raw_angle.rows()+clerp_length,raw_angle.cols());
+    raw_angle_2.block(0,0,raw_angle.rows(),raw_angle.cols()) = raw_angle;
+    raw_angle_2.block(raw_angle.rows(),0,clerp_length,raw_angle.cols()) = CLerp(raw_angle.block(raw_angle.rows()-1,0,1,raw_angle.cols()),raw_angle.block(0,0,1,raw_angle.cols()),clerp_length);
+    Eigen::VectorXcd filter_coeff_vector = getLPFFrequencyCoeff(raw_angle_2.rows(),8,fs,fc).array();
+    
+    filtered_angle.resize(raw_angle_2.rows(),raw_angle_2.cols());
 
     //Apply LPF to each x, y and z axis.
-    for(int i=0,e=raw_angle.cols();i<e;++i){
-        freq_vector = fft.fwd(raw_angle.col(i));
+    for(int i=0,e=raw_angle_2.cols();i<e;++i){
+        freq_vector = fft.fwd(raw_angle_2.col(i));
         freq_vector = filter_coeff_vector.array() * freq_vector.array();
         filtered_angle.col(i).noalias() = fft.inv(freq_vector);
     }
-    //TODO: ここで末尾の余白を削除
+    //ここで末尾の余白を削除
+    filtered_angle = filtered_angle.block(0,0,raw_angle.rows(),raw_angle.cols());
+    is_filterd = true;
+    return filtered_angle;
 }
 
 Eigen::MatrixXd vsp::CLerp(Eigen::MatrixXd start, Eigen::MatrixXd end, int32_t num){

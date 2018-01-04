@@ -462,6 +462,25 @@ int main(int argc, char** argv){
         angleQuaternion.back() = angleQuaternion.back() * (1.0 / norm(angleQuaternion.back()));
     }
 
+    //EigenによるDFT LPFのテスト
+    {
+        vector<Eigen::Quaternion<double>> angleQuaternion_vsp2;
+        angleQuaternion_vsp2.push_back(Eigen::Quaternion<double>(1,0,0,0));
+        for(int frame=0,e=Capture->get(CV_CAP_PROP_FRAME_COUNT);frame<e;++frame){
+            auto v_sync = angularVelocitySync(frame);
+            Eigen::Vector3d ve_sync(v_sync[0],v_sync[1],v_sync[2]);
+            angleQuaternion_vsp2.push_back(angleQuaternion_vsp2.back()*vsp::RotationQuaternion(ve_sync*Tvideo));
+            angleQuaternion_vsp2.back() = angleQuaternion_vsp2.back().normalized();
+        }
+        vsp v2(angleQuaternion_vsp2);
+        std::vector<string> legends = {"x","y","z"};
+        vgp::plot(v2.data(),"Raw DFT",legends);
+//        v.setFilterCoeff(FIRcoeffs[lowPassFilterStrength]);
+        //平滑化を試す
+        vgp::plot(v2.filteredDataDFT(Capture->get(CV_CAP_PROP_FPS),4.0),"Filterd DFT",legends);
+
+    }
+
     //Eigenによる信号処理のテスト
     vector<Eigen::Quaternion<double>> angleQuaternion_vsp;
     angleQuaternion_vsp.push_back(Eigen::Quaternion<double>(1,0,0,0));

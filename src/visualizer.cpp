@@ -115,16 +115,16 @@ void plot(vector<double> x,vector<double>  y,vector<double> z, string title, str
 }
 
 void plot(const Eigen::MatrixXd mat, std::string title, std::vector<std::string> legends){
-    vector<double> index(mat.cols());
+    vector<double> index(mat.rows());
 
     for(int i=0;i<index.size();i++){
         index[i] = static_cast<double>(i);
     }
     vector<double> value;
-    for(int i=0,e=mat.rows();i<e;++i){
-        value.resize(mat.cols());
-        Eigen::MatrixXd part = mat.block(i,0,1,mat.cols());
-        memcpy(value.data(),part.data(),mat.cols()*sizeof(double));
+    for(int i=0,e=mat.cols();i<e;++i){
+        value.resize(mat.rows());
+        Eigen::MatrixXd part = mat.block(0,i,mat.rows(),1);
+        memcpy(value.data(),part.data(),mat.rows()*sizeof(double));
 
         if(i < legends.size()){
             plt::named_plot(legends[i].c_str(),index,value);

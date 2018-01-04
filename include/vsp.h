@@ -46,7 +46,7 @@ public:
 //    static std::vector<std::complex<double>> getLPFFrequencyCoeff(uint32_t N, uint32_t alpha, double fs, double fc);
     static Eigen::VectorXcd getLPFFrequencyCoeff(uint32_t N, uint32_t alpha, double fs, double fc);
 
-    const Eigen::MatrixXd &filteredDataDCT(double fs, double fc);
+    const Eigen::MatrixXd &filteredDataDFT(double fs, double fc);
 
     Eigen::Quaternion<double> toRawQuaternion(uint32_t frame);
     Eigen::Quaternion<double> toFilteredQuaternion(uint32_t frame);
