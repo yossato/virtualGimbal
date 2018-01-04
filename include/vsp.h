@@ -17,13 +17,13 @@ public:
 
     //TODO:コンストラクタでfilter coeffも受け取っといたほうがよさ気
     template <class T> vsp(vector<Eigen::Quaternion<T>> &angle_quaternion){
-        raw_angle.resize(3,angle_quaternion.size());
+        raw_angle.resize(angle_quaternion.size(),3);
 
         for(int i=0,e=angle_quaternion.size();i<e;++i){
             auto el = Quaternion2Vector(angle_quaternion[i]);//require Quaternion2Matrix<3,1>()
-            raw_angle(0,i) = el[0];
-            raw_angle(1,i) = el[1];
-            raw_angle(2,i) = el[2];
+            raw_angle(i,0) = el[0];
+            raw_angle(i,1) = el[1];
+            raw_angle(i,2) = el[2];
         }
         is_filterd = false;
     }
@@ -33,9 +33,9 @@ public:
     const Eigen::MatrixXd &data();
 
     template <class T> void setFilterCoeff(T coeff){
-        filter_coeff.resize(1,coeff.size());
+        filter_coeff.resize(coeff.size(),1);
         for(int i=0,e=coeff.size();i<e;++i){
-            filter_coeff(0,i) = coeff[i];
+            filter_coeff(i,0) = coeff[i];
         }
     }
 
@@ -51,6 +51,12 @@ public:
     Eigen::Quaternion<double> toRawQuaternion(uint32_t frame);
     Eigen::Quaternion<double> toFilteredQuaternion(uint32_t frame);
     Eigen::Quaternion<double> toDiffQuaternion(uint32_t frame);
+
+    /**
+      * @brief cos関数で2点をなめらかに補完する関数
+      * @retval numステップで補完された行列
+      **/
+    static Eigen::MatrixXd CLerp(Eigen::MatrixXd start, Eigen::MatrixXd end, int32_t num);
 
     /**
      * @brief 回転を表すクォータニオンを生成する関数
@@ -443,7 +449,7 @@ public:
 private:
     Eigen::MatrixXd raw_angle;
     Eigen::MatrixXd filtered_angle;
-    Eigen::MatrixXd filter_coeff;
+    Eigen::VectorXd filter_coeff;
     bool is_filterd;
 
 };

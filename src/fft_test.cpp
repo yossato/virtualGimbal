@@ -7,7 +7,7 @@
 #include "vsp.h"
 
 namespace plt = matplotlibcpp;
-
+using namespace Eigen;
 double coeff[] = {0.0000000028	,
                0.0000000113	,
                0.0000000282	,
@@ -417,6 +417,21 @@ void plot_eigen(Eigen::VectorXd x, Eigen::VectorXd y, std::string style){
 }
 
 int main(int argc, char** argv){
+
+    //CLerp関数をテスト
+//    MatrixXd buff4 = Eigen::ArrayXd::LinSpaced(1,0,10);
+//    std::cout <<  buff4 << std::endl;
+    MatrixXd start(1,3),end(1,3);
+    start << 1,2,3;
+    end << -6,-5,-4;
+    MatrixXd cl = vsp::CLerp(start,end,100);
+    VectorXd ln = ArrayXd::LinSpaced(100,0,100);
+    plot_eigen(ln,cl.col(0),".-r");
+    plot_eigen(ln,cl.col(1),".-g");
+    plot_eigen(ln,cl.col(2),".-b");
+    plt::title("CLerp");
+    plt::show();
+    return 0;
     //kaiser窓を表示
 //    Eigen::VectorXd vector_kaiser = vsp::getKaiserWindow(400,4);
 //    std::vector<double> kaiser(vector_kaiser.rows());
