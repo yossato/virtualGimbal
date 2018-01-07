@@ -151,7 +151,7 @@ const Eigen::MatrixXd &vsp::filteredDataDFT(double fs, double fc){
     Eigen::VectorXcd freq_vector;
     Eigen::FFT<double> fft;
      
-    int32_t clerp_length = fs / fc;
+    int32_t clerp_length = fs / fc * 20.0;
 
     //先頭と末尾は繰り返しで不連続になってしまうので、DFT LPFを適用する前に、CLerpでなめらかに繋いでおく
     Eigen::MatrixXd raw_angle_2(raw_angle.rows()+clerp_length,raw_angle.cols());
@@ -168,8 +168,9 @@ const Eigen::MatrixXd &vsp::filteredDataDFT(double fs, double fc){
         filtered_angle.col(i).noalias() = fft.inv(freq_vector);
     }
     //ここで末尾の余白を削除
-    filtered_angle = filtered_angle.block(0,0,raw_angle.rows(),raw_angle.cols());
+    Eigen::MatrixXd buf = filtered_angle.block(0,0,raw_angle.rows(),raw_angle.cols());
     is_filterd = true;
+    filtered_angle = buf;
     return filtered_angle;
 }
 

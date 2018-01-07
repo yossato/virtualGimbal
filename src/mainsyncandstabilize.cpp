@@ -477,7 +477,7 @@ int main(int argc, char** argv){
         vgp::plot(v2.data(),"Raw DFT",legends);
 //        v.setFilterCoeff(FIRcoeffs[lowPassFilterStrength]);
         //平滑化を試す
-        vgp::plot(v2.filteredDataDFT(Capture->get(CV_CAP_PROP_FPS),4.0),"Filterd DFT",legends);
+        vgp::plot(v2.filteredDataDFT(Capture->get(CV_CAP_PROP_FPS),1.0),"Filterd DFT",legends);
 
     }
 
