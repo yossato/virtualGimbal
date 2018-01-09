@@ -84,14 +84,16 @@ public:
      * @param シングルローテーションを表すベクトルを回転を表すクォータニオンへ変換
      **/
     template <typename T_num> static Eigen::Quaternion<T_num> Vector2Quaternion(Eigen::Vector3d w){
-        double theta = sqrt(w[0]*w[0]+w[1]*w[1]+w[2]*w[2]);//回転角度を計算、normと等しい
+        double theta = w.norm();//sqrt(w[0]*w[0]+w[1]*w[1]+w[2]*w[2]);//回転角度を計算、normと等しい
         //0割を回避するためにマクローリン展開
         if(theta > EPS){
-            auto n = w * (1.0/theta);//単位ベクトルに変換
-            double sin_theta_2 = sin(theta*0.5);
-            return Eigen::Quaternion<double>(cos(theta*0.5),n[0]*sin_theta_2,n[1]*sin_theta_2,n[2]*sin_theta_2);
+            auto n = w.normalized();//w * (1.0/theta);//単位ベクトルに変換
+//            double sin_theta_2 = sin(theta*0.5);
+//            return Eigen::Quaternion<T_num>(cos(theta*0.5),n[0]*sin_theta_2,n[1]*sin_theta_2,n[2]*sin_theta_2);
+            Eigen::VectorXd n_sin_theta_2 = n * sin(theta*0.5);
+            return Eigen::Quaternion<T_num>(cos(theta*0.5),n_sin_theta_2[0],n_sin_theta_2[1],n_sin_theta_2[2]);
         }else{
-            return Eigen::Quaternion<double>(1.0,0.5*w[0],0.5*w[1],0.5*w[2]);
+            return Eigen::Quaternion<T_num>(1.0,0.5*w[0],0.5*w[1],0.5*w[2]);
         }
     }
 
@@ -99,11 +101,11 @@ public:
      * @param 回転を表すクォータニオンをシングルローテーションを表すベクトルへ変換。前回算出したベクトルを引数として受け取ることで、アンラッピングする。
      * */
     template <typename T_num> static Eigen::Vector3d Quaternion2Vector(Eigen::Quaternion<T_num> &q, Eigen::Vector3d &prev){
-        double denom = sqrt(1-q.R_component_1()*q.R_component_1());
+        double denom = sqrt(1-q.w()*q.w());
         if(denom==0.0){//まったく回転しない時は０割になるので、場合分けする
             return Eigen::Vector3d(0,0,0);//return zero vector
         }
-        double theta_2 = atan2(denom,q.R_component_1());
+        double theta_2 = atan2(denom,q.w());
         double prev_theta_2 = prev.norm()/2;
         double diff = theta_2 - prev_theta_2;
         theta_2 -= 2.0*M_PI*(double)(static_cast<int>(diff/(2.0*M_PI)));//マイナスの符号に注意
@@ -112,18 +114,19 @@ public:
             printf("\n###########Unwrapping %d\n",static_cast<int>(diff/(2.0*M_PI)));
         }
 
-        return Eigen::Vector3d(q.R_component_2(),q.R_component_3(),q.R_component_4())*2.0*theta_2/denom;
+        return Eigen::Vector3d(q.x(),q.y(),q.z())*2.0*theta_2/denom;
     }
 
     /**
      * @param 回転を表すクォータニオンから回転を表す行列を生成
      **/
     template <typename T_num> static void Quaternion2Matrix(Eigen::Quaternion<T_num> &q, Eigen::MatrixXd &det){
-        det = (Eigen::MatrixXd(3,3) <<
-               q.R_component_1()*q.R_component_1()+q.R_component_2()*q.R_component_2()-q.R_component_3()*q.R_component_3()-q.R_component_4()*q.R_component_4(), 2*(q.R_component_2()*q.R_component_3()-q.R_component_1()*q.R_component_4()),                  2*(q.R_component_2()*q.R_component_4()+q.R_component_1()*q.R_component_3()),
-               2*(q.R_component_2()*q.R_component_3()+q.R_component_1()*q.R_component_4()),                 q.R_component_1()*q.R_component_1()-q.R_component_2()*q.R_component_2()+q.R_component_3()*q.R_component_3()-q.R_component_4()*q.R_component_4(), 2*(q.R_component_3()*q.R_component_4()-q.R_component_1()*q.R_component_2()),
-               2*(q.R_component_2()*q.R_component_4()-q.R_component_1()*q.R_component_3()),                 2*(q.R_component_3()*q.R_component_4()+q.R_component_1()*q.R_component_2()),                  q.R_component_1()*q.R_component_1()-q.R_component_2()*q.R_component_2()-q.R_component_3()*q.R_component_3()+q.R_component_4()*q.R_component_4()
-               );
+//        det = Eigen::MatrixXd::Zero(3,3);
+//        q.matrix()
+//        det << q.w()*q.w()+q.x()*q.x()-q.y()*q.y()-q.z()*q.z(), 2*(q.x()*q.y()-q.w()*q.z()),                  2*(q.x()*q.z()+q.w()*q.y()),
+//               2*(q.x()*q.y()+q.w()*q.z()),                 q.w()*q.w()-q.x()*q.x()+q.y()*q.y()-q.z()*q.z(), 2*(q.y()*q.z()-q.w()*q.x()),
+//               2*(q.x()*q.z()-q.w()*q.y()),                 2*(q.y()*q.z()+q.w()*q.x()),                  q.w()*q.w()-q.x()*q.x()-q.y()*q.y()+q.z()*q.z();
+        det = q.matrix();
     }
 
     /**
@@ -132,32 +135,32 @@ public:
      * @param [in]	Qto		四元数2
      * @param [in]	t		比率(0<=t<=1)
      **/
-    template <typename _Tp> static Eigen::Quaternion<_Tp> Slerp(Eigen::Quaternion<_Tp> &Qfrom, Eigen::Quaternion<_Tp> &Qto, _Tp t){
-        double cosom = Qfrom.R_component_1()*Qto.R_component_1()+Qfrom.R_component_2()*Qto.R_component_2()+Qfrom.R_component_3()*Qto.R_component_3()+Qfrom.R_component_4()*Qto.R_component_4();
-        double sinom, omega, scale0, scale1;
+//    template <typename _Tp> static Eigen::Quaternion<_Tp> Slerp(Eigen::Quaternion<_Tp> &Qfrom, Eigen::Quaternion<_Tp> &Qto, _Tp t){
+//        double cosom = Qfrom.w()*Qto.w()+Qfrom.x()*Qto.x()+Qfrom.y()*Qto.y()+Qfrom.z()*Qto.z();
+//        double sinom, omega, scale0, scale1;
 
-        if(Qto == Qfrom){	//QfromとQtoが完全に一致->補完の必要なし
-            return Qfrom;
-        }
+//        if(Qto.Coefficients == Qfrom.Coefficients){	//QfromとQtoが完全に一致->補完の必要なし
+//            return Qfrom;
+//        }
 
-        //符号を直す
-        if(cosom < 0.0){
-            cosom = -cosom;
-            Qto = -Qto;
-        }
-        if((1.0-cosom)>1e-4){
-            omega = acos(cosom);
-            sinom = sin(omega);
-            scale0 = sin((1.0 - t) * omega) / sinom;
-            scale1 = sin(t * omega) / sinom;
-        }else{
-            scale0 = 1.0 -t;
-            scale1 = t;
-        }
+//        //符号を直す
+//        if(cosom < 0.0){
+//            cosom = -cosom;
+//            Qto = -Qto;
+//        }
+//        if((1.0-cosom)>1e-4){
+//            omega = acos(cosom);
+//            sinom = sin(omega);
+//            scale0 = sin((1.0 - t) * omega) / sinom;
+//            scale1 = sin(t * omega) / sinom;
+//        }else{
+//            scale0 = 1.0 -t;
+//            scale1 = t;
+//        }
 
-        return scale0 * Qfrom + scale1 * Qto;
+//        return scale0 * Qfrom + scale1 * Qto;
 
-    }
+//    }
 
     /** @brief 補正前の画像座標から、補正後のポリゴンの頂点を作成
      * @param [in]	Qa	ジャイロの角速度から計算したカメラの方向を表す回転クウォータニオン時系列データ、参照渡し
@@ -225,16 +228,19 @@ public:
 
             Eigen::Quaternion<double> slerpedAngleQuaternion;
             if(exposureTimingInEachRow >= 0){
-                slerpedAngleQuaternion = Slerp(currAngleQuaternion,nextAngleQuaternion,exposureTimingInEachRow);
+//                slerpedAngleQuaternion = Slerp(currAngleQuaternion,nextAngleQuaternion,exposureTimingInEachRow);
+                slerpedAngleQuaternion = currAngleQuaternion.slerp(exposureTimingInEachRow,nextAngleQuaternion);
             }else{
-                slerpedAngleQuaternion = Slerp(prevAngleQuaternion,currAngleQuaternion,1+exposureTimingInEachRow);
+//                slerpedAngleQuaternion = Slerp(prevAngleQuaternion,currAngleQuaternion,1+exposureTimingInEachRow);
+                slerpedAngleQuaternion = prevAngleQuaternion.slerp(1.0+exposureTimingInEachRow,currAngleQuaternion);
             }
             slerpedAngleQuaternion = adjustmentQuaternion * slerpedAngleQuaternion;
             Quaternion2Matrix(slerpedAngleQuaternion,R);
             for(int i=0;i<=division_x;++i){
                 double u = (double)i/division_x*image_width;
                 //後々の行列演算に備えて、画像上の座標を同次座標で表現しておく。(x座標、y座標,1)T
-                Eigen::MatrixXd p = (Eigen::MatrixXd(3,1) << (u- cx)/fx, (v - cy)/fy, 1.0);	//1のポリゴン座標に、K^-1を掛けた結果の３x１行列
+                Eigen::Vector3d p;
+                p << (u- cx)/fx, (v - cy)/fy, 1.0;	//1のポリゴン座標に、K^-1を掛けた結果の３x１行列
                 //2
                 Eigen::MatrixXd XYW = R * p;//inv()なし
 
@@ -273,16 +279,19 @@ public:
 
             Eigen::Quaternion<double> slerpedAngleQuaternion;
             if(exposureTimingInEachRow >= 0){
-                slerpedAngleQuaternion = Slerp(currAngleQuaternion,nextAngleQuaternion,exposureTimingInEachRow);
+//                slerpedAngleQuaternion = Slerp(currAngleQuaternion,nextAngleQuaternion,exposureTimingInEachRow);
+                slerpedAngleQuaternion = currAngleQuaternion.slerp(exposureTimingInEachRow,nextAngleQuaternion);
             }else{
-                slerpedAngleQuaternion = Slerp(prevAngleQuaternion,currAngleQuaternion,1+exposureTimingInEachRow);
+//                slerpedAngleQuaternion = Slerp(prevAngleQuaternion,currAngleQuaternion,1+exposureTimingInEachRow);
+                slerpedAngleQuaternion = prevAngleQuaternion.slerp(1.0+exposureTimingInEachRow,currAngleQuaternion);
             }
             slerpedAngleQuaternion = adjustmentQuaternion * slerpedAngleQuaternion;
             Quaternion2Matrix(slerpedAngleQuaternion,R);
             for(int i=0;i<=division_x;i+=division_x){
                 double u = (double)i/division_x*image_width;
                 //後々の行列演算に備えて、画像上の座標を同次座標で表現しておく。(x座標、y座標,1)T
-                Eigen::MatrixXd p = (Eigen::MatrixXd(3,1) << (u- cx)/fx, (v - cy)/fy, 1.0);	//1のポリゴン座標に、K^-1を掛けた結果の３x１行列
+                Eigen::Vector3d p;
+                p << (u- cx)/fx, (v - cy)/fy, 1.0;	//1のポリゴン座標に、K^-1を掛けた結果の３x１行列
                 //2
                 Eigen::MatrixXd XYW = R * p;//inv()なし
 
@@ -320,16 +329,19 @@ public:
 
             Eigen::Quaternion<double> slerpedAngleQuaternion;
             if(exposureTimingInEachRow >= 0){
-                slerpedAngleQuaternion = Slerp(currAngleQuaternion,nextAngleQuaternion,exposureTimingInEachRow);
+//                slerpedAngleQuaternion = Slerp(currAngleQuaternion,nextAngleQuaternion,exposureTimingInEachRow);
+                slerpedAngleQuaternion = currAngleQuaternion.slerp(exposureTimingInEachRow,nextAngleQuaternion);
             }else{
-                slerpedAngleQuaternion = Slerp(prevAngleQuaternion,currAngleQuaternion,1+exposureTimingInEachRow);
+//                slerpedAngleQuaternion = Slerp(prevAngleQuaternion,currAngleQuaternion,1+exposureTimingInEachRow);
+                slerpedAngleQuaternion = prevAngleQuaternion.slerp(1.0+exposureTimingInEachRow,currAngleQuaternion);
             }
             slerpedAngleQuaternion = adjustmentQuaternion * slerpedAngleQuaternion;
             Quaternion2Matrix(slerpedAngleQuaternion,R);
             for(int i=0;i<=division_x;++i){
                 double u = (double)i/division_x*image_width;
                 //後々の行列演算に備えて、画像上の座標を同次座標で表現しておく。(x座標、y座標,1)T
-                Eigen::MatrixXd p = (Eigen::MatrixXd(3,1) << (u- cx)/fx, (v - cy)/fy, 1.0);	//1のポリゴン座標に、K^-1を掛けた結果の３x１行列
+                Eigen::Vector3d p;
+                p  << (u- cx)/fx, (v - cy)/fy, 1.0;	//1のポリゴン座標に、K^-1を掛けた結果の３x１行列
                 //2
                 Eigen::MatrixXd XYW = R * p;//inv()なし
 
@@ -385,17 +397,17 @@ public:
      * @param [out] error はみ出したノルムの長さ
      **/
     template <typename _Tp> static void getRollingVectorError(
-            Eigen::Quaternion<double> &prevAngleQuaternion,
-            Eigen::Quaternion<double> &currAngleQuaternion,
-            Eigen::Quaternion<double> &nextAngleQuaternion,
+            Eigen::Quaternion<_Tp> &prevAngleQuaternion,
+            Eigen::Quaternion<_Tp> &currAngleQuaternion,
+            Eigen::Quaternion<_Tp> &nextAngleQuaternion,
             uint32_t division_x,
             uint32_t division_y,
             double TRollingShutter,
-            Eigen::MatrixXd &IK,
-            Eigen::MatrixXd &matIntrinsic,
+            Eigen::MatrixXd IK,
+            Eigen::MatrixXd matIntrinsic,
             uint32_t image_width,
             uint32_t image_height,
-            Eigen::Quaternion<double> adjustmentQuaternion,
+            Eigen::Quaternion<_Tp> adjustmentQuaternion,
             double zoom,
             double &error
             ){
@@ -415,7 +427,7 @@ public:
                                        matIntrinsic,
                                        image_width,
                                        image_height,
-                                       Vector2Quaternion<double>(ratio*Quaternion2Vector(adjustmentQuaternion)),
+                                       Vector2Quaternion<_Tp>(ratio*Quaternion2Vector(adjustmentQuaternion)),
                                        vecPorigonn_uv,
                                        zoom
                                        );

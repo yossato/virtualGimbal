@@ -153,17 +153,17 @@ int main(int argc, char** argv){
             }
             break;
         case 'f':       //Low pass filter strength of a camera shake reduction.
-                        //Larger is strong filter. This parameter must be integer.
-                        //Default 3.
+            //Larger is strong filter. This parameter must be integer.
+            //Default 3.
             value1 = optarg;
             lowPassFilterStrength = std::stoi(value1);
             if(lowPassFilterStrength < 0){
                 cout << "Low pass filter strength must be greater than or equal to 0.\r\n" <<
-                     "It is set as 0 automatically." << endl;
+                        "It is set as 0 automatically." << endl;
                 lowPassFilterStrength = 0;
             }else if(lowPassFilterStrength > 11){
                 cout << "Low pass filter strength must be less than 12.\r\n" <<
-                     "It is set as 11 automatically." << endl;
+                        "It is set as 11 automatically." << endl;
                 lowPassFilterStrength = 1;
             }
             break;
@@ -183,7 +183,7 @@ int main(int argc, char** argv){
     // 処理の経過時間
     auto elapsed = t2 - t1 ;
     std::cout << "Elapsed time: " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << " ms\n";
-//show(opticShift,"opticShift");
+    //show(opticShift,"opticShift");
     cv::VideoCapture *Capture = new cv::VideoCapture(videoPass);//動画をオープン
     assert(Capture->isOpened());
     cv::Size imageSize = cv::Size(Capture->get(CV_CAP_PROP_FRAME_WIDTH),Capture->get(CV_CAP_PROP_FRAME_HEIGHT));//解像度を読む
@@ -434,7 +434,7 @@ int main(int argc, char** argv){
                         };
 
     std::vector<std::vector<double>> FIRcoeffs;
-//    int32_t lowPassFilterStrength = 3;
+    //    int32_t lowPassFilterStrength = 3;
     for(int i=0;i<12;i++){
         std::vector<double> temp;
         if(ReadCoeff(temp,coeffs[i])){
@@ -466,7 +466,7 @@ int main(int argc, char** argv){
     {
         vector<Eigen::Quaternion<double>> angleQuaternion_vsp2;
         angleQuaternion_vsp2.push_back(Eigen::Quaternion<double>(1,0,0,0));
-        for(int frame=0,e=Capture->get(CV_CAP_PROP_FRAME_COUNT);frame<e;++frame){
+        for(int frame= -1 ,e=Capture->get(CV_CAP_PROP_FRAME_COUNT)+1;frame<e;++frame){//球面線形補間を考慮し前後各1フレーム追加
             auto v_sync = angularVelocitySync(frame);
             Eigen::Vector3d ve_sync(v_sync[0],v_sync[1],v_sync[2]);
             angleQuaternion_vsp2.push_back(angleQuaternion_vsp2.back()*vsp::RotationQuaternion(ve_sync*Tvideo));
@@ -475,11 +475,50 @@ int main(int argc, char** argv){
         vsp v2(angleQuaternion_vsp2);
         std::vector<string> legends = {"x","y","z"};
         vgp::plot(v2.data(),"Raw DFT",legends);
-//        v.setFilterCoeff(FIRcoeffs[lowPassFilterStrength]);
+        //        v.setFilterCoeff(FIRcoeffs[lowPassFilterStrength]);
         //平滑化を試す
         vgp::plot(v2.filteredDataDFT(Capture->get(CV_CAP_PROP_FPS),1.0),"Filterd DFT",legends);
 
+        auto convCVMat2EigenMat = [](cv::Mat &src){
+            assert(src.type()==CV_64FC1);
+          Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor> retval;
+          retval.resize(src.rows,src.cols);
+          memcpy(retval.data(),src.data,src.size().area()*sizeof(double));
+          return retval;
+        };
+
+        //エラーを計算する
+        Eigen::MatrixXd fdd = v2.filteredDataDFT(Capture->get(CV_CAP_PROP_FPS),1.0);
+        Eigen::VectorXd errors(fdd.rows()-2);
+        Eigen::Quaternion<double> prevQ,currQ,nextQ;
+        prevQ = vsp::Vector2Quaternion<double>(fdd.row(0).transpose()).conjugate() * vsp::Vector2Quaternion<double>(v2.data().row(0).transpose());
+        currQ = vsp::Vector2Quaternion<double>(fdd.row(1).transpose()).conjugate() * vsp::Vector2Quaternion<double>(v2.data().row(1).transpose());
+        for(int i=1,e=fdd.rows()-1;i<e;++i){
+            std::cout << "i:" << i <<  "prevQ:" << prevQ.coeffs() << std::endl;
+            nextQ = vsp::Vector2Quaternion<double>(fdd.row(i+1).transpose()).conjugate() * vsp::Vector2Quaternion<double>(v2.data().row(i+1).transpose());
+            double residual;
+            vsp::getRollingVectorError(prevQ,
+                                       currQ,
+                                       nextQ,
+                                       division_x,
+                                       division_y,
+                                       rollingShutterDuration,
+                                       convCVMat2EigenMat(matInvDistort),
+                                       convCVMat2EigenMat(matIntrinsic),
+                                       imageSize.width,
+                                       imageSize.height,
+                                       vsp::Vector2Quaternion<double>(Eigen::Vector3d(0.15,-0.15,0.0)),
+                                       zoomRatio,
+                                       residual
+                        );
+            errors(i-1) = residual;
+            prevQ = currQ;
+            currQ = nextQ;
+        }
+        std::vector<string> legends2 = {"x"};
+        vgp::plot(errors,"Errors",legends2);
     }
+    return 0;
 
     //Eigenによる信号処理のテスト
     vector<Eigen::Quaternion<double>> angleQuaternion_vsp;
@@ -496,7 +535,7 @@ int main(int argc, char** argv){
          << "y:" << angleQuaternion_vsp[100].y()
          << "z:" << angleQuaternion_vsp[100].z()<< endl;
     vsp v(angleQuaternion_vsp);
-//    vgp::plot(v.get_row(0),v.get_row(1),v.get_row(2),"Eigen");
+    //    vgp::plot(v.get_row(0),v.get_row(1),v.get_row(2),"Eigen");
     std::vector<string> legends = {"x","y","z"};
     vgp::plot(v.data(),"Eigen",legends);
     v.setFilterCoeff(FIRcoeffs[lowPassFilterStrength]);
@@ -507,7 +546,7 @@ int main(int argc, char** argv){
     {
 
         std::vector<double> time(v.data().cols()),time_x(v.data().cols()),time_y(v.data().cols()),time_z(v.data().cols());
-//        Map<MatrixXd>(&time_x[0],1,v.cols()) = v.block(0,0,1,v.cols());
+        //        Map<MatrixXd>(&time_x[0],1,v.cols()) = v.block(0,0,1,v.cols());
         for(int i=0,e=v.data().cols();i<e;++i){
             time[i] = i;
             time_x[i] = v.data()(0,i);
@@ -530,7 +569,7 @@ int main(int argc, char** argv){
                 time_z.push_back((time_z_begin*(double)i + time_z_end*(double)(liner_interpolate_length-i))/liner_interpolate_length);
             }
         }
-cout << "time_x.size()" << time_x.size() << endl;
+        cout << "time_x.size()" << time_x.size() << endl;
         //FFT
         std::vector<std::complex<double>> freq_x,freq_y,freq_z;
         Eigen::FFT<double> fft;
@@ -541,9 +580,9 @@ cout << "time_x.size()" << time_x.size() << endl;
         vector<double> norm_y(freq_y.size());
         vector<double> norm_z(freq_z.size());
         for(int i=0,e=freq_x.size();i<e;++i){
-//            norm_x[i] = log(norm(freq_x[i]));
-//            norm_y[i] = log(norm(freq_y[i]));
-//            norm_z[i] = log(norm(freq_z[i]));
+            //            norm_x[i] = log(norm(freq_x[i]));
+            //            norm_y[i] = log(norm(freq_y[i]));
+            //            norm_z[i] = log(norm(freq_z[i]));
             norm_x[i] = norm(freq_x[i]);
             norm_y[i] = norm(freq_y[i]);
             norm_z[i] = norm(freq_z[i]);
@@ -551,16 +590,16 @@ cout << "time_x.size()" << time_x.size() << endl;
         vgp::plot(norm_x,norm_y,norm_z,"norm");
         //LPFかけてみる！
         for(int i=80,e=freq_x.size()-80;i<e;++i){
-           freq_x[i] = std::complex<double>(0.0,0.0);
-           freq_y[i] = std::complex<double>(0.0,0.0);
-           freq_z[i] = std::complex<double>(0.0,0.0);
+            freq_x[i] = std::complex<double>(0.0,0.0);
+            freq_y[i] = std::complex<double>(0.0,0.0);
+            freq_z[i] = std::complex<double>(0.0,0.0);
         }
         fft.inv(time_x,freq_x);
         fft.inv(time_y,freq_y);
         fft.inv(time_z,freq_z);
         vgp::plot(time_x,time_y,time_z,"Low cut 80");
     }
-return 0;
+    return 0;
 
     //計算した角度を
     vgp::plot(angleQuaternion,"angleQuaternion");
@@ -619,7 +658,7 @@ return 0;
     glfwWindowHint( GLFW_VISIBLE, 0 );//オフスクリーンレンダリング。
 #endif
 
-//    glfwWindowHint( GLFW_VISIBLE, 0 );//オフスクリーンレンダリング。
+    //    glfwWindowHint( GLFW_VISIBLE, 0 );//オフスクリーンレンダリング。
 
 
     // Open a window and create its OpenGL context
@@ -648,7 +687,7 @@ return 0;
 #ifndef TEST2D
     glfwIconifyWindow(window);
 #endif
-//    glfwHideWindow(window);
+    //    glfwHideWindow(window);
 
     // Ensure we can capture the escape key being pressed below
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
@@ -725,10 +764,10 @@ return 0;
     glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, imageSize.width, imageSize.height, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
 
     // Poor filtering
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -857,9 +896,9 @@ return 0;
 
         //調整用のクォータニオンを準備
         quaternion<double> adjustmentQuaternion = Vector2Quaternion<double>(cv::Vec3d(vAngle,hAngle,0.0));
-//        cout << "adjustmentQuaternion:" << adjustmentQuaternion << endl;
-//        cout << "vAngle:" << vAngle << endl;
-//        cout << "hAngle:" << hAngle << endl;
+        //        cout << "adjustmentQuaternion:" << adjustmentQuaternion << endl;
+        //        cout << "vAngle:" << vAngle << endl;
+        //        cout << "hAngle:" << hAngle << endl;
         getDistortUnrollingMap(prevDiffAngleQuaternion,currDiffAngleQuaternion,nextDiffAngleQuaternion,
                                division_x,division_y,rollingShutterDuration,matInvDistort, matIntrinsic, imageSize, adjustmentQuaternion,vecVtx,zoomRatio);
         //角度配列の先頭を削除
@@ -1052,7 +1091,7 @@ return 0;
         //~ glReadBuffer(GL_FRONT);//読み取るOpenGLのバッファを指定 GL_FRONT:フロントバッファ GL_BACK:バックバッファ
 
 
-//        glReadBuffer(GL_BACK);//読み取るOpenGLのバッファを指定 GL_FRONT:フロントバッファ GL_BACK:バックバッファ
+        //        glReadBuffer(GL_BACK);//読み取るOpenGLのバッファを指定 GL_FRONT:フロントバッファ GL_BACK:バックバッファ
         // OpenGLで画面に描画されている内容をバッファに格納
         glReadPixels(
                     0,					//読み取る領域の左下隅のx座標
@@ -1064,12 +1103,12 @@ return 0;
                     simg.data			//ビットマップのピクセルデータ（実際にはバイト配列）へのポインタ
                     );
 #else
-      cv::Mat simg(textureSize,CV_8UC3);
-      glGetTexImage(GL_TEXTURE_2D,0,GL_BGR,GL_UNSIGNED_BYTE,simg.data);
+        cv::Mat simg(textureSize,CV_8UC3);
+        glGetTexImage(GL_TEXTURE_2D,0,GL_BGR,GL_UNSIGNED_BYTE,simg.data);
 #endif
 
-      glDisableVertexAttribArray(0);
-      glDisableVertexAttribArray(1);
+        glDisableVertexAttribArray(0);
+        glDisableVertexAttribArray(1);
 
         cv::imshow("Stabilized Image2",simg);
         char key =cv::waitKey(1);
@@ -1146,7 +1185,7 @@ return 0;
     }
 
     //#define OUTPUTVIDEO
-//#ifdef OUTPUTVIDEO
+    //#ifdef OUTPUTVIDEO
     if(outputStabilizedVideo){
         std::cout << "音声を分離" << std::endl;
         std::string command = "ffmpeg -i " + sInputVideoPass +  " -vn -acodec copy output-audio.aac";
@@ -1159,7 +1198,7 @@ return 0;
         command = "rm " + sInputVideoPass + "_deblured.avi";
         system(command.c_str());
     }
-//#endif
+    //#endif
     return 0;
 }
 
