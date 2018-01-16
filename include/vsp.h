@@ -13,6 +13,7 @@ using namespace boost::math;
 class vsp
 {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     vsp();
 
     //TODO:コンストラクタでfilter coeffも受け取っといたほうがよさ気
@@ -175,7 +176,7 @@ public:
      * @param [in]	zoom	倍率[]。拡大縮小しないなら1を指定すること。省略可
      * @retval true:成功 false:折り返し発生で失敗
      **/
-    template <typename _Tp, typename _Tx> static bool getDistortUnrollingContour(
+    template <typename _Tp, typename _Tx> bool getDistortUnrollingContour(
             Eigen::Quaternion<_Tp> &prevAngleQuaternion,
             Eigen::Quaternion<_Tp> &currAngleQuaternion,
             Eigen::Quaternion<_Tp> &nextAngleQuaternion,
@@ -186,7 +187,7 @@ public:
             Eigen::MatrixXd &matIntrinsic,
             uint32_t image_width,
             uint32_t image_height,
-            Eigen::Quaternion<double> adjustmentQuaternion,
+//            Eigen::Quaternion<double> adjustmentQuaternion,
             std::vector<_Tx> &vecPorigonn_uv,
             double zoom
             ){
@@ -234,7 +235,7 @@ public:
 //                slerpedAngleQuaternion = Slerp(prevAngleQuaternion,currAngleQuaternion,1+exposureTimingInEachRow);
                 slerpedAngleQuaternion = prevAngleQuaternion.slerp(1.0+exposureTimingInEachRow,currAngleQuaternion);
             }
-            slerpedAngleQuaternion = adjustmentQuaternion * slerpedAngleQuaternion;
+//            slerpedAngleQuaternion = adjustmentQuaternion * slerpedAngleQuaternion;
             Quaternion2Matrix(slerpedAngleQuaternion,R);
             for(int i=0;i<=division_x;++i){
                 double u = (double)i/division_x*image_width;
@@ -285,7 +286,7 @@ public:
 //                slerpedAngleQuaternion = Slerp(prevAngleQuaternion,currAngleQuaternion,1+exposureTimingInEachRow);
                 slerpedAngleQuaternion = prevAngleQuaternion.slerp(1.0+exposureTimingInEachRow,currAngleQuaternion);
             }
-            slerpedAngleQuaternion = adjustmentQuaternion * slerpedAngleQuaternion;
+//            slerpedAngleQuaternion = adjustmentQuaternion * slerpedAngleQuaternion;
             Quaternion2Matrix(slerpedAngleQuaternion,R);
             for(int i=0;i<=division_x;i+=division_x){
                 double u = (double)i/division_x*image_width;
@@ -335,7 +336,7 @@ public:
 //                slerpedAngleQuaternion = Slerp(prevAngleQuaternion,currAngleQuaternion,1+exposureTimingInEachRow);
                 slerpedAngleQuaternion = prevAngleQuaternion.slerp(1.0+exposureTimingInEachRow,currAngleQuaternion);
             }
-            slerpedAngleQuaternion = adjustmentQuaternion * slerpedAngleQuaternion;
+//            slerpedAngleQuaternion = adjustmentQuaternion * slerpedAngleQuaternion;
             Quaternion2Matrix(slerpedAngleQuaternion,R);
             for(int i=0;i<=division_x;++i){
                 double u = (double)i/division_x*image_width;
@@ -396,65 +397,16 @@ public:
       * @param [in]	zoom	倍率[]。拡大縮小しないなら1を指定すること。省略可
      * @param [out] error はみ出したノルムの長さ
      **/
-    template <typename _Tp> static void getRollingVectorError(
-            Eigen::Quaternion<_Tp> &prevAngleQuaternion,
-            Eigen::Quaternion<_Tp> &currAngleQuaternion,
-            Eigen::Quaternion<_Tp> &nextAngleQuaternion,
-            uint32_t division_x,
-            uint32_t division_y,
+    Eigen::VectorXd getRollingVectorError(
+            int32_t division_x,
+            int32_t division_y,
             double TRollingShutter,
             Eigen::MatrixXd IK,
             Eigen::MatrixXd matIntrinsic,
-            uint32_t image_width,
-            uint32_t image_height,
-            Eigen::Quaternion<_Tp> adjustmentQuaternion,
-            double zoom,
-            double &error
-            ){
-        double a=0.0;
-        double b=1.0;
-        double eps = 1.0e-5;
-        int count=0;
-        std::vector<float> vecPorigonn_uv;
-        auto func = [&](double ratio){
-            getDistortUnrollingContour(prevAngleQuaternion,
-                                       currAngleQuaternion,
-                                       nextAngleQuaternion,
-                                       division_x,
-                                       division_y,
-                                       TRollingShutter,
-                                       IK,
-                                       matIntrinsic,
-                                       image_width,
-                                       image_height,
-                                       Vector2Quaternion<_Tp>(ratio*Quaternion2Vector(adjustmentQuaternion)),
-                                       vecPorigonn_uv,
-                                       zoom
-                                       );
-            return check_warp(vecPorigonn_uv);
-        };
-        if(func(1.0)==true){
-            error = 0.0;
-            return;
-        }
-    double m;
-        do{
-            count++;
-            m=(a+b)/2.0;
-            if(func(m)^func(a)){
-                b=m;
-            }else{
-                a=m;
-            }
-            if(count == 1000){
-                cout << "収束失敗" << endl;
-               break;
-            }
-        }while(!(abs(a-b)<eps));
-        cout << count << "回で収束" << endl;
-
-        error = (Quaternion2Vector(adjustmentQuaternion).norm())*(1-m);
-    }
+            int32_t image_width,
+            int32_t image_height,
+            double zoom
+            );
 
 //    const Eigen::Quaternion
 

@@ -487,8 +487,17 @@ int main(int argc, char** argv){
           return retval;
         };
 
-        //エラーを計算する
-        Eigen::MatrixXd fdd = v2.filteredDataDFT(Capture->get(CV_CAP_PROP_FPS),1.0);
+        //エラーを計算する。将来的に所望の特性の波形が得られるまで、DFTした複素配列の値をいじることになる？？？どうやって複素配列にアクセスする？
+        Eigen::VectorXd errors = v2.getRollingVectorError(
+                    division_x,
+                    division_y,
+                    rollingShutterDuration,
+                    convCVMat2EigenMat(matInvDistort),
+                    convCVMat2EigenMat(matIntrinsic),
+                    imageSize.width,
+                    imageSize.height,
+                    (double)zoomRatio);
+        /*Eigen::MatrixXd fdd = v2.filteredDataDFT(Capture->get(CV_CAP_PROP_FPS),1.0);
         Eigen::VectorXd errors(fdd.rows()-2);
         Eigen::Quaternion<double> prevQ,currQ,nextQ;
         prevQ = vsp::Vector2Quaternion<double>(fdd.row(0).transpose()).conjugate() * vsp::Vector2Quaternion<double>(v2.data().row(0).transpose());
@@ -507,14 +516,14 @@ int main(int argc, char** argv){
                                        convCVMat2EigenMat(matIntrinsic),
                                        imageSize.width,
                                        imageSize.height,
-                                       vsp::Vector2Quaternion<double>(Eigen::Vector3d(0.15,-0.15,0.0)),
+//                                       vsp::Vector2Quaternion<double>(Eigen::Vector3d(0.15,-0.15,0.0)),
                                        zoomRatio,
                                        residual
                         );
             errors(i-1) = residual;
             prevQ = currQ;
             currQ = nextQ;
-        }
+        }*/
         std::vector<string> legends2 = {"x"};
         vgp::plot(errors,"Errors",legends2);
     }

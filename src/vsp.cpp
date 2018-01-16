@@ -181,3 +181,87 @@ Eigen::MatrixXd vsp::CLerp(Eigen::MatrixXd start, Eigen::MatrixXd end, int32_t n
     Eigen::VectorXd cos_phase = phase.array().cos();
     return cos_phase * (-(end - start)*0.5) + Eigen::VectorXd::Ones(phase.rows()) * (start + end) * 0.5;
 }
+
+Eigen::VectorXd vsp::getRollingVectorError(
+        int32_t division_x,
+        int32_t division_y,
+        double TRollingShutter,
+        Eigen::MatrixXd IK,
+        Eigen::MatrixXd matIntrinsic,
+        int32_t image_width,
+        int32_t image_height,
+        double zoom
+        ){
+
+
+    double eps = 1.0e-5;
+
+    std::vector<float> vecPorigonn_uv;
+
+    auto func = [&](int32_t frame, double ratio){
+        Eigen::Quaternion<double> prevQ;
+        Eigen::Quaternion<double> currQ;
+        Eigen::Quaternion<double> nextQ;
+        if(0 == frame){
+            currQ = Vector2Quaternion<double>(ratio*Quaternion2Vector(Vector2Quaternion<double>(filtered_angle.row(frame  ).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame  ).transpose())));
+            prevQ = currQ;
+            nextQ = Vector2Quaternion<double>(ratio*Quaternion2Vector(Vector2Quaternion<double>(filtered_angle.row(frame+1).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame+1).transpose())));
+        }else if((raw_angle.rows()-1) == frame){
+            prevQ = Vector2Quaternion<double>(ratio*Quaternion2Vector(Vector2Quaternion<double>(filtered_angle.row(frame-1).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame-1).transpose())));
+            currQ = Vector2Quaternion<double>(ratio*Quaternion2Vector(Vector2Quaternion<double>(filtered_angle.row(frame  ).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame  ).transpose())));
+            nextQ = currQ;
+        }else{
+            prevQ = Vector2Quaternion<double>(ratio*Quaternion2Vector(Vector2Quaternion<double>(filtered_angle.row(frame-1).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame-1).transpose())));
+            currQ = Vector2Quaternion<double>(ratio*Quaternion2Vector(Vector2Quaternion<double>(filtered_angle.row(frame  ).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame  ).transpose())));
+            nextQ = Vector2Quaternion<double>(ratio*Quaternion2Vector(Vector2Quaternion<double>(filtered_angle.row(frame+1).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame+1).transpose())));
+        }
+        getDistortUnrollingContour(
+                    prevQ,
+                    currQ,
+                    nextQ,
+                    division_x,
+                    division_y,
+                    TRollingShutter,
+                    IK,
+                    matIntrinsic,
+                    image_width,
+                    image_height,
+                    //                                       Vector2Quaternion<_Tp>(ratio*Quaternion2Vector(adjustmentQuaternion)),
+                    vecPorigonn_uv,
+                    zoom
+                    );
+        return check_warp(vecPorigonn_uv);
+    };
+
+    Eigen::VectorXd retval = Eigen::VectorXd::Zero(raw_angle.rows());
+
+    double error = 0.0;
+    for(int32_t frame=0,e=retval.rows();frame<e;++frame){
+        int count=0;
+        double a=0.0;
+        double b=1.0;
+        if(func(frame,1.0)==true){
+            retval[frame] = 0.0;
+            continue;
+        }
+        double m;
+        do{
+            count++;
+            m=(a+b)/2.0;
+            if(func(frame,m)^func(frame,a)){
+                b=m;
+            }else{
+                a=m;
+            }
+            if(count == 1000){
+                cout << "frame:" << frame << " 収束失敗" << endl;
+                break;
+            }
+        }while(!(abs(a-b)<eps));
+        cout <<  "frame:" << frame << " " << count << "回で収束" << endl;
+
+        error = (Quaternion2Vector(Vector2Quaternion<double>(filtered_angle.row(frame  ).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame  ).transpose())).norm())*(1-m);
+        retval[frame] = error;
+    }
+    return retval;
+}
