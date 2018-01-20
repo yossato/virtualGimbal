@@ -4,6 +4,7 @@
 #include "Eigen/Dense"
 #include "unsupported/Eigen/NonLinearOptimization"
 #include "unsupported/Eigen/NumericalDiff"
+#include "vsp.h"
 
 // Generic functor
 template<typename _Scalar, int NX=Dynamic, int NY=Dynamic>
@@ -30,9 +31,18 @@ struct Functor
 
 };
 
-template <typename _Tp> struct frequency_domain_optimizer : Functor<double>
+/**
+ * @brief 平滑化済み波形を周波数領域で調整することで、なめらか、かつ、画面が欠けないように、時間波形調整します
+ */
+template <typename _Tp> struct FrequencyDomainOptimizer : Functor<double>
 {
-
+    /**
+      * @brief コンストラクタ。
+      * @param [in] inputs 最適化の対象となるパラメータの数、周波数軸での係数の個数
+      * @param [in] values 最適化に使用できるサンプルデータの数、おそらく、時間軸での係数の個数
+      * @param [in]
+      **/
+    FrequencyDomainOptimizer(int inputs, int values, vsp &angles)
 }
 
 #endif // FREQUENCY_DOMAIN_OPTIMIZATION_HPP
