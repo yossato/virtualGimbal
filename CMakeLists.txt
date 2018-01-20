@@ -109,6 +109,7 @@ add_executable(virtualGimbal src/mainsyncandstabilize.cpp
         include/distortion.h
         include/visualizer.h
         include/vsp.h
+        include/frequency_domain_optimization.hpp
         TransformVertexShader.vertexshader
         TextureFragmentShader.fragmentshader
 )
