@@ -145,28 +145,64 @@ Eigen::VectorXcd vsp::getLPFFrequencyCoeff(uint32_t N, uint32_t alpha, double fs
 }
 
 
+//getCLerpedFrequencyVectorと
+//setCLerpedFrequencyVectorを準備すればよさ気
+void vsp::RawAngle2CLerpedFrequencyVector(double fs, double fc, Eigen::MatrixXd &raw_angle, Eigen::MatrixXcd &freq_vectors){
+//    Eigen::MatrixXcd freq_vectors;
 
-const Eigen::MatrixXd &vsp::filteredDataDFT(double fs, double fc){
-    //TODO 最初に条件分岐を追加し、is_filterd == trueなら計算を回避させる
-    Eigen::VectorXcd freq_vector;
     Eigen::FFT<double> fft;
-     
+
     int32_t clerp_length = fs / fc * 20.0;
 
     //先頭と末尾は繰り返しで不連続になってしまうので、DFT LPFを適用する前に、CLerpでなめらかに繋いでおく
     Eigen::MatrixXd raw_angle_2(raw_angle.rows()+clerp_length,raw_angle.cols());
     raw_angle_2.block(0,0,raw_angle.rows(),raw_angle.cols()) = raw_angle;
     raw_angle_2.block(raw_angle.rows(),0,clerp_length,raw_angle.cols()) = CLerp(raw_angle.block(raw_angle.rows()-1,0,1,raw_angle.cols()),raw_angle.block(0,0,1,raw_angle.cols()),clerp_length);
-    Eigen::VectorXcd filter_coeff_vector = getLPFFrequencyCoeff(raw_angle_2.rows(),8,fs,fc).array();
-    
-    filtered_angle.resize(raw_angle_2.rows(),raw_angle_2.cols());
+
+//    filtered_angle.resize(raw_angle_2.rows(),raw_angle_2.cols());
+    freq_vectors.resize(raw_angle_2.rows(),raw_angle_2.cols());
 
     //Apply LPF to each x, y and z axis.
     for(int i=0,e=raw_angle_2.cols();i<e;++i){
-        freq_vector = fft.fwd(raw_angle_2.col(i));
-        freq_vector = filter_coeff_vector.array() * freq_vector.array();
-        filtered_angle.col(i).noalias() = fft.inv(freq_vector);
+        freq_vectors.col(i) = fft.fwd(raw_angle_2.col(i));
     }
+//    return freq_vectors;
+}
+
+Eigen::MatrixXd vsp::FrequencyVector2RawAngle(Eigen::MatrixXcd &frequency_vector){
+    Eigen::MatrixXd filtered_angle_;
+
+    for(int i=0,e=frequency_vector.cols();i<e;++i){
+
+    }
+}
+
+const Eigen::MatrixXd &vsp::filteredDataDFT(double fs, double fc){
+    //TODO 最初に条件分岐を追加し、is_filterd == trueなら計算を回避させる
+
+
+
+    Eigen::MatrixXcd clerped_freq_vectors;
+    RawAngle2CLerpedFrequencyVector(fs,fc,raw_angle,clerped_freq_vectors);
+
+//    Eigen::FFT<double> fft;
+     
+//    int32_t clerp_length = fs / fc * 20.0;
+
+//    //先頭と末尾は繰り返しで不連続になってしまうので、DFT LPFを適用する前に、CLerpでなめらかに繋いでおく
+//    Eigen::MatrixXd raw_angle_2(raw_angle.rows()+clerp_length,raw_angle.cols());
+//    raw_angle_2.block(0,0,raw_angle.rows(),raw_angle.cols()) = raw_angle;
+//    raw_angle_2.block(raw_angle.rows(),0,clerp_length,raw_angle.cols()) = CLerp(raw_angle.block(raw_angle.rows()-1,0,1,raw_angle.cols()),raw_angle.block(0,0,1,raw_angle.cols()),clerp_length);
+    Eigen::VectorXcd filter_coeff_vector = getLPFFrequencyCoeff(clerped_freq_vectors.rows(),8,fs,fc).array();
+    
+    filtered_angle.resize(clerped_freq_vectors.rows(),clerped_freq_vectors.cols());
+
+//    //Apply LPF to each x, y and z axis.
+//    for(int i=0,e=raw_angle_2.cols();i<e;++i){
+//        freq_vector = fft.fwd(raw_angle_2.col(i));
+//        freq_vector = filter_coeff_vector.array() * freq_vector.array();
+//        filtered_angle.col(i).noalias() = fft.inv(freq_vector);
+//    }
     //ここで末尾の余白を削除
     Eigen::MatrixXd buf = filtered_angle.block(0,0,raw_angle.rows(),raw_angle.cols());
     is_filterd = true;

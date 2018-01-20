@@ -46,6 +46,9 @@ public:
 
 //    static std::vector<std::complex<double>> getLPFFrequencyCoeff(uint32_t N, uint32_t alpha, double fs, double fc);
     static Eigen::VectorXcd getLPFFrequencyCoeff(uint32_t N, uint32_t alpha, double fs, double fc);
+//    Eigen::MatrixXcd getCLerpedFrequencyVector(double fs, double fc);
+    static void RawAngle2CLerpedFrequencyVector(double fs, double fc, Eigen::MatrixXd &raw_angle, Eigen::MatrixXcd &freq_vectors);
+    static Eigen::MatrixXd FrequencyVector2RawAngle(Eigen::MatrixXcd &frequency_vector);
 
     const Eigen::MatrixXd &filteredDataDFT(double fs, double fc);
 
