@@ -26,7 +26,7 @@ public:
             raw_angle(i,1) = el[1];
             raw_angle(i,2) = el[2];
         }
-        is_filterd = false;
+        is_filtered = false;
     }
 
     vector<double> getRow(int r);
@@ -44,14 +44,12 @@ public:
 
     static Eigen::VectorXd getKaiserWindow(uint32_t tap_length, uint32_t alpha);
 
-//    static std::vector<std::complex<double>> getLPFFrequencyCoeff(uint32_t N, uint32_t alpha, double fs, double fc);
     static Eigen::VectorXcd getLPFFrequencyCoeff(uint32_t N, uint32_t alpha, double fs, double fc);
-//    Eigen::MatrixXcd getCLerpedFrequencyVector(double fs, double fc);
-    static void RawAngle2CLerpedFrequencyVector(double fs, double fc, Eigen::MatrixXd &raw_angle, Eigen::MatrixXcd &freq_vectors);
+    static void Angle2CLerpedFrequency(double fs, double fc, Eigen::MatrixXd &raw_angle, Eigen::MatrixXcd &freq_vectors);
     static void Frequency2Angle(Eigen::MatrixXcd &frequency_vector_, Eigen::MatrixXd &angle_);
 
     const Eigen::MatrixXd &filteredDataDFT(double fs, double fc);
-
+    const Eigen::MatrixXd &filteredDataDFT();
     Eigen::Quaternion<double> toRawQuaternion(uint32_t frame);
     Eigen::Quaternion<double> toFilteredQuaternion(uint32_t frame);
     Eigen::Quaternion<double> toDiffQuaternion(uint32_t frame);
@@ -417,8 +415,9 @@ private:
     Eigen::MatrixXd raw_angle;
     Eigen::MatrixXd filtered_angle;
     Eigen::VectorXd filter_coeff;
-    bool is_filterd;
-
+    bool is_filtered;
+    float fs_ = 0.0;
+    float fc_ = 0.0;
 };
 
 #endif // VSP_H

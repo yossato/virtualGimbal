@@ -43,16 +43,34 @@ template <typename _Tp> struct FrequencyDomainOptimizer : Functor<double>
       * @param [in] values 最適化に使用できるサンプルデータの数、おそらく、時間軸での係数の個数
       * @param [in] angle 角度。raw_angleをリファレンスとして用いる
       **/
-    FrequencyDomainOptimizer(int inputs, int values, vsp &angle)
-        : angle_(angle),Functor(inputs, values) {}
+    FrequencyDomainOptimizer(int inputs, int values, double fs, double fc, vsp &angle)
+        : angle_(angle),Functor(inputs, values) {
+        vsp::Angle2CLerpedFrequency(fs,fc,angle.filteredDataDFT(fs,fc),frequency_vector_);
+    }
 
     vsp &angle_;
     Eigen::VectorXcd frequency_vector_;
 
     int operator()(const VectorXd& complex_frequency_coefficients, VectorXd& fvec) const
     {
-        //cols majorなcomplex_frequency_coefficientsを受け取り、詰め替える
+
+        assert(complex_frequency_coefficients.rows() < frequency_vector_.rows());
+        //complex_frequency_coefficientsを受け取り、frequency_vector_の一部に詰め替える
+        for(int32_t i=0,e=complex_frequency_coefficients.rows()/2;i<e;i+=2){
+            frequency_vector_[i].real() = complex_frequency_coefficients[i];
+            frequency_vector_[i].imag() = complex_frequency_coefficients[i+1];
+        }
+        //周波数領域 -> 時間波形に変換、angle_に時間波形の情報を戻す
+        vsp::Frequency2Angle(frequency_vector_,angle_.filteredDataDFT());
+
+        //末尾の余白を削除
+        Eigen::MatrixXd buf = angle_.filteredDataDFT().block(0,0,angle_.data().rows(),angle_.data().cols());
+        angle_.filteredDataDFT() = buf;
+
         //getRollingVectorErrorでエラーを取得する、fvecに詰め込む
+        angle_.getRollingVectorError()
+//        fvec.block(0,0,values,1) = angle.
+//        frequency_vector_
 
     }
 }

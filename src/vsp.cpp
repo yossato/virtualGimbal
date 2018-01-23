@@ -3,7 +3,7 @@
 
 vsp::vsp()
 {
-    is_filterd=false;
+    is_filtered=false;
 }
 
 //template <class T> vsp::vsp(vector<quaternion<T>> &angle_quaternion)
@@ -39,7 +39,7 @@ const Eigen::MatrixXd &vsp::data(){
 }
 
 const Eigen::MatrixXd &vsp::filteredData(){
-    if(is_filterd){
+    if(is_filtered){
         return filtered_angle;
     }else{
         int full_tap_length = filter_coeff.rows();
@@ -49,7 +49,7 @@ const Eigen::MatrixXd &vsp::filteredData(){
             filtered_angle.block(i,0,1,3) = filter_coeff.transpose() * raw_angle.block(i,0,full_tap_length,3);
         }
 
-        is_filterd = true;
+        is_filtered = true;
         return filtered_angle;
     }
 }
@@ -147,7 +147,7 @@ Eigen::VectorXcd vsp::getLPFFrequencyCoeff(uint32_t N, uint32_t alpha, double fs
 
 //getCLerpedFrequencyVectorと
 //setCLerpedFrequencyVectorを準備すればよさ気
-void vsp::RawAngle2CLerpedFrequencyVector(double fs, double fc, Eigen::MatrixXd &raw_angle, Eigen::MatrixXcd &freq_vectors){
+void vsp::Angle2CLerpedFrequency(double fs, double fc, Eigen::MatrixXd &raw_angle, Eigen::MatrixXcd &freq_vectors){
 //    Eigen::MatrixXcd freq_vectors;
 
     static Eigen::FFT<double> fft;
@@ -178,24 +178,36 @@ void vsp::Frequency2Angle(Eigen::MatrixXcd &frequency_vector_, Eigen::MatrixXd &
     }
 }
 
+const Eigen::MatrixXd &vsp::filteredDataDFT(){
+    assert(is_filtered == true);
+    return filtered_angle;
+}
+
 const Eigen::MatrixXd &vsp::filteredDataDFT(double fs, double fc){
     //TODO 最初に条件分岐を追加し、is_filterd == trueなら計算を回避させる
-    Eigen::MatrixXcd clerped_freq_vectors;
-    RawAngle2CLerpedFrequencyVector(fs,fc,raw_angle,clerped_freq_vectors);
-    Eigen::VectorXcd filter_coeff_vector = getLPFFrequencyCoeff(clerped_freq_vectors.rows(),8,fs,fc).array();
-//    filtered_angle.resize(clerped_freq_vectors.rows(),clerped_freq_vectors.cols());
-    //Apply LPF to each x, y and z axis.
-    for(int i=0,e=clerped_freq_vectors.cols();i<e;++i){
-        clerped_freq_vectors.col(i) = filter_coeff_vector.array() * clerped_freq_vectors.col(i).array();
+    if(is_filtered && (fs_ == fs) && (fc_ == fc)){
+        return filtered_angle;
+    }else{
+        fs_ = fs;
+        fc_ = fc;
+
+        Eigen::MatrixXcd clerped_freq_vectors;
+        Angle2CLerpedFrequency(fs,fc,raw_angle,clerped_freq_vectors);
+        Eigen::VectorXcd filter_coeff_vector = getLPFFrequencyCoeff(clerped_freq_vectors.rows(),8,fs,fc).array();
+
+        //Apply LPF to each x, y and z axis.
+        for(int i=0,e=clerped_freq_vectors.cols();i<e;++i){
+            clerped_freq_vectors.col(i) = filter_coeff_vector.array() * clerped_freq_vectors.col(i).array();
+        }
+
+        Frequency2Angle(clerped_freq_vectors,filtered_angle);
+
+        //ここで末尾の余白を削除
+        Eigen::MatrixXd buf = filtered_angle.block(0,0,raw_angle.rows(),raw_angle.cols());
+        is_filtered = true;
+        filtered_angle = buf;
+        return filtered_angle;
     }
-
-    Frequency2Angle(clerped_freq_vectors,filtered_angle);
-
-    //ここで末尾の余白を削除
-    Eigen::MatrixXd buf = filtered_angle.block(0,0,raw_angle.rows(),raw_angle.cols());
-    is_filterd = true;
-    filtered_angle = buf;
-    return filtered_angle;
 }
 
 Eigen::MatrixXd vsp::CLerp(Eigen::MatrixXd start, Eigen::MatrixXd end, int32_t num){
