@@ -43,9 +43,9 @@ template <typename _Tp> struct FrequencyDomainOptimizer : Functor<double>
       * @param [in] values 最適化に使用できるサンプルデータの数、おそらく、時間軸での係数の個数
       * @param [in] angle 角度。raw_angleをリファレンスとして用いる
       **/
-    FrequencyDomainOptimizer(int inputs, int values, double fs, double fc, vsp &angle)
+    FrequencyDomainOptimizer(int inputs, int values, vsp &angle)
         : angle_(angle),Functor(inputs, values) {
-        vsp::Angle2CLerpedFrequency(fs,fc,angle.filteredDataDFT(fs,fc),frequency_vector_);
+        vsp::Angle2CLerpedFrequency(angle.filteredDataDFT(),frequency_vector_);
     }
 
     vsp &angle_;

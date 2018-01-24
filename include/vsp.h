@@ -14,9 +14,20 @@ class vsp
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    //    vsp();
 
-    //TODO:コンストラクタでfilter coeffも受け取っといたほうがよさ気
+    /**
+     * @brief コンストラクタ
+     * @param [in]	Qa	ジャイロの角速度から計算したカメラの方向を表す回転クウォータニオン時系列データ、参照渡し
+     * @param [in]	Qf	LPFを掛けて平滑化した回転クウォータニオンの時系列データ、参照渡し
+     * @param [in]	m	画面の縦の分割数[ ]
+     * @param [in]	n	画面の横の分割数[ ]
+     * @param [in]	IK	"逆"歪係数(k1,k2,p1,p2)
+     * @param [in]	matIntrinsic	カメラ行列(fx,fy,cx,cy) [pixel]
+     * @param [in]	imageSize	フレーム画像のサイズ[pixel]
+     * @param [in]  adjustmentQuaternion 画面方向を微調整するクォータニオン[rad]
+     * @param [in]	zoom	倍率[]。拡大縮小しないなら1を指定すること。省略可
+     * @param [out] error はみ出したノルムの長さ
+     **/
     template <class T> vsp(vector<Eigen::Quaternion<T>> &angle_quaternion,
                            int32_t division_x,
                            int32_t division_y,
@@ -141,46 +152,8 @@ public:
      * @param 回転を表すクォータニオンから回転を表す行列を生成
      **/
     template <typename T_num> static void Quaternion2Matrix(Eigen::Quaternion<T_num> &q, Eigen::MatrixXd &det){
-        //        det = Eigen::MatrixXd::Zero(3,3);
-        //        q.matrix()
-        //        det << q.w()*q.w()+q.x()*q.x()-q.y()*q.y()-q.z()*q.z(), 2*(q.x()*q.y()-q.w()*q.z()),                  2*(q.x()*q.z()+q.w()*q.y()),
-        //               2*(q.x()*q.y()+q.w()*q.z()),                 q.w()*q.w()-q.x()*q.x()+q.y()*q.y()-q.z()*q.z(), 2*(q.y()*q.z()-q.w()*q.x()),
-        //               2*(q.x()*q.z()-q.w()*q.y()),                 2*(q.y()*q.z()+q.w()*q.x()),                  q.w()*q.w()-q.x()*q.x()-q.y()*q.y()+q.z()*q.z();
         det = q.matrix();
     }
-
-    /**
-     * @brief 球面線形補間関数
-     * @param [in]	Qfrom	四元数1
-     * @param [in]	Qto		四元数2
-     * @param [in]	t		比率(0<=t<=1)
-     **/
-    //    template <typename _Tp> static Eigen::Quaternion<_Tp> Slerp(Eigen::Quaternion<_Tp> &Qfrom, Eigen::Quaternion<_Tp> &Qto, _Tp t){
-    //        double cosom = Qfrom.w()*Qto.w()+Qfrom.x()*Qto.x()+Qfrom.y()*Qto.y()+Qfrom.z()*Qto.z();
-    //        double sinom, omega, scale0, scale1;
-
-    //        if(Qto.Coefficients == Qfrom.Coefficients){	//QfromとQtoが完全に一致->補完の必要なし
-    //            return Qfrom;
-    //        }
-
-    //        //符号を直す
-    //        if(cosom < 0.0){
-    //            cosom = -cosom;
-    //            Qto = -Qto;
-    //        }
-    //        if((1.0-cosom)>1e-4){
-    //            omega = acos(cosom);
-    //            sinom = sin(omega);
-    //            scale0 = sin((1.0 - t) * omega) / sinom;
-    //            scale1 = sin(t * omega) / sinom;
-    //        }else{
-    //            scale0 = 1.0 -t;
-    //            scale1 = t;
-    //        }
-
-    //        return scale0 * Qfrom + scale1 * Qto;
-
-    //    }
 
     /** @brief 補正前の画像座標から、補正後のポリゴンの頂点を作成
      * @param [in]	Qa	ジャイロの角速度から計算したカメラの方向を表す回転クウォータニオン時系列データ、参照渡し
@@ -199,23 +172,19 @@ public:
             Eigen::Quaternion<_Tp> &prevAngleQuaternion,
             Eigen::Quaternion<_Tp> &currAngleQuaternion,
             Eigen::Quaternion<_Tp> &nextAngleQuaternion,
-            uint32_t division_x,
-            uint32_t division_y,
-            double TRollingShutter,
-            Eigen::MatrixXd &IK,
-            Eigen::MatrixXd &matIntrinsic,
-            uint32_t image_width,
-            uint32_t image_height,
-            //            Eigen::Quaternion<double> adjustmentQuaternion,
-            std::vector<_Tx> &vecPorigonn_uv,
-            double zoom
+//            uint32_t division_x,
+//            uint32_t division_y,
+//            double TRollingShutter,
+//            Eigen::MatrixXd &IK,
+//            Eigen::MatrixXd &matIntrinsic,
+//            uint32_t image_width,
+//            uint32_t image_height,
+            std::vector<_Tx> &vecPorigonn_uv
+//            double zoom
             ){
 
         bool retval = true;
 
-        //Matの型をdoubleに強制。
-        //        assert(IK.type() == CV_64F);
-        //        assert(matIntrinsic.type() == CV_64F);
 
         //手順
         //1.補正前画像を分割した時の分割点の座標(pixel)を計算
@@ -230,8 +199,6 @@ public:
         double k2 = IK(0,1);
         double p1 = IK(0,2);
         double p2 = IK(0,3);
-
-        //        Eigen::MatrixXd map(division_y+1,division_x+1);
 
         vecPorigonn_uv.clear();
 
@@ -248,13 +215,10 @@ public:
 
             Eigen::Quaternion<double> slerpedAngleQuaternion;
             if(exposureTimingInEachRow >= 0){
-                //                slerpedAngleQuaternion = Slerp(currAngleQuaternion,nextAngleQuaternion,exposureTimingInEachRow);
                 slerpedAngleQuaternion = currAngleQuaternion.slerp(exposureTimingInEachRow,nextAngleQuaternion);
             }else{
-                //                slerpedAngleQuaternion = Slerp(prevAngleQuaternion,currAngleQuaternion,1+exposureTimingInEachRow);
                 slerpedAngleQuaternion = prevAngleQuaternion.slerp(1.0+exposureTimingInEachRow,currAngleQuaternion);
             }
-            //            slerpedAngleQuaternion = adjustmentQuaternion * slerpedAngleQuaternion;
             Quaternion2Matrix(slerpedAngleQuaternion,R);
             for(int i=0;i<=division_x;++i){
                 double u = (double)i/division_x*image_width;
@@ -283,8 +247,6 @@ public:
                 }
                 vecPorigonn_uv.push_back(x2*fx*zoom/image_width*2.0);
                 vecPorigonn_uv.push_back(y2*fy*zoom/image_height*2.0);
-                //            vecPorigonn_uv.push_back(x1*fx*zoom/image_width*2.0);
-                //                        vecPorigonn_uv.push_back(y1*fy*zoom/image_height*2.0);
             }
         }
 
@@ -299,13 +261,10 @@ public:
 
             Eigen::Quaternion<double> slerpedAngleQuaternion;
             if(exposureTimingInEachRow >= 0){
-                //                slerpedAngleQuaternion = Slerp(currAngleQuaternion,nextAngleQuaternion,exposureTimingInEachRow);
                 slerpedAngleQuaternion = currAngleQuaternion.slerp(exposureTimingInEachRow,nextAngleQuaternion);
             }else{
-                //                slerpedAngleQuaternion = Slerp(prevAngleQuaternion,currAngleQuaternion,1+exposureTimingInEachRow);
                 slerpedAngleQuaternion = prevAngleQuaternion.slerp(1.0+exposureTimingInEachRow,currAngleQuaternion);
             }
-            //            slerpedAngleQuaternion = adjustmentQuaternion * slerpedAngleQuaternion;
             Quaternion2Matrix(slerpedAngleQuaternion,R);
             for(int i=0;i<=division_x;i+=division_x){
                 double u = (double)i/division_x*image_width;
@@ -349,13 +308,10 @@ public:
 
             Eigen::Quaternion<double> slerpedAngleQuaternion;
             if(exposureTimingInEachRow >= 0){
-                //                slerpedAngleQuaternion = Slerp(currAngleQuaternion,nextAngleQuaternion,exposureTimingInEachRow);
                 slerpedAngleQuaternion = currAngleQuaternion.slerp(exposureTimingInEachRow,nextAngleQuaternion);
             }else{
-                //                slerpedAngleQuaternion = Slerp(prevAngleQuaternion,currAngleQuaternion,1+exposureTimingInEachRow);
                 slerpedAngleQuaternion = prevAngleQuaternion.slerp(1.0+exposureTimingInEachRow,currAngleQuaternion);
             }
-            //            slerpedAngleQuaternion = adjustmentQuaternion * slerpedAngleQuaternion;
             Quaternion2Matrix(slerpedAngleQuaternion,R);
             for(int i=0;i<=division_x;++i){
                 double u = (double)i/division_x*image_width;
@@ -405,29 +361,8 @@ public:
 
     /**
      * @brief 画面の欠けを生み出している回転ベクトルのオーバーした長さを返す
-     * @param [in]	Qa	ジャイロの角速度から計算したカメラの方向を表す回転クウォータニオン時系列データ、参照渡し
-     * @param [in]	Qf	LPFを掛けて平滑化した回転クウォータニオンの時系列データ、参照渡し
-     * @param [in]	m	画面の縦の分割数[ ]
-     * @param [in]	n	画面の横の分割数[ ]
-     * @param [in]	IK	"逆"歪係数(k1,k2,p1,p2)
-     * @param [in]	matIntrinsic	カメラ行列(fx,fy,cx,cy) [pixel]
-     * @param [in]	imageSize	フレーム画像のサイズ[pixel]
-     * @param [in]  adjustmentQuaternion 画面方向を微調整するクォータニオン[rad]
-      * @param [in]	zoom	倍率[]。拡大縮小しないなら1を指定すること。省略可
-     * @param [out] error はみ出したノルムの長さ
      **/
-    Eigen::VectorXd getRollingVectorError(
-//            int32_t division_x,
-//            int32_t division_y,
-//            double TRollingShutter,
-//            Eigen::MatrixXd IK,
-//            Eigen::MatrixXd matIntrinsic,
-//            int32_t image_width,
-//            int32_t image_height,
-//            double zoom
-            );
-
-    //    const Eigen::Quaternion
+    Eigen::VectorXd getRollingVectorError();
 
 private:
     Eigen::MatrixXd raw_angle;

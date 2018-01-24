@@ -1,12 +1,7 @@
 #include "vsp.h"
 #include <boost/math/special_functions/bessel.hpp>
 
-//vsp::vsp()
-//{
 
-//}
-
-//template <class T> vsp::vsp(vector<quaternion<T>> &angle_quaternion)
 Eigen::Quaternion<double> vsp::RotationQuaternion(double theta, Eigen::Vector3d n){
     //nを規格化してから計算する
     auto n_sin_theta_2 = n.normalized()*sin(theta/2.0);
@@ -64,7 +59,6 @@ Eigen::Quaternion<double> vsp::toRawQuaternion(uint32_t frame){
     //Order: w, x, y, z.
     if(theta > EPS){
         Eigen::VectorXd n = w.normalized();//w * (1.0/theta);//単位ベクトルに変換
-//        double sin_theta_2 = sin(theta*0.5);
         Eigen::VectorXd n_sin_theta_2 = n * sin(theta*0.5);
         return Eigen::Quaternion<double>(cos(theta*0.5),n_sin_theta_2[0],n_sin_theta_2[1],n_sin_theta_2[2]);
     }else{
@@ -80,7 +74,6 @@ Eigen::Quaternion<double> vsp::toFilteredQuaternion(uint32_t frame){
     //Order: w, x, y, z.
     if(theta > EPS){
         Eigen::VectorXd n = w.normalized();//w * (1.0/theta);//単位ベクトルに変換
-//        double sin_theta_2 = sin(theta*0.5);
         Eigen::VectorXd n_sin_theta_2 = n * sin(theta*0.5);
         return Eigen::Quaternion<double>(cos(theta*0.5),n_sin_theta_2[0],n_sin_theta_2[1],n_sin_theta_2[2]);
     }else{
@@ -100,14 +93,12 @@ Eigen::VectorXd vsp::getKaiserWindow(uint32_t tap_length, uint32_t alpha){
         for(int32_t n=-L,e=L;n<=e;++n){
             window[n+L] = boost::math::cyl_bessel_i(0.0,alpha*sqrt(1.0-pow((double)n/(double)L,2.0)))
                     /boost::math::cyl_bessel_i(0.0,alpha);
-//            std::cout << n+L << std::endl;
         }
     }else{  //偶数
         int32_t L = tap_length/2;
         for(int32_t n=-L,e=L;n<e;++n){//異なる終了条件
             window[n+L] = boost::math::cyl_bessel_i(0.0,alpha*sqrt(1.0-pow((double)n/(double)L,2.0)))
                     /boost::math::cyl_bessel_i(0.0,alpha);
-//            std::cout << n+L << std::endl;
         }
     }
 
@@ -118,7 +109,6 @@ Eigen::VectorXd vsp::getKaiserWindow(uint32_t tap_length, uint32_t alpha){
     return buff2;
 }
 
-//std::vector<std::complex<double>> vsp::getLPFFrequencyCoeff(uint32_t N, uint32_t alpha, double fs, double fc){
 Eigen::VectorXcd vsp::getLPFFrequencyCoeff(uint32_t N, uint32_t alpha, double fs, double fc){
     Eigen::VectorXd time_vector = Eigen::VectorXd::Zero(N);
     Eigen::VectorXcd frequency_vector = Eigen::VectorXcd::Zero(N);
@@ -130,10 +120,6 @@ Eigen::VectorXcd vsp::getLPFFrequencyCoeff(uint32_t N, uint32_t alpha, double fs
     for(int i=(Nc-1);i<(N-Nc);++i){
         frequency_vector[i].real(0.0);
     }
-//    for(auto &el:frequency_vector){
-//    for(auto &el:frequency_vector){
-//        el.imag(0.0);
-//    }
     Eigen::FFT<double> fft;
     fft.inv(time_vector,frequency_vector);
     Eigen::VectorXd time_eigen_vector = Eigen::Map<Eigen::VectorXd>(&time_vector[0],time_vector.size());
@@ -145,13 +131,8 @@ Eigen::VectorXcd vsp::getLPFFrequencyCoeff(uint32_t N, uint32_t alpha, double fs
 }
 
 
-//getCLerpedFrequencyVectorと
-//setCLerpedFrequencyVectorを準備すればよさ気
 void vsp::Angle2CLerpedFrequency(double fs, double fc, Eigen::MatrixXd &raw_angle, Eigen::MatrixXcd &freq_vectors){
-//    Eigen::MatrixXcd freq_vectors;
-
     static Eigen::FFT<double> fft;
-
     int32_t clerp_length = fs / fc * 20.0;
 
     //先頭と末尾は繰り返しで不連続になってしまうので、DFT LPFを適用する前に、CLerpでなめらかに繋いでおく
@@ -159,18 +140,15 @@ void vsp::Angle2CLerpedFrequency(double fs, double fc, Eigen::MatrixXd &raw_angl
     raw_angle_2.block(0,0,raw_angle.rows(),raw_angle.cols()) = raw_angle;
     raw_angle_2.block(raw_angle.rows(),0,clerp_length,raw_angle.cols()) = CLerp(raw_angle.block(raw_angle.rows()-1,0,1,raw_angle.cols()),raw_angle.block(0,0,1,raw_angle.cols()),clerp_length);
 
-//    filtered_angle.resize(raw_angle_2.rows(),raw_angle_2.cols());
     freq_vectors.resize(raw_angle_2.rows(),raw_angle_2.cols());
 
     //Apply LPF to each x, y and z axis.
     for(int i=0,e=raw_angle_2.cols();i<e;++i){
         freq_vectors.col(i) = fft.fwd(raw_angle_2.col(i));
     }
-//    return freq_vectors;
 }
 
 void vsp::Frequency2Angle(Eigen::MatrixXcd &frequency_vector_, Eigen::MatrixXd &angle_){
-//    Eigen::MatrixXd filtered_angle_;
     static Eigen::FFT<double> fft;
     angle_.resize(frequency_vector_.rows(),frequency_vector_.cols());
     for(int i=0,e=frequency_vector_.cols();i<e;++i){
@@ -218,18 +196,7 @@ Eigen::MatrixXd vsp::CLerp(Eigen::MatrixXd start, Eigen::MatrixXd end, int32_t n
     return cos_phase * (-(end - start)*0.5) + Eigen::VectorXd::Ones(phase.rows()) * (start + end) * 0.5;
 }
 
-Eigen::VectorXd vsp::getRollingVectorError(
-//        int32_t division_x,
-//        int32_t division_y,
-//        double TRollingShutter,
-//        Eigen::MatrixXd IK,
-//        Eigen::MatrixXd matIntrinsic,
-//        int32_t image_width,
-//        int32_t image_height,
-//        double zoom
-        ){
-
-
+Eigen::VectorXd vsp::getRollingVectorError(){
     double eps = 1.0e-5;
 
     std::vector<float> vecPorigonn_uv;
@@ -255,16 +222,15 @@ Eigen::VectorXd vsp::getRollingVectorError(
                     prevQ,
                     currQ,
                     nextQ,
-                    division_x,
-                    division_y,
-                    TRollingShutter,
-                    IK,
-                    matIntrinsic,
-                    image_width,
-                    image_height,
-                    //                                       Vector2Quaternion<_Tp>(ratio*Quaternion2Vector(adjustmentQuaternion)),
-                    vecPorigonn_uv,
-                    zoom
+//                    division_x,
+//                    division_y,
+//                    TRollingShutter,
+//                    IK,
+//                    matIntrinsic,
+//                    image_width,
+//                    image_height,
+                    vecPorigonn_uv
+//                    zoom
                     );
         return check_warp(vecPorigonn_uv);
     };
