@@ -472,12 +472,6 @@ int main(int argc, char** argv){
             angleQuaternion_vsp2.push_back(angleQuaternion_vsp2.back()*vsp::RotationQuaternion(ve_sync*Tvideo));
             angleQuaternion_vsp2.back() = angleQuaternion_vsp2.back().normalized();
         }
-        vsp v2(angleQuaternion_vsp2);
-        std::vector<string> legends = {"x","y","z"};
-        vgp::plot(v2.data(),"Raw DFT",legends);
-        //        v.setFilterCoeff(FIRcoeffs[lowPassFilterStrength]);
-        //平滑化を試す
-        vgp::plot(v2.filteredDataDFT(Capture->get(CV_CAP_PROP_FPS),1.0),"Filterd DFT",legends);
 
         auto convCVMat2EigenMat = [](cv::Mat &src){
             assert(src.type()==CV_64FC1);
@@ -487,16 +481,34 @@ int main(int argc, char** argv){
           return retval;
         };
 
+        vsp v2(angleQuaternion_vsp2,
+               division_x,
+               division_y,
+               rollingShutterDuration,
+               convCVMat2EigenMat(matInvDistort),
+               convCVMat2EigenMat(matIntrinsic),
+               imageSize.width,
+               imageSize.height,
+               (double)zoomRatio);
+        std::vector<string> legends = {"x","y","z"};
+        vgp::plot(v2.data(),"Raw DFT",legends);
+        //        v.setFilterCoeff(FIRcoeffs[lowPassFilterStrength]);
+        //平滑化を試す
+        vgp::plot(v2.filteredDataDFT(Capture->get(CV_CAP_PROP_FPS),1.0),"Filterd DFT",legends);
+
+
+
         //エラーを計算する。将来的に所望の特性の波形が得られるまで、DFTした複素配列の値をいじることになる？？？どうやって複素配列にアクセスする？
         Eigen::VectorXd errors = v2.getRollingVectorError(
-                    division_x,
-                    division_y,
-                    rollingShutterDuration,
-                    convCVMat2EigenMat(matInvDistort),
-                    convCVMat2EigenMat(matIntrinsic),
-                    imageSize.width,
-                    imageSize.height,
-                    (double)zoomRatio);
+//                    division_x,
+//                    division_y,
+//                    rollingShutterDuration,
+//                    convCVMat2EigenMat(matInvDistort),
+//                    convCVMat2EigenMat(matIntrinsic),
+//                    imageSize.width,
+//                    imageSize.height,
+//                    (double)zoomRatio
+                    );
         /*Eigen::MatrixXd fdd = v2.filteredDataDFT(Capture->get(CV_CAP_PROP_FPS),1.0);
         Eigen::VectorXd errors(fdd.rows()-2);
         Eigen::Quaternion<double> prevQ,currQ,nextQ;
@@ -543,7 +555,25 @@ int main(int argc, char** argv){
          << "x:" << angleQuaternion_vsp[100].x()
          << "y:" << angleQuaternion_vsp[100].y()
          << "z:" << angleQuaternion_vsp[100].z()<< endl;
-    vsp v(angleQuaternion_vsp);
+
+    auto convCVMat2EigenMat = [](cv::Mat &src){
+        assert(src.type()==CV_64FC1);
+      Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor> retval;
+      retval.resize(src.rows,src.cols);
+      memcpy(retval.data(),src.data,src.size().area()*sizeof(double));
+      return retval;
+    };
+
+    vsp v(angleQuaternion_vsp,
+          division_x,
+          division_y,
+          rollingShutterDuration,
+          convCVMat2EigenMat(matInvDistort),
+          convCVMat2EigenMat(matIntrinsic),
+          imageSize.width,
+          imageSize.height,
+          (double)zoomRatio
+          );
     //    vgp::plot(v.get_row(0),v.get_row(1),v.get_row(2),"Eigen");
     std::vector<string> legends = {"x","y","z"};
     vgp::plot(v.data(),"Eigen",legends);

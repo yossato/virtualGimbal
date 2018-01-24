@@ -14,10 +14,28 @@ class vsp
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    vsp();
+    //    vsp();
 
     //TODO:コンストラクタでfilter coeffも受け取っといたほうがよさ気
-    template <class T> vsp(vector<Eigen::Quaternion<T>> &angle_quaternion){
+    template <class T> vsp(vector<Eigen::Quaternion<T>> &angle_quaternion,
+                           int32_t division_x,
+                           int32_t division_y,
+                           double TRollingShutter,
+                           Eigen::MatrixXd IK,
+                           Eigen::MatrixXd matIntrinsic,
+                           int32_t image_width,
+                           int32_t image_height,
+                           double zoom){
+        is_filtered=false;
+        this->division_x = division_x;
+        this->division_y = division_y;
+        this->TRollingShutter = TRollingShutter;
+        this->IK = IK;
+        this->matIntrinsic = matIntrinsic;
+        this->image_width = image_width;
+        this->image_height = image_height;
+        this->zoom = zoom;
+
         raw_angle.resize(angle_quaternion.size(),3);
 
         for(int i=0,e=angle_quaternion.size();i<e;++i){
@@ -90,8 +108,8 @@ public:
         //0割を回避するためにマクローリン展開
         if(theta > EPS){
             auto n = w.normalized();//w * (1.0/theta);//単位ベクトルに変換
-//            double sin_theta_2 = sin(theta*0.5);
-//            return Eigen::Quaternion<T_num>(cos(theta*0.5),n[0]*sin_theta_2,n[1]*sin_theta_2,n[2]*sin_theta_2);
+            //            double sin_theta_2 = sin(theta*0.5);
+            //            return Eigen::Quaternion<T_num>(cos(theta*0.5),n[0]*sin_theta_2,n[1]*sin_theta_2,n[2]*sin_theta_2);
             Eigen::VectorXd n_sin_theta_2 = n * sin(theta*0.5);
             return Eigen::Quaternion<T_num>(cos(theta*0.5),n_sin_theta_2[0],n_sin_theta_2[1],n_sin_theta_2[2]);
         }else{
@@ -123,11 +141,11 @@ public:
      * @param 回転を表すクォータニオンから回転を表す行列を生成
      **/
     template <typename T_num> static void Quaternion2Matrix(Eigen::Quaternion<T_num> &q, Eigen::MatrixXd &det){
-//        det = Eigen::MatrixXd::Zero(3,3);
-//        q.matrix()
-//        det << q.w()*q.w()+q.x()*q.x()-q.y()*q.y()-q.z()*q.z(), 2*(q.x()*q.y()-q.w()*q.z()),                  2*(q.x()*q.z()+q.w()*q.y()),
-//               2*(q.x()*q.y()+q.w()*q.z()),                 q.w()*q.w()-q.x()*q.x()+q.y()*q.y()-q.z()*q.z(), 2*(q.y()*q.z()-q.w()*q.x()),
-//               2*(q.x()*q.z()-q.w()*q.y()),                 2*(q.y()*q.z()+q.w()*q.x()),                  q.w()*q.w()-q.x()*q.x()-q.y()*q.y()+q.z()*q.z();
+        //        det = Eigen::MatrixXd::Zero(3,3);
+        //        q.matrix()
+        //        det << q.w()*q.w()+q.x()*q.x()-q.y()*q.y()-q.z()*q.z(), 2*(q.x()*q.y()-q.w()*q.z()),                  2*(q.x()*q.z()+q.w()*q.y()),
+        //               2*(q.x()*q.y()+q.w()*q.z()),                 q.w()*q.w()-q.x()*q.x()+q.y()*q.y()-q.z()*q.z(), 2*(q.y()*q.z()-q.w()*q.x()),
+        //               2*(q.x()*q.z()-q.w()*q.y()),                 2*(q.y()*q.z()+q.w()*q.x()),                  q.w()*q.w()-q.x()*q.x()-q.y()*q.y()+q.z()*q.z();
         det = q.matrix();
     }
 
@@ -137,32 +155,32 @@ public:
      * @param [in]	Qto		四元数2
      * @param [in]	t		比率(0<=t<=1)
      **/
-//    template <typename _Tp> static Eigen::Quaternion<_Tp> Slerp(Eigen::Quaternion<_Tp> &Qfrom, Eigen::Quaternion<_Tp> &Qto, _Tp t){
-//        double cosom = Qfrom.w()*Qto.w()+Qfrom.x()*Qto.x()+Qfrom.y()*Qto.y()+Qfrom.z()*Qto.z();
-//        double sinom, omega, scale0, scale1;
+    //    template <typename _Tp> static Eigen::Quaternion<_Tp> Slerp(Eigen::Quaternion<_Tp> &Qfrom, Eigen::Quaternion<_Tp> &Qto, _Tp t){
+    //        double cosom = Qfrom.w()*Qto.w()+Qfrom.x()*Qto.x()+Qfrom.y()*Qto.y()+Qfrom.z()*Qto.z();
+    //        double sinom, omega, scale0, scale1;
 
-//        if(Qto.Coefficients == Qfrom.Coefficients){	//QfromとQtoが完全に一致->補完の必要なし
-//            return Qfrom;
-//        }
+    //        if(Qto.Coefficients == Qfrom.Coefficients){	//QfromとQtoが完全に一致->補完の必要なし
+    //            return Qfrom;
+    //        }
 
-//        //符号を直す
-//        if(cosom < 0.0){
-//            cosom = -cosom;
-//            Qto = -Qto;
-//        }
-//        if((1.0-cosom)>1e-4){
-//            omega = acos(cosom);
-//            sinom = sin(omega);
-//            scale0 = sin((1.0 - t) * omega) / sinom;
-//            scale1 = sin(t * omega) / sinom;
-//        }else{
-//            scale0 = 1.0 -t;
-//            scale1 = t;
-//        }
+    //        //符号を直す
+    //        if(cosom < 0.0){
+    //            cosom = -cosom;
+    //            Qto = -Qto;
+    //        }
+    //        if((1.0-cosom)>1e-4){
+    //            omega = acos(cosom);
+    //            sinom = sin(omega);
+    //            scale0 = sin((1.0 - t) * omega) / sinom;
+    //            scale1 = sin(t * omega) / sinom;
+    //        }else{
+    //            scale0 = 1.0 -t;
+    //            scale1 = t;
+    //        }
 
-//        return scale0 * Qfrom + scale1 * Qto;
+    //        return scale0 * Qfrom + scale1 * Qto;
 
-//    }
+    //    }
 
     /** @brief 補正前の画像座標から、補正後のポリゴンの頂点を作成
      * @param [in]	Qa	ジャイロの角速度から計算したカメラの方向を表す回転クウォータニオン時系列データ、参照渡し
@@ -188,7 +206,7 @@ public:
             Eigen::MatrixXd &matIntrinsic,
             uint32_t image_width,
             uint32_t image_height,
-//            Eigen::Quaternion<double> adjustmentQuaternion,
+            //            Eigen::Quaternion<double> adjustmentQuaternion,
             std::vector<_Tx> &vecPorigonn_uv,
             double zoom
             ){
@@ -196,8 +214,8 @@ public:
         bool retval = true;
 
         //Matの型をdoubleに強制。
-//        assert(IK.type() == CV_64F);
-//        assert(matIntrinsic.type() == CV_64F);
+        //        assert(IK.type() == CV_64F);
+        //        assert(matIntrinsic.type() == CV_64F);
 
         //手順
         //1.補正前画像を分割した時の分割点の座標(pixel)を計算
@@ -213,12 +231,12 @@ public:
         double p1 = IK(0,2);
         double p2 = IK(0,3);
 
-//        Eigen::MatrixXd map(division_y+1,division_x+1);
+        //        Eigen::MatrixXd map(division_y+1,division_x+1);
 
         vecPorigonn_uv.clear();
 
         //top
-    //    for(int j=0;j<=division_y;++j){
+        //    for(int j=0;j<=division_y;++j){
         {
             int j=0;
             //W(t1,t2)を計算
@@ -230,13 +248,13 @@ public:
 
             Eigen::Quaternion<double> slerpedAngleQuaternion;
             if(exposureTimingInEachRow >= 0){
-//                slerpedAngleQuaternion = Slerp(currAngleQuaternion,nextAngleQuaternion,exposureTimingInEachRow);
+                //                slerpedAngleQuaternion = Slerp(currAngleQuaternion,nextAngleQuaternion,exposureTimingInEachRow);
                 slerpedAngleQuaternion = currAngleQuaternion.slerp(exposureTimingInEachRow,nextAngleQuaternion);
             }else{
-//                slerpedAngleQuaternion = Slerp(prevAngleQuaternion,currAngleQuaternion,1+exposureTimingInEachRow);
+                //                slerpedAngleQuaternion = Slerp(prevAngleQuaternion,currAngleQuaternion,1+exposureTimingInEachRow);
                 slerpedAngleQuaternion = prevAngleQuaternion.slerp(1.0+exposureTimingInEachRow,currAngleQuaternion);
             }
-//            slerpedAngleQuaternion = adjustmentQuaternion * slerpedAngleQuaternion;
+            //            slerpedAngleQuaternion = adjustmentQuaternion * slerpedAngleQuaternion;
             Quaternion2Matrix(slerpedAngleQuaternion,R);
             for(int i=0;i<=division_x;++i){
                 double u = (double)i/division_x*image_width;
@@ -265,8 +283,8 @@ public:
                 }
                 vecPorigonn_uv.push_back(x2*fx*zoom/image_width*2.0);
                 vecPorigonn_uv.push_back(y2*fy*zoom/image_height*2.0);
-    //            vecPorigonn_uv.push_back(x1*fx*zoom/image_width*2.0);
-    //                        vecPorigonn_uv.push_back(y1*fy*zoom/image_height*2.0);
+                //            vecPorigonn_uv.push_back(x1*fx*zoom/image_width*2.0);
+                //                        vecPorigonn_uv.push_back(y1*fy*zoom/image_height*2.0);
             }
         }
 
@@ -281,13 +299,13 @@ public:
 
             Eigen::Quaternion<double> slerpedAngleQuaternion;
             if(exposureTimingInEachRow >= 0){
-//                slerpedAngleQuaternion = Slerp(currAngleQuaternion,nextAngleQuaternion,exposureTimingInEachRow);
+                //                slerpedAngleQuaternion = Slerp(currAngleQuaternion,nextAngleQuaternion,exposureTimingInEachRow);
                 slerpedAngleQuaternion = currAngleQuaternion.slerp(exposureTimingInEachRow,nextAngleQuaternion);
             }else{
-//                slerpedAngleQuaternion = Slerp(prevAngleQuaternion,currAngleQuaternion,1+exposureTimingInEachRow);
+                //                slerpedAngleQuaternion = Slerp(prevAngleQuaternion,currAngleQuaternion,1+exposureTimingInEachRow);
                 slerpedAngleQuaternion = prevAngleQuaternion.slerp(1.0+exposureTimingInEachRow,currAngleQuaternion);
             }
-//            slerpedAngleQuaternion = adjustmentQuaternion * slerpedAngleQuaternion;
+            //            slerpedAngleQuaternion = adjustmentQuaternion * slerpedAngleQuaternion;
             Quaternion2Matrix(slerpedAngleQuaternion,R);
             for(int i=0;i<=division_x;i+=division_x){
                 double u = (double)i/division_x*image_width;
@@ -331,13 +349,13 @@ public:
 
             Eigen::Quaternion<double> slerpedAngleQuaternion;
             if(exposureTimingInEachRow >= 0){
-//                slerpedAngleQuaternion = Slerp(currAngleQuaternion,nextAngleQuaternion,exposureTimingInEachRow);
+                //                slerpedAngleQuaternion = Slerp(currAngleQuaternion,nextAngleQuaternion,exposureTimingInEachRow);
                 slerpedAngleQuaternion = currAngleQuaternion.slerp(exposureTimingInEachRow,nextAngleQuaternion);
             }else{
-//                slerpedAngleQuaternion = Slerp(prevAngleQuaternion,currAngleQuaternion,1+exposureTimingInEachRow);
+                //                slerpedAngleQuaternion = Slerp(prevAngleQuaternion,currAngleQuaternion,1+exposureTimingInEachRow);
                 slerpedAngleQuaternion = prevAngleQuaternion.slerp(1.0+exposureTimingInEachRow,currAngleQuaternion);
             }
-//            slerpedAngleQuaternion = adjustmentQuaternion * slerpedAngleQuaternion;
+            //            slerpedAngleQuaternion = adjustmentQuaternion * slerpedAngleQuaternion;
             Quaternion2Matrix(slerpedAngleQuaternion,R);
             for(int i=0;i<=division_x;++i){
                 double u = (double)i/division_x*image_width;
@@ -399,25 +417,33 @@ public:
      * @param [out] error はみ出したノルムの長さ
      **/
     Eigen::VectorXd getRollingVectorError(
-            int32_t division_x,
-            int32_t division_y,
-            double TRollingShutter,
-            Eigen::MatrixXd IK,
-            Eigen::MatrixXd matIntrinsic,
-            int32_t image_width,
-            int32_t image_height,
-            double zoom
+//            int32_t division_x,
+//            int32_t division_y,
+//            double TRollingShutter,
+//            Eigen::MatrixXd IK,
+//            Eigen::MatrixXd matIntrinsic,
+//            int32_t image_width,
+//            int32_t image_height,
+//            double zoom
             );
 
-//    const Eigen::Quaternion
+    //    const Eigen::Quaternion
 
 private:
     Eigen::MatrixXd raw_angle;
     Eigen::MatrixXd filtered_angle;
     Eigen::VectorXd filter_coeff;
     bool is_filtered;
-    float fs_ = 0.0;
-    float fc_ = 0.0;
+    float fs = 0.0;
+    float fc = 0.0;
+    int32_t division_x = 9;
+    int32_t division_y = 9;
+    double TRollingShutter = 0.0;
+    Eigen::MatrixXd IK = Eigen::MatrixXd::Zero(1,4);
+    Eigen::MatrixXd matIntrinsic = Eigen::MatrixXd::Identity(3,3);
+    int32_t image_width=1920;
+    int32_t image_height=1080;
+    double zoom=1.0;
 };
 
 #endif // VSP_H

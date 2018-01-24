@@ -1,10 +1,10 @@
 #include "vsp.h"
 #include <boost/math/special_functions/bessel.hpp>
 
-vsp::vsp()
-{
-    is_filtered=false;
-}
+//vsp::vsp()
+//{
+
+//}
 
 //template <class T> vsp::vsp(vector<quaternion<T>> &angle_quaternion)
 Eigen::Quaternion<double> vsp::RotationQuaternion(double theta, Eigen::Vector3d n){
@@ -185,11 +185,11 @@ const Eigen::MatrixXd &vsp::filteredDataDFT(){
 
 const Eigen::MatrixXd &vsp::filteredDataDFT(double fs, double fc){
     //TODO 最初に条件分岐を追加し、is_filterd == trueなら計算を回避させる
-    if(is_filtered && (fs_ == fs) && (fc_ == fc)){
+    if(is_filtered && (this->fs == fs) && (this->fc == fc)){
         return filtered_angle;
     }else{
-        fs_ = fs;
-        fc_ = fc;
+        this->fs = fs;
+        this->fc = fc;
 
         Eigen::MatrixXcd clerped_freq_vectors;
         Angle2CLerpedFrequency(fs,fc,raw_angle,clerped_freq_vectors);
@@ -219,14 +219,14 @@ Eigen::MatrixXd vsp::CLerp(Eigen::MatrixXd start, Eigen::MatrixXd end, int32_t n
 }
 
 Eigen::VectorXd vsp::getRollingVectorError(
-        int32_t division_x,
-        int32_t division_y,
-        double TRollingShutter,
-        Eigen::MatrixXd IK,
-        Eigen::MatrixXd matIntrinsic,
-        int32_t image_width,
-        int32_t image_height,
-        double zoom
+//        int32_t division_x,
+//        int32_t division_y,
+//        double TRollingShutter,
+//        Eigen::MatrixXd IK,
+//        Eigen::MatrixXd matIntrinsic,
+//        int32_t image_width,
+//        int32_t image_height,
+//        double zoom
         ){
 
 
