@@ -56,7 +56,7 @@ template <typename _Tp> struct FrequencyDomainOptimizer : Functor<double>
 
     int operator()(const VectorXd& complex_frequency_coefficients, VectorXd& fvec) const
     {
-
+static int32_t tryed=0;
         assert(complex_frequency_coefficients.rows() < frequency_vector_.rows());
         //complex_frequency_coefficientsを受け取り、frequency_vector_の一部に詰め替える
         //x,y,zの3chあるからちゃんと扱おう！
@@ -74,7 +74,8 @@ template <typename _Tp> struct FrequencyDomainOptimizer : Functor<double>
 
         //getRollingVectorErrorでエラーを取得する、fvecに詰め込む
         fvec = angle_.getRollingVectorError();
-
+        cout << "tryed:" << (int32_t)tryed++ << endl;
+        cout << "Error:" << fvec.norm() << endl;
     }
 };
 

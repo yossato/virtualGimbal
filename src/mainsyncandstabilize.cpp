@@ -514,8 +514,9 @@ int main(int argc, char** argv){
         FrequencyDomainOptimizer<double> functor3(complex_frequency_coefficients.rows(),v2.data().rows(),v2);
         NumericalDiff<FrequencyDomainOptimizer<double>> numDiff3(functor3);
         LevenbergMarquardt<NumericalDiff<FrequencyDomainOptimizer<double>>> lm3(numDiff3);
-
+        cout << "Before:" << complex_frequency_coefficients.transpose() << endl;
         int info3 = lm3.minimize(complex_frequency_coefficients);
+        cout << "After:" << complex_frequency_coefficients.transpose() << endl;
         //結果を代入
         //直接は代入できないので、まずcler~に代入
         vsp::VectorXd2MatrixXcd(complex_frequency_coefficients,clerped_freq_vectors);
@@ -528,6 +529,7 @@ int main(int argc, char** argv){
         //プロット
         //        Eigen::VectorXd errors = v2.getRollingVectorError();
         vgp::plot(v2.getRollingVectorError(),"Optimized Errors",legends2);
+        vgp::plot(v2.filteredDataDFT(),"Optimized Filterd DFT",legends);
     }
     return 0;
 

@@ -256,11 +256,11 @@ Eigen::VectorXd vsp::getRollingVectorError(){
                 a=m;
             }
             if(count == 1000){
-                cout << "frame:" << frame << " 収束失敗" << endl;
+//                cout << "frame:" << frame << " 収束失敗" << endl;
                 break;
             }
         }while(!(abs(a-b)<eps));
-        cout <<  "frame:" << frame << " " << count << "回で収束" << endl;
+//        cout <<  "frame:" << frame << " " << count << "回で収束" << endl;
 
         error = (Quaternion2Vector(Vector2Quaternion<double>(filtered_angle.row(frame  ).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame  ).transpose())).norm())*(1-m);
         retval[frame] = error;
