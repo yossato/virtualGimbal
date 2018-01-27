@@ -7,29 +7,29 @@
 #include "vsp.h"
 
 // Generic functor
-template<typename _Scalar, int NX=Dynamic, int NY=Dynamic>
-struct Functor
-{
-  typedef _Scalar Scalar;
-  enum {
-    InputsAtCompileTime = NX,
-    ValuesAtCompileTime = NY
-  };
-  typedef Matrix<Scalar,InputsAtCompileTime,1> InputType;
-  typedef Matrix<Scalar,ValuesAtCompileTime,1> ValueType;
-  typedef Matrix<Scalar,ValuesAtCompileTime,InputsAtCompileTime> JacobianType;
+//template<typename _Scalar, int NX=Dynamic, int NY=Dynamic>
+//struct Functor
+//{
+//  typedef _Scalar Scalar;
+//  enum {
+//    InputsAtCompileTime = NX,
+//    ValuesAtCompileTime = NY
+//  };
+//  typedef Matrix<Scalar,InputsAtCompileTime,1> InputType;
+//  typedef Matrix<Scalar,ValuesAtCompileTime,1> ValueType;
+//  typedef Matrix<Scalar,ValuesAtCompileTime,InputsAtCompileTime> JacobianType;
 
-  Functor() : inputs_(InputsAtCompileTime), values_(ValuesAtCompileTime){}
-  Functor(int inputs, int values) : inputs_(inputs), values_(values) {}
+//  Functor() : inputs_(InputsAtCompileTime), values_(ValuesAtCompileTime){}
+//  Functor(int inputs, int values) : inputs_(inputs), values_(values) {}
 
-  int inputs() const { return inputs_; }
-  int values() const { return values_; }
+//  int inputs() const { return inputs_; }
+//  int values() const { return values_; }
 
-  const int inputs_;
-  const int values_;
+//  const int inputs_;
+//  const int values_;
 
 
-};
+//};
 
 /**
  * @brief 平滑化済み波形を周波数領域で調整することで、なめらか、かつ、画面が欠けないように、時間波形調整します\
@@ -45,7 +45,7 @@ template <typename _Tp> struct FrequencyDomainOptimizer : Functor<double>
       **/
     FrequencyDomainOptimizer(int inputs, int values, vsp &angle)
         : angle_(angle),Functor(inputs, values) {
-        vsp::Angle2CLerpedFrequency(angle_.fs,angle_.fc,angle_.filteredDataDFT(),frequency_vector_);
+        vsp::Angle2CLerpedFrequency((double)angle_.fs,(double)angle_.fc,angle_.filteredDataDFT(),frequency_vector_);
     }
 
     vsp &angle_;
@@ -60,12 +60,13 @@ template <typename _Tp> struct FrequencyDomainOptimizer : Functor<double>
         assert(complex_frequency_coefficients.rows() < frequency_vector_.rows());
         //complex_frequency_coefficientsを受け取り、frequency_vector_の一部に詰め替える
         //x,y,zの3chあるからちゃんと扱おう！
-        for(int32_t i=0,e=complex_frequency_coefficients.rows()/2;i<e;i+=2){
-            frequency_vector_[i].real() = complex_frequency_coefficients[i];
-            frequency_vector_[i].imag() = complex_frequency_coefficients[i+1];
-        }
+        vsp::VectorXd2MatrixXcd(complex_frequency_coefficients,(Eigen::MatrixXcd&)frequency_vector_);
+//        for(int32_t i=0,e=complex_frequency_coefficients.rows()/2;i<e;i+=2){
+//            frequency_vector_[i].real() = complex_frequency_coefficients[i];
+//            frequency_vector_[i].imag() = complex_frequency_coefficients[i+1];
+//        }
         //周波数領域 -> 時間波形に変換、angle_に時間波形の情報を戻す
-        vsp::Frequency2Angle(frequency_vector_,angle_.filteredDataDFT());
+        vsp::Frequency2Angle((Eigen::MatrixXcd&)frequency_vector_,angle_.filteredDataDFT());
 
         //末尾の余白を削除
         Eigen::MatrixXd buf = angle_.filteredDataDFT().block(0,0,angle_.data().rows(),angle_.data().cols());
@@ -75,6 +76,6 @@ template <typename _Tp> struct FrequencyDomainOptimizer : Functor<double>
         fvec = angle_.getRollingVectorError();
 
     }
-}
+};
 
 #endif // FREQUENCY_DOMAIN_OPTIMIZATION_HPP

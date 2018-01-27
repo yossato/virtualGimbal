@@ -50,7 +50,7 @@ using namespace glm;
 #include <Eigen/Dense>
 #include <unsupported/Eigen/FFT>
 #include "vsp.h"
-//#include "frequency_domain_optimization.hpp"
+#include "frequency_domain_optimization.hpp"
 using namespace std;
 
 struct videoBufferAndWriter{
@@ -502,22 +502,32 @@ int main(int argc, char** argv){
         std::vector<string> legends2 = {"x"};
         vgp::plot(errors,"Errors",legends2);
 
-//        //最適化
-//        cout << "let's optimize!" << endl;
-//        //適切な初期値を準備
-//        Eigen::MatrixXcd clerped_freq_vectors;
-//        VectorXd complex_frequency_coefficients;
-//        Angle2CLerpedFrequency(fs,fc,raw_angle,clerped_freq_vectors);
-//         = VectorXd::Zero(v2.data().rows()/10);
-//        for(int32_t i=0,e=complex_frequency_coefficients.rows()/2;i<e;i+=2){
-//            complex_frequency_coefficients[i]   = v2.f[i].real();
-//            complex_frequency_coefficients[i+1] = frequency_vector_[i].imag();
-//        }
-//        FrequencyDomainOptimizer functor3(complex_frequency_coefficients.rows(),v2.data().rows(),v2);
-//        NumericalDiff<FrequencyDomainOptimizer> numDiff3(functor3);
-//        LevenbergMarquardt<NumericalDiff<FrequencyDomainOptimizer>> lm3(numDiff3);
+        //最適化
+        cout << "let's optimize!" << endl;
+        //適切な初期値を準備
+        Eigen::MatrixXcd clerped_freq_vectors;
 
-//        int info3 = lm3.minimize()
+        vsp::Angle2CLerpedFrequency(v2.fs,v2.fc,v2.filteredDataDFT(),clerped_freq_vectors);
+        VectorXd complex_frequency_coefficients = VectorXd::Zero((int32_t)((double)clerped_freq_vectors.rows() * v2.fc / v2.fs));
+        vsp::MatrixXcd2VectorXd(clerped_freq_vectors,complex_frequency_coefficients);
+
+        FrequencyDomainOptimizer<double> functor3(complex_frequency_coefficients.rows(),v2.data().rows(),v2);
+        NumericalDiff<FrequencyDomainOptimizer<double>> numDiff3(functor3);
+        LevenbergMarquardt<NumericalDiff<FrequencyDomainOptimizer<double>>> lm3(numDiff3);
+
+        int info3 = lm3.minimize(complex_frequency_coefficients);
+        //結果を代入
+        //直接は代入できないので、まずcler~に代入
+        vsp::VectorXd2MatrixXcd(complex_frequency_coefficients,clerped_freq_vectors);
+        //元に戻す
+        vsp::Frequency2Angle(clerped_freq_vectors,v2.filteredDataDFT());
+
+        //末尾の余白を削除
+        Eigen::MatrixXd buf = v2.filteredDataDFT().block(0,0,v2.data().rows(),v2.data().cols());
+        v2.filteredDataDFT() = buf;
+        //プロット
+        //        Eigen::VectorXd errors = v2.getRollingVectorError();
+        vgp::plot(v2.getRollingVectorError(),"Optimized Errors",legends2);
     }
     return 0;
 

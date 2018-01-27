@@ -75,13 +75,13 @@ public:
     static Eigen::VectorXd getKaiserWindow(uint32_t tap_length, uint32_t alpha);
 
     static Eigen::VectorXcd getLPFFrequencyCoeff(uint32_t N, uint32_t alpha, double fs, double fc);
-    static void Angle2CLerpedFrequency(double fs, double fc, Eigen::MatrixXd &raw_angle, Eigen::MatrixXcd &freq_vectors);
+    static void Angle2CLerpedFrequency(double fs, double fc, const Eigen::MatrixXd &raw_angle, Eigen::MatrixXcd &freq_vectors);
     static void Frequency2Angle(Eigen::MatrixXcd &frequency_vector_, Eigen::MatrixXd &angle_);
-    static void MatrixXcd2VectorXd(Eigen::MatrixXcd &src, Eigen::VectorXd &dst);
-    static void VectorXd2MatrixXcd(Eigen::VectorXd &src, Eigen::MatrixXcd &dst);
+    static void MatrixXcd2VectorXd(const Eigen::MatrixXcd &src, Eigen::VectorXd &dst);
+    static void VectorXd2MatrixXcd(const Eigen::VectorXd &src, Eigen::MatrixXcd &dst);
 
     const Eigen::MatrixXd &filteredDataDFT(double fs, double fc);
-    const Eigen::MatrixXd &filteredDataDFT();
+    Eigen::MatrixXd &filteredDataDFT();
     Eigen::Quaternion<double> toRawQuaternion(uint32_t frame);
     Eigen::Quaternion<double> toFilteredQuaternion(uint32_t frame);
     Eigen::Quaternion<double> toDiffQuaternion(uint32_t frame);

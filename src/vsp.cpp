@@ -131,7 +131,7 @@ Eigen::VectorXcd vsp::getLPFFrequencyCoeff(uint32_t N, uint32_t alpha, double fs
 }
 
 
-void vsp::Angle2CLerpedFrequency(double fs, double fc, Eigen::MatrixXd &raw_angle, Eigen::MatrixXcd &freq_vectors){
+void vsp::Angle2CLerpedFrequency(double fs, double fc, const Eigen::MatrixXd &raw_angle, Eigen::MatrixXcd &freq_vectors){
     static Eigen::FFT<double> fft;
     int32_t clerp_length = fs / fc * 20.0;
 
@@ -156,7 +156,7 @@ void vsp::Frequency2Angle(Eigen::MatrixXcd &frequency_vector_, Eigen::MatrixXd &
     }
 }
 
-const Eigen::MatrixXd &vsp::filteredDataDFT(){
+Eigen::MatrixXd &vsp::filteredDataDFT(){
     assert(is_filtered == true);
     return filtered_angle;
 }
@@ -268,7 +268,7 @@ Eigen::VectorXd vsp::getRollingVectorError(){
     return retval;
 }
 
-void vsp::MatrixXcd2VectorXd(Eigen::MatrixXcd &src, Eigen::VectorXd &dst){
+void vsp::MatrixXcd2VectorXd(const Eigen::MatrixXcd &src, Eigen::VectorXd &dst){
     assert(!src.IsRowMajor);//メモリ配置はcol majorでなければならない
     assert(0 == dst.rows()%(2*src.cols()));//2とsrc列数の公倍数。2はMatrixXcdの1要素がimagとrealの2つの要素からなることに起因している
     int32_t row_elements_to_copy = dst.rows()/src.cols();//imaginaly and real number
@@ -278,7 +278,7 @@ void vsp::MatrixXcd2VectorXd(Eigen::MatrixXcd &src, Eigen::VectorXd &dst){
     }
 }
 
-void vsp::VectorXd2MatrixXcd(Eigen::VectorXd &src, Eigen::MatrixXcd &dst){
+void vsp::VectorXd2MatrixXcd(const Eigen::VectorXd &src, Eigen::MatrixXcd &dst){
     assert(!dst.IsRowMajor);//メモリ配置はcol majorでなければならない
     assert(0 == src.rows()%(2*dst.cols()));//2とdst列数の公倍数。2はMatrixXcdの1要素がimagとrealの2つの要素からなることに起因している
     int32_t row_elements_to_copy = src.rows()/dst.cols();//imaginaly and real number
