@@ -50,6 +50,7 @@ using namespace glm;
 #include <Eigen/Dense>
 #include <unsupported/Eigen/FFT>
 #include "vsp.h"
+//#include "frequency_domain_optimization.hpp"
 using namespace std;
 
 struct videoBufferAndWriter{
@@ -99,9 +100,6 @@ void videoWriterProcess(){
 
 
 int main(int argc, char** argv){
-
-
-
     //テクスチャ座標の準備
     int32_t division_x = 9; //画面の横の分割数
     int32_t division_y = 9; //画面の縦の分割数
@@ -499,45 +497,27 @@ int main(int argc, char** argv){
 
 
         //エラーを計算する。将来的に所望の特性の波形が得られるまで、DFTした複素配列の値をいじることになる？？？どうやって複素配列にアクセスする？
-        Eigen::VectorXd errors = v2.getRollingVectorError(
-//                    division_x,
-//                    division_y,
-//                    rollingShutterDuration,
-//                    convCVMat2EigenMat(matInvDistort),
-//                    convCVMat2EigenMat(matIntrinsic),
-//                    imageSize.width,
-//                    imageSize.height,
-//                    (double)zoomRatio
-                    );
-        /*Eigen::MatrixXd fdd = v2.filteredDataDFT(Capture->get(CV_CAP_PROP_FPS),1.0);
-        Eigen::VectorXd errors(fdd.rows()-2);
-        Eigen::Quaternion<double> prevQ,currQ,nextQ;
-        prevQ = vsp::Vector2Quaternion<double>(fdd.row(0).transpose()).conjugate() * vsp::Vector2Quaternion<double>(v2.data().row(0).transpose());
-        currQ = vsp::Vector2Quaternion<double>(fdd.row(1).transpose()).conjugate() * vsp::Vector2Quaternion<double>(v2.data().row(1).transpose());
-        for(int i=1,e=fdd.rows()-1;i<e;++i){
-            std::cout << "i:" << i <<  "prevQ:" << prevQ.coeffs() << std::endl;
-            nextQ = vsp::Vector2Quaternion<double>(fdd.row(i+1).transpose()).conjugate() * vsp::Vector2Quaternion<double>(v2.data().row(i+1).transpose());
-            double residual;
-            vsp::getRollingVectorError(prevQ,
-                                       currQ,
-                                       nextQ,
-                                       division_x,
-                                       division_y,
-                                       rollingShutterDuration,
-                                       convCVMat2EigenMat(matInvDistort),
-                                       convCVMat2EigenMat(matIntrinsic),
-                                       imageSize.width,
-                                       imageSize.height,
-//                                       vsp::Vector2Quaternion<double>(Eigen::Vector3d(0.15,-0.15,0.0)),
-                                       zoomRatio,
-                                       residual
-                        );
-            errors(i-1) = residual;
-            prevQ = currQ;
-            currQ = nextQ;
-        }*/
+        Eigen::VectorXd errors = v2.getRollingVectorError();
+
         std::vector<string> legends2 = {"x"};
         vgp::plot(errors,"Errors",legends2);
+
+//        //最適化
+//        cout << "let's optimize!" << endl;
+//        //適切な初期値を準備
+//        Eigen::MatrixXcd clerped_freq_vectors;
+//        VectorXd complex_frequency_coefficients;
+//        Angle2CLerpedFrequency(fs,fc,raw_angle,clerped_freq_vectors);
+//         = VectorXd::Zero(v2.data().rows()/10);
+//        for(int32_t i=0,e=complex_frequency_coefficients.rows()/2;i<e;i+=2){
+//            complex_frequency_coefficients[i]   = v2.f[i].real();
+//            complex_frequency_coefficients[i+1] = frequency_vector_[i].imag();
+//        }
+//        FrequencyDomainOptimizer functor3(complex_frequency_coefficients.rows(),v2.data().rows(),v2);
+//        NumericalDiff<FrequencyDomainOptimizer> numDiff3(functor3);
+//        LevenbergMarquardt<NumericalDiff<FrequencyDomainOptimizer>> lm3(numDiff3);
+
+//        int info3 = lm3.minimize()
     }
     return 0;
 

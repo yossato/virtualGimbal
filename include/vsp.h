@@ -14,7 +14,8 @@ class vsp
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
+    float fs = 0.0;
+    float fc = 0.0;
     /**
      * @brief コンストラクタ
      * @param [in]	Qa	ジャイロの角速度から計算したカメラの方向を表す回転クウォータニオン時系列データ、参照渡し
@@ -76,6 +77,8 @@ public:
     static Eigen::VectorXcd getLPFFrequencyCoeff(uint32_t N, uint32_t alpha, double fs, double fc);
     static void Angle2CLerpedFrequency(double fs, double fc, Eigen::MatrixXd &raw_angle, Eigen::MatrixXcd &freq_vectors);
     static void Frequency2Angle(Eigen::MatrixXcd &frequency_vector_, Eigen::MatrixXd &angle_);
+    static void MatrixXcd2VectorXd(Eigen::MatrixXcd &src, Eigen::VectorXd &dst);
+    static void VectorXd2MatrixXcd(Eigen::VectorXd &src, Eigen::MatrixXcd &dst);
 
     const Eigen::MatrixXd &filteredDataDFT(double fs, double fc);
     const Eigen::MatrixXd &filteredDataDFT();
@@ -369,8 +372,7 @@ private:
     Eigen::MatrixXd filtered_angle;
     Eigen::VectorXd filter_coeff;
     bool is_filtered;
-    float fs = 0.0;
-    float fc = 0.0;
+
     int32_t division_x = 9;
     int32_t division_y = 9;
     double TRollingShutter = 0.0;

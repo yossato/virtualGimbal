@@ -45,17 +45,21 @@ template <typename _Tp> struct FrequencyDomainOptimizer : Functor<double>
       **/
     FrequencyDomainOptimizer(int inputs, int values, vsp &angle)
         : angle_(angle),Functor(inputs, values) {
-        vsp::Angle2CLerpedFrequency(angle.filteredDataDFT(),frequency_vector_);
+        vsp::Angle2CLerpedFrequency(angle_.fs,angle_.fc,angle_.filteredDataDFT(),frequency_vector_);
     }
 
     vsp &angle_;
-    Eigen::VectorXcd frequency_vector_;
+    Eigen::MatrixXcd frequency_vector_;
+
+    std::complex<double> a;
+//    VectorXd getInitial
 
     int operator()(const VectorXd& complex_frequency_coefficients, VectorXd& fvec) const
     {
 
         assert(complex_frequency_coefficients.rows() < frequency_vector_.rows());
         //complex_frequency_coefficientsを受け取り、frequency_vector_の一部に詰め替える
+        //x,y,zの3chあるからちゃんと扱おう！
         for(int32_t i=0,e=complex_frequency_coefficients.rows()/2;i<e;i+=2){
             frequency_vector_[i].real() = complex_frequency_coefficients[i];
             frequency_vector_[i].imag() = complex_frequency_coefficients[i+1];
@@ -68,9 +72,7 @@ template <typename _Tp> struct FrequencyDomainOptimizer : Functor<double>
         angle_.filteredDataDFT() = buf;
 
         //getRollingVectorErrorでエラーを取得する、fvecに詰め込む
-        angle_.getRollingVectorError()
-//        fvec.block(0,0,values,1) = angle.
-//        frequency_vector_
+        fvec = angle_.getRollingVectorError();
 
     }
 }

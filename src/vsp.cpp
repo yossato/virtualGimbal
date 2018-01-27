@@ -267,3 +267,24 @@ Eigen::VectorXd vsp::getRollingVectorError(){
     }
     return retval;
 }
+
+void vsp::MatrixXcd2VectorXd(Eigen::MatrixXcd &src, Eigen::VectorXd &dst){
+    assert(!src.IsRowMajor);//メモリ配置はcol majorでなければならない
+    assert(0 == dst.rows()%(2*src.cols()));//2とsrc列数の公倍数。2はMatrixXcdの1要素がimagとrealの2つの要素からなることに起因している
+    int32_t row_elements_to_copy = dst.rows()/src.cols();//imaginaly and real number
+    int32_t col_copy = src.cols();
+    for(int i=0;i<col_copy;++i){
+        memcpy((double*)dst.data()+i*row_elements_to_copy,(double*)src.data()+i*src.rows()*2,row_elements_to_copy*sizeof(double));
+    }
+}
+
+void vsp::VectorXd2MatrixXcd(Eigen::VectorXd &src, Eigen::MatrixXcd &dst){
+    assert(!dst.IsRowMajor);//メモリ配置はcol majorでなければならない
+    assert(0 == src.rows()%(2*dst.cols()));//2とdst列数の公倍数。2はMatrixXcdの1要素がimagとrealの2つの要素からなることに起因している
+    int32_t row_elements_to_copy = src.rows()/dst.cols();//imaginaly and real number
+    int32_t col_copy = dst.cols();
+    for(int i=0;i<col_copy;++i){
+        memcpy((double*)dst.data()+i*dst.rows()*2,(double*)src.data()+i*row_elements_to_copy,row_elements_to_copy*sizeof(double));
+    }
+
+}
