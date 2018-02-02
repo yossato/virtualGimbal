@@ -492,6 +492,10 @@ int main(int argc, char** argv){
         vgp::plot(v2.data(),"Raw DFT",legends);
         //        v.setFilterCoeff(FIRcoeffs[lowPassFilterStrength]);
         //平滑化を試す
+        //時間波形補正実装済み平滑化
+        Eigen::MatrixXd coeffs = Eigen::MatrixXd::Ones(v2.data().rows()*1.0/Capture->get(CV_CAP_PROP_FPS)+2,v2.data().cols());
+        vgp::plot(v2.filteredDataDFTTimeDomainOptimize(Capture->get(CV_CAP_PROP_FPS),1.0,coeffs),"Filtered DFT DO",legends);
+        //通常版平滑化
         vgp::plot(v2.filteredDataDFT(Capture->get(CV_CAP_PROP_FPS),1.0),"Filterd DFT",legends);
 
 
@@ -508,7 +512,7 @@ int main(int argc, char** argv){
         Eigen::MatrixXcd clerped_freq_vectors;
 
         vsp::Angle2CLerpedFrequency(v2.fs,v2.fc,v2.filteredDataDFT(),clerped_freq_vectors);
-        VectorXd complex_frequency_coefficients = VectorXd::Zero((int32_t)((double)clerped_freq_vectors.rows() * v2.fc / v2.fs));
+        VectorXd complex_frequency_coefficients = VectorXd::Zero((int32_t)((double)clerped_freq_vectors.rows() * v2.fc / v2.fs * 2.0));
         vsp::MatrixXcd2VectorXd(clerped_freq_vectors,complex_frequency_coefficients);
 
         FrequencyDomainOptimizer<double> functor3(complex_frequency_coefficients.rows(),v2.data().rows(),v2);

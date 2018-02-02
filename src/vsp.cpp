@@ -188,6 +188,52 @@ const Eigen::MatrixXd &vsp::filteredDataDFT(double fs, double fc){
     }
 }
 
+const Eigen::MatrixXd &vsp::filteredDataDFTTimeDomainOptimize(double fs, double fc, Eigen::MatrixXd &coeff){
+    this->fs = fs;
+    this->fc = fc;
+
+    Eigen::MatrixXcd clerped_freq_vectors;
+    Eigen::MatrixXd corrected_angle = raw_angle;
+
+    int32_t period = fs/fc;
+    assert(coeff.cols() == raw_angle.cols());
+//    assert(coeff.rows() == raw_angle.rows()/period);
+
+    Eigen::MatrixXd linear_interporate_coeff = Eigen::MatrixXd::Zero(period,2);
+
+    linear_interporate_coeff.col(0) = Eigen::VectorXd::LinSpaced(linear_interporate_coeff.rows()+1,0.0,1.0).block(0,0,linear_interporate_coeff.rows(),1);
+    linear_interporate_coeff.col(1) = Eigen::VectorXd::LinSpaced(linear_interporate_coeff.rows()+1,1.0,0.0).block(0,0,linear_interporate_coeff.rows(),1);
+
+    //線形補間で加算する
+    for(int i=0,e=raw_angle.rows()/period;i<e;++i){
+        corrected_angle.block(i*period,0,period,3) += linear_interporate_coeff * coeff.block(i,0,2,3);
+    }
+    //時間波形の長さが、periodの整数倍でない時、別途対応。殆どのケースはこれになる。
+    {
+        int32_t rest = raw_angle.rows()%period;
+        int32_t i = raw_angle.rows()/period;
+        if(0 != rest){
+            corrected_angle.block(i*period,0,rest,3) += linear_interporate_coeff.block(0,0,rest,2) * coeff.block(i,0,2,3);
+        }
+    }
+
+    Angle2CLerpedFrequency(fs,fc,corrected_angle,clerped_freq_vectors);
+    Eigen::VectorXcd filter_coeff_vector = getLPFFrequencyCoeff(clerped_freq_vectors.rows(),8,fs,fc).array();
+
+    //Apply LPF to each x, y and z axis.
+    for(int i=0,e=clerped_freq_vectors.cols();i<e;++i){
+        clerped_freq_vectors.col(i) = filter_coeff_vector.array() * clerped_freq_vectors.col(i).array();
+    }
+
+    Frequency2Angle(clerped_freq_vectors,filtered_angle);
+
+    //ここで末尾の余白を削除
+    Eigen::MatrixXd buf = filtered_angle.block(0,0,raw_angle.rows(),raw_angle.cols());
+    is_filtered = true;
+    filtered_angle = buf;
+    return filtered_angle;
+}
+
 Eigen::MatrixXd vsp::CLerp(Eigen::MatrixXd start, Eigen::MatrixXd end, int32_t num){
     assert(start.cols() == end.cols());
     assert(start.rows() == end.rows());

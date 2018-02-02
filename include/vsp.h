@@ -81,6 +81,7 @@ public:
     static void VectorXd2MatrixXcd(const Eigen::VectorXd &src, Eigen::MatrixXcd &dst);
 
     const Eigen::MatrixXd &filteredDataDFT(double fs, double fc);
+    const Eigen::MatrixXd &filteredDataDFTTimeDomainOptimize(double fs, double fc, Eigen::MatrixXd &coeff);
     Eigen::MatrixXd &filteredDataDFT();
     Eigen::Quaternion<double> toRawQuaternion(uint32_t frame);
     Eigen::Quaternion<double> toFilteredQuaternion(uint32_t frame);
