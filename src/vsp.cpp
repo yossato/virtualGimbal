@@ -188,7 +188,7 @@ const Eigen::MatrixXd &vsp::filteredDataDFT(double fs, double fc){
     }
 }
 
-const Eigen::MatrixXd &vsp::filteredDataDFTTimeDomainOptimize(double fs, double fc, Eigen::MatrixXd &coeff){
+const Eigen::MatrixXd &vsp::filteredDataDFTTimeDomainOptimize(double fs, double fc, const Eigen::MatrixXd &coeff){
     this->fs = fs;
     this->fc = fc;
 

@@ -51,7 +51,7 @@ template <typename _Tp> struct FrequencyDomainOptimizer : Functor<double>
     vsp &angle_;
     Eigen::MatrixXcd frequency_vector_;
 
-    std::complex<double> a;
+//    std::complex<double> a;
 //    VectorXd getInitial
 
     int operator()(const VectorXd& complex_frequency_coefficients, VectorXd& fvec) const
@@ -71,6 +71,45 @@ static int32_t tryed=0;
         //末尾の余白を削除
         Eigen::MatrixXd buf = angle_.filteredDataDFT().block(0,0,angle_.data().rows(),angle_.data().cols());
         angle_.filteredDataDFT() = buf;
+
+        //getRollingVectorErrorでエラーを取得する、fvecに詰め込む
+        fvec = angle_.getRollingVectorError();
+        cout << "tryed:" << (int32_t)tryed++ << endl;
+        cout << "Error:" << fvec.norm() << endl;
+    }
+};
+
+
+/**
+ * @brief 時間波形を整形し、平滑化することで、なめらか、かつ、画面が欠けないように、時間波形調整します\
+ *        x,y,zの軸全てに関して最適化します
+ */
+template <typename _Tp> struct TimeDomainOptimizer : Functor<double>
+{
+    /**
+      * @brief コンストラクタ。
+      * @param [in] inputs 最適化の対象となるパラメータの数、時間軸での係数の個数
+      * @param [in] values 最適化に使用できるサンプルデータの数、おそらく、時間軸での係数の個数
+      * @param [in] angle 角度。raw_angleをリファレンスとして用いる
+      **/
+    TimeDomainOptimizer(int inputs, int values, vsp &angle)
+        : angle_(angle),Functor(inputs, values) {
+    }
+
+    vsp &angle_;
+    mutable Eigen::MatrixXd wave_form_matrix;
+
+    int operator()(const VectorXd& wave_form_coefficients, VectorXd& fvec) const
+    {
+        static int32_t tryed=0;
+        //x,y,zの3chあるからちゃんと扱おう！
+        wave_form_matrix.resize(wave_form_coefficients.rows()/3,angle_.data().cols());
+        for(int i=0,e=wave_form_matrix.cols();i<e;++i){
+            wave_form_matrix.col(i) = wave_form_coefficients.block(i*wave_form_matrix.rows(),0,wave_form_matrix.rows(),1);
+        }
+
+        //末尾の余白を削除
+        angle_.filteredDataDFTTimeDomainOptimize(angle_.fs,angle_.fc,wave_form_matrix);
 
         //getRollingVectorErrorでエラーを取得する、fvecに詰め込む
         fvec = angle_.getRollingVectorError();

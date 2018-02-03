@@ -494,6 +494,7 @@ int main(int argc, char** argv){
         //平滑化を試す
         //時間波形補正実装済み平滑化
         Eigen::MatrixXd coeffs = Eigen::MatrixXd::Ones(v2.data().rows()*1.0/Capture->get(CV_CAP_PROP_FPS)+2,v2.data().cols());
+//        Eigen::MatrixXd coeffs = Eigen::MatrixXd::Random(v2.data().rows()*1.0/Capture->get(CV_CAP_PROP_FPS)+2,v2.data().cols());
         vgp::plot(v2.filteredDataDFTTimeDomainOptimize(Capture->get(CV_CAP_PROP_FPS),1.0,coeffs),"Filtered DFT DO",legends);
         //通常版平滑化
         vgp::plot(v2.filteredDataDFT(Capture->get(CV_CAP_PROP_FPS),1.0),"Filterd DFT",legends);
@@ -505,6 +506,19 @@ int main(int argc, char** argv){
 
         std::vector<string> legends2 = {"x"};
         vgp::plot(errors,"Errors",legends2);
+
+        //最適化
+        cout << "let's optimize time domain!" << endl;
+        //初期値を準備
+        Eigen::VectorXd wave_form_coefficients = Eigen::VectorXd::Zero((v2.data().rows()*1.0/Capture->get(CV_CAP_PROP_FPS)+2)*3);
+        TimeDomainOptimizer<double> functor4(wave_form_coefficients.rows(),v2.data().rows(),v2);
+
+        NumericalDiff<TimeDomainOptimizer<double>> numDiff4(functor4);
+        LevenbergMarquardt<NumericalDiff<TimeDomainOptimizer<double>>> lm4(numDiff4);
+        cout << "Before:" << wave_form_coefficients.transpose() << endl;
+        int info4 = lm4.minimize(wave_form_coefficients);
+        cout << "After:" << wave_form_coefficients.transpose() << endl;
+        return 0;
 
         //最適化
         cout << "let's optimize!" << endl;
