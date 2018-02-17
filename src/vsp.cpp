@@ -130,7 +130,7 @@ Eigen::VectorXcd vsp::getLPFFrequencyCoeff(uint32_t N, uint32_t alpha, double fs
     return frequency_vector;
 }
 
-Eigen::VectorXcd vsp::getKaizerWindowFrequencyCoeff(double alpha, int32_t window_length, int32_t data_length){
+Eigen::VectorXd vsp::getKaiserWindowWithZeros(int32_t data_length, double alpha, int32_t window_length){
     int32_t length_diff = data_length - window_length;
     Eigen::VectorXd kw = getKaiserWindow(window_length,alpha);
     Eigen::VectorXd kaiser_window_put_zeros = Eigen::VectorXd::Zero(data_length);
@@ -139,6 +139,13 @@ Eigen::VectorXcd vsp::getKaizerWindowFrequencyCoeff(double alpha, int32_t window
     kaiser_window_put_zeros.block(window_length/2 + length_diff,0,window_length-window_length/2,1)
             = kw.block(window_length/2,0,window_length-window_length/2,1);
     //ここに追記
+    kaiser_window_put_zeros = kaiser_window_put_zeros.array() / kaiser_window_put_zeros.sum();
+    return kaiser_window_put_zeros;
+}
+
+Eigen::VectorXcd vsp::getKaiserWindowWithZerosFrequencyCoeff(int32_t data_length, double alpha, int32_t window_length){
+    Eigen::FFT<double> fft;
+    return fft.fwd(getKaiserWindowWithZeros(data_length,alpha,window_length));
 }
 
 void vsp::Angle2CLerpedFrequency(double fs, double fc, const Eigen::MatrixXd &raw_angle, Eigen::MatrixXcd &freq_vectors){

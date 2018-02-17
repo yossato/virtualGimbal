@@ -73,9 +73,14 @@ public:
     const Eigen::MatrixXd &filteredData();
 
     static Eigen::VectorXd getKaiserWindow(uint32_t tap_length, uint32_t alpha);
+    static Eigen::VectorXd getKaiserWindowWithZeros(int32_t data_length, double alpha, int32_t window_length);
+
+
 
     static Eigen::VectorXcd getLPFFrequencyCoeff(uint32_t N, uint32_t alpha, double fs, double fc);
-    static Eigen::VectorXcd getKaizerWindowFrequencyCoeff(double alpha, int32_t window_length, int32_t data_length);
+    static Eigen::VectorXcd getKaiserWindowWithZerosFrequencyCoeff(int32_t data_length, double alpha, int32_t window_length);
+
+
     static void Angle2CLerpedFrequency(double fs, double fc, const Eigen::MatrixXd &raw_angle, Eigen::MatrixXcd &freq_vectors);
     static void Frequency2Angle(Eigen::MatrixXcd &frequency_vector_, Eigen::MatrixXd &angle_);
     static void MatrixXcd2VectorXd(const Eigen::MatrixXcd &src, Eigen::VectorXd &dst);

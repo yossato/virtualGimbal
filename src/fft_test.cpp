@@ -417,7 +417,11 @@ void plot_eigen(Eigen::VectorXd x, Eigen::VectorXd y, std::string style){
 }
 
 int main(int argc, char** argv){
-
+    //zeroを間に挟んだカイザー窓をテストする
+    plot_eigen(VectorXd::LinSpaced(800,0,799),vsp::getKaiserWindowWithZeros(800,100,400),".-r");
+    plt::title("getKaiserWindowWithZeros");
+    plt::show();
+    return 0;
     //CLerp関数をテスト
 //    MatrixXd buff4 = Eigen::ArrayXd::LinSpaced(1,0,10);
 //    std::cout <<  buff4 << std::endl;
