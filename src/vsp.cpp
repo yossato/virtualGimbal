@@ -52,8 +52,8 @@ const Eigen::MatrixXd &vsp::filteredData(){
 
 
 Eigen::Quaternion<double> vsp::toRawQuaternion(uint32_t frame){
-    int half_tap_length = filter_coeff.rows()/2;
-    Eigen::VectorXd w = raw_angle.block(0,frame+half_tap_length,3,1);
+//    int half_tap_length = filter_coeff.rows()/2;
+    Eigen::VectorXd w = raw_angle.block(0,frame,3,1);
     double theta = w.norm();//回転角度を計算、normと等しい
     //0割を回避するためにマクローリン展開
     //Order: w, x, y, z.
@@ -67,8 +67,8 @@ Eigen::Quaternion<double> vsp::toRawQuaternion(uint32_t frame){
 }
 
 Eigen::Quaternion<double> vsp::toFilteredQuaternion(uint32_t frame){
-    int half_tap_length = filter_coeff.rows()/2;
-    Eigen::VectorXd w = filtered_angle.block(frame+half_tap_length,0,1,3);
+//    int half_tap_length = filter_coeff.rows()/2;
+    Eigen::VectorXd w = filtered_angle.block(frame,0,1,3);//TODO:用修正
     double theta = w.norm();//回転角度を計算
     //0割を回避するためにマクローリン展開
     //Order: w, x, y, z.
