@@ -93,6 +93,8 @@ public:
     Eigen::Quaternion<double> toFilteredQuaternion(uint32_t frame);
     Eigen::Quaternion<double> toDiffQuaternion(uint32_t frame);
 
+
+
     /**
       * @brief cos関数で2点をなめらかに補完する関数
       * @retval numステップで補完された行列
@@ -121,6 +123,8 @@ public:
         return Eigen::Vector3d(q.x(),q.y(),q.z())*2.0*atan2(denom,q.w())/denom;
     }
 
+
+
     /**
      * @param シングルローテーションを表すベクトルを回転を表すクォータニオンへ変換
      **/
@@ -137,6 +141,15 @@ public:
             return Eigen::Quaternion<T_num>(1.0,0.5*w[0],0.5*w[1],0.5*w[2]);
         }
     }
+
+    /**
+     * @brief AngleVectorをQuarternionに変換します。
+     */
+//    template <typename T_num> static Eigen::Quaternion<T_num> Vector2Quaternion(Eigen::VectorXd &angle, int32_t row){
+//        return Vector2Quaternion<T_num>(angle.row(row).transpose());
+//    }
+
+//    Eigen::Quaternion<T_num> toDiffQuaternion()
 
     /**
      * @param 回転を表すクォータニオンをシングルローテーションを表すベクトルへ変換。前回算出したベクトルを引数として受け取ることで、アンラッピングする。

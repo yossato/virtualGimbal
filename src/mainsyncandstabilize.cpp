@@ -460,8 +460,39 @@ int main(int argc, char** argv){
         angleQuaternion.back() = angleQuaternion.back() * (1.0 / norm(angleQuaternion.back()));
     }
 
+
+    //vspクラスによる平滑化波形の生成
+    vector<Eigen::Quaternion<double>> angleQuaternion_vsp2;
+    angleQuaternion_vsp2.push_back(Eigen::Quaternion<double>(1,0,0,0));
+    for(int frame= -1 ,e=Capture->get(CV_CAP_PROP_FRAME_COUNT)+1;frame<e;++frame){//球面線形補間を考慮し前後各1フレーム追加
+        auto v_sync = angularVelocitySync(frame);
+        Eigen::Vector3d ve_sync(v_sync[0],v_sync[1],v_sync[2]);
+        angleQuaternion_vsp2.push_back(angleQuaternion_vsp2.back()*vsp::RotationQuaternion(ve_sync*Tvideo));
+        angleQuaternion_vsp2.back() = angleQuaternion_vsp2.back().normalized();
+    }
+
+    auto convCVMat2EigenMat = [](cv::Mat &src){
+        assert(src.type()==CV_64FC1);
+      Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor> retval;
+      retval.resize(src.rows,src.cols);
+      memcpy(retval.data(),src.data,src.size().area()*sizeof(double));
+      return retval;
+    };
+
+    vsp v2(angleQuaternion_vsp2,
+           division_x,
+           division_y,
+           rollingShutterDuration,
+           convCVMat2EigenMat(matInvDistort),
+           convCVMat2EigenMat(matIntrinsic),
+           imageSize.width,
+           imageSize.height,
+           (double)zoomRatio);
+    //平滑化
+    v2.filteredDataDFT(Capture->get(CV_CAP_PROP_FPS),1.0);
+
     //EigenによるDFT LPFのテスト
-    {
+    /*{
         vector<Eigen::Quaternion<double>> angleQuaternion_vsp2;
         angleQuaternion_vsp2.push_back(Eigen::Quaternion<double>(1,0,0,0));
         for(int frame= -1 ,e=Capture->get(CV_CAP_PROP_FRAME_COUNT)+1;frame<e;++frame){//球面線形補間を考慮し前後各1フレーム追加
@@ -549,10 +580,10 @@ int main(int argc, char** argv){
         vgp::plot(v2.getRollingVectorError(),"Optimized Errors",legends2);
         vgp::plot(v2.filteredDataDFT(),"Optimized Filterd DFT",legends);
     }
-    return 0;
+    return 0;*/
 
     //Eigenによる信号処理のテスト
-    vector<Eigen::Quaternion<double>> angleQuaternion_vsp;
+/*    vector<Eigen::Quaternion<double>> angleQuaternion_vsp;
     angleQuaternion_vsp.push_back(Eigen::Quaternion<double>(1,0,0,0));
     for(int frame=-halfLength,e=halfLength+Capture->get(CV_CAP_PROP_FRAME_COUNT);frame<e;frame++){
         //convert vector from boost to Eigen.
@@ -659,7 +690,7 @@ int main(int argc, char** argv){
             printf("%d ",cn++);
             cout << Quaternion2Vector(el) << endl;
         }
-    }
+    }*/
 
     quaternion<double> prevDiffAngleQuaternion;
     quaternion<double> currDiffAngleQuaternion;
@@ -924,32 +955,23 @@ int main(int argc, char** argv){
             norms[j] = cv::norm(Quaternion2Vector(conj(smoothedAngleQuaternion)*angleQuaternion[j]));
         }
         mipFrame = std::distance(norms.begin(),std::min_element(norms.begin(),norms.end()))-PREFETCH_LENGTH/2;
-        //        cout << "mipFrame:" << mipFrame << endl;
-
-
-        //        nextDiffAngleQuaternion = conj(quaternion<double>(1,0,0,0))*angleQuaternion[halfLength];
-
-        //試しに表示
-        if(0){
-            //            static int framen=0;
-            cv::Vec3d s = Quaternion2Vector(smoothedAngleQuaternion);
-            cv::Vec3d a = Quaternion2Vector(angleQuaternion[halfLength]);
-            cv::Vec3d d = Quaternion2Vector(currDiffAngleQuaternion);
-            //cv::Vec3d e = Quaternion2Vector(estimatedAngleQuaternion.back());
-            //            printf("%d,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f\r\n",i,s[0],s[1],s[2],a[0],a[1],a[2],d[0],d[1],d[2],e[0],e[1],e[2]);
-            printf("%d,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f,%4.3f\r\n",i,s[0],s[1],s[2],a[0],a[1],a[2],d[0],d[1],d[2]);
-            //            currSmoothedAngleQuaternion = nextSmoothedAngleQuaternion;
-            //            framen++;
-        }
-        //estimatedAngleQuaternion.push_back(estimatedAngleQuaternion.back()*RotationQuaternion(estimatedAngularVelocity[i]*Tvideo));
 
         //調整用のクォータニオンを準備
         quaternion<double> adjustmentQuaternion = Vector2Quaternion<double>(cv::Vec3d(vAngle,hAngle,0.0));
-        //        cout << "adjustmentQuaternion:" << adjustmentQuaternion << endl;
-        //        cout << "vAngle:" << vAngle << endl;
-        //        cout << "hAngle:" << hAngle << endl;
+
+
+
         getDistortUnrollingMap(prevDiffAngleQuaternion,currDiffAngleQuaternion,nextDiffAngleQuaternion,
                                division_x,division_y,rollingShutterDuration,matInvDistort, matIntrinsic, imageSize, adjustmentQuaternion,vecVtx,zoomRatio);
+
+        //vspクラスの結果を、今までの形式に変換
+        Eigen::Quaternion<double> prevEigenDiffAngleQuaternion = v2.toDiffQuaternion(i);
+        Eigen::Quaternion<double> currEigenDiffAngleQuaternion = v2.toDiffQuaternion(i+1);
+        Eigen::Quaternion<double> nextEigenDiffAngleQuaternion = v2.toDiffQuaternion(i+2);
+//        getDistortUnrollingMap(prevEigenDiffAngleQuaternion,currEigenDiffAngleQuaternion,nextEigenDiffAngleQuaternion,
+//                               division_x,division_y,rollingShutterDuration,matInvDistort, matIntrinsic, imageSize, adjustmentQuaternion,vecVtx,zoomRatio);
+        //TODO:ここにEigen版のgetDistortUnrollingMapを追加。vspクラスのメンバメソッドが必要
+
         //角度配列の先頭を削除
         angleQuaternion.erase(angleQuaternion.begin());
         //末尾に角度を追加
