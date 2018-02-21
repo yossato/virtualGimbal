@@ -666,7 +666,7 @@ int main(int argc, char** argv){
     quaternion<double> nextDiffAngleQuaternion;
 
     quaternion<double> smoothedAngleQuaternion;
-    {   //IIR平滑化
+    {   //FIR平滑化
         cv::Vec3d prevVec = Quaternion2Vector(angleQuaternion[0]);
         cv::Vec3d sum(0.0, 0.0, 0.0);
         for(int32_t j=0,f=FIRcoeffs[lowPassFilterStrength].size();j<f;++j){

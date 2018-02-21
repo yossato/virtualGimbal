@@ -188,8 +188,8 @@ const Eigen::MatrixXd &vsp::filteredDataDFT(double fs, double fc){
 
         Eigen::MatrixXcd clerped_freq_vectors;
         Angle2CLerpedFrequency(fs,fc,raw_angle,clerped_freq_vectors);
-        Eigen::VectorXcd filter_coeff_vector = getLPFFrequencyCoeff(clerped_freq_vectors.rows(),8,fs,fc).array();
-
+#//       Eigen::VectorXcd filter_coeff_vector = getLPFFrequencyCoeff(clerped_freq_vectors.rows(),8,fs,fc).array();
+        Eigen::VectorXcd filter_coeff_vector = getKaiserWindowWithZerosFrequencyCoeff(clerped_freq_vectors.rows(),100.0,200);
         //Apply LPF to each x, y and z axis.
         for(int i=0,e=clerped_freq_vectors.cols();i<e;++i){
             clerped_freq_vectors.col(i) = filter_coeff_vector.array() * clerped_freq_vectors.col(i).array();
@@ -235,7 +235,8 @@ const Eigen::MatrixXd &vsp::filteredDataDFTTimeDomainOptimize(double fs, double 
     }
 
     Angle2CLerpedFrequency(fs,fc,corrected_angle,clerped_freq_vectors);
-    Eigen::VectorXcd filter_coeff_vector = getLPFFrequencyCoeff(clerped_freq_vectors.rows(),8,fs,fc).array();
+    //Eigen::VectorXcd filter_coeff_vector = getLPFFrequencyCoeff(clerped_freq_vectors.rows(),8,fs,fc).array();
+    Eigen::VectorXcd filter_coeff_vector = getKaiserWindowWithZerosFrequencyCoeff(clerped_freq_vectors.rows(),100.0,200);
 
     //Apply LPF to each x, y and z axis.
     for(int i=0,e=clerped_freq_vectors.cols();i<e;++i){
