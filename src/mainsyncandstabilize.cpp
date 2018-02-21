@@ -489,7 +489,7 @@ int main(int argc, char** argv){
            imageSize.height,
            (double)zoomRatio);
     //平滑化
-    v2.filteredDataDFT(Capture->get(CV_CAP_PROP_FPS),1.0);
+    v2.filteredDataDFT(Capture->get(CV_CAP_PROP_FPS),1.0);//TODO:引数修正。もはやあまり意味がない。
 
     //EigenによるDFT LPFのテスト
     /*{
@@ -961,16 +961,11 @@ int main(int argc, char** argv){
 
 
 
-        getDistortUnrollingMap(prevDiffAngleQuaternion,currDiffAngleQuaternion,nextDiffAngleQuaternion,
-                               division_x,division_y,rollingShutterDuration,matInvDistort, matIntrinsic, imageSize, adjustmentQuaternion,vecVtx,zoomRatio);
-
-        //vspクラスの結果を、今までの形式に変換
-        Eigen::Quaternion<double> prevEigenDiffAngleQuaternion = v2.toDiffQuaternion(i);
-        Eigen::Quaternion<double> currEigenDiffAngleQuaternion = v2.toDiffQuaternion(i+1);
-        Eigen::Quaternion<double> nextEigenDiffAngleQuaternion = v2.toDiffQuaternion(i+2);
-//        getDistortUnrollingMap(prevEigenDiffAngleQuaternion,currEigenDiffAngleQuaternion,nextEigenDiffAngleQuaternion,
+//        getDistortUnrollingMap(prevDiffAngleQuaternion,currDiffAngleQuaternion,nextDiffAngleQuaternion,
 //                               division_x,division_y,rollingShutterDuration,matInvDistort, matIntrinsic, imageSize, adjustmentQuaternion,vecVtx,zoomRatio);
-        //TODO:ここにEigen版のgetDistortUnrollingMapを追加。vspクラスのメンバメソッドが必要
+
+        //vspクラスでDistortUnrollingMapを得る
+         v2.getDistortUnrollingMap(i,vecVtx);
 
         //角度配列の先頭を削除
         angleQuaternion.erase(angleQuaternion.begin());
