@@ -401,8 +401,8 @@ public:
         double p2 = IK(0,3);
 
         vecPorigonn_uv.clear();
-
-        //top
+        Eigen::MatrixXd map_x = Eigen::MatrixXd::Zero(division_y+1,division_x+1);
+        Eigen::MatrixXd map_y = Eigen::MatrixXd::Zero(division_y+1,division_x+1);
         for(int j=0;j<=division_y;++j)
         {
             //W(t1,t2)を計算
@@ -444,10 +444,37 @@ public:
                     x2 = x1;
                     y2 = y1;
                 }
-                vecPorigonn_uv.push_back(x2*fx*zoom/image_width*2.0);
-                vecPorigonn_uv.push_back(y2*fy*zoom/image_height*2.0);
+//                vecPorigonn_uv.push_back(x2*fx*zoom/image_width*2.0);
+//                vecPorigonn_uv.push_back(y2*fy*zoom/image_height*2.0);
+                map_x(j,i) = x2*fx*zoom/image_width*2.0;
+                map_y(j,i) = y2*fy*zoom/image_height*2.0;
+
+                }
+        }
+
+        //3.ポリゴン座標をOpenGLの関数に渡すために順番を書き換える
+        vecPorigonn_uv.clear();
+        for(int j=0;j<division_y;++j){//jは終了の判定が"<"であることに注意
+            for(int i=0;i<division_x;++i){
+                //GL_TRIANGLESでGL側へ送信するポリゴンの頂点座標を準備
+                vecPorigonn_uv.push_back(map_x(j,i));//x座標
+                vecPorigonn_uv.push_back(map_y(j,i));//y座標
+                vecPorigonn_uv.push_back(map_x(j,i+1));//x座標
+                vecPorigonn_uv.push_back(map_y(j,i+1));//y座標
+                vecPorigonn_uv.push_back(map_x(j+1,i));//x座標
+                vecPorigonn_uv.push_back(map_y(j+1,i));//y座標
+
+                vecPorigonn_uv.push_back(map_x(j+1,i));//x座標
+                vecPorigonn_uv.push_back(map_y(j+1,i));//y座標
+                vecPorigonn_uv.push_back(map_x(j,i+1));//x座標
+                vecPorigonn_uv.push_back(map_y(j,i+1));//y座標
+                vecPorigonn_uv.push_back(map_x(j+1,i+1));//x座標
+                vecPorigonn_uv.push_back(map_y(j+1,i+1));//y座標
+
+
             }
         }
+
         return retval;
     }
 

@@ -901,6 +901,7 @@ int main(int argc, char** argv){
     }
 
     std::vector<GLfloat> vecVtx(vecTexture.size());					//頂点座標
+    std::vector<GLfloat> vecVtxEigen(vecTexture.size());					//頂点座標
 
     GLuint vertexbuffer;
     glGenBuffers(1, &vertexbuffer);
@@ -965,8 +966,8 @@ int main(int argc, char** argv){
 //                               division_x,division_y,rollingShutterDuration,matInvDistort, matIntrinsic, imageSize, adjustmentQuaternion,vecVtx,zoomRatio);
 
         //vspクラスでDistortUnrollingMapを得る
-         v2.getDistortUnrollingMap(i,vecVtx);
-
+//         v2.getDistortUnrollingMap(i,vecVtxEigen);
+v2.getDistortUnrollingMap(i,vecVtx);
         //角度配列の先頭を削除
         angleQuaternion.erase(angleQuaternion.begin());
         //末尾に角度を追加
