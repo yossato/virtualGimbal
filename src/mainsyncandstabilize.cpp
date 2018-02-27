@@ -100,6 +100,8 @@ void videoWriterProcess(){
 
 
 int main(int argc, char** argv){
+    bool debug_signal_processing = false;
+
     //テクスチャ座標の準備
     int32_t division_x = 9; //画面の横の分割数
     int32_t division_y = 9; //画面の縦の分割数
@@ -117,7 +119,7 @@ int main(int argc, char** argv){
     //    char *outputPass = NULL;
     bool outputStabilizedVideo = false;
     int opt;
-    while((opt = getopt(argc, argv, "i:c:o::v:h:z:r:f:")) != -1){
+    while((opt = getopt(argc, argv, "i:c:o::d::v:h:z:r:f:")) != -1){
         string value1 ;//= optarg;
         switch (opt) {
         case 'i':       //input video file pass
@@ -128,6 +130,9 @@ int main(int argc, char** argv){
             break;
         case 'o':       //output
             outputStabilizedVideo = true;
+            break;
+        case 'd':
+            debug_signal_processing = true;
             break;
         case 'v':       //vertical position adjustment [rad], default 0
             value1 = optarg;
@@ -479,20 +484,9 @@ int main(int argc, char** argv){
       return retval;
     };
 
-    vsp v2(angleQuaternion_vsp2,
-           division_x,
-           division_y,
-           rollingShutterDuration,
-           convCVMat2EigenMat(matInvDistort),
-           convCVMat2EigenMat(matIntrinsic),
-           imageSize.width,
-           imageSize.height,
-           (double)zoomRatio);
-    //平滑化
-    v2.filteredDataDFT(Capture->get(CV_CAP_PROP_FPS),1.0);//TODO:引数修正。もはやあまり意味がない。
 
     //EigenによるDFT LPFのテスト
-    /*{
+    if(debug_signal_processing){
         vector<Eigen::Quaternion<double>> angleQuaternion_vsp2;
         angleQuaternion_vsp2.push_back(Eigen::Quaternion<double>(1,0,0,0));
         for(int frame= -1 ,e=Capture->get(CV_CAP_PROP_FRAME_COUNT)+1;frame<e;++frame){//球面線形補間を考慮し前後各1フレーム追加
@@ -579,8 +573,22 @@ int main(int argc, char** argv){
         //        Eigen::VectorXd errors = v2.getRollingVectorError();
         vgp::plot(v2.getRollingVectorError(),"Optimized Errors",legends2);
         vgp::plot(v2.filteredDataDFT(),"Optimized Filterd DFT",legends);
+        return 0;
     }
-    return 0;*/
+
+    vsp v2(angleQuaternion_vsp2,
+           division_x,
+           division_y,
+           rollingShutterDuration,
+           convCVMat2EigenMat(matInvDistort),
+           convCVMat2EigenMat(matIntrinsic),
+           imageSize.width,
+           imageSize.height,
+           (double)zoomRatio);
+    //平滑化
+    v2.filteredDataDFT(Capture->get(CV_CAP_PROP_FPS),1.0);//TODO:引数修正。もはやあまり意味がない。
+
+
 
     //Eigenによる信号処理のテスト
 /*    vector<Eigen::Quaternion<double>> angleQuaternion_vsp;

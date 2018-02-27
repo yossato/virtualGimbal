@@ -50,8 +50,9 @@ public:
 
         raw_angle.resize(angle_quaternion.size(),3);
 
+        Eigen::Vector3d el = Quaternion2Vector(angle_quaternion[0]);
         for(int i=0,e=angle_quaternion.size();i<e;++i){
-            auto el = Quaternion2Vector(angle_quaternion[i]);//require Quaternion2Matrix<3,1>()
+            el = Quaternion2Vector(angle_quaternion[i],el);//require Quaternion2Matrix<3,1>()
             raw_angle(i,0) = el[0];
             raw_angle(i,1) = el[1];
             raw_angle(i,2) = el[2];
