@@ -5,7 +5,7 @@
 Eigen::Quaternion<double> vsp::RotationQuaternion(double theta, Eigen::Vector3d n){
     //nを規格化してから計算する
     auto n_sin_theta_2 = n.normalized()*sin(theta/2.0);
-    return Eigen::Quaternion<double>(cos(theta/2),n_sin_theta_2[0],n_sin_theta_2[1],n_sin_theta_2[2]);
+    return Eigen::Quaternion<double>(cos(theta/2.0),n_sin_theta_2[0],n_sin_theta_2[1],n_sin_theta_2[2]);
 }
 
 /**
