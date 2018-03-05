@@ -465,17 +465,6 @@ int main(int argc, char** argv){
         angleQuaternion.back() = angleQuaternion.back() * (1.0 / norm(angleQuaternion.back()));
     }
 
-
-    //vspクラスによる平滑化波形の生成
-    vector<Eigen::Quaternion<double>> angleQuaternion_vsp2;
-    angleQuaternion_vsp2.push_back(Eigen::Quaternion<double>(1,0,0,0));
-    for(int frame= -1 ,e=Capture->get(CV_CAP_PROP_FRAME_COUNT)+1;frame<e;++frame){//球面線形補間を考慮し前後各1フレーム追加
-        auto v_sync = angularVelocitySync(frame);
-        Eigen::Vector3d ve_sync(v_sync[0],v_sync[1],v_sync[2]);
-        angleQuaternion_vsp2.push_back(angleQuaternion_vsp2.back()*vsp::RotationQuaternion(ve_sync*Tvideo));
-        angleQuaternion_vsp2.back() = angleQuaternion_vsp2.back().normalized();
-    }
-
     auto convCVMat2EigenMat = [](cv::Mat &src){
         assert(src.type()==CV_64FC1);
       Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor> retval;
@@ -484,7 +473,6 @@ int main(int argc, char** argv){
       return retval;
     };
 
-
     //EigenによるDFT LPFのテスト
     if(debug_signal_processing){
         vector<Eigen::Quaternion<double>> angleQuaternion_vsp2;
@@ -492,17 +480,18 @@ int main(int argc, char** argv){
         for(int frame= -1 ,e=Capture->get(CV_CAP_PROP_FRAME_COUNT)+1;frame<e;++frame){//球面線形補間を考慮し前後各1フレーム追加
             auto v_sync = angularVelocitySync(frame);
             Eigen::Vector3d ve_sync(v_sync[0],v_sync[1],v_sync[2]);
+            cout << "frame:" << frame << " ve_sync:" << ve_sync.transpose() << endl;
             angleQuaternion_vsp2.push_back(angleQuaternion_vsp2.back()*vsp::RotationQuaternion(ve_sync*Tvideo));
             angleQuaternion_vsp2.back() = angleQuaternion_vsp2.back().normalized();
         }
 
-        auto convCVMat2EigenMat = [](cv::Mat &src){
-            assert(src.type()==CV_64FC1);
-          Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor> retval;
-          retval.resize(src.rows,src.cols);
-          memcpy(retval.data(),src.data,src.size().area()*sizeof(double));
-          return retval;
-        };
+//        auto convCVMat2EigenMat = [](cv::Mat &src){
+//            assert(src.type()==CV_64FC1);
+//          Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor> retval;
+//          retval.resize(src.rows,src.cols);
+//          memcpy(retval.data(),src.data,src.size().area()*sizeof(double));
+//          return retval;
+//        };
 
         vsp v2(angleQuaternion_vsp2,
                division_x,
@@ -575,6 +564,18 @@ int main(int argc, char** argv){
         vgp::plot(v2.filteredDataDFT(),"Optimized Filterd DFT",legends);
         return 0;
     }
+
+    //vspクラスによる平滑化波形の生成
+    vector<Eigen::Quaternion<double>> angleQuaternion_vsp2;
+    angleQuaternion_vsp2.push_back(Eigen::Quaternion<double>(1,0,0,0));
+    for(int frame= -1 ,e=Capture->get(CV_CAP_PROP_FRAME_COUNT)+1;frame<e;++frame){//球面線形補間を考慮し前後各1フレーム追加
+        auto v_sync = angularVelocitySync(frame);
+        Eigen::Vector3d ve_sync(v_sync[0],v_sync[1],v_sync[2]);
+        angleQuaternion_vsp2.push_back(angleQuaternion_vsp2.back()*vsp::RotationQuaternion(ve_sync*Tvideo));
+        angleQuaternion_vsp2.back() = angleQuaternion_vsp2.back().normalized();
+    }
+
+
 
     vsp v2(angleQuaternion_vsp2,
            division_x,
