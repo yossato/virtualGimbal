@@ -161,6 +161,7 @@ public:
             return Eigen::Vector3d(0,0,0);//return zero vector
         }
         double theta_2 = atan2(denom,q.w());
+        std::cout << "theta 2:" << theta_2;// << q.coeffs().transpose() << std::endl;
         double prev_theta_2 = prev.norm()/2;
         double diff = theta_2 - prev_theta_2;
         theta_2 -= 2.0*M_PI*(double)(static_cast<int>(diff/(2.0*M_PI)));//マイナスの符号に注意
@@ -168,7 +169,8 @@ public:
         if(static_cast<int>(diff/(2.0*M_PI))!=0){
             printf("\n###########Unwrapping %d\n",static_cast<int>(diff/(2.0*M_PI)));
         }
-
+//        std::cout <<  ", q:" << (Eigen::Vector3d(q.x(),q.y(),q.z())*2.0*theta_2/denom).transpose() << std::endl;
+        std::cout <<  ", q:" << (Eigen::Vector3d(q.x(),q.y(),q.z())*2.0*theta_2).transpose() << " denom:" << denom << std::endl;
         return Eigen::Vector3d(q.x(),q.y(),q.z())*2.0*theta_2/denom;
     }
 
