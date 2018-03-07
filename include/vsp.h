@@ -169,7 +169,12 @@ public:
             printf("\n###########Unwrapping %d\n",static_cast<int>(diff/(2.0*M_PI)));
         }
 //        std::cout <<  ", q:" << (Eigen::Vector3d(q.x(),q.y(),q.z())*2.0*theta_2/denom).transpose() << std::endl;
-        std::cout <<  "theta:" << theta << ", q:" << Eigen::Vector3d(q.x(),q.y(),q.z()).transpose() << " denom:" << denom << std::endl;
+        Eigen::Vector3d n(q.x(),q.y(),q.z());
+        n /= n.norm();
+        std::cout <<  "theta:" << theta << ", q:" << Eigen::Vector4d(q.w(),q.x(),q.y(),q.z()).transpose() <<
+                      " denom:" << denom <<
+                      " n:" << n.transpose() << std::endl;
+
         return Eigen::Vector3d(q.x(),q.y(),q.z())*theta/denom;
     }
 
