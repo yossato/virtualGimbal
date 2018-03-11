@@ -178,6 +178,31 @@ Eigen::MatrixXd &vsp::filteredDataDFT(){
     return filtered_angle;
 }
 
+Eigen::MatrixXd &vsp::filteredQuaternion(double fs, double fc){
+    if(true == quaternion_is_filtered){
+        return filtered_quaternion;
+    }else{
+        this->fs = fs;
+        this->fc = fc;
+
+        Eigen::MatrixXcd clerped_quaternion_vectors;
+        Angle2CLerpedFrequency(fs,fc,raw_quaternion,clerped_quaternion_vectors);
+        Eigen::VectorXcd filter_coeff_vector = getKaiserWindowWithZerosFrequencyCoeff(clerped_quaternion_vectors.rows(),100.0,200);
+        //Apply LPF to each w, x, y and z axis.
+        for(int i=0,e=clerped_quaternion_vectors.cols();i<e;++i){
+            clerped_quaternion_vectors.col(i) = filter_coeff_vector.array() * clerped_quaternion_vectors.col(i).array();
+        }
+
+        Frequency2Angle(clerped_quaternion_vectors,filtered_quaternion);
+
+        //ここで末尾の余白を削除
+        Eigen::MatrixXd buf = filtered_quaternion.block(0,0,raw_quaternion.rows(),raw_quaternion.cols());
+        quaternion_is_filtered = true;
+        filtered_quaternion = buf;
+        return filtered_quaternion;
+    }
+}
+
 const Eigen::MatrixXd &vsp::filteredDataDFT(double fs, double fc){
     //TODO 最初に条件分岐を追加し、is_filterd == trueなら計算を回避させる
     if(is_filtered && (this->fs == fs) && (this->fc == fc)){
@@ -188,7 +213,6 @@ const Eigen::MatrixXd &vsp::filteredDataDFT(double fs, double fc){
 
         Eigen::MatrixXcd clerped_freq_vectors;
         Angle2CLerpedFrequency(fs,fc,raw_angle,clerped_freq_vectors);
-#//       Eigen::VectorXcd filter_coeff_vector = getLPFFrequencyCoeff(clerped_freq_vectors.rows(),8,fs,fc).array();
         Eigen::VectorXcd filter_coeff_vector = getKaiserWindowWithZerosFrequencyCoeff(clerped_freq_vectors.rows(),100.0,200);
         //Apply LPF to each x, y and z axis.
         for(int i=0,e=clerped_freq_vectors.cols();i<e;++i){

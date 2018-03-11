@@ -57,6 +57,12 @@ public:
             raw_angle(i,1) = el[1];
             raw_angle(i,2) = el[2];
         }
+
+        raw_quaternion.resize(angle_quaternion.size(),4);
+        for(int32_t i=0,e=angle_quaternion.size();i<e;++i){
+            raw_quaternion.row(i)=angle_quaternion[i].coeffs().transpose();
+        }
+
         is_filtered = false;
     }
 
@@ -90,6 +96,7 @@ public:
     const Eigen::MatrixXd &filteredDataDFT(double fs, double fc);
     const Eigen::MatrixXd &filteredDataDFTTimeDomainOptimize(double fs, double fc, const Eigen::MatrixXd &coeff);
     Eigen::MatrixXd &filteredDataDFT();
+    Eigen::MatrixXd &filteredQuaternion(double fs, double fc);
     Eigen::Quaternion<double> toRawQuaternion(uint32_t frame);
     Eigen::Quaternion<double> toFilteredQuaternion(uint32_t frame);
     Eigen::Quaternion<double> toDiffQuaternion(uint32_t frame);
@@ -505,10 +512,12 @@ public:
 
 private:
     Eigen::MatrixXd raw_angle;
+    Eigen::MatrixXd raw_quaternion;
     Eigen::MatrixXd filtered_angle;
+    Eigen::MatrixXd filtered_quaternion;
     Eigen::VectorXd filter_coeff;
     bool is_filtered;
-
+    bool quaternion_is_filtered=false;
     int32_t division_x = 9;
     int32_t division_y = 9;
     double TRollingShutter = 0.0;
