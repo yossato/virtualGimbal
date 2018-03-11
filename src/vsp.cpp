@@ -33,6 +33,10 @@ const Eigen::MatrixXd &vsp::data(){
     return raw_angle;
 }
 
+const Eigen::MatrixXd &vsp::toQuaternion(){
+    return raw_quaternion;
+}
+
 const Eigen::MatrixXd &vsp::filteredData(){
     if(is_filtered){
         return filtered_angle;
@@ -198,6 +202,7 @@ Eigen::MatrixXd &vsp::filteredQuaternion(double fs, double fc){
         //ここで末尾の余白を削除
         Eigen::MatrixXd buf = filtered_quaternion.block(0,0,raw_quaternion.rows(),raw_quaternion.cols());
         quaternion_is_filtered = true;
+//        buf.colwise() /= buf.rowwise().norm();
         filtered_quaternion = buf;
         return filtered_quaternion;
     }

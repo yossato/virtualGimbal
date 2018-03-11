@@ -70,6 +70,8 @@ public:
 
     const Eigen::MatrixXd &data();
 
+    const Eigen::MatrixXd &toQuaternion();
+
     template <class T> void setFilterCoeff(T coeff){
         filter_coeff.resize(coeff.size(),1);
         for(int i=0,e=coeff.size();i<e;++i){

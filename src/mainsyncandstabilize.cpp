@@ -502,6 +502,10 @@ int main(int argc, char** argv){
                imageSize.width,
                imageSize.height,
                (double)zoomRatio);
+        std::vector<string> legends_quaternion = {"w","x","y","z"};
+        vgp::plot(v2.toQuaternion(),"Raw Quaternion",legends_quaternion);
+        vgp::plot(v2.filteredQuaternion(Capture->get(CV_CAP_PROP_FPS),1.0),"Filtered Quaternion",legends_quaternion);
+
         std::vector<string> legends = {"x","y","z"};
         vgp::plot(v2.data(),"Raw DFT",legends);
         //        v.setFilterCoeff(FIRcoeffs[lowPassFilterStrength]);
