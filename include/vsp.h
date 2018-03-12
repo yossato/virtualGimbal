@@ -102,6 +102,7 @@ public:
     Eigen::Quaternion<double> toRawQuaternion(uint32_t frame);
     Eigen::Quaternion<double> toFilteredQuaternion(uint32_t frame);
     Eigen::Quaternion<double> toDiffQuaternion(uint32_t frame);
+    Eigen::Quaternion<double> toDiffQuaternion2(uint32_t frame);
 
 
 
@@ -399,6 +400,110 @@ public:
         Eigen::Quaternion<double> prevAngleQuaternion = this->toDiffQuaternion(frame);
         Eigen::Quaternion<double> currAngleQuaternion = this->toDiffQuaternion(frame+1);//インデックスの付け方が気持ち悪い。TODO:何とかする
         Eigen::Quaternion<double> nextAngleQuaternion = this->toDiffQuaternion(frame+2);
+        bool retval = true;
+
+
+        //手順
+        //1.補正前画像を分割した時の分割点の座標(pixel)を計算
+        //2.1の座標を入力として、各行毎のW(t1,t2)を計算
+        //3.補正後の画像上のポリゴン座標(pixel)を計算、歪み補正も含める
+
+        double fx = matIntrinsic(0, 0);
+        double fy = matIntrinsic(1, 1);
+        double cx = matIntrinsic(0, 2);
+        double cy = matIntrinsic(1, 2);
+        double k1 = IK(0,0);
+        double k2 = IK(0,1);
+        double p1 = IK(0,2);
+        double p2 = IK(0,3);
+
+        vecPorigonn_uv.clear();
+        Eigen::MatrixXd map_x = Eigen::MatrixXd::Zero(division_y+1,division_x+1);
+        Eigen::MatrixXd map_y = Eigen::MatrixXd::Zero(division_y+1,division_x+1);
+        for(int j=0;j<=division_y;++j)
+        {
+            //W(t1,t2)を計算
+            Eigen::MatrixXd R;
+            //1
+            double v = (double)j/division_y*image_height;
+
+            double exposureTimingInEachRow = TRollingShutter*v/image_height;	//ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
+
+            Eigen::Quaternion<double> slerpedAngleQuaternion;
+            if(exposureTimingInEachRow >= 0){
+                slerpedAngleQuaternion = currAngleQuaternion.slerp(exposureTimingInEachRow,nextAngleQuaternion);
+            }else{
+                slerpedAngleQuaternion = prevAngleQuaternion.slerp(1.0+exposureTimingInEachRow,currAngleQuaternion);
+            }
+            Quaternion2Matrix(slerpedAngleQuaternion,R);
+            for(int i=0;i<=division_x;++i){
+                double u = (double)i/division_x*image_width;
+                //後々の行列演算に備えて、画像上の座標を同次座標で表現しておく。(x座標、y座標,1)T
+                Eigen::Vector3d p;
+                p << (u- cx)/fx, (v - cy)/fy, 1.0;	//1のポリゴン座標に、K^-1を掛けた結果の３x１行列
+                //2
+                Eigen::MatrixXd XYW = R * p;//inv()なし
+
+                if(XYW(2,0) < 0.0){
+                    retval = false;
+                }
+
+                double x1 = XYW(0, 0)/XYW(2, 0);
+                double y1 = XYW(1, 0)/XYW(2, 0);
+
+                double r = sqrt(x1*x1+y1*y1);
+
+                double x2 = x1*(1.0+k1*r*r+k2*r*r*r*r)+2.0*p1*x1*y1+p2*(r*r+2.0*x1*x1);
+                double y2 = y1*(1.0+k1*r*r+k2*r*r*r*r)+p1*(r*r+2.0*y1*y1)+2.0*p2*x1*y1;
+                //変な折り返しを防止
+                if((pow(x2-x1,2)>1.0)||(pow(y2-y1,2)>1.0)){
+                    //                printf("折り返し防止\r\n");
+                    x2 = x1;
+                    y2 = y1;
+                }
+//                vecPorigonn_uv.push_back(x2*fx*zoom/image_width*2.0);
+//                vecPorigonn_uv.push_back(y2*fy*zoom/image_height*2.0);
+                map_x(j,i) = x2*fx*zoom/image_width*2.0;
+                map_y(j,i) = y2*fy*zoom/image_height*2.0;
+
+                }
+        }
+
+        //3.ポリゴン座標をOpenGLの関数に渡すために順番を書き換える
+        vecPorigonn_uv.clear();
+        for(int j=0;j<division_y;++j){//jは終了の判定が"<"であることに注意
+            for(int i=0;i<division_x;++i){
+                //GL_TRIANGLESでGL側へ送信するポリゴンの頂点座標を準備
+                vecPorigonn_uv.push_back(map_x(j,i));//x座標
+                vecPorigonn_uv.push_back(map_y(j,i));//y座標
+                vecPorigonn_uv.push_back(map_x(j,i+1));//x座標
+                vecPorigonn_uv.push_back(map_y(j,i+1));//y座標
+                vecPorigonn_uv.push_back(map_x(j+1,i));//x座標
+                vecPorigonn_uv.push_back(map_y(j+1,i));//y座標
+
+                vecPorigonn_uv.push_back(map_x(j+1,i));//x座標
+                vecPorigonn_uv.push_back(map_y(j+1,i));//y座標
+                vecPorigonn_uv.push_back(map_x(j,i+1));//x座標
+                vecPorigonn_uv.push_back(map_y(j,i+1));//y座標
+                vecPorigonn_uv.push_back(map_x(j+1,i+1));//x座標
+                vecPorigonn_uv.push_back(map_y(j+1,i+1));//y座標
+
+
+            }
+        }
+
+        return retval;
+    }
+
+    template <typename _Tx> bool getDistortUnrollingMapQuaternion(
+            int32_t frame,
+            std::vector<_Tx> &vecPorigonn_uv
+            ){
+
+
+        Eigen::Quaternion<double> prevAngleQuaternion = this->toDiffQuaternion2(frame);
+        Eigen::Quaternion<double> currAngleQuaternion = this->toDiffQuaternion2(frame+1);//インデックスの付け方が気持ち悪い。TODO:何とかする
+        Eigen::Quaternion<double> nextAngleQuaternion = this->toDiffQuaternion2(frame+2);
         bool retval = true;
 
 

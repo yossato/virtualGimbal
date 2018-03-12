@@ -592,7 +592,7 @@ int main(int argc, char** argv){
            (double)zoomRatio);
     //平滑化
     v2.filteredDataDFT(Capture->get(CV_CAP_PROP_FPS),1.0);//TODO:引数修正。もはやあまり意味がない。
-
+    v2.filteredQuaternion(Capture->get(CV_CAP_PROP_FPS),1.0);
 
 
     //Eigenによる信号処理のテスト
@@ -980,7 +980,8 @@ int main(int argc, char** argv){
 
         //vspクラスでDistortUnrollingMapを得る
 //         v2.getDistortUnrollingMap(i,vecVtxEigen);
-v2.getDistortUnrollingMap(i,vecVtx);
+//        v2.getDistortUnrollingMap(i,vecVtx);
+        v2.getDistortUnrollingMapQuaternion(i,vecVtx);
         //角度配列の先頭を削除
         angleQuaternion.erase(angleQuaternion.begin());
         //末尾に角度を追加

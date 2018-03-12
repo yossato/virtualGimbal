@@ -85,6 +85,15 @@ Eigen::Quaternion<double> vsp::toFilteredQuaternion(uint32_t frame){
     }
 }
 
+Eigen::Quaternion<double> vsp::toDiffQuaternion2(uint32_t frame){
+    Eigen::MatrixXd buf = raw_quaternion.row(frame);
+    Eigen::Quaterniond filtered = Eigen::QuaternionMapAlignedd(buf.data());
+    Eigen::MatrixXd buf2 = filtered_quaternion.row(frame);
+    Eigen::Quaterniond raw = Eigen::QuaternionMapAlignedd(buf2.data());
+//    std::cout << filtered.coeffs().transpose() << std::endl;
+    return filtered.conjugate()*raw;
+}
+
 Eigen::Quaternion<double> vsp::toDiffQuaternion(uint32_t frame){
     return this->toFilteredQuaternion(frame).conjugate()*this->toRawQuaternion(frame);
 }
@@ -191,7 +200,7 @@ Eigen::MatrixXd &vsp::filteredQuaternion(double fs, double fc){
 
         Eigen::MatrixXcd clerped_quaternion_vectors;
         Angle2CLerpedFrequency(fs,fc,raw_quaternion,clerped_quaternion_vectors);
-        Eigen::VectorXcd filter_coeff_vector = getKaiserWindowWithZerosFrequencyCoeff(clerped_quaternion_vectors.rows(),100.0,200);
+        Eigen::VectorXcd filter_coeff_vector = getKaiserWindowWithZerosFrequencyCoeff(clerped_quaternion_vectors.rows(),100.0,399);
         //Apply LPF to each w, x, y and z axis.
         for(int i=0,e=clerped_quaternion_vectors.cols();i<e;++i){
             clerped_quaternion_vectors.col(i) = filter_coeff_vector.array() * clerped_quaternion_vectors.col(i).array();
@@ -202,8 +211,10 @@ Eigen::MatrixXd &vsp::filteredQuaternion(double fs, double fc){
         //ここで末尾の余白を削除
         Eigen::MatrixXd buf = filtered_quaternion.block(0,0,raw_quaternion.rows(),raw_quaternion.cols());
         quaternion_is_filtered = true;
-        buf.colwise() /= buf.rowwise().norm();
-        std::cout << buf.rowwise().norm();
+        buf.array().colwise() /= buf.rowwise().norm().array();
+
+//        std::cout << "norm:\r\n" << buf.rowwise().norm();
+//        std::cout << "buf:\r\n" << buf;
         filtered_quaternion = buf;
         return filtered_quaternion;
     }
