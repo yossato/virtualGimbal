@@ -60,7 +60,16 @@ public:
 
         raw_quaternion.resize(angle_quaternion.size(),4);
         for(int32_t i=0,e=angle_quaternion.size();i<e;++i){
-            raw_quaternion.row(i)=angle_quaternion[i].coeffs().transpose();
+//            raw_quaternion.row(i)=angle_quaternion[i].coeffs().transpose();
+            //θ/2を格納する
+            raw_quaternion(i,3) = acos(angle_quaternion[i].w());
+            double r = sqrt(pow(angle_quaternion[i].x(),2.0)+pow(angle_quaternion[i].y(),2.0)+pow(angle_quaternion[i].z(),2.0));
+            if(r > 0.0001){
+                raw_quaternion.row(i).block(0,0,1,3) = angle_quaternion[i].coeffs().transpose().block(0,0,1,3)*asin(r)/r;
+            }else{
+                //不定形
+                raw_quaternion.row(i).block(0,0,1,3) = angle_quaternion[i].coeffs().transpose().block(0,0,1,3);
+            }
         }
 
         is_filtered = false;

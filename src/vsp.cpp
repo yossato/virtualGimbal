@@ -211,6 +211,12 @@ Eigen::MatrixXd &vsp::filteredQuaternion(double fs, double fc){
         //ここで末尾の余白を削除
         Eigen::MatrixXd buf = filtered_quaternion.block(0,0,raw_quaternion.rows(),raw_quaternion.cols());
         quaternion_is_filtered = true;
+
+        //θ/2からcos(θ/2)やn・sin(θ/2)にもどす
+        buf.block(0,0,buf.rows(),3) = buf.block(0,0,buf.rows(),3).array().colwise() * buf.block(0,0,buf.rows(),3).rowwise().norm().array().sin();
+        buf.block(0,3,buf.rows(),1) = buf.block(0,3,buf.rows(),1).array().cos();
+
+        //正規化
         buf.array().colwise() /= buf.rowwise().norm().array();
 
 //        std::cout << "norm:\r\n" << buf.rowwise().norm();
