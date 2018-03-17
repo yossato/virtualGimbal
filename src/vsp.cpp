@@ -197,31 +197,59 @@ Eigen::MatrixXd &vsp::filteredQuaternion(double fs, double fc){
     }else{
         this->fs = fs;
         this->fc = fc;
+        {
+            int32_t tap_length = 399;
+            int32_t half_length = floor(tap_length*0.5);
+            std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond>> quaternion_buf(tap_length);//TODO:可変長にする
+            for(int i=0,e=raw_quaternion.rows();i<e;++i){
+                //1.タップ長分、クォータニオンを集める
+                int32_t head = half_length - i;
+                int32_t end = i - (raw_quaternion.rows() - 1) + half_length;
+                Eigen::MatrixXd matrix_buf;
+                int k=0;
+                for(;k<head;++k){
+                    matrix_buf = raw_quaternion.row(0);
+                    quaternion_buf(k) = Eigen::QuaternionMapAlignedd(matrix_buf.data());
+                }
+                for(;(i+k)<e;++k){
+                    matrix_buf = raw_quaternion.row(i+k);
+                }
 
-        Eigen::MatrixXcd clerped_quaternion_vectors;
-        Angle2CLerpedFrequency(fs,fc,raw_quaternion,clerped_quaternion_vectors);
-        Eigen::VectorXcd filter_coeff_vector = getKaiserWindowWithZerosFrequencyCoeff(clerped_quaternion_vectors.rows(),100.0,399);
-        //Apply LPF to each w, x, y and z axis.
-        for(int i=0,e=clerped_quaternion_vectors.cols();i<e;++i){
-            clerped_quaternion_vectors.col(i) = filter_coeff_vector.array() * clerped_quaternion_vectors.col(i).array();
+
+                //2.回転角を変換
+                //3.Exponentialを計算
+                //3.FIRフィルタ適用
+                //4.Logを計算
+            }
+
+
         }
+        if(0){
+            Eigen::MatrixXcd clerped_quaternion_vectors;
+            Angle2CLerpedFrequency(fs,fc,raw_quaternion,clerped_quaternion_vectors);
+            Eigen::VectorXcd filter_coeff_vector = getKaiserWindowWithZerosFrequencyCoeff(clerped_quaternion_vectors.rows(),100.0,399);
+            //Apply LPF to each w, x, y and z axis.
+            for(int i=0,e=clerped_quaternion_vectors.cols();i<e;++i){
+                clerped_quaternion_vectors.col(i) = filter_coeff_vector.array() * clerped_quaternion_vectors.col(i).array();
+            }
 
-        Frequency2Angle(clerped_quaternion_vectors,filtered_quaternion);
+            Frequency2Angle(clerped_quaternion_vectors,filtered_quaternion);
 
-        //ここで末尾の余白を削除
-        Eigen::MatrixXd buf = filtered_quaternion.block(0,0,raw_quaternion.rows(),raw_quaternion.cols());
-        quaternion_is_filtered = true;
+            //ここで末尾の余白を削除
+            Eigen::MatrixXd buf = filtered_quaternion.block(0,0,raw_quaternion.rows(),raw_quaternion.cols());
+            quaternion_is_filtered = true;
 
-        //θ/2からcos(θ/2)やn・sin(θ/2)にもどす
-        buf.block(0,0,buf.rows(),3) = buf.block(0,0,buf.rows(),3).array().colwise() * buf.block(0,0,buf.rows(),3).rowwise().norm().array().sin();
-        buf.block(0,3,buf.rows(),1) = buf.block(0,3,buf.rows(),1).array().cos();
+            //θ/2からcos(θ/2)やn・sin(θ/2)にもどす
+            buf.block(0,0,buf.rows(),3) = buf.block(0,0,buf.rows(),3).array().colwise() * buf.block(0,0,buf.rows(),3).rowwise().norm().array().sin();
+            buf.block(0,3,buf.rows(),1) = buf.block(0,3,buf.rows(),1).array().cos();
 
-        //正規化
-        buf.array().colwise() /= buf.rowwise().norm().array();
+            //正規化
+            buf.array().colwise() /= buf.rowwise().norm().array();
 
-//        std::cout << "norm:\r\n" << buf.rowwise().norm();
-//        std::cout << "buf:\r\n" << buf;
-        filtered_quaternion = buf;
+            //        std::cout << "norm:\r\n" << buf.rowwise().norm();
+            //        std::cout << "buf:\r\n" << buf;
+            filtered_quaternion = buf;
+        }
         return filtered_quaternion;
     }
 }
