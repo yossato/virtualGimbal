@@ -7,6 +7,10 @@
 #include "settings.h"
 #include <Eigen/Dense>
 #include <unsupported/Eigen/FFT>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <sstream>
 using namespace std;
 using namespace boost::math;
 
@@ -29,7 +33,7 @@ public:
      * @param [in]	zoom	倍率[]。拡大縮小しないなら1を指定すること。省略可
      * @param [out] error はみ出したノルムの長さ
      **/
-    template <class T> vsp(vector<Eigen::Quaternion<T>> &angle_quaternion,
+    vsp(/*vector<Eigen::Quaternion<T>> &angle_quaternion,*/
                            int32_t division_x,
                            int32_t division_y,
                            double TRollingShutter,
@@ -37,7 +41,13 @@ public:
                            Eigen::MatrixXd matIntrinsic,
                            int32_t image_width,
                            int32_t image_height,
-                           double zoom){
+                           double zoom,
+                           std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> &angular_velocity,
+                           double T_video,
+                           double T_angular_velocity,
+                           double frame_offset,
+                           int32_t video_frames,
+                           int32_t filter_tap_length = 399);/*{
         is_filtered=false;
         this->division_x = division_x;
         this->division_y = division_y;
@@ -48,38 +58,57 @@ public:
         this->image_height = image_height;
         this->zoom = zoom;
 
-        raw_angle.resize(angle_quaternion.size(),3);
+        this->angular_velocity = angular_velocity;
+        this->T_video = T_video;
+        this->T_angular_velocity = T_angular_velocity;
+        this->frame_offset = frame_offset;
 
-        Eigen::Vector3d el = Quaternion2Vector(angle_quaternion[0].conjugate());
-        for(int i=0,e=angle_quaternion.size();i<e;++i){
-            el = Quaternion2Vector(angle_quaternion[i].conjugate(),el);//require Quaternion2Matrix<3,1>()
+        //クォータニオンをクラスの内部で計算する
+//        vector<Eigen::Quaternion<double>> angleQuaternion_vsp2;
+        raw_quaternion_vec.clear();
+        raw_quaternion_vec.push_back(Eigen::Quaterniond(1,0,0,0));
+        for(int frame= -floor(filter_tap_length/2)-1 ,e=video_frames+floor(filter_tap_length/2)+1;frame<e;++frame){//球面線形補間を考慮し前後各1フレーム追加
+            auto v_sync = angularVelocitySync(frame);
+//            Eigen::Vector3d ve_sync(v_sync[0],v_sync[1],v_sync[2]);
+            cout << "frame:" << frame << " v_sync:" << v_sync.transpose() << endl;
+            raw_quaternion_vec.push_back((raw_quaternion_vec.back()*vsp::RotationQuaternion(v_sync*this->T_video)).normalized());
+//            raw_quaternion_vec.back() = raw_quaternion_vec.back().normalized();
+        }
+
+
+        raw_angle.resize(raw_quaternion_vec.size(),3);
+
+        Eigen::Vector3d el = Quaternion2Vector(raw_quaternion_vec[0].conjugate());
+        for(int i=0,e=raw_quaternion_vec.size();i<e;++i){
+            el = Quaternion2Vector(raw_quaternion_vec[i].conjugate(),el);//require Quaternion2Matrix<3,1>()
             raw_angle(i,0) = el[0];
             raw_angle(i,1) = el[1];
             raw_angle(i,2) = el[2];
         }
 
-        raw_quaternion.resize(angle_quaternion.size(),4);
-        for(int32_t i=0,e=angle_quaternion.size();i<e;++i){
-//            raw_quaternion.row(i)=angle_quaternion[i].coeffs().transpose();
-            //θ/2を格納する
-            raw_quaternion(i,3) = acos(angle_quaternion[i].w());
-            double r = sqrt(pow(angle_quaternion[i].x(),2.0)+pow(angle_quaternion[i].y(),2.0)+pow(angle_quaternion[i].z(),2.0));
-            if(r > 0.0001){
-                raw_quaternion.row(i).block(0,0,1,3) = angle_quaternion[i].coeffs().transpose().block(0,0,1,3)*asin(r)/r;
-            }else{
-                //不定形
-                raw_quaternion.row(i).block(0,0,1,3) = angle_quaternion[i].coeffs().transpose().block(0,0,1,3);
-            }
+        raw_quaternion.resize(raw_quaternion_vec.size(),4);
+        for(int32_t i=0,e=raw_quaternion_vec.size();i<e;++i){
+            raw_quaternion.row(i)=raw_quaternion_vec[i].coeffs().transpose();
+//            //θ/2を格納する
+//            raw_quaternion(i,3) = acos(angle_quaternion[i].w());
+//            double r = sqrt(pow(angle_quaternion[i].x(),2.0)+pow(angle_quaternion[i].y(),2.0)+pow(angle_quaternion[i].z(),2.0));
+//            if(r > 0.0001){
+//                raw_quaternion.row(i).block(0,0,1,3) = angle_quaternion[i].coeffs().transpose().block(0,0,1,3)*asin(r)/r;
+//            }else{
+//                //不定形
+//                raw_quaternion.row(i).block(0,0,1,3) = angle_quaternion[i].coeffs().transpose().block(0,0,1,3);
+//            }
         }
 
         is_filtered = false;
-    }
+    }*/
 
     vector<double> getRow(int r);
 
     const Eigen::MatrixXd &data();
 
     const Eigen::MatrixXd &toQuaternion();
+    const std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond>> &toQuaternion_vec();
 
     template <class T> void setFilterCoeff(T coeff){
         filter_coeff.resize(coeff.size(),1);
@@ -107,7 +136,7 @@ public:
     const Eigen::MatrixXd &filteredDataDFT(double fs, double fc);
     const Eigen::MatrixXd &filteredDataDFTTimeDomainOptimize(double fs, double fc, const Eigen::MatrixXd &coeff);
     Eigen::MatrixXd &filteredDataDFT();
-    Eigen::MatrixXd &filteredQuaternion(double fs, double fc);
+    Eigen::MatrixXd &filteredQuaternion(uint32_t alpha, double fs, double fc);
     Eigen::Quaternion<double> toRawQuaternion(uint32_t frame);
     Eigen::Quaternion<double> toFilteredQuaternion(uint32_t frame);
     Eigen::Quaternion<double> toDiffQuaternion(uint32_t frame);
@@ -137,7 +166,7 @@ public:
      **/
     template <typename T_num> static Eigen::Vector3d Quaternion2Vector(Eigen::Quaternion<T_num> q){
         double denom = sqrt(1-q.w()*q.w());
-        if(denom==0.0){//まったく回転しない時は０割になるので、場合分けする
+        if(abs(denom)<EPS){//まったく回転しない時は０割になるので、場合分けする//TODO:
             return Eigen::Vector3d(0,0,0);//return zero vector
         }
         return Eigen::Vector3d(q.x(),q.y(),q.z())*2.0*atan2(denom,q.w())/denom;
@@ -626,9 +655,60 @@ public:
      **/
     Eigen::VectorXd getRollingVectorError();
 
+    /**
+      * @brief 同期が取れている角速度を出力
+      **/
+    Eigen::Vector3d angularVelocitySync(/*std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> &angularVelocityIn60Hz,
+                                        double T_video,
+                                        double T_av,
+                                        double frame_offset,*/
+                                        int32_t frame);/*{
+        double dframe = (frame + frame_offset) * T_video / T_angular_velocity;
+        int i = floor(dframe);
+        double decimalPart = dframe - (double)i;
+        //領域外にはみ出した時は、末端の値で埋める
+        if(i<0){
+            return angular_velocity[0];
+        }else if(angular_velocity.size()<=(i+1)){
+            return angular_velocity.back();
+        }else{
+            return angular_velocity[i]*(1.0-decimalPart)+angular_velocity[i+1]*decimalPart;
+        }
+    }*/
+
+    /**
+     * @brief CSVファイルを読み込んで配列を返す関数
+     **/
+    template <typename _Tp, typename _Alloc = std::allocator<_Tp>> static void ReadCSV(std::vector<_Tp,_Alloc> &w, const char* filename){
+            std::ifstream ifs(filename);//CSVファイルを開く
+            if(!ifs){
+                    std::cout << "エラー：CSVファイルが見つかりません\n" << std::endl;
+                    return;
+            }
+
+            std::string str;
+            w.clear();
+            _Tp numl;
+            while(getline(ifs,str)){//1行ずつ読み込む
+                    std::string token;
+                    std::istringstream stream(str);
+
+                    int i=0;
+                    while(getline(stream, token, ',')){
+                            double temp = stof(token);
+                            numl[i++] = (double)temp;//値を保存
+                    }
+                    w.push_back(numl);
+            }
+
+            printf("size of w is %ld\n",w.size());
+            return;
+    }
+
 private:
     Eigen::MatrixXd raw_angle;
     Eigen::MatrixXd raw_quaternion;
+    std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond>> raw_quaternion_vec;
     Eigen::MatrixXd filtered_angle;
     Eigen::MatrixXd filtered_quaternion;
     Eigen::VectorXd filter_coeff;
@@ -642,6 +722,13 @@ private:
     int32_t image_width=1920;
     int32_t image_height=1080;
     double zoom=1.0;
+
+    std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> angular_velocity;
+    double T_video=1.0/30.0;
+    double T_angular_velocity=1.0/60.0;
+    double frame_offset=0;
+    int32_t video_frames=0;
+    int32_t filter_tap_length=0;
 };
 
 #endif // VSP_H

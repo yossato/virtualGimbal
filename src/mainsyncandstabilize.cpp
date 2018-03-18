@@ -240,6 +240,8 @@ int main(int argc, char** argv){
     //角速度データを読み込み
     std::vector<cv::Vec3d> angularVelocityIn60Hz;
     ReadCSV(angularVelocityIn60Hz,csvPass);
+    std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> angular_velocity_from_csv;
+    vsp::ReadCSV(angular_velocity_from_csv,csvPass);
 
     //軸の定義方向の入れ替え
     //TODO:将来的に、CSVファイルに順番を揃えて、ゲインも揃えた値を書き込んでおくべき
@@ -485,7 +487,7 @@ int main(int argc, char** argv){
             angleQuaternion_vsp2.back() = angleQuaternion_vsp2.back().normalized();
         }
 
-        vsp v2(angleQuaternion_vsp2,
+        vsp v2(/*angleQuaternion_vsp2,*/
                division_x,
                division_y,
                rollingShutterDuration,
@@ -493,7 +495,12 @@ int main(int argc, char** argv){
                convCVMat2EigenMat(matIntrinsic),
                imageSize.width,
                imageSize.height,
-               (double)zoomRatio);
+               (double)zoomRatio,
+               angular_velocity_from_csv,
+               Tvideo,
+               Tav,
+               minPosition + subframeOffset,
+               (int32_t)(Capture->get(CV_CAP_PROP_FRAME_COUNT)));
 
     }
 
@@ -517,7 +524,7 @@ int main(int argc, char** argv){
 //          return retval;
 //        };
 
-        vsp v2(angleQuaternion_vsp2,
+        vsp v2(/*angleQuaternion_vsp2,*/
                division_x,
                division_y,
                rollingShutterDuration,
@@ -525,10 +532,15 @@ int main(int argc, char** argv){
                convCVMat2EigenMat(matIntrinsic),
                imageSize.width,
                imageSize.height,
-               (double)zoomRatio);
+               (double)zoomRatio,
+               angular_velocity_from_csv,
+               Tvideo,
+               Tav,
+               minPosition + subframeOffset,
+               (int32_t)(Capture->get(CV_CAP_PROP_FRAME_COUNT)));
         std::vector<string> legends_quaternion = {"w","x","y","z"};
         vgp::plot(v2.toQuaternion(),"Raw Quaternion",legends_quaternion);
-        vgp::plot(v2.filteredQuaternion(Capture->get(CV_CAP_PROP_FPS),1.0),"Filtered Quaternion",legends_quaternion);
+        vgp::plot(v2.filteredQuaternion(100,Capture->get(CV_CAP_PROP_FPS),1.0),"Filtered Quaternion",legends_quaternion);
 
         std::vector<string> legends = {"x","y","z"};
         vgp::plot(v2.data(),"Raw DFT",legends);
@@ -605,7 +617,7 @@ int main(int argc, char** argv){
 
 
 
-    vsp v2(angleQuaternion_vsp2,
+    vsp v2(/*angleQuaternion_vsp2,*/
            division_x,
            division_y,
            rollingShutterDuration,
@@ -613,10 +625,16 @@ int main(int argc, char** argv){
            convCVMat2EigenMat(matIntrinsic),
            imageSize.width,
            imageSize.height,
-           (double)zoomRatio);
+           (double)zoomRatio,
+           angular_velocity_from_csv,
+           Tvideo,
+           Tav,
+           minPosition + subframeOffset,
+           (int32_t)(Capture->get(CV_CAP_PROP_FRAME_COUNT))
+           );
     //平滑化
     v2.filteredDataDFT(Capture->get(CV_CAP_PROP_FPS),1.0);//TODO:引数修正。もはやあまり意味がない。
-    v2.filteredQuaternion(Capture->get(CV_CAP_PROP_FPS),1.0);
+    v2.filteredQuaternion(100,Capture->get(CV_CAP_PROP_FPS),1.0);
 
 
     //Eigenによる信号処理のテスト
