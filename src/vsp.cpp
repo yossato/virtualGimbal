@@ -168,7 +168,7 @@ Eigen::Quaternion<double> vsp::toDiffQuaternion(uint32_t frame){
     return this->toFilteredQuaternion(frame).conjugate()*this->toRawQuaternion(frame);
 }
 
-Eigen::VectorXd vsp::getKaiserWindow(uint32_t tap_length, uint32_t alpha){
+Eigen::VectorXd vsp::getKaiserWindow(uint32_t tap_length, uint32_t alpha, bool swap){
     Eigen::VectorXd window = Eigen::VectorXd::Zero(tap_length);
 
     if(tap_length % 2){ //奇数
@@ -185,11 +185,15 @@ Eigen::VectorXd vsp::getKaiserWindow(uint32_t tap_length, uint32_t alpha){
         }
     }
 
-    Eigen::VectorXd buff2(window.rows());
-    buff2.block(0,0,window.rows()/2,1) = window.block(window.rows()/2,0,window.rows()/2,1);
-    buff2.block(window.rows()/2,0,window.rows()-window.rows()/2,1) = window.block(0,0,window.rows()-window.rows()/2,1);
+    if(true == swap){
+        Eigen::VectorXd buff2(window.rows());
+        buff2.block(0,0,window.rows()/2,1) = window.block(window.rows()/2,0,window.rows()/2,1);
+        buff2.block(window.rows()/2,0,window.rows()-window.rows()/2,1) = window.block(0,0,window.rows()-window.rows()/2,1);
 
-    return buff2;
+        return buff2;
+    }else{
+        return window;
+    }
 }
 
 Eigen::VectorXcd vsp::getLPFFrequencyCoeff(uint32_t N, uint32_t alpha, double fs, double fc){
@@ -290,7 +294,10 @@ Eigen::MatrixXd &vsp::filteredQuaternion(uint32_t alpha, double fs, double fc){
                     exponential_map.row(k) = Quaternion2Vector(buff[k]).transpose();
                 }
                 //3.FIRフィルタ適用
-                exponential_map.array().colwise() *= getKaiserWindow(filter_tap_length,alpha).array();
+                Eigen::VectorXd kaiser_window = getKaiserWindow(filter_tap_length,alpha,false );
+                //総和が1になるように調整
+                kaiser_window.array() /= kaiser_window.sum();
+                exponential_map.array().colwise() *= kaiser_window.array();
                 //4.Logを計算
                 Eigen::Vector3d temp = exponential_map.colwise().sum().transpose();
                 qo = Vector2Quaternion<double>(temp);
