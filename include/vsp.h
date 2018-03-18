@@ -108,7 +108,7 @@ public:
     const Eigen::MatrixXd &data();
 
     const Eigen::MatrixXd &toQuaternion();
-    const std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond>> &toQuaternion_vec();
+//    const std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond>> &toQuaternion_vec();
 
     template <class T> void setFilterCoeff(T coeff){
         filter_coeff.resize(coeff.size(),1);
@@ -708,7 +708,7 @@ public:
 private:
     Eigen::MatrixXd raw_angle;
     Eigen::MatrixXd raw_quaternion;
-    std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond>> raw_quaternion_vec;
+    std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond>> raw_quaternion_with_margin;
     Eigen::MatrixXd filtered_angle;
     Eigen::MatrixXd filtered_quaternion;
     Eigen::VectorXd filter_coeff;

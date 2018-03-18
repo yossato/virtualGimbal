@@ -538,7 +538,7 @@ int main(int argc, char** argv){
                Tav,
                minPosition + subframeOffset,
                (int32_t)(Capture->get(CV_CAP_PROP_FRAME_COUNT)));
-        std::vector<string> legends_quaternion = {"w","x","y","z"};
+        std::vector<string> legends_quaternion = {"x","y","z","w"};
         vgp::plot(v2.toQuaternion(),"Raw Quaternion",legends_quaternion);
         vgp::plot(v2.filteredQuaternion(100,Capture->get(CV_CAP_PROP_FPS),1.0),"Filtered Quaternion",legends_quaternion);
 

@@ -33,28 +33,28 @@ vsp::vsp(/*vector<Eigen::Quaternion<T>> &angle_quaternion,*/
     this->video_frames = video_frames;
     this->filter_tap_length = filter_tap_length;
     //クォータニオンをクラスの内部で計算する TODO:互換性のためのルーチンなので、後で削除する
-    raw_quaternion_vec.clear();
-    raw_quaternion_vec.push_back(Eigen::Quaterniond(1,0,0,0));
+    raw_quaternion_with_margin.clear();
+    raw_quaternion_with_margin.push_back(Eigen::Quaterniond(1,0,0,0));
     for(int frame= -floor(filter_tap_length/2)-1 ,e=video_frames+floor(filter_tap_length/2)+1;frame<e;++frame){//球面線形補間を考慮し前後各1フレーム追加
         auto v_sync = angularVelocitySync(frame);
         cout << "frame:" << frame << " v_sync:" << v_sync.transpose() << endl;
-        raw_quaternion_vec.push_back((raw_quaternion_vec.back()*vsp::RotationQuaternion(v_sync*this->T_video)).normalized());
+        raw_quaternion_with_margin.push_back((raw_quaternion_with_margin.back()*vsp::RotationQuaternion(v_sync*this->T_video)).normalized());
     }
 
 
-    raw_angle.resize(raw_quaternion_vec.size(),3);
-
-    Eigen::Vector3d el = Quaternion2Vector(raw_quaternion_vec[0].conjugate());
-    for(int i=0,e=raw_quaternion_vec.size();i<e;++i){
-        el = Quaternion2Vector(raw_quaternion_vec[i].conjugate(),el);//require Quaternion2Matrix<3,1>()
+    raw_angle.resize(video_frames+2,3);//+2はローリングシャッター歪み補正のため
+int32_t half_tap_length = filter_tap_length/2;
+    Eigen::Vector3d el = Quaternion2Vector(raw_quaternion_with_margin[0].conjugate());
+    for(int i=0,e=raw_quaternion.rows();i<e;++i){
+        el = Quaternion2Vector(raw_quaternion_with_margin[i+half_tap_length].conjugate(),el);//require Quaternion2Matrix<3,1>()
         raw_angle(i,0) = el[0];
         raw_angle(i,1) = el[1];
         raw_angle(i,2) = el[2];
     }
 
-    raw_quaternion.resize(raw_quaternion_vec.size(),4);
-    for(int32_t i=0,e=raw_quaternion_vec.size();i<e;++i){
-        raw_quaternion.row(i)=raw_quaternion_vec[i].coeffs().transpose();
+    raw_quaternion.resize(video_frames+2,4);
+    for(int i=0,e=raw_quaternion.rows();i<e;++i){
+        raw_quaternion.row(i)=raw_quaternion_with_margin[i+half_tap_length].coeffs().transpose();
     }
 
     is_filtered = false;
@@ -95,17 +95,17 @@ const Eigen::MatrixXd &vsp::toQuaternion(){
     return raw_quaternion;
 }
 
-const std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond>> &vsp::toQuaternion_vec(){
-    //クォータニオンをクラスの内部で計算する
-    raw_quaternion_vec.clear();
-    raw_quaternion_vec.push_back(Eigen::Quaterniond(1,0,0,0));
-    for(int frame= -floor(filter_tap_length/2)-1 ,e=video_frames+floor(filter_tap_length/2)+1;frame<e;++frame){//球面線形補間を考慮し前後各1フレーム追加
-        auto v_sync = angularVelocitySync(frame);
-        cout << "frame:" << frame << " v_sync:" << v_sync.transpose() << endl;
-        raw_quaternion_vec.push_back((raw_quaternion_vec.back()*vsp::RotationQuaternion(v_sync*this->T_video)).normalized());
-    }
-    return raw_quaternion_vec;
-}
+//const std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond>> &vsp::toQuaternion_vec(){
+//    //クォータニオンをクラスの内部で計算する
+//    raw_quaternion_with_margin.clear();
+//    raw_quaternion_with_margin.push_back(Eigen::Quaterniond(1,0,0,0));
+//    for(int frame= -floor(filter_tap_length/2)-1 ,e=video_frames+floor(filter_tap_length/2)+1;frame<e;++frame){//球面線形補間を考慮し前後各1フレーム追加
+//        auto v_sync = angularVelocitySync(frame);
+//        cout << "frame:" << frame << " v_sync:" << v_sync.transpose() << endl;
+//        raw_quaternion_with_margin.push_back((raw_quaternion_with_margin.back()*vsp::RotationQuaternion(v_sync*this->T_video)).normalized());
+//    }
+//    return raw_quaternion_with_margin;
+//}
 
 const Eigen::MatrixXd &vsp::filteredData(){
     if(is_filtered){
@@ -274,10 +274,10 @@ Eigen::MatrixXd &vsp::filteredQuaternion(uint32_t alpha, double fs, double fc){
         {
             int32_t half_filter_tap_length = floor(this->filter_tap_length*0.5);
 
-            auto q = toQuaternion_vec();
-            filtered_quaternion.resize(raw_quaternion_vec.size(),4);
+            auto q = raw_quaternion_with_margin;
+            filtered_quaternion.resize(video_frames+2,4);
             Eigen::Quaterniond qo,q_center;
-            for(int i=0,e=filtered_quaternion.rows()-filter_tap_length;i<e;++i){
+            for(int i=0,e=filtered_quaternion.rows();i<e;++i){
 
                 //1.タップ長分、クォータニオンを集める
                 std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond>> buff;
@@ -302,7 +302,7 @@ Eigen::MatrixXd &vsp::filteredQuaternion(uint32_t alpha, double fs, double fc){
                 Eigen::Vector3d temp = exponential_map.colwise().sum().transpose();
                 qo = Vector2Quaternion<double>(temp);
                 //5.元の座標系に戻す もしかして戻さなくても、差分のベクトルが得られている？？？？
-                qo = q_center*qo;
+                qo = (q_center*qo).normalized();
                 filtered_quaternion.row(i) = qo.coeffs().transpose();
             }
 
