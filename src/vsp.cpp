@@ -45,7 +45,7 @@ vsp::vsp(/*vector<Eigen::Quaternion<T>> &angle_quaternion,*/
     raw_angle.resize(video_frames+2,3);//+2はローリングシャッター歪み補正のため
 int32_t half_tap_length = filter_tap_length/2;
     Eigen::Vector3d el = Quaternion2Vector(raw_quaternion_with_margin[0].conjugate());
-    for(int i=0,e=raw_quaternion.rows();i<e;++i){
+    for(int i=0,e=raw_angle.rows();i<e;++i){
         el = Quaternion2Vector(raw_quaternion_with_margin[i+half_tap_length].conjugate(),el);//require Quaternion2Matrix<3,1>()
         raw_angle(i,0) = el[0];
         raw_angle(i,1) = el[1];
@@ -277,6 +277,7 @@ Eigen::MatrixXd &vsp::filteredQuaternion(uint32_t alpha, double fs, double fc){
             auto q = raw_quaternion_with_margin;
             filtered_quaternion.resize(video_frames+2,4);
             Eigen::Quaterniond qo,q_center;
+            Eigen::VectorXd kaiser_window = getKaiserWindow(filter_tap_length,alpha,false );
             for(int i=0,e=filtered_quaternion.rows();i<e;++i){
 
                 //1.タップ長分、クォータニオンを集める
@@ -294,7 +295,7 @@ Eigen::MatrixXd &vsp::filteredQuaternion(uint32_t alpha, double fs, double fc){
                     exponential_map.row(k) = Quaternion2Vector(buff[k]).transpose();
                 }
                 //3.FIRフィルタ適用
-                Eigen::VectorXd kaiser_window = getKaiserWindow(filter_tap_length,alpha,false );
+//                Eigen::VectorXd kaiser_window = getKaiserWindow(filter_tap_length,alpha,false );
                 //総和が1になるように調整
                 kaiser_window.array() /= kaiser_window.sum();
                 exponential_map.array().colwise() *= kaiser_window.array();
