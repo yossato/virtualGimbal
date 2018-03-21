@@ -272,7 +272,7 @@ Eigen::MatrixXd &vsp::filteredQuaternion(uint32_t alpha, double fs, double fc){
     }else{
         this->fs = fs;
         this->fc = fc;
-        {
+        if(1){
             int32_t half_filter_tap_length = floor(this->filter_tap_length*0.5);
 
             auto q = raw_quaternion_with_margin;
@@ -315,11 +315,10 @@ Eigen::MatrixXd &vsp::filteredQuaternion(uint32_t alpha, double fs, double fc){
             }
 
 
-        }
-        if(0){
+        }else{
             Eigen::MatrixXcd clerped_quaternion_vectors;
             Angle2CLerpedFrequency(fs,fc,raw_quaternion,clerped_quaternion_vectors);
-            Eigen::VectorXcd filter_coeff_vector = getKaiserWindowWithZerosFrequencyCoeff(clerped_quaternion_vectors.rows(),100.0,399);
+            Eigen::VectorXcd filter_coeff_vector = getKaiserWindowWithZerosFrequencyCoeff(clerped_quaternion_vectors.rows(),alpha,filter_tap_length);
             //Apply LPF to each w, x, y and z axis.
             for(int i=0,e=clerped_quaternion_vectors.cols();i<e;++i){
                 clerped_quaternion_vectors.col(i) = filter_coeff_vector.array() * clerped_quaternion_vectors.col(i).array();
