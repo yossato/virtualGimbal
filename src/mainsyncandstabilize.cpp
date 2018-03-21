@@ -506,15 +506,15 @@ int main(int argc, char** argv){
 
     //EigenによるDFT LPFのテスト
     if(debug_signal_processing){
-        vector<Eigen::Quaternion<double>> angleQuaternion_vsp2;
-        angleQuaternion_vsp2.push_back(Eigen::Quaternion<double>(1,0,0,0));
-        for(int frame= -1 ,e=Capture->get(CV_CAP_PROP_FRAME_COUNT)+1;frame<e;++frame){//球面線形補間を考慮し前後各1フレーム追加
-            auto v_sync = angularVelocitySync(frame);
-            Eigen::Vector3d ve_sync(v_sync[0],v_sync[1],v_sync[2]);
-            cout << "frame:" << frame << " ve_sync:" << ve_sync.transpose() << endl;
-            angleQuaternion_vsp2.push_back(angleQuaternion_vsp2.back()*vsp::RotationQuaternion(ve_sync*Tvideo));
-            angleQuaternion_vsp2.back() = angleQuaternion_vsp2.back().normalized();
-        }
+//        vector<Eigen::Quaternion<double>> angleQuaternion_vsp2;
+//        angleQuaternion_vsp2.push_back(Eigen::Quaternion<double>(1,0,0,0));
+//        for(int frame= -1 ,e=Capture->get(CV_CAP_PROP_FRAME_COUNT)+1;frame<e;++frame){//球面線形補間を考慮し前後各1フレーム追加
+//            auto v_sync = angularVelocitySync(frame);
+//            Eigen::Vector3d ve_sync(v_sync[0],v_sync[1],v_sync[2]);
+//            cout << "frame:" << frame << " ve_sync:" << ve_sync.transpose() << endl;
+//            angleQuaternion_vsp2.push_back(angleQuaternion_vsp2.back()*vsp::RotationQuaternion(ve_sync*Tvideo));
+//            angleQuaternion_vsp2.back() = angleQuaternion_vsp2.back().normalized();
+//        }
 
 //        auto convCVMat2EigenMat = [](cv::Mat &src){
 //            assert(src.type()==CV_64FC1);
@@ -634,7 +634,7 @@ int main(int argc, char** argv){
            );
     //平滑化
     v2.filteredDataDFT(Capture->get(CV_CAP_PROP_FPS),1.0);//TODO:引数修正。もはやあまり意味がない。
-    v2.filteredQuaternion(100,Capture->get(CV_CAP_PROP_FPS),1.0);
+    v2.filteredQuaternion(10,Capture->get(CV_CAP_PROP_FPS),1.0);
 
 
     quaternion<double> prevDiffAngleQuaternion;

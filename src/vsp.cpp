@@ -32,6 +32,7 @@ vsp::vsp(/*vector<Eigen::Quaternion<T>> &angle_quaternion,*/
     this->frame_offset = frame_offset;
     this->video_frames = video_frames;
     this->filter_tap_length = filter_tap_length;
+
     //クォータニオンをクラスの内部で計算する TODO:互換性のためのルーチンなので、後で削除する
     raw_quaternion_with_margin.clear();
     raw_quaternion_with_margin.push_back(Eigen::Quaterniond(1,0,0,0));
@@ -278,6 +279,12 @@ Eigen::MatrixXd &vsp::filteredQuaternion(uint32_t alpha, double fs, double fc){
             filtered_quaternion.resize(video_frames+2,4);
             Eigen::Quaterniond qo,q_center;
             Eigen::VectorXd kaiser_window = getKaiserWindow(filter_tap_length,alpha,false );
+            kaiser_window = Eigen::VectorXd::Zero(filter_tap_length);
+            kaiser_window(kaiser_window.rows()/2) = 1.0;
+            //総和が1になるように調整
+            kaiser_window.array() /= kaiser_window.sum();
+            Eigen::MatrixXd exponential_map;
+            exponential_map.resize(filter_tap_length,3);
             for(int i=0,e=filtered_quaternion.rows();i<e;++i){
 
                 //1.タップ長分、クォータニオンを集める
@@ -289,15 +296,14 @@ Eigen::MatrixXd &vsp::filteredQuaternion(uint32_t alpha, double fs, double fc){
                     el=(q_center.conjugate()*el).normalized();
                 }
                 //3.Exponentialを計算
-                Eigen::MatrixXd exponential_map;
-                exponential_map.resize(buff.size(),3);
+
                 for(int k=0,ek=buff.size();k<ek;++k){
                     exponential_map.row(k) = Quaternion2Vector(buff[k]).transpose();
                 }
                 //3.FIRフィルタ適用
 //                Eigen::VectorXd kaiser_window = getKaiserWindow(filter_tap_length,alpha,false );
                 //総和が1になるように調整
-                kaiser_window.array() /= kaiser_window.sum();
+//                kaiser_window.array() /= kaiser_window.sum();
                 exponential_map.array().colwise() *= kaiser_window.array();
                 //4.Logを計算
                 Eigen::Vector3d temp = exponential_map.colwise().sum().transpose();
