@@ -158,9 +158,9 @@ Eigen::Quaternion<double> vsp::toFilteredQuaternion(uint32_t frame){
 
 Eigen::Quaternion<double> vsp::toDiffQuaternion2(uint32_t frame){
     Eigen::MatrixXd buf = raw_quaternion.row(frame);
-    Eigen::Quaterniond filtered = Eigen::QuaternionMapAlignedd(buf.data());
+    Eigen::Quaterniond raw = Eigen::QuaternionMapAlignedd(buf.data());
     Eigen::MatrixXd buf2 = filtered_quaternion.row(frame);
-    Eigen::Quaterniond raw = Eigen::QuaternionMapAlignedd(buf2.data());
+    Eigen::Quaterniond filtered = Eigen::QuaternionMapAlignedd(buf2.data());
 //    std::cout << filtered.coeffs().transpose() << std::endl;
     return filtered.conjugate()*raw;
 }
@@ -279,8 +279,8 @@ Eigen::MatrixXd &vsp::filteredQuaternion(uint32_t alpha, double fs, double fc){
             filtered_quaternion.resize(video_frames+2,4);
             Eigen::Quaterniond qo,q_center;
             Eigen::VectorXd kaiser_window = getKaiserWindow(filter_tap_length,alpha,false );
-            kaiser_window = Eigen::VectorXd::Zero(filter_tap_length);
-            kaiser_window(kaiser_window.rows()/2) = 1.0;
+//            kaiser_window = Eigen::VectorXd::Zero(filter_tap_length);
+//            kaiser_window(kaiser_window.rows()/2) = 1.0;
             //総和が1になるように調整
             kaiser_window.array() /= kaiser_window.sum();
             Eigen::MatrixXd exponential_map;
@@ -292,6 +292,7 @@ Eigen::MatrixXd &vsp::filteredQuaternion(uint32_t alpha, double fs, double fc){
                 std::copy(q.begin()+i,q.begin()+i+filter_tap_length,back_inserter(buff));
                 //2.回転角を変換
                 q_center = buff[buff.size()/2];
+//                q_center = Eigen::Quaterniond(1.0,0,0,0);
                 for(auto &el:buff){
                     el=(q_center.conjugate()*el).normalized();
                 }
