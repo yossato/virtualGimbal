@@ -243,15 +243,6 @@ int main(int argc, char** argv){
     std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> angular_velocity_from_csv;
     vsp::ReadCSV(angular_velocity_from_csv,csvPass);
 
-    //軸の定義方向の入れ替え
-    //TODO:将来的に、CSVファイルに順番を揃えて、ゲインも揃えた値を書き込んでおくべき
-    //    for(auto &el:angularVelocityIn60Hz){
-    //        auto temp = el;
-    //        el[0] = temp[1]/16.4*M_PI/180.0;//16.4はジャイロセンサが感度[LSB/(degree/s)]で2000[degrees/second]の時のもの。ジャイロセンサの種類や感度を変更した時は値を変更する;
-    //        el[1] = temp[0]/16.4*M_PI/180.0;
-    //        el[2] = -temp[2]/16.4*M_PI/180.0;
-    //    }
-
     //ジャイロのDCオフセット（いわゆる温度ドリフトと等価）を計算。単純にフレームの平均値を計算
     if(SUBTRACT_OFFSET){
         cv::Vec3d dc(0,0,0);
@@ -275,7 +266,6 @@ int main(int argc, char** argv){
     //動画のサンプリング周期に合わせて、角速度を得られるようにする関数を定義
     //線形補間
     auto angularVelocity = [&angularVelocityIn60Hz, Tvideo, Tav](uint32_t frame){
-        //        double dframe = frame * Tav / Tvideo;
         double dframe = frame * Tvideo / Tav;
         int i = floor(dframe);
         double decimalPart = dframe - (double)i;
@@ -285,25 +275,12 @@ int main(int argc, char** argv){
 
     //動画のオプティカルフローと内部パラメータと解像度から角速度推定値を計算
     vector<cv::Vec3d> estimatedAngularVelocity;
-    //    cout << "estimated AngularVelocity" << endl;
     for(auto el:opticShift){
         estimatedAngularVelocity.push_back(cv::Vec3d(-atan(el[1]/fy),atan(el[0]/fx),el[2])/Tvideo*-1);
-        //        cout << estimatedAngularVelocity.back() << endl;
-        //        printf("%f,%f,%f\n",estimatedAngularVelocity.back()[0],estimatedAngularVelocity.back()[1],estimatedAngularVelocity.back()[2]);
     }
-
-    //sync test
-#if 0
-    Tav = Tvideo;
-    for(int i=0;i<estimatedAngularVelocity.size();i++){
-        angularVelocityIn60Hz[i] = estimatedAngularVelocity[i];
-    }
-
-#endif
 
     t1 = std::chrono::system_clock::now() ;
 
-    //    int32_t lengthDiff = angularVelocityIn60Hz.size() * Tvideo / Tav - estimatedAngularVelocity.size();
     int32_t lengthDiff = angularVelocityIn60Hz.size() * Tav / Tvideo - estimatedAngularVelocity.size();
     cout << "lengthDiff:" << lengthDiff << endl;
     vector<double> correlationCoefficients(lengthDiff);
@@ -314,10 +291,6 @@ int main(int argc, char** argv){
             sum +=   abs(angularVelocity(i+offset)[0]-estimatedAngularVelocity[i][0])
                     + abs(angularVelocity(i+offset)[1]-estimatedAngularVelocity[i][1])
                     + abs(angularVelocity(i+offset)[2]-estimatedAngularVelocity[i][2]);
-            //            double diff = abs(angularVelocity(i+offset)[0]-estimatedAngularVelocity[i][0])
-            //                        + abs(angularVelocity(i+offset)[1]-estimatedAngularVelocity[i][1]);
-            //                        + abs(angularVelocity(i+offset)[2]-estimatedAngularVelocity[i][2]);
-            //            sum += (diff < 0.05) ? diff : 0.05;
             if(sum > minCC){
                 break;
             }
@@ -327,11 +300,6 @@ int main(int argc, char** argv){
         }
         correlationCoefficients[offset] = sum;
     }
-
-
-
-    //    cout << "correlationCoefficients" << endl;
-    //    for(auto el:correlationCoefficients) cout << el << endl;
 
     //最小となる要素を取得
     int32_t minPosition = std::distance(correlationCoefficients.begin(),min_element(correlationCoefficients.begin(),correlationCoefficients.end()));
@@ -343,10 +311,6 @@ int main(int argc, char** argv){
             sum +=   abs(angularVelocity(i+minPosition+1)[0]-estimatedAngularVelocity[i][0])
                     + abs(angularVelocity(i+minPosition+1)[1]-estimatedAngularVelocity[i][1])
                     + abs(angularVelocity(i+minPosition+1)[2]-estimatedAngularVelocity[i][2]);
-            //            double diff = abs(angularVelocity(i+minPosition+1)[0]-estimatedAngularVelocity[i][0])
-            //                        + abs(angularVelocity(i+minPosition+1)[1]-estimatedAngularVelocity[i][1]);
-            //                        + abs(angularVelocity(i+minPosition+1)[2]-estimatedAngularVelocity[i][2]);
-            //            sum += (diff < 0.05) ? diff : 0.05;
         }
         correlationCoefficients[minPosition+1] = sum;
     }
@@ -355,7 +319,6 @@ int main(int argc, char** argv){
     // 処理の経過時間
     elapsed = t2 - t1 ;
     std::cout << "Elapsed time@search minimum: " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << " ms\n";
-
 
     //最小値サブピクセル推定
     double subframeOffset;
@@ -366,8 +329,6 @@ int main(int argc, char** argv){
     }else{					//その他
         subframeOffset = -(correlationCoefficients[minPosition+1]-correlationCoefficients[minPosition-1])/(2*correlationCoefficients[minPosition-1]-4*correlationCoefficients[minPosition]+2*correlationCoefficients[minPosition+1]);
     }
-
-    //    minPosition += 30;//マジックナンバーｗｗｗｗ
 
     cout << "minPosition" << minPosition << endl;
     cout << "subframe minposition :" << minPosition+subframeOffset << endl;
@@ -393,7 +354,6 @@ int main(int argc, char** argv){
         }
         cout << "position"<<minPosition+subframeOffset+d<<" minimum correlationCoefficients:" << sum << endl;
     }
-    ////試行錯誤的に入れ替える
 
     //同期が取れている角速度を出力する関数を定義
     auto angularVelocitySync = [&angularVelocityIn60Hz, Tvideo, Tav, minPosition, subframeOffset](int32_t frame){
