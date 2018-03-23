@@ -101,7 +101,7 @@ void videoWriterProcess(){
 
 void show_correlation(std::vector<cv::Vec3d> &angularVelocityIn60Hz, std::vector<cv::Vec3d> estimatedAngularVelocity, double Tvideo, double Tav, double frame){
 
-    auto angularVelocity = [&angularVelocityIn60Hz, Tvideo, Tav](uint32_t frame_){
+    auto angularVelocity = [&angularVelocityIn60Hz, Tvideo, Tav](double frame_){
         double dframe = frame_ * Tvideo / Tav;
         int i = floor(dframe);
         double decimalPart = dframe - (double)i;
