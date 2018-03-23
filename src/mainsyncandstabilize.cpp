@@ -99,6 +99,28 @@ void videoWriterProcess(){
 
 
 
+void show_correlation(std::vector<cv::Vec3d> &angularVelocityIn60Hz, std::vector<cv::Vec3d> estimatedAngularVelocity, double Tvideo, double Tav, double frame){
+
+    auto angularVelocity = [&angularVelocityIn60Hz, Tvideo, Tav](uint32_t frame_){
+        double dframe = frame_ * Tvideo / Tav;
+        int i = floor(dframe);
+        double decimalPart = dframe - (double)i;
+        return angularVelocityIn60Hz[i]*(1.0-decimalPart)+angularVelocityIn60Hz[i+1]*decimalPart;
+    };
+
+    for(double d=-0.5;d<=0.5;d+=0.01)
+    {
+
+        double sum = 0.0;
+        for(int32_t i=0; i<estimatedAngularVelocity.size();i++){
+            sum +=   abs(angularVelocity(i+frame+d)[0]-estimatedAngularVelocity[i][0])
+                    + abs(angularVelocity(i+frame+d)[1]-estimatedAngularVelocity[i][1])
+                    + abs(angularVelocity(i+frame+d)[2]-estimatedAngularVelocity[i][2]);
+        }
+        cout << "position"<<frame+d<<" minimum correlationCoefficients:" << sum << endl;
+    }
+}
+
 int main(int argc, char** argv){
     bool debug_signal_processing = false;
 
@@ -333,27 +355,7 @@ int main(int argc, char** argv){
     cout << "minPosition" << minPosition << endl;
     cout << "subframe minposition :" << minPosition+subframeOffset << endl;
 
-    auto angularVelocity_double = [&angularVelocityIn60Hz, Tvideo, Tav](double frame){
-        //        double dframe = frame * Tav / Tvideo;
-        double dframe = frame *  Tvideo / Tav;
-        int i = floor(dframe);
-        double decimalPart = dframe - (double)i;
-        return angularVelocityIn60Hz[i]*(1.0-decimalPart)+angularVelocityIn60Hz[i+1]*decimalPart;
-    };
-    for(double d=-0.5;d<=0.5;d+=0.01)
-    {
-
-        double sum = 0.0;
-        for(int32_t i=0; i<estimatedAngularVelocity.size();i++){
-            sum +=   abs(angularVelocity_double(i+minPosition+subframeOffset+d)[0]-estimatedAngularVelocity[i][0])
-                    + abs(angularVelocity_double(i+minPosition+subframeOffset+d)[1]-estimatedAngularVelocity[i][1])
-                    + abs(angularVelocity_double(i+minPosition+subframeOffset+d)[2]-estimatedAngularVelocity[i][2]);
-            //            if(sum > minCC){
-            //                break;
-            //            }
-        }
-        cout << "position"<<minPosition+subframeOffset+d<<" minimum correlationCoefficients:" << sum << endl;
-    }
+    if(debug_signal_processing) show_correlation(angularVelocityIn60Hz,estimatedAngularVelocity, Tvideo,Tav,minPosition+subframeOffset);
 
     //同期が取れている角速度を出力する関数を定義
     auto angularVelocitySync = [&angularVelocityIn60Hz, Tvideo, Tav, minPosition, subframeOffset](int32_t frame){
@@ -370,16 +372,6 @@ int main(int argc, char** argv){
             return angularVelocityIn60Hz[i]*(1.0-decimalPart)+angularVelocityIn60Hz[i+1]*decimalPart;
         }
     };
-
-    if(0){
-        double sum = 0.0;
-        for(int32_t i=0; i<estimatedAngularVelocity.size();i++){
-            sum +=   abs(angularVelocitySync(i)[0]-estimatedAngularVelocity[i][0])
-                    + abs(angularVelocitySync(i)[1]-estimatedAngularVelocity[i][1])
-                    + abs(angularVelocitySync(i)[2]-estimatedAngularVelocity[i][2]);
-        }
-        cout << " Sync correlationCoefficients:" << sum << endl;
-    }
 
     //FIRフィルタ係数の読み込み
     //txtファイルの中身は、FIR(Finite Impluse Response)のローパスフィルタの係数である
