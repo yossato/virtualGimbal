@@ -352,7 +352,7 @@ int main(int argc, char** argv){
             //                break;
             //            }
         }
-        cout << "position"<<minPosition+subframeOffset+d<<" minimum correlationCoefficients:" << sum << endl;
+        cout << "position"<<(double)minPosition+subframeOffset+d<<" minimum correlationCoefficients:" << sum << endl;
     }
 
     //同期が取れている角速度を出力する関数を定義
