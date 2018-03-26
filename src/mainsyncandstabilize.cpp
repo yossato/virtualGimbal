@@ -337,6 +337,9 @@ int main(int argc, char** argv){
         correlationCoefficients[minPosition+1] = sum;
     }
 
+    //ここでEigenのMatrixでできるだけ計算するルーチンを追加してみる
+
+
     t2 = std::chrono::system_clock::now() ;
     // 処理の経過時間
     elapsed = t2 - t1 ;
@@ -373,52 +376,6 @@ int main(int argc, char** argv){
         }
     };
 
-    //FIRフィルタ係数の読み込み
-    //txtファイルの中身は、FIR(Finite Impluse Response)のローパスフィルタの係数である
-    char coeffs[][12] = {	//!<フィルタ係数のファイル名
-                            "coeff00.txt",
-                            "coeff01.txt",
-                            "coeff02.txt",
-                            "coeff03.txt",
-                            "coeff04.txt",
-                            "coeff05.txt",
-                            "coeff06.txt",
-                            "coeff07.txt",
-                            "coeff08.txt",
-                            "coeff09.txt",
-                            "coeff10.txt",
-                            "coeff11.txt",
-                        };
-
-    std::vector<std::vector<double>> FIRcoeffs;
-    //    int32_t lowPassFilterStrength = 3;
-    for(int i=0;i<12;i++){
-        std::vector<double> temp;
-        if(ReadCoeff(temp,coeffs[i])){
-            return 1;
-        }
-        FIRcoeffs.push_back(temp);
-    }
-
-    cout << "estimated AngularVelocity and angularVelocitySync" << endl;
-    cout << "i,rex,rey,rez,rx,ry,rz" << endl;
-    //    for(int i = 0,e=opticShift.size();i<e;++i){
-    //        printf("%d,%f,%f,%f,%f,%f,%f\n",i,estimatedAngularVelocity[i][0],estimatedAngularVelocity[i][1],estimatedAngularVelocity[i][2],angularVelocitySync(i)[0],angularVelocitySync(i)[1],angularVelocitySync(i)[2]);
-    //    }
-
-    //平滑済みクォータニオンの計算//////////////////////////
-    vector<quaternion<double>> angleQuaternion;
-    angleQuaternion.push_back(quaternion<double>(1,0,0,0));
-
-
-    //FIRフィルタに食わせやすいように、FIRフィルタのタップ数を考慮して位置を合わせつつ、先に角度を計算する
-    int32_t halfLength = floor(FIRcoeffs[lowPassFilterStrength].size()/2);
-    for(int frame=-halfLength,e=halfLength;frame<e;frame++){
-        cout << "frame:" << frame << "av:" << angularVelocitySync(frame) << endl;
-        angleQuaternion.push_back(angleQuaternion.back()*RotationQuaternion(angularVelocitySync(frame)*Tvideo));
-        angleQuaternion.back() = angleQuaternion.back() * (1.0 / norm(angleQuaternion.back()));
-    }
-
     auto convCVMat2EigenMat = [](cv::Mat &src){
         assert(src.type()==CV_64FC1);
       Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor> retval;
@@ -427,54 +384,9 @@ int main(int argc, char** argv){
       return retval;
     };
 
-    //FIRフィルタによる信号処理の復活をテスト
-//    if(debug_signal_processing){
-//        vector<Eigen::Quaternion<double>> angleQuaternion_vsp2;
-//        angleQuaternion_vsp2.push_back(Eigen::Quaternion<double>(1,0,0,0));
-//        for(int frame= -1 ,e=Capture->get(CV_CAP_PROP_FRAME_COUNT)+1;frame<e;++frame){//球面線形補間を考慮し前後各1フレーム追加
-//            auto v_sync = angularVelocitySync(frame);
-//            Eigen::Vector3d ve_sync(v_sync[0],v_sync[1],v_sync[2]);
-//            cout << "frame:" << frame << " ve_sync:" << ve_sync.transpose() << endl;
-//            angleQuaternion_vsp2.push_back(angleQuaternion_vsp2.back()*vsp::RotationQuaternion(ve_sync*Tvideo));
-//            angleQuaternion_vsp2.back() = angleQuaternion_vsp2.back().normalized();
-//        }
-
-//        vsp v2(/*angleQuaternion_vsp2,*/
-//               division_x,
-//               division_y,
-//               rollingShutterDuration,
-//               convCVMat2EigenMat(matInvDistort),
-//               convCVMat2EigenMat(matIntrinsic),
-//               imageSize.width,
-//               imageSize.height,
-//               (double)zoomRatio,
-//               angular_velocity_from_csv,
-//               Tvideo,
-//               Tav,
-//               minPosition + subframeOffset,
-//               (int32_t)(Capture->get(CV_CAP_PROP_FRAME_COUNT)));
-
-//    }
 
     //EigenによるDFT LPFのテスト
     if(debug_signal_processing){
-//        vector<Eigen::Quaternion<double>> angleQuaternion_vsp2;
-//        angleQuaternion_vsp2.push_back(Eigen::Quaternion<double>(1,0,0,0));
-//        for(int frame= -1 ,e=Capture->get(CV_CAP_PROP_FRAME_COUNT)+1;frame<e;++frame){//球面線形補間を考慮し前後各1フレーム追加
-//            auto v_sync = angularVelocitySync(frame);
-//            Eigen::Vector3d ve_sync(v_sync[0],v_sync[1],v_sync[2]);
-//            cout << "frame:" << frame << " ve_sync:" << ve_sync.transpose() << endl;
-//            angleQuaternion_vsp2.push_back(angleQuaternion_vsp2.back()*vsp::RotationQuaternion(ve_sync*Tvideo));
-//            angleQuaternion_vsp2.back() = angleQuaternion_vsp2.back().normalized();
-//        }
-
-//        auto convCVMat2EigenMat = [](cv::Mat &src){
-//            assert(src.type()==CV_64FC1);
-//          Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor> retval;
-//          retval.resize(src.rows,src.cols);
-//          memcpy(retval.data(),src.data,src.size().area()*sizeof(double));
-//          return retval;
-//        };
 
         vsp v2(/*angleQuaternion_vsp2,*/
                division_x,
@@ -496,11 +408,11 @@ int main(int argc, char** argv){
 
         std::vector<string> legends = {"x","y","z"};
         vgp::plot(v2.data(),"Raw DFT",legends);
-        //        v.setFilterCoeff(FIRcoeffs[lowPassFilterStrength]);
+
         //平滑化を試す
         //時間波形補正実装済み平滑化
         Eigen::MatrixXd coeffs = Eigen::MatrixXd::Ones(v2.data().rows()*1.0/Capture->get(CV_CAP_PROP_FPS)+2,v2.data().cols());
-//        Eigen::MatrixXd coeffs = Eigen::MatrixXd::Random(v2.data().rows()*1.0/Capture->get(CV_CAP_PROP_FPS)+2,v2.data().cols());
+
         vgp::plot(v2.filteredDataDFTTimeDomainOptimize(Capture->get(CV_CAP_PROP_FPS),1.0,coeffs),"Filtered DFT DO",legends);
         //通常版平滑化
         vgp::plot(v2.filteredDataDFT(Capture->get(CV_CAP_PROP_FPS),1.0),"Filterd DFT",legends);
@@ -551,7 +463,6 @@ int main(int argc, char** argv){
         Eigen::MatrixXd buf = v2.filteredDataDFT().block(0,0,v2.data().rows(),v2.data().cols());
         v2.filteredDataDFT() = buf;
         //プロット
-        //        Eigen::VectorXd errors = v2.getRollingVectorError();
         vgp::plot(v2.getRollingVectorError(),"Optimized Errors",legends2);
         vgp::plot(v2.filteredDataDFT(),"Optimized Filterd DFT",legends);
         return 0;
@@ -566,8 +477,6 @@ int main(int argc, char** argv){
         angleQuaternion_vsp2.push_back(angleQuaternion_vsp2.back()*vsp::RotationQuaternion(ve_sync*Tvideo));
         angleQuaternion_vsp2.back() = angleQuaternion_vsp2.back().normalized();
     }
-
-
 
     vsp v2(/*angleQuaternion_vsp2,*/
            division_x,
@@ -588,32 +497,7 @@ int main(int argc, char** argv){
     v2.filteredDataDFT(Capture->get(CV_CAP_PROP_FPS),1.0);//TODO:引数修正。もはやあまり意味がない。
     v2.filteredQuaternion(100,Capture->get(CV_CAP_PROP_FPS),1.0);
 
-
-    quaternion<double> prevDiffAngleQuaternion;
-    quaternion<double> currDiffAngleQuaternion;
-    quaternion<double> nextDiffAngleQuaternion;
-
-    quaternion<double> smoothedAngleQuaternion;
-    {   //FIR平滑化
-        cv::Vec3d prevVec = Quaternion2Vector(angleQuaternion[0]);
-        cv::Vec3d sum(0.0, 0.0, 0.0);
-        for(int32_t j=0,f=FIRcoeffs[lowPassFilterStrength].size();j<f;++j){
-            cv::Vec3d curVec = Quaternion2Vector(angleQuaternion[j],prevVec);
-            sum += FIRcoeffs[lowPassFilterStrength][j]*curVec;
-            prevVec = curVec;
-        }
-        smoothedAngleQuaternion = Vector2Quaternion<double>(sum);
-    }
-
-    prevDiffAngleQuaternion = conj(smoothedAngleQuaternion)*angleQuaternion[halfLength];
-    currDiffAngleQuaternion = conj(smoothedAngleQuaternion)*angleQuaternion[halfLength];
-
-
     cv::Mat buff(textureSize.height,textureSize.width,CV_8UC3);//テクスチャ用Matを準備
-    //    img.copyTo(buff(cv::Rect(0,0,img.cols,img.rows)));
-
-
-
 
     // Initialise GLFW
     if( !glfwInit() )
@@ -634,9 +518,6 @@ int main(int argc, char** argv){
 #ifdef TEST2D
     glfwWindowHint( GLFW_VISIBLE, 0 );//オフスクリーンレンダリング。
 #endif
-
-    //    glfwWindowHint( GLFW_VISIBLE, 0 );//オフスクリーンレンダリング。
-
 
     // Open a window and create its OpenGL context
 
@@ -763,9 +644,6 @@ int main(int argc, char** argv){
     }
 #endif
 
-    // Load the texture
-    //        GLuint Texture = loadDDS("uvtemplate.DDS");
-
     // Get a handle for our "myTextureSampler" uniform
     GLuint TextureID  = glGetUniformLocation(programID, "myTextureSampler");
 
@@ -798,7 +676,6 @@ int main(int argc, char** argv){
     }
 
     std::vector<GLfloat> vecVtx(vecTexture.size());					//頂点座標
-    std::vector<GLfloat> vecVtxEigen(vecTexture.size());					//頂点座標
 
     GLuint vertexbuffer;
     glGenBuffers(1, &vertexbuffer);
@@ -812,21 +689,11 @@ int main(int argc, char** argv){
     //    glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
     glBufferData(GL_ARRAY_BUFFER, vecTexture.size()*sizeof(GLfloat), vecTexture.data(), GL_STATIC_DRAW);
 
-    /*    cout << "vecVtx" << endl;
-    for(auto it=vecVtx.begin(),e=vecVtx.end();it!=e;it+=2) cout << *it << "," << *(it+1)  << endl;
-    cout << "vecTexture" << endl;
-    for(auto it=vecTexture.begin(),e=vecTexture.end();it!=e;it+=2) cout << *it << "," << *(it+1) << endl;*/
-
-
-
-
     //歪補正の準備
     GLuint nFxyID       = glGetUniformLocation(programID, "normalizedFocalLength");
     GLuint nCxyID       = glGetUniformLocation(programID, "normalizedOpticalCenter");
     GLuint distCoeffID  = glGetUniformLocation(programID, "distortionCoeffs");
 
-
-    printf(",sx,sy,sz,ax,ay,az,dx,dy,dz,ex,ey,ez\r\n");
 
     //動画の位置を修正
     cv::Mat img;
@@ -841,50 +708,7 @@ int main(int argc, char** argv){
     for(int32_t i=0;i<e;++i){
 
 
-        //        cout << "i:" << i <<" POS:" << Capture->get(cv::CAP_PROP_POS_FRAMES) << endl;
-        nextDiffAngleQuaternion = conj(smoothedAngleQuaternion)*angleQuaternion[halfLength+1];
-
-        //モーションインペインティング用の位置を検索
-        int32_t mipFrame = 0;//0は適するフレームがないことを示す
-
-        std::vector<float> norms(PREFETCH_LENGTH);
-        //まずすべてのnormを計算
-        for(int32_t j=0;j<PREFETCH_LENGTH;++j){
-            norms[j] = cv::norm(Quaternion2Vector(conj(smoothedAngleQuaternion)*angleQuaternion[j]));
-        }
-        mipFrame = std::distance(norms.begin(),std::min_element(norms.begin(),norms.end()))-PREFETCH_LENGTH/2;
-
-        //調整用のクォータニオンを準備
-        quaternion<double> adjustmentQuaternion = Vector2Quaternion<double>(cv::Vec3d(vAngle,hAngle,0.0));
-
-
-
-//        getDistortUnrollingMap(prevDiffAngleQuaternion,currDiffAngleQuaternion,nextDiffAngleQuaternion,
-//                               division_x,division_y,rollingShutterDuration,matInvDistort, matIntrinsic, imageSize, adjustmentQuaternion,vecVtx,zoomRatio);
-
-        //vspクラスでDistortUnrollingMapを得る
-//         v2.getDistortUnrollingMap(i,vecVtxEigen);
-//        v2.getDistortUnrollingMap(i,vecVtx);
         v2.getDistortUnrollingMapQuaternion(i,vecVtx);
-        //角度配列の先頭を削除
-        angleQuaternion.erase(angleQuaternion.begin());
-        //末尾に角度を追加
-        angleQuaternion.push_back(angleQuaternion.back()*RotationQuaternion(angularVelocitySync(i+halfLength)*Tvideo));
-
-        //IIR平滑化、次回の分を計算しておく
-        cv::Vec3d prevVec = Quaternion2Vector(angleQuaternion[0]);
-        cv::Vec3d sum(0.0, 0.0, 0.0);
-        for(int32_t j=0,f=FIRcoeffs[lowPassFilterStrength].size();j<f;++j){
-            cv::Vec3d curVec = Quaternion2Vector(angleQuaternion[j],prevVec);
-            sum += FIRcoeffs[lowPassFilterStrength][j]*curVec;
-            prevVec = curVec;
-        }
-        smoothedAngleQuaternion = Vector2Quaternion<double>(sum);
-
-
-        //補正量を保存
-        prevDiffAngleQuaternion = currDiffAngleQuaternion;
-        currDiffAngleQuaternion = nextDiffAngleQuaternion;
 
 #ifdef TEST2D
         // Render to our framebuffer
@@ -907,8 +731,6 @@ int main(int argc, char** argv){
 
         glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
         glBufferData(GL_ARRAY_BUFFER, vecVtx.size()*sizeof(GLfloat), vecVtx.data(),GL_DYNAMIC_DRAW);
-
-
 
 #if MULTITHREAD_CAPTURE
         {
@@ -968,87 +790,6 @@ int main(int argc, char** argv){
 
         // Draw the triangle !
         glDrawArrays(GL_TRIANGLES, 0, vecVtx.size()*2); // 12*3 indices starting at 0 -> 12 triangles
-
-
-
-
-
-#if 0   //モーションインペインティング
-        if(abs(mipFrame)>6){
-            t1 = std::chrono::system_clock::now() ;
-            int32_t divNum = 5;
-            for(int32_t k=mipFrame/divNum;abs(k)<=abs(mipFrame);k+=mipFrame/divNum){
-
-
-
-                quaternion<double> mipDiffAngleQuaternion = conj(smoothedAngleQuaternion)*angleQuaternion[halfLength+k];
-
-
-                std::vector<GLfloat> vecVtx4MIP(vecTexture.size());					//頂点座標
-
-                getDistortUnrollingMap(mipDiffAngleQuaternion,mipDiffAngleQuaternion,mipDiffAngleQuaternion,
-                                       division_x,division_y,0,matInvDistort, matIntrinsic, imageSize, vecVtx4MIP,ZOOM_RATIO);
-
-                if(sCapture.getFrameForMIP(i+k,img)){
-                    //                    glDeleteBuffers(1, &vertexbuffer);
-                    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-                    glBufferData(GL_ARRAY_BUFFER, vecVtx4MIP.size()*sizeof(GLfloat), vecVtx4MIP.data(),GL_DYNAMIC_DRAW);
-
-
-                    glBindTexture(GL_TEXTURE_2D, textureID_0);
-                    glTexSubImage2D(GL_TEXTURE_2D,0,0,0,img.cols,img.rows,GL_BGR,GL_UNSIGNED_BYTE,img.data);
-                    glUniform1i(TextureID, 0);
-
-                    //歪補正の準備
-                    float nfxy[] = {(float)(matIntrinsic.at<double>(0,0)/imageSize.width), (float)(matIntrinsic.at<double>(1,1)/imageSize.height)};
-                    glUniform2fv(nFxyID, 1, nfxy);
-                    float ncxy[] = {(float)(matIntrinsic.at<double>(0,2)/imageSize.width), (float)(matIntrinsic.at<double>(1,2)/imageSize.height)};
-                    glUniform2fv(nCxyID, 1, ncxy);
-                    //        float distcoeffFloat[] = {(float)(matDist.at<double>(0,0)),(float)(matDist.at<double>(0,1)),(float)(matDist.at<double>(0,2)),(float)(matDist.at<double>(0,3))};
-                    float distcoeffFloat[] = {(float)(matInvDistort.at<double>(0,0)),(float)(matInvDistort.at<double>(0,1)),(float)(matInvDistort.at<double>(0,2)),(float)(matInvDistort.at<double>(0,3))};
-                    glUniform4fv(distCoeffID, 1, distcoeffFloat);
-
-                    // 1rst attribute buffer : vertices
-                    glEnableVertexAttribArray(0);
-                    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-                    glVertexAttribPointer(
-                                0,                  // attribute. No particular reason for 0, but must match the layout in the shader.
-                                2,                  // size
-                                GL_FLOAT,           // type
-                                GL_FALSE,           // normalized?
-                                0,                  // stride
-                                (void*)0            // array buffer offset
-                                );
-
-                    // 2nd attribute buffer : UVs
-                    glEnableVertexAttribArray(1);
-                    glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-                    glVertexAttribPointer(
-                                1,                                // attribute. No particular reason for 1, but must match the layout in the shader.
-                                2,                                // size : U+V => 2
-                                GL_FLOAT,                         // type
-                                GL_FALSE,                         // normalized?
-                                0,                                // stride
-                                (void*)0                          // array buffer offset
-                                );
-
-                    // Draw the triangle !
-                    glDrawArrays(GL_TRIANGLES, 0, vecVtx4MIP.size()*2); // 12*3 indices starting at 0 -> 12 triangles
-
-                    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-                    glDisableVertexAttribArray(0);
-                    glDisableVertexAttribArray(1);
-                }
-            }
-            t2 = std::chrono::system_clock::now();
-            // 処理の経過時間
-            elapsed = t2 - t1 ;
-            std::cout << "Elapsed time: " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << " ms\n";
-
-        }
-
-#endif
 
 #if 1
         ////////////////////
