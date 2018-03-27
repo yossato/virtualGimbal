@@ -341,24 +341,27 @@ int main(int argc, char** argv){
     t2 = std::chrono::system_clock::now() ;
     // 処理の経過時間
     elapsed = t2 - t1 ;
-    std::cout << "Elapsed time@search minimum: " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << " ms\n";
+    std::cout << "Elapsed time@search minimum: " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << " ms" << std::endl;
 
 
     //ここでEigenのMatrixでできるだけ計算するルーチンを追加してみる
     Eigen::MatrixXd angular_velocity_matrix             = Eigen::MatrixXd::Zero(ceil(angularVelocityIn60Hz.size()*Tav /Tvideo),3);
     for(int32_t i=0;i<angular_velocity_length_in_video;++i){
-        angular_velocity_matrix.row(i) = angular_velocity_from_csv[i].transpose();
+        angular_velocity_matrix.row(i) = Eigen::Map<Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>((double*)(&angularVelocity(i)[0]),1,3);
     }
     Eigen::MatrixXd estimated_angular_velocity_matrix   = Eigen::Map<Matrix<double, Eigen::Dynamic, Eigen::Dynamic, RowMajor>>((double*)(estimatedAngularVelocity.data()),estimatedAngularVelocity.size(),3);
+    vector<double> correlation_coefficients(lengthDiff);
     for(int32_t offset=0;offset<lengthDiff;++offset){
-
+        correlation_coefficients[offset] = (angular_velocity_matrix.block(offset,0,estimated_angular_velocity_matrix.rows(),estimated_angular_velocity_matrix.cols())
+                -estimated_angular_velocity_matrix).array().abs().sum();
     }
+int32_t min_position = std::distance(correlation_coefficients.begin(),min_element(correlation_coefficients.begin(),correlation_coefficients.end()));
 
 
     auto t3 = std::chrono::system_clock::now() ;
     // 処理の経過時間
     elapsed = t3 - t2 ;
-    std::cout << "Elapsed time@search minimum in new method: " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << " ms\n";
+    std::cout << "Elapsed time@search minimum in new method: " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << " ms" << std::endl;
 
 
 
