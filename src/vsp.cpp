@@ -37,8 +37,8 @@ vsp::vsp(/*vector<Eigen::Quaternion<T>> &angle_quaternion,*/
     raw_quaternion_with_margin.clear();
     raw_quaternion_with_margin.push_back(Eigen::Quaterniond(1,0,0,0));
     for(int frame= -floor(filter_tap_length/2)-1 ,e=video_frames+floor(filter_tap_length/2)+1;frame<e;++frame){//球面線形補間を考慮し前後各1フレーム追加
-        auto v_sync = angularVelocitySync(frame);
-        cout << "frame:" << frame << " v_sync:" << v_sync.transpose() << endl;
+        Eigen::Vector3d v_sync = angularVelocitySync(frame);
+//        cout << "frame:" << frame << " v_sync:" << v_sync.transpose() << endl;
         raw_quaternion_with_margin.push_back((raw_quaternion_with_margin.back()*vsp::RotationQuaternion(v_sync*this->T_video)).normalized());
     }
 
@@ -47,7 +47,7 @@ vsp::vsp(/*vector<Eigen::Quaternion<T>> &angle_quaternion,*/
 int32_t half_tap_length = filter_tap_length/2;
     Eigen::Vector3d el = Quaternion2Vector(raw_quaternion_with_margin[0].conjugate());
     for(int i=0,e=raw_angle.rows();i<e;++i){
-        el = Quaternion2Vector(raw_quaternion_with_margin[i+half_tap_length].conjugate(),el);//require Quaternion2Matrix<3,1>()
+        el = Quaternion2Vector(raw_quaternion_with_margin[i+half_tap_length].conjugate());//require Quaternion2Matrix<3,1>()
         raw_angle(i,0) = el[0];
         raw_angle(i,1) = el[1];
         raw_angle(i,2) = el[2];
@@ -63,7 +63,7 @@ int32_t half_tap_length = filter_tap_length/2;
 
 Eigen::Quaternion<double> vsp::RotationQuaternion(double theta, Eigen::Vector3d n){
     //nを規格化してから計算する
-    auto n_sin_theta_2 = n.normalized()*sin(theta/2.0);
+    Eigen::Vector3d n_sin_theta_2 = n.normalized()*sin(theta/2.0);
     return Eigen::Quaternion<double>(cos(theta/2.0),n_sin_theta_2[0],n_sin_theta_2[1],n_sin_theta_2[2]);
 }
 
@@ -275,7 +275,7 @@ Eigen::MatrixXd &vsp::filteredQuaternion(uint32_t alpha, double fs, double fc){
         if(1){
             int32_t half_filter_tap_length = floor(this->filter_tap_length*0.5);
 
-            auto q = raw_quaternion_with_margin;
+            std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond>> &q = raw_quaternion_with_margin;
             filtered_quaternion.resize(video_frames+2,4);
             Eigen::Quaterniond qo,q_center;
             Eigen::VectorXd kaiser_window = getKaiserWindow(filter_tap_length,alpha,false );

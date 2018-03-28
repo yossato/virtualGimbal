@@ -181,7 +181,7 @@ public:
         double theta = w.norm();//sqrt(w[0]*w[0]+w[1]*w[1]+w[2]*w[2]);//回転角度を計算、normと等しい
         //0割を回避するためにマクローリン展開
         if(theta > EPS){
-            auto n = w.normalized();//w * (1.0/theta);//単位ベクトルに変換
+            Eigen::Vector3d n = w.normalized();//w * (1.0/theta);//単位ベクトルに変換
             //            double sin_theta_2 = sin(theta*0.5);
             //            return Eigen::Quaternion<T_num>(cos(theta*0.5),n[0]*sin_theta_2,n[1]*sin_theta_2,n[2]*sin_theta_2);
             Eigen::VectorXd n_sin_theta_2 = n * sin(theta*0.5);
@@ -203,28 +203,28 @@ public:
     /**
      * @param 回転を表すクォータニオンをシングルローテーションを表すベクトルへ変換。前回算出したベクトルを引数として受け取ることで、アンラッピングする。
      * */
-    template <typename T_num> static Eigen::Vector3d Quaternion2Vector(Eigen::Quaternion<T_num> q, Eigen::Vector3d &prev){
-        double denom = sqrt(1-q.w()*q.w());
-        if(denom==0.0){//まったく回転しない時は０割になるので、場合分けする
-            return Eigen::Vector3d(0,0,0);//return zero vector
-        }
-        double theta = 2.0 * atan2(denom,q.w());
-        double prev_theta = prev.norm()/2;
-        double diff = theta - prev_theta;
-        theta -= 2.0*M_PI*(double)(static_cast<int>(diff/(2.0*M_PI)));//マイナスの符号に注意
-        //~ printf("Theta_2:%4.3f sc:%d\n",theta_2,static_cast<int>(diff/(2.0*M_PI)));
-        if(static_cast<int>(diff/(2.0*M_PI))!=0){
-            printf("\n###########Unwrapping %d\n",static_cast<int>(diff/(2.0*M_PI)));
-        }
-//        std::cout <<  ", q:" << (Eigen::Vector3d(q.x(),q.y(),q.z())*2.0*theta_2/denom).transpose() << std::endl;
-        Eigen::Vector3d n(q.x(),q.y(),q.z());
-        n /= n.norm();
-        std::cout <<  "theta:" << theta << ", q:" << Eigen::Vector4d(q.w(),q.x(),q.y(),q.z()).transpose() <<
-                      " denom:" << denom <<
-                      " n:" << n.transpose() << std::endl;
+//    template <typename T_num> static Eigen::Vector3d Quaternion2Vector(Eigen::Quaternion<T_num> q, Eigen::Vector3d &prev){
+//        double denom = sqrt(1-q.w()*q.w());
+//        if(denom==0.0){//まったく回転しない時は０割になるので、場合分けする
+//            return Eigen::Vector3d(0,0,0);//return zero vector
+//        }
+//        double theta = 2.0 * atan2(denom,q.w());
+//        double prev_theta = prev.norm()/2;
+//        double diff = theta - prev_theta;
+//        theta -= 2.0*M_PI*(double)(static_cast<int>(diff/(2.0*M_PI)));//マイナスの符号に注意
+//        //~ printf("Theta_2:%4.3f sc:%d\n",theta_2,static_cast<int>(diff/(2.0*M_PI)));
+//        if(static_cast<int>(diff/(2.0*M_PI))!=0){
+//            printf("\n###########Unwrapping %d\n",static_cast<int>(diff/(2.0*M_PI)));
+//        }
+////        std::cout <<  ", q:" << (Eigen::Vector3d(q.x(),q.y(),q.z())*2.0*theta_2/denom).transpose() << std::endl;
+//        Eigen::Vector3d n(q.x(),q.y(),q.z());
+//        n /= n.norm();
+//        std::cout <<  "theta:" << theta << ", q:" << Eigen::Vector4d(q.w(),q.x(),q.y(),q.z()).transpose() <<
+//                      " denom:" << denom <<
+//                      " n:" << n.transpose() << std::endl;
 
-        return Eigen::Vector3d(q.x(),q.y(),q.z())*theta/denom;
-    }
+//        return Eigen::Vector3d(q.x(),q.y(),q.z())*theta/denom;
+//    }
 
     /**
      * @param 回転を表すクォータニオンから回転を表す行列を生成
