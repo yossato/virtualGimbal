@@ -27,7 +27,7 @@ Generating stabilized video:
 `./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/angularVelocity.csv  -z 1.1 -f 3 -r 0.5 -o`
 
 Here, `i` option is an input video file. `c` is a csv file which contains angular velocity of a camera.
-`z` is zooming ratio. `f` is low pass filter strength of a camera shake reduction. Larger is strong filter.
+`z` is zooming ratio.
 This parameter must be integer, default value is 3. It should be between 0 and 11.
 `v` is vertical video position adjustment [rad], default value is 0.00.
 `h` is horizontal video position adjustment [rad], default value is 0.00. `o` option generates output video.
