@@ -134,7 +134,7 @@ int main(int argc, char** argv){
     float hAngle = 0.f;
     float zoomRatio = 1.f;
     double rollingShutterDuration = 0; //rolling shutter duration [frame]
-    int32_t lowPassFilterStrength = 3;
+//    int32_t lowPassFilterStrength = 3;
     //引数の確認
     char *videoPass = NULL;
     char *csvPass = NULL;
@@ -181,7 +181,7 @@ int main(int argc, char** argv){
             //Larger is strong filter. This parameter must be integer.
             //Default 3.
             value1 = optarg;
-            lowPassFilterStrength = std::stoi(value1);
+//            lowPassFilterStrength = std::stoi(value1);
             std::cout << "Currently, -f option doesn't work. This function will be implemented in the future." << std::endl;
 //            if(lowPassFilterStrength < 0){
 //                cout << "Low pass filter strength must be greater than or equal to 0.\r\n" <<
@@ -213,6 +213,14 @@ int main(int argc, char** argv){
     cv::VideoCapture *Capture = new cv::VideoCapture(videoPass);//動画をオープン
     assert(Capture->isOpened());
     cv::Size imageSize = cv::Size(Capture->get(CV_CAP_PROP_FRAME_WIDTH),Capture->get(CV_CAP_PROP_FRAME_HEIGHT));//解像度を読む
+    std::cout << "Static size:" << textureSize << std::endl;
+
+    //テキスチャーのサイズをここで計算する
+    textureSize.width = pow(2.0,ceil(log(imageSize.width)/log(2.0)));
+    textureSize.height = pow(2.0,ceil(log(imageSize.height)/log(2.0)));
+    std::cout << "Adaptive size:" << textureSize << std::endl;
+
+
     double Tvideo = 1.0/Capture->get(CV_CAP_PROP_FPS);
     std::cout << "resolution" << imageSize << std::endl;
     std::cout << "samplingPeriod" << Tvideo << std::endl;
