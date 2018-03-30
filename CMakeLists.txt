@@ -132,6 +132,10 @@ add_executable(fft_test src/fft_test.cpp
     src/vsp.cpp)
 target_link_libraries(fft_test ${ALL_LIBS}  ${PYTHON_LIBRARIES})
 
+add_executable(camera_calibration src/camera_calibration.cpp
+    src/mINIRead.cpp)
+target_link_libraries(camera_calibration ${OpenCV_LIBS})
+
 
 # デバッグビルド
 IF(CMAKE_BUILD_TYPE MATCHES DEBUG)
