@@ -692,11 +692,16 @@ public:
             while(getline(ifs,str)){//1行ずつ読み込む
                     std::string token;
                     std::istringstream stream(str);
-
-                    int i=0;
-                    while(getline(stream, token, ',')){
+                    try{
+                        int i=0;
+                        while(getline(stream, token, ',')){
                             double temp = stof(token);
                             numl[i++] = (double)temp;//値を保存
+                        }
+
+                    }catch(...){
+                        //読み込みに失敗したら次の行へすすむ
+                        continue;
                     }
                     w.push_back(numl);
             }
