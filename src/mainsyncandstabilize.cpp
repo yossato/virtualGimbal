@@ -99,7 +99,7 @@ void videoWriterProcess(){
 
 
 
-void show_correlation(std::vector<cv::Vec3d> &angularVelocityIn60Hz, std::vector<cv::Vec3d> estimatedAngularVelocity, double Tvideo, double Tav, double frame){
+void show_correlation(std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> &angularVelocityIn60Hz, std::vector<cv::Vec3d> estimatedAngularVelocity, double Tvideo, double Tav, double frame){
 
     auto angularVelocity = [&angularVelocityIn60Hz, Tvideo, Tav](double frame_){
         double dframe = frame_ * Tvideo / Tav;
@@ -269,38 +269,38 @@ int main(int argc, char** argv){
 
 
     //角速度データを読み込み
-    std::vector<cv::Vec3d> angularVelocityIn60Hz;
-    ReadCSV(angularVelocityIn60Hz,csvPass);
+//    std::vector<cv::Vec3d> angularVelocityIn60Hz;
+//    ReadCSV(angularVelocityIn60Hz,csvPass);
     std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> angular_velocity_from_csv;
     vsp::ReadCSV(angular_velocity_from_csv,csvPass);
 
     //ジャイロのDCオフセット（いわゆる温度ドリフトと等価）を計算。単純にフレームの平均値を計算
-    if(SUBTRACT_OFFSET){
-        cv::Vec3d dc(0,0,0);
-        for(auto el:angularVelocityIn60Hz){
-            dc[0] += el[0];
-            dc[1] += el[1];
-            dc[2] += el[2];
-        }
-        dc[0]/=angularVelocityIn60Hz.size();
-        dc[1]/=angularVelocityIn60Hz.size();
-        dc[2]/=angularVelocityIn60Hz.size();
-        for(auto &el:angularVelocityIn60Hz){
-            el[0] -= dc[0];
-            el[1] -= dc[1];
-            el[2] -= dc[2];
-        }
-    }
+//    if(SUBTRACT_OFFSET){
+//        cv::Vec3d dc(0,0,0);
+//        for(auto el:angularVelocityIn60Hz){
+//            dc[0] += el[0];
+//            dc[1] += el[1];
+//            dc[2] += el[2];
+//        }
+//        dc[0]/=angularVelocityIn60Hz.size();
+//        dc[1]/=angularVelocityIn60Hz.size();
+//        dc[2]/=angularVelocityIn60Hz.size();
+//        for(auto &el:angularVelocityIn60Hz){
+//            el[0] -= dc[0];
+//            el[1] -= dc[1];
+//            el[2] -= dc[2];
+//        }
+//    }
 
     double Tav = 1/60.0;//Sampling period of angular velocity
 
     //動画のサンプリング周期に合わせて、角速度を得られるようにする関数を定義
     //線形補間
-    auto angularVelocity = [&angularVelocityIn60Hz, Tvideo, Tav](uint32_t frame){
+    auto angularVelocity = [&angular_velocity_from_csv, Tvideo, Tav](uint32_t frame){
         double dframe = frame * Tvideo / Tav;
         int i = floor(dframe);
         double decimalPart = dframe - (double)i;
-        return angularVelocityIn60Hz[i]*(1.0-decimalPart)+angularVelocityIn60Hz[i+1]*decimalPart;
+        return angular_velocity_from_csv[i]*(1.0-decimalPart)+angular_velocity_from_csv[i+1]*decimalPart;
     };
 
 
@@ -312,7 +312,7 @@ int main(int argc, char** argv){
 
     t1 = std::chrono::system_clock::now() ;
 
-    int32_t angular_velocity_length_in_video = ceil(angularVelocityIn60Hz.size() * Tav / Tvideo);
+    int32_t angular_velocity_length_in_video = ceil(angular_velocity_from_csv.size() * Tav / Tvideo);
     int32_t lengthDiff = angular_velocity_length_in_video - estimatedAngularVelocity.size();
     cout << "lengthDiff:" << lengthDiff << endl;
     vector<double> correlationCoefficients(lengthDiff);
@@ -354,9 +354,10 @@ int main(int argc, char** argv){
 
 
     //ここでEigenのMatrixでできるだけ計算するルーチンを追加してみる
-    Eigen::MatrixXd angular_velocity_matrix             = Eigen::MatrixXd::Zero(ceil(angularVelocityIn60Hz.size()*Tav /Tvideo),3);
+    Eigen::MatrixXd angular_velocity_matrix             = Eigen::MatrixXd::Zero(ceil(angular_velocity_from_csv.size()*Tav /Tvideo),3);
     for(int32_t i=0;i<angular_velocity_length_in_video;++i){
-        angular_velocity_matrix.row(i) = Eigen::Map<Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>((double*)(&angularVelocity(i)[0]),1,3);
+//        angular_velocity_matrix.row(i) = Eigen::Map<Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>((double*)(&angularVelocity(i)[0]),1,3);
+        angular_velocity_matrix.row(i) = angularVelocity(i).transpose();
     }
     Eigen::MatrixXd estimated_angular_velocity_matrix   = Eigen::Map<Matrix<double, Eigen::Dynamic, Eigen::Dynamic, RowMajor>>((double*)(estimatedAngularVelocity.data()),estimatedAngularVelocity.size(),3);
     vector<double> correlation_coefficients(lengthDiff);
@@ -387,21 +388,22 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
     cout << "minPosition" << minPosition << endl;
     cout << "subframe minposition :" << minPosition+subframeOffset << endl;
 
-    if(debug_signal_processing) show_correlation(angularVelocityIn60Hz,estimatedAngularVelocity, Tvideo,Tav,minPosition+subframeOffset);
+    if(debug_signal_processing) show_correlation(angular_velocity_from_csv,estimatedAngularVelocity, Tvideo,Tav,minPosition+subframeOffset);
 
     //同期が取れている角速度を出力する関数を定義
-    auto angularVelocitySync = [&angularVelocityIn60Hz, Tvideo, Tav, minPosition, subframeOffset](int32_t frame){
+    auto angularVelocitySync = [&angular_velocity_from_csv, Tvideo, Tav, minPosition, subframeOffset](int32_t frame){
         //        double dframe = (frame + minPosition + subframeOffset) * Tav / Tvideo;
         double dframe = (frame + minPosition + subframeOffset) * Tvideo / Tav;
         int i = floor(dframe);
         double decimalPart = dframe - (double)i;
         //領域外にはみ出した時は、末端の値で埋める
         if(i<0){
-            return angularVelocityIn60Hz[0];
-        }else if(angularVelocityIn60Hz.size()<=(i+1)){
-            return angularVelocityIn60Hz.back();
+            return angular_velocity_from_csv[0];
+        }else if(angular_velocity_from_csv.size()<=(i+1)){
+            return angular_velocity_from_csv.back();
         }else{
-            return angularVelocityIn60Hz[i]*(1.0-decimalPart)+angularVelocityIn60Hz[i+1]*decimalPart;
+            Eigen::Vector3d retval = angular_velocity_from_csv[i]*(1.0-decimalPart)+angular_velocity_from_csv[i+1]*decimalPart;
+            return retval;
         }
     };
 
