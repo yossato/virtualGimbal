@@ -269,28 +269,27 @@ int main(int argc, char** argv){
 
 
     //角速度データを読み込み
-//    std::vector<cv::Vec3d> angularVelocityIn60Hz;
-//    ReadCSV(angularVelocityIn60Hz,csvPass);
+
     std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> angular_velocity_from_csv;
     vsp::ReadCSV(angular_velocity_from_csv,csvPass);
 
     //ジャイロのDCオフセット（いわゆる温度ドリフトと等価）を計算。単純にフレームの平均値を計算
-//    if(SUBTRACT_OFFSET){
-//        cv::Vec3d dc(0,0,0);
-//        for(auto el:angularVelocityIn60Hz){
-//            dc[0] += el[0];
-//            dc[1] += el[1];
-//            dc[2] += el[2];
-//        }
-//        dc[0]/=angularVelocityIn60Hz.size();
-//        dc[1]/=angularVelocityIn60Hz.size();
-//        dc[2]/=angularVelocityIn60Hz.size();
-//        for(auto &el:angularVelocityIn60Hz){
-//            el[0] -= dc[0];
-//            el[1] -= dc[1];
-//            el[2] -= dc[2];
-//        }
-//    }
+    if(SUBTRACT_OFFSET){
+        Eigen::Vector3d dc(0,0,0);
+        for(auto el:angular_velocity_from_csv){
+            dc[0] += el[0];
+            dc[1] += el[1];
+            dc[2] += el[2];
+        }
+        dc[0]/=angular_velocity_from_csv.size();
+        dc[1]/=angular_velocity_from_csv.size();
+        dc[2]/=angular_velocity_from_csv.size();
+        for(auto &el:angular_velocity_from_csv){
+            el[0] -= dc[0];
+            el[1] -= dc[1];
+            el[2] -= dc[2];
+        }
+    }
 
     double Tav = 1/60.0;//Sampling period of angular velocity
 
@@ -315,42 +314,42 @@ int main(int argc, char** argv){
     int32_t angular_velocity_length_in_video = ceil(angular_velocity_from_csv.size() * Tav / Tvideo);
     int32_t lengthDiff = angular_velocity_length_in_video - estimatedAngularVelocity.size();
     cout << "lengthDiff:" << lengthDiff << endl;
-    vector<double> correlationCoefficients(lengthDiff);
-    double minCC = DBL_MAX;
-    for(int32_t offset = 0; offset < lengthDiff; offset++){
-        double sum = 0.0;
-        for(int32_t i=0; i<estimatedAngularVelocity.size();i++){
-            sum +=   abs(angularVelocity(i+offset)[0]-estimatedAngularVelocity[i][0])
-                    + abs(angularVelocity(i+offset)[1]-estimatedAngularVelocity[i][1])
-                    + abs(angularVelocity(i+offset)[2]-estimatedAngularVelocity[i][2]);
-            if(sum > minCC){
-                break;
-            }
-        }
-        if(sum < minCC){
-            minCC = sum;
-        }
-        correlationCoefficients[offset] = sum;
-    }
+//    vector<double> correlationCoefficients(lengthDiff);
+//    double minCC = DBL_MAX;
+//    for(int32_t offset = 0; offset < lengthDiff; offset++){
+//        double sum = 0.0;
+//        for(int32_t i=0; i<estimatedAngularVelocity.size();i++){
+//            sum +=   abs(angularVelocity(i+offset)[0]-estimatedAngularVelocity[i][0])
+//                    + abs(angularVelocity(i+offset)[1]-estimatedAngularVelocity[i][1])
+//                    + abs(angularVelocity(i+offset)[2]-estimatedAngularVelocity[i][2]);
+//            if(sum > minCC){
+//                break;
+//            }
+//        }
+//        if(sum < minCC){
+//            minCC = sum;
+//        }
+//        correlationCoefficients[offset] = sum;
+//    }
 
     //最小となる要素を取得
-    int32_t minPosition = std::distance(correlationCoefficients.begin(),min_element(correlationCoefficients.begin(),correlationCoefficients.end()));
+//    int32_t minPosition = std::distance(correlationCoefficients.begin(),min_element(correlationCoefficients.begin(),correlationCoefficients.end()));
 
-    //正しくサブピクセル推定するために、最小となった要素の次の要素を計算し直す
-    {
-        double sum = 0.0;
-        for(int32_t i=0; i<estimatedAngularVelocity.size();i++){
-            sum +=   abs(angularVelocity(i+minPosition+1)[0]-estimatedAngularVelocity[i][0])
-                    + abs(angularVelocity(i+minPosition+1)[1]-estimatedAngularVelocity[i][1])
-                    + abs(angularVelocity(i+minPosition+1)[2]-estimatedAngularVelocity[i][2]);
-        }
-        correlationCoefficients[minPosition+1] = sum;
-    }
+//    //正しくサブピクセル推定するために、最小となった要素の次の要素を計算し直す
+//    {
+//        double sum = 0.0;
+//        for(int32_t i=0; i<estimatedAngularVelocity.size();i++){
+//            sum +=   abs(angularVelocity(i+minPosition+1)[0]-estimatedAngularVelocity[i][0])
+//                    + abs(angularVelocity(i+minPosition+1)[1]-estimatedAngularVelocity[i][1])
+//                    + abs(angularVelocity(i+minPosition+1)[2]-estimatedAngularVelocity[i][2]);
+//        }
+//        correlationCoefficients[minPosition+1] = sum;
+//    }
 
     t2 = std::chrono::system_clock::now() ;
-    // 処理の経過時間
-    elapsed = t2 - t1 ;
-    std::cout << "Elapsed time@search minimum: " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << " ms" << std::endl;
+//    // 処理の経過時間
+//    elapsed = t2 - t1 ;
+//    std::cout << "Elapsed time@search minimum: " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << " ms" << std::endl;
 
 
     //ここでEigenのMatrixでできるだけ計算するルーチンを追加してみる
@@ -377,23 +376,23 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
 
     //最小値サブピクセル推定
     double subframeOffset;
-    if(minPosition == 0){	//位置が最初のフレームで一致している場合
+    if(min_position == 0){	//位置が最初のフレームで一致している場合
         subframeOffset = 0.0;
-    }else if(minPosition == (lengthDiff-1)){//末尾
+    }else if(min_position == (lengthDiff-1)){//末尾
         subframeOffset = (double)(lengthDiff -1);
     }else{					//その他
-        subframeOffset = -(correlationCoefficients[minPosition+1]-correlationCoefficients[minPosition-1])/(2*correlationCoefficients[minPosition-1]-4*correlationCoefficients[minPosition]+2*correlationCoefficients[minPosition+1]);
+        subframeOffset = -(correlation_coefficients[min_position+1]-correlation_coefficients[min_position-1])/(2*correlation_coefficients[min_position-1]-4*correlation_coefficients[min_position]+2*correlation_coefficients[min_position+1]);
     }
+    cout << "min_position" << min_position << endl;
+//    cout << "minPosition" << minPosition << endl;
+    cout << "subframe minposition :" << min_position+subframeOffset << endl;
 
-    cout << "minPosition" << minPosition << endl;
-    cout << "subframe minposition :" << minPosition+subframeOffset << endl;
-
-    if(debug_signal_processing) show_correlation(angular_velocity_from_csv,estimatedAngularVelocity, Tvideo,Tav,minPosition+subframeOffset);
+    if(debug_signal_processing) show_correlation(angular_velocity_from_csv,estimatedAngularVelocity, Tvideo,Tav,min_position+subframeOffset);
 
     //同期が取れている角速度を出力する関数を定義
-    auto angularVelocitySync = [&angular_velocity_from_csv, Tvideo, Tav, minPosition, subframeOffset](int32_t frame){
-        //        double dframe = (frame + minPosition + subframeOffset) * Tav / Tvideo;
-        double dframe = (frame + minPosition + subframeOffset) * Tvideo / Tav;
+    auto angularVelocitySync = [&angular_velocity_from_csv, Tvideo, Tav, min_position, subframeOffset](int32_t frame){
+        //        double dframe = (frame + min_position + subframeOffset) * Tav / Tvideo;
+        double dframe = (frame + min_position + subframeOffset) * Tvideo / Tav;
         int i = floor(dframe);
         double decimalPart = dframe - (double)i;
         //領域外にはみ出した時は、末端の値で埋める
@@ -431,7 +430,7 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
                angular_velocity_from_csv,
                Tvideo,
                Tav,
-               minPosition + subframeOffset,
+               min_position + subframeOffset,
                (int32_t)(Capture->get(CV_CAP_PROP_FRAME_COUNT)));
         std::vector<string> legends_quaternion = {"x","y","z","w"};
         vgp::plot(v2.toQuaternion(),"Raw Quaternion",legends_quaternion);
@@ -521,7 +520,7 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
            angular_velocity_from_csv,
            Tvideo,
            Tav,
-           minPosition + subframeOffset,
+           min_position + subframeOffset,
            (int32_t)(Capture->get(CV_CAP_PROP_FRAME_COUNT)),
            199);
     //平滑化
