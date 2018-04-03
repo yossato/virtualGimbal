@@ -390,21 +390,21 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
     if(debug_signal_processing) show_correlation(angular_velocity_from_csv,estimatedAngularVelocity, Tvideo,Tav,min_position+subframeOffset);
 
     //同期が取れている角速度を出力する関数を定義
-    auto angularVelocitySync = [&angular_velocity_from_csv, Tvideo, Tav, min_position, subframeOffset](int32_t frame){
-        //        double dframe = (frame + min_position + subframeOffset) * Tav / Tvideo;
-        double dframe = (frame + min_position + subframeOffset) * Tvideo / Tav;
-        int i = floor(dframe);
-        double decimalPart = dframe - (double)i;
-        //領域外にはみ出した時は、末端の値で埋める
-        if(i<0){
-            return angular_velocity_from_csv[0];
-        }else if(angular_velocity_from_csv.size()<=(i+1)){
-            return angular_velocity_from_csv.back();
-        }else{
-            Eigen::Vector3d retval = angular_velocity_from_csv[i]*(1.0-decimalPart)+angular_velocity_from_csv[i+1]*decimalPart;
-            return retval;
-        }
-    };
+//    auto angularVelocitySync = [&angular_velocity_from_csv, Tvideo, Tav, min_position, subframeOffset](int32_t frame){
+//        //        double dframe = (frame + min_position + subframeOffset) * Tav / Tvideo;
+//        double dframe = (frame + min_position + subframeOffset) * Tvideo / Tav;
+//        int i = floor(dframe);
+//        double decimalPart = dframe - (double)i;
+//        //領域外にはみ出した時は、末端の値で埋める
+//        if(i<0){
+//            return angular_velocity_from_csv[0];
+//        }else if(angular_velocity_from_csv.size()<=(i+1)){
+//            return angular_velocity_from_csv.back();
+//        }else{
+//            Eigen::Vector3d retval = angular_velocity_from_csv[i]*(1.0-decimalPart)+angular_velocity_from_csv[i+1]*decimalPart;
+//            return retval;
+//        }
+//    };
 
     auto convCVMat2EigenMat = [](cv::Mat &src){
         assert(src.type()==CV_64FC1);
@@ -499,14 +499,14 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
     }
 
     //vspクラスによる平滑化波形の生成
-    vector<Eigen::Quaternion<double>> angleQuaternion_vsp2;
-    angleQuaternion_vsp2.push_back(Eigen::Quaternion<double>(1,0,0,0));
-    for(int frame= -1 ,e=Capture->get(CV_CAP_PROP_FRAME_COUNT)+1;frame<e;++frame){//球面線形補間を考慮し前後各1フレーム追加
-        auto v_sync = angularVelocitySync(frame);
-        Eigen::Vector3d ve_sync(v_sync[0],v_sync[1],v_sync[2]);
-        angleQuaternion_vsp2.push_back(angleQuaternion_vsp2.back()*vsp::RotationQuaternion(ve_sync*Tvideo));
-        angleQuaternion_vsp2.back() = angleQuaternion_vsp2.back().normalized();
-    }
+//    vector<Eigen::Quaternion<double>> angleQuaternion_vsp2;
+//    angleQuaternion_vsp2.push_back(Eigen::Quaternion<double>(1,0,0,0));
+//    for(int frame= -1 ,e=Capture->get(CV_CAP_PROP_FRAME_COUNT)+1;frame<e;++frame){//球面線形補間を考慮し前後各1フレーム追加
+//        auto v_sync = angularVelocitySync(frame);
+//        Eigen::Vector3d ve_sync(v_sync[0],v_sync[1],v_sync[2]);
+//        angleQuaternion_vsp2.push_back(angleQuaternion_vsp2.back()*vsp::RotationQuaternion(ve_sync*Tvideo));
+//        angleQuaternion_vsp2.back() = angleQuaternion_vsp2.back().normalized();
+//    }
 
     vsp v2(/*angleQuaternion_vsp2,*/
            division_x,
