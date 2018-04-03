@@ -19,7 +19,7 @@ using namespace boost::math;
 
 // Include GLFW
 #include <glfw3.h>
-GLFWwindow* window;
+//GLFWwindow* window;
 
 // Include GLM
 #include <glm/glm.hpp>
@@ -527,8 +527,11 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
     v2.filteredDataDFT(Capture->get(CV_CAP_PROP_FPS),1.0);//TODO:引数修正。もはやあまり意味がない。
     v2.filteredQuaternion(100,Capture->get(CV_CAP_PROP_FPS),1.0);
 
-    cv::Mat buff(textureSize.height,textureSize.width,CV_8UC3);//テクスチャ用Matを準備
+//    cv::Mat buff(textureSize.height,textureSize.width,CV_8UC3);//テクスチャ用Matを準備
 
+    v2.init_opengl(textureSize);
+
+    /*
     // Initialise GLFW
     if( !glfwInit() )
     {
@@ -678,6 +681,7 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
     GLuint TextureID  = glGetUniformLocation(programID, "myTextureSampler");
 
 
+
     std::vector<GLfloat> vecTexture;
     for(int j=0;j<division_y;++j){							//jは終了の判定が"<"であることに注意
         double v	= (double)j/division_y*imageSize.height;
@@ -727,7 +731,7 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
 
     //動画の位置を修正
     cv::Mat img;
-
+*/
     //一度動画を閉じて、seek可能版に置き換える
     int32_t e=Capture->get(CV_CAP_PROP_FRAME_COUNT);
     delete Capture;
@@ -736,9 +740,11 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
     cv::namedWindow("Preview",cv::WINDOW_NORMAL);
 
     for(int32_t i=0;i<e;++i){
-
-
-        v2.getDistortUnrollingMapQuaternion(i,vecVtx);
+cv::Mat simg;
+        if(0 != v2.spin_once(i,sCapture,simg)){
+            break;
+        }
+        /*v2.getDistortUnrollingMapQuaternion(i,vecVtx);
 
 #ifdef TEST2D
         // Render to our framebuffer
@@ -847,14 +853,14 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
         glDisableVertexAttribArray(1);
 
         cv::imshow("Stabilized Image2",simg);
-        char key =cv::waitKey(1);
+        char key =cv::waitKey(1);*/
 
         if(outputStabilizedVideo){
             std::lock_guard<std::mutex> lock(buffer.mtx);
             buffer.images.push_back(cv::Mat());
             buffer.images.back() = simg.clone();
         }
-
+/*
 
         /////////////////////
 
@@ -865,7 +871,7 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
         if(glfwGetKey(window, GLFW_KEY_ESCAPE ) == GLFW_PRESS ||
                 glfwWindowShouldClose(window) != 0 ){
             break;
-        }
+        }*/
 
         //Show fps
         auto t4 = std::chrono::system_clock::now();
@@ -885,6 +891,8 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
     //    while( glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
     //           glfwWindowShouldClose(window) == 0 );
 
+    v2.stop_opengl();
+    /*
     // Cleanup VBO and shader
     glDeleteBuffers(1, &vertexbuffer);
     glDeleteBuffers(1, &uvbuffer);
@@ -894,6 +902,7 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
     //ここでTextureID_0をDeleteしなくて大丈夫？
     // Close OpenGL window and terminate GLFW
     glfwTerminate();
+    */
 
     //動画書き出しのマルチスレッド処理の終了処理
     //書き込みが終わっているか確認

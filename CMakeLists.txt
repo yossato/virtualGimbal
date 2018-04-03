@@ -129,7 +129,15 @@ add_executable(audioEdit src/audioedit.cpp)
 target_link_libraries(audioEdit ${ALL_LIBS})
 
 add_executable(fft_test src/fft_test.cpp
-    src/vsp.cpp)
+    src/vsp.cpp
+    common/shader.cpp
+    common/shader.hpp
+    common/controls.cpp
+    common/controls.hpp
+    common/texture.cpp
+    common/texture.hpp
+    src/seekablevideocapture.cpp
+    )
 target_link_libraries(fft_test ${ALL_LIBS}  ${PYTHON_LIBRARIES})
 
 add_executable(camera_calibration src/camera_calibration.cpp

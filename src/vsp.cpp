@@ -1,21 +1,23 @@
 #include "vsp.h"
 #include <boost/math/special_functions/bessel.hpp>
 
+GLFWwindow* window;
+
 vsp::vsp(/*vector<Eigen::Quaternion<T>> &angle_quaternion,*/
-                       int32_t division_x,
-                       int32_t division_y,
-                       double TRollingShutter,
-                       Eigen::MatrixXd IK,
-                       Eigen::MatrixXd matIntrinsic,
-                       int32_t image_width,
-                       int32_t image_height,
-                       double zoom,
-                       std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> &angular_velocity,
-                       double T_video,
-                       double T_angular_velocity,
-                       double frame_offset,
-                       int32_t video_frames,
-                       int32_t filter_tap_length){
+         int32_t division_x,
+         int32_t division_y,
+         double TRollingShutter,
+         Eigen::MatrixXd IK,
+         Eigen::MatrixXd matIntrinsic,
+         int32_t image_width,
+         int32_t image_height,
+         double zoom,
+         std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> &angular_velocity,
+         double T_video,
+         double T_angular_velocity,
+         double frame_offset,
+         int32_t video_frames,
+         int32_t filter_tap_length){
     is_filtered=false;
     this->division_x = division_x;
     this->division_y = division_y;
@@ -38,13 +40,13 @@ vsp::vsp(/*vector<Eigen::Quaternion<T>> &angle_quaternion,*/
     raw_quaternion_with_margin.push_back(Eigen::Quaterniond(1,0,0,0));
     for(int frame= -floor(filter_tap_length/2)-1 ,e=video_frames+floor(filter_tap_length/2)+1;frame<e;++frame){//球面線形補間を考慮し前後各1フレーム追加
         Eigen::Vector3d v_sync = angularVelocitySync(frame);
-//        cout << "frame:" << frame << " v_sync:" << v_sync.transpose() << endl;
+        //        cout << "frame:" << frame << " v_sync:" << v_sync.transpose() << endl;
         raw_quaternion_with_margin.push_back((raw_quaternion_with_margin.back()*vsp::RotationQuaternion(v_sync*this->T_video)).normalized());
     }
 
 
     raw_angle.resize(video_frames+2,3);//+2はローリングシャッター歪み補正のため
-int32_t half_tap_length = filter_tap_length/2;
+    int32_t half_tap_length = filter_tap_length/2;
     Eigen::Vector3d el = Quaternion2Vector(raw_quaternion_with_margin[0].conjugate());
     for(int i=0,e=raw_angle.rows();i<e;++i){
         el = Quaternion2Vector(raw_quaternion_with_margin[i+half_tap_length].conjugate());//require Quaternion2Matrix<3,1>()
@@ -76,7 +78,7 @@ Eigen::Quaternion<double> vsp::RotationQuaternion(Eigen::Vector3d w){
     if(theta == 0.0){
         return Eigen::Quaternion<double>(1,0,0,0);
     }
-//    auto n = w*(1.0/theta);								//!<回転軸を表す単位ベクトル
+    //    auto n = w*(1.0/theta);								//!<回転軸を表す単位ベクトル
     return RotationQuaternion(theta, w.normalized());
 }
 
@@ -127,7 +129,7 @@ const Eigen::MatrixXd &vsp::filteredData(){
 
 
 Eigen::Quaternion<double> vsp::toRawQuaternion(uint32_t frame){
-//    int half_tap_length = filter_coeff.rows()/2;
+    //    int half_tap_length = filter_coeff.rows()/2;
     Eigen::VectorXd w = raw_angle.block(frame,0,1,3).transpose();
     double theta = w.norm();//回転角度を計算、normと等しい
     //0割を回避するためにマクローリン展開
@@ -142,7 +144,7 @@ Eigen::Quaternion<double> vsp::toRawQuaternion(uint32_t frame){
 }
 
 Eigen::Quaternion<double> vsp::toFilteredQuaternion(uint32_t frame){
-//    int half_tap_length = filter_coeff.rows()/2;
+    //    int half_tap_length = filter_coeff.rows()/2;
     Eigen::VectorXd w = filtered_angle.block(frame,0,1,3).transpose();
     double theta = w.norm();//回転角度を計算
     //0割を回避するためにマクローリン展開
@@ -161,7 +163,7 @@ Eigen::Quaternion<double> vsp::toDiffQuaternion2(uint32_t frame){
     Eigen::Quaterniond raw = Eigen::QuaternionMapAlignedd(buf.data());
     Eigen::MatrixXd buf2 = filtered_quaternion.row(frame);
     Eigen::Quaterniond filtered = Eigen::QuaternionMapAlignedd(buf2.data());
-//    std::cout << filtered.coeffs().transpose() << std::endl;
+    //    std::cout << filtered.coeffs().transpose() << std::endl;
     return filtered.conjugate()*raw;
 }
 
@@ -279,8 +281,8 @@ Eigen::MatrixXd &vsp::filteredQuaternion(uint32_t alpha, double fs, double fc){
             filtered_quaternion.resize(video_frames+2,4);
             Eigen::Quaterniond qo,q_center;
             Eigen::VectorXd kaiser_window = getKaiserWindow(filter_tap_length,alpha,false );
-//            kaiser_window = Eigen::VectorXd::Zero(filter_tap_length);
-//            kaiser_window(kaiser_window.rows()/2) = 1.0;
+            //            kaiser_window = Eigen::VectorXd::Zero(filter_tap_length);
+            //            kaiser_window(kaiser_window.rows()/2) = 1.0;
             //総和が1になるように調整
             kaiser_window.array() /= kaiser_window.sum();
             Eigen::MatrixXd exponential_map;
@@ -292,7 +294,7 @@ Eigen::MatrixXd &vsp::filteredQuaternion(uint32_t alpha, double fs, double fc){
                 std::copy(q.begin()+i,q.begin()+i+filter_tap_length,back_inserter(buff));
                 //2.回転角を変換
                 q_center = buff[buff.size()/2];
-//                q_center = Eigen::Quaterniond(1.0,0,0,0);
+                //                q_center = Eigen::Quaterniond(1.0,0,0,0);
                 for(auto &el:buff){
                     el=(q_center.conjugate()*el).normalized();
                 }
@@ -302,9 +304,9 @@ Eigen::MatrixXd &vsp::filteredQuaternion(uint32_t alpha, double fs, double fc){
                     exponential_map.row(k) = Quaternion2Vector(buff[k]).transpose();
                 }
                 //3.FIRフィルタ適用
-//                Eigen::VectorXd kaiser_window = getKaiserWindow(filter_tap_length,alpha,false );
+                //                Eigen::VectorXd kaiser_window = getKaiserWindow(filter_tap_length,alpha,false );
                 //総和が1になるように調整
-//                kaiser_window.array() /= kaiser_window.sum();
+                //                kaiser_window.array() /= kaiser_window.sum();
                 exponential_map.array().colwise() *= kaiser_window.array();
                 //4.Logを計算
                 Eigen::Vector3d temp = exponential_map.colwise().sum().transpose();
@@ -381,7 +383,7 @@ const Eigen::MatrixXd &vsp::filteredDataDFTTimeDomainOptimize(double fs, double 
 
     int32_t period = fs/fc;
     assert(coeff.cols() == raw_angle.cols());
-//    assert(coeff.rows() == raw_angle.rows()/period);
+    //    assert(coeff.rows() == raw_angle.rows()/period);
 
     Eigen::MatrixXd linear_interporate_coeff = Eigen::MatrixXd::Zero(period,2);
 
@@ -453,15 +455,15 @@ Eigen::VectorXd vsp::getRollingVectorError(){
                     prevQ,
                     currQ,
                     nextQ,
-//                    division_x,
-//                    division_y,
-//                    TRollingShutter,
-//                    IK,
-//                    matIntrinsic,
-//                    image_width,
-//                    image_height,
+                    //                    division_x,
+                    //                    division_y,
+                    //                    TRollingShutter,
+                    //                    IK,
+                    //                    matIntrinsic,
+                    //                    image_width,
+                    //                    image_height,
                     vecPorigonn_uv
-//                    zoom
+                    //                    zoom
                     );
         return check_warp(vecPorigonn_uv);
     };
@@ -487,11 +489,11 @@ Eigen::VectorXd vsp::getRollingVectorError(){
                 a=m;
             }
             if(count == 1000){
-//                cout << "frame:" << frame << " 収束失敗" << endl;
+                //                cout << "frame:" << frame << " 収束失敗" << endl;
                 break;
             }
         }while(!(abs(a-b)<eps));
-//        cout <<  "frame:" << frame << " " << count << "回で収束" << endl;
+        //        cout <<  "frame:" << frame << " " << count << "回で収束" << endl;
 
         error = (Quaternion2Vector(Vector2Quaternion<double>(filtered_angle.row(frame  ).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame  ).transpose())).norm())*(1-m);
         retval[frame] = error;
@@ -521,10 +523,10 @@ void vsp::VectorXd2MatrixXcd(const Eigen::VectorXd &src, Eigen::MatrixXcd &dst){
 }
 
 Eigen::Vector3d vsp::angularVelocitySync(/*std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> &angularVelocityIn60Hz,
-                                    double T_video,
-                                    double T_av,
-                                    double frame_offset,*/
-                                    int32_t frame){
+                                                                             double T_video,
+                                                                             double T_av,
+                                                                             double frame_offset,*/
+                                         int32_t frame){
     double dframe = (frame + frame_offset) * T_video / T_angular_velocity;
     int i = floor(dframe);
     double decimalPart = dframe - (double)i;
@@ -535,5 +537,360 @@ Eigen::Vector3d vsp::angularVelocitySync(/*std::vector<Eigen::Vector3d,Eigen::al
         return angular_velocity.back();
     }else{
         return angular_velocity[i]*(1.0-decimalPart)+angular_velocity[i+1]*decimalPart;
+    }
+}
+
+#define TEST2D
+
+int vsp::init_opengl(cv::Size textureSize){
+    this->buff = cv::Mat(textureSize.height,textureSize.width,CV_8UC3);
+    this->textureSize = textureSize;
+    // Initialise GLFW
+    if( !glfwInit() )
+    {
+        fprintf( stderr, "Failed to initialize GLFW\n" );
+        getchar();
+        return -1;
+    }
+
+
+
+    glfwWindowHint(GLFW_SAMPLES, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+#ifdef TEST2D
+    glfwWindowHint( GLFW_VISIBLE, 0 );//オフスクリーンレンダリング。
+#endif
+
+    // Open a window and create its OpenGL context
+
+#ifndef TEST2D
+    window = glfwCreateWindow( 1920, 1080, "Tutorial 0 - Keyboard and Mouse", glfwGetPrimaryMonitor(), NULL);
+#else
+    window = glfwCreateWindow( 1920, 1080, "Tutorial 0 - Keyboard and Mouse", NULL, NULL);
+#endif
+    if( window == NULL ){
+        fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
+        getchar();
+        glfwTerminate();
+        return -1;
+    }
+    glfwMakeContextCurrent(window);
+
+    // Initialize GLEW
+    glewExperimental = true; // Needed for core profile
+    if (glewInit() != GLEW_OK) {
+        fprintf(stderr, "Failed to initialize GLEW\n");
+        getchar();
+        glfwTerminate();
+        return -1;
+    }
+#ifndef TEST2D
+    glfwIconifyWindow(window);
+#endif
+    //    glfwHideWindow(window);
+
+    // Ensure we can capture the escape key being pressed below
+    glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
+    // Hide the mouse and enable unlimited mouvement
+    //        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+    // Set the mouse at the center of the screen
+    glfwPollEvents();
+    //    glfwSetCursorPos(window, 1024/2, 768/2);
+
+    // Dark blue background
+    glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
+
+    // Enable depth test
+    glEnable(GL_DEPTH_TEST);
+    // Accept fragment if it closer to the camera than the former one
+    glDepthFunc(GL_LESS);
+
+    // Cull triangles which normal is not towards the camera
+    glEnable(GL_CULL_FACE);
+
+//    GLuint VertexArrayID;
+    glGenVertexArrays(1, &VertexArrayID);
+    glBindVertexArray(VertexArrayID);
+
+    // Create and compile our GLSL program from the shaders
+    /*GLuint */programID = LoadShaders( "TransformVertexShader.vertexshader", "TextureFragmentShader.fragmentshader" );
+
+    // Get a handle for our "MVP" uniform
+    /*GLuint */MatrixID = glGetUniformLocation(programID, "MVP");
+
+
+#ifndef TEST2D
+    // Create one OpenGL texture
+    GLuint textureID_0;
+    glGenTextures(1, &textureID_0);
+    //OpenGLに「これから、テクスチャ識別子idに対して指示を与えます」と指示
+    glBindTexture(GL_TEXTURE_2D,textureID_0);
+    //テクスチャをここで作成
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,buff.cols,buff.rows,0,GL_BGR,GL_UNSIGNED_BYTE,buff.data);
+#else
+    // The framebuffer, which regroups 0, 1, or more textures, and 0 or 1 depth buffer.
+    /*GLuint */FramebufferName = 0;
+    glGenFramebuffers(1, &FramebufferName);
+    glBindFramebuffer(GL_FRAMEBUFFER, FramebufferName);
+
+    // The texture we're going to render to
+    GLuint renderedTexture;
+
+    GLuint textures[2];
+    glGenTextures(2, textures);
+    renderedTexture = textures[0];
+    /*GLuint */textureID_0 = textures[1];
+
+    glBindTexture(GL_TEXTURE_2D,textureID_0);
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,buff.cols,buff.rows,0,GL_BGR,GL_UNSIGNED_BYTE,buff.data);
+#endif
+
+
+    static const GLfloat border[] = { 0.0, 0.0, 0.0, 0.0 };//背景色
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border);//テクスチャの境界色
+    //テクスチャの繰り返しの設定
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+#ifdef TEST2D
+    // "Bind" the newly created texture : all future texture functions will modify this texture
+    glBindTexture(GL_TEXTURE_2D, renderedTexture);
+
+    // Give an empty image to OpenGL ( the last "0" means "empty" )
+    glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, image_width, image_height, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
+
+    // Poor filtering
+    //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+    // Set "renderedTexture" as our colour attachement #0
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, renderedTexture, 0);
+
+    // Set the list of draw buffers.
+    GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+    glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+
+    // Always check that our framebuffer is ok
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
+        return false;
+    }
+#endif
+
+    // Get a handle for our "myTextureSampler" uniform
+    /*GLuint */TextureID  = glGetUniformLocation(programID, "myTextureSampler");
+
+    std::vector<GLfloat> vecTexture;
+    for(int j=0;j<division_y;++j){							//jは終了の判定が"<"であることに注意
+        double v	= (double)j/division_y*image_height;
+        double v1	= (double)(j+1)/division_y*image_height;
+        for(int i=0;i<division_x;++i){
+            double u	= (double)i/division_x*image_width;
+            double u1	= (double)(i+1)/division_x*image_width;
+            //OpenGL側へ送信するテクスチャの頂点座標を準備
+            vecTexture.push_back((GLfloat)u/textureSize.width);//x座標
+            vecTexture.push_back((GLfloat)v/textureSize.height);//y座標
+            vecTexture.push_back((GLfloat)u1/textureSize.width);//x座標
+            vecTexture.push_back((GLfloat)v/textureSize.height);//y座標
+            vecTexture.push_back((GLfloat)u/textureSize.width);//x座標
+            vecTexture.push_back((GLfloat)v1/textureSize.height);//y座標
+
+
+            vecTexture.push_back((GLfloat)u/textureSize.width);//x座標
+            vecTexture.push_back((GLfloat)v1/textureSize.height);//y座標
+            vecTexture.push_back((GLfloat)u1/textureSize.width);//x座標
+            vecTexture.push_back((GLfloat)v/textureSize.height);//y座標
+            vecTexture.push_back((GLfloat)u1/textureSize.width);//x座標
+            vecTexture.push_back((GLfloat)v1/textureSize.height);//y座標
+
+
+        }
+    }
+
+//    std::vector<GLfloat> vecVtx(vecTexture.size());					//頂点座標
+
+//    GLuint vertexbuffer;
+    glGenBuffers(1, &vertexbuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+    //    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vecVtx.size()*sizeof(GLfloat), vecVtx.data(), GL_DYNAMIC_DRAW);
+
+//    GLuint uvbuffer;
+    glGenBuffers(1, &uvbuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
+    //    glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vecTexture.size()*sizeof(GLfloat), vecTexture.data(), GL_STATIC_DRAW);
+
+    //歪補正の準備
+    /*GLuint */nFxyID       = glGetUniformLocation(programID, "normalizedFocalLength");
+    /*GLuint */nCxyID       = glGetUniformLocation(programID, "normalizedOpticalCenter");
+    /*GLuint */distCoeffID  = glGetUniformLocation(programID, "distortionCoeffs");
+
+
+
+    //動画の位置を修正
+//    cv::Mat img;
+
+vecVtx.resize(vecTexture.size());
+
+//this->outputStabilizedVideo = outputStabilizedVideo;
+
+
+}
+
+int vsp::stop_opengl(){
+    // Cleanup VBO and shader
+    glDeleteBuffers(1, &vertexbuffer);
+    glDeleteBuffers(1, &uvbuffer);
+    glDeleteProgram(programID);
+    glDeleteTextures(1, &TextureID);
+    glDeleteVertexArrays(1, &VertexArrayID);
+    //ここでTextureID_0をDeleteしなくて大丈夫？
+    // Close OpenGL window and terminate GLFW
+    glfwTerminate();
+}
+
+int vsp::spin_once(int frame,seekableVideoCapture &capture, cv::Mat &simg){
+    getDistortUnrollingMapQuaternion(frame,vecVtx);
+
+#ifdef TEST2D
+    // Render to our framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, FramebufferName);
+    glViewport(0,0,image_width,image_height); // Render on the whole framebuffer, complete from the lower left corner to the upper right
+#endif
+
+    // Clear the screen
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Use our shader
+    glUseProgram(programID);
+
+
+    glm::mat4 MVP = glm::mat4(1.0f);//動画保存用
+    // Send our transformation to the currently bound shader,
+    // in the "MVP" uniform
+    glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+
+
+    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+    glBufferData(GL_ARRAY_BUFFER, vecVtx.size()*sizeof(GLfloat), vecVtx.data(),GL_DYNAMIC_DRAW);
+
+#if MULTITHREAD_CAPTURE
+    {
+        std::lock_guard<std::mutex> lock(mtvc.mtx);
+        img = mtvc.images.front().clone();
+        mtvc.images.pop_front();//先頭を削除
+    }
+#else
+    capture.getFrame(frame,img);
+#endif
+
+#ifdef TEST2D
+    // Bind our texture in Texture Unit 0
+    glActiveTexture(GL_TEXTURE0);
+#endif
+
+    // Bind our texture in Texture Unit 0
+    //        glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, textureID_0);//            glBindTexture(GL_TEXTURE_2D, Texture);
+    glTexSubImage2D(GL_TEXTURE_2D,0,0,0,img.cols,img.rows,GL_BGR,GL_UNSIGNED_BYTE,img.data);
+    //        glGenerateMipmap(GL_TEXTURE_2D);
+    // Set our "myTextureSampler" sampler to user Texture Unit 0
+    glUniform1i(TextureID, 0);
+
+    //歪補正の準備
+    float nfxy[] = {(float)(matIntrinsic(0,0)/image_width), (float)(matIntrinsic(1,1)/image_height)};
+    glUniform2fv(nFxyID, 1, nfxy);
+    float ncxy[] = {(float)(matIntrinsic(0,2)/image_width), (float)(matIntrinsic(1,2)/image_height)};
+    glUniform2fv(nCxyID, 1, ncxy);
+    //        float distcoeffFloat[] = {(float)(matDist.at<double>(0,0)),(float)(matDist.at<double>(0,1)),(float)(matDist.at<double>(0,2)),(float)(matDist.at<double>(0,3))};
+    float distcoeffFloat[] = {(float)(IK(0,0)),(float)(IK(0,1)),(float)(IK(0,2)),(float)(IK(0,3))};
+    glUniform4fv(distCoeffID, 1, distcoeffFloat);
+
+    // 1rst attribute buffer : vertices
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+    glVertexAttribPointer(
+                0,                  // attribute. No particular reason for 0, but must match the layout in the shader.
+                2,                  // size
+                GL_FLOAT,           // type
+                GL_FALSE,           // normalized?
+                0,                  // stride
+                (void*)0            // array buffer offset
+                );
+
+    // 2nd attribute buffer : UVs
+    glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
+    glVertexAttribPointer(
+                1,                                // attribute. No particular reason for 1, but must match the layout in the shader.
+                2,                                // size : U+V => 2
+                GL_FLOAT,                         // type
+                GL_FALSE,                         // normalized?
+                0,                                // stride
+                (void*)0                          // array buffer offset
+                );
+
+    // Draw the triangle !
+    glDrawArrays(GL_TRIANGLES, 0, vecVtx.size()*2); // 12*3 indices starting at 0 -> 12 triangles
+
+#if 1
+    ////////////////////
+//    cv::Mat simg(cv::Size(image_width,image_height),CV_8UC3);
+    simg = cv::Mat(cv::Size(image_width,image_height),CV_8UC3);
+    //~ glReadBuffer(GL_FRONT);//読み取るOpenGLのバッファを指定 GL_FRONT:フロントバッファ GL_BACK:バックバッファ
+
+
+    //        glReadBuffer(GL_BACK);//読み取るOpenGLのバッファを指定 GL_FRONT:フロントバッファ GL_BACK:バックバッファ
+    // OpenGLで画面に描画されている内容をバッファに格納
+    glReadPixels(
+                0,					//読み取る領域の左下隅のx座標
+                0,					//読み取る領域の左下隅のy座標 //0 or getCurrentWidth() - 1
+                image_width,				//読み取る領域の幅
+                image_height,				//読み取る領域の高さ
+                GL_BGR,				//it means GL_BGR,           //取得したい色情報の形式
+                GL_UNSIGNED_BYTE,	//読み取ったデータを保存する配列の型
+                simg.data			//ビットマップのピクセルデータ（実際にはバイト配列）へのポインタ
+                );
+#else
+    cv::Mat simg(textureSize,CV_8UC3);
+    glGetTexImage(GL_TEXTURE_2D,0,GL_BGR,GL_UNSIGNED_BYTE,simg.data);
+#endif
+
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+
+    cv::imshow("Stabilized Image2",simg);
+    char key =cv::waitKey(1);
+
+//    if(outputStabilizedVideo){
+//        std::lock_guard<std::mutex> lock(buffer.mtx);
+//        buffer.images.push_back(cv::Mat());
+//        buffer.images.back() = simg.clone();
+//    }
+
+
+    /////////////////////
+
+    // Swap buffers
+    //        glfwSwapBuffers(window);
+    glfwPollEvents();
+
+    if(glfwGetKey(window, GLFW_KEY_ESCAPE ) == GLFW_PRESS ||
+            glfwWindowShouldClose(window) != 0 ){
+        return 1;
     }
 }

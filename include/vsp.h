@@ -3,8 +3,11 @@
 
 #include <stdio.h>
 #include <iostream>
+#include <string>
+#include <opencv2/opencv.hpp>
 #include <boost/math/quaternion.hpp>
 #include "settings.h"
+
 #include <Eigen/Dense>
 #include <unsupported/Eigen/FFT>
 #include <fstream>
@@ -13,6 +16,30 @@
 #include <sstream>
 using namespace std;
 using namespace boost::math;
+
+
+// Include standard headers
+#include <stdio.h>
+#include <stdlib.h>
+
+// Include GLEW
+#include <GL/glew.h>
+
+// Include GLFW
+#include <glfw3.h>
+//extern GLFWwindow* window;
+
+// Include GLM
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+using namespace glm;
+
+#include <common/shader.hpp>
+#include <common/texture.hpp>
+#include <common/controls.hpp>
+#include "seekablevideocapture.h"
+
+
 
 class vsp
 {
@@ -710,6 +737,9 @@ public:
             return;
     }
 
+    int init_opengl(cv::Size textureSize);
+    int stop_opengl();
+    int spin_once(int frame,seekableVideoCapture &capture,cv::Mat &simg);
 private:
     Eigen::MatrixXd raw_angle;
     Eigen::MatrixXd raw_quaternion;
@@ -734,6 +764,25 @@ private:
     double frame_offset=0;
     int32_t video_frames=0;
     int32_t filter_tap_length=0;
+
+    //OpenGL
+    cv::Size textureSize;
+    cv::Mat buff;
+    GLuint vertexbuffer;
+    GLuint uvbuffer;
+    GLuint programID;
+    GLuint TextureID;
+    GLuint VertexArrayID;
+    std::vector<GLfloat> vecVtx;					//頂点座標
+    GLuint FramebufferName = 0;
+    GLuint MatrixID;
+    cv::Mat img;
+    GLuint textureID_0;
+    GLuint nFxyID;
+    GLuint nCxyID;
+    GLuint distCoeffID;
+//    bool outputStabilizedVideo = false;
+
 };
 
 #endif // VSP_H
