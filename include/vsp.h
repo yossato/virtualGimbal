@@ -739,7 +739,7 @@ public:
 
     int init_opengl(cv::Size textureSize);
     int stop_opengl();
-    int spin_once(int frame,seekableVideoCapture &capture,cv::Mat &simg);
+    int spin_once(int frame,cv::VideoCapture &capture,cv::Mat &simg);
 private:
     enum KEY {
         KEY_SIDEBYSIDE = '1',

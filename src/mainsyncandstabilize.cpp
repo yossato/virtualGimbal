@@ -471,13 +471,14 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
     //一度動画を閉じて、seek可能版に置き換える
     int32_t e=Capture->get(CV_CAP_PROP_FRAME_COUNT);
     delete Capture;
-    seekableVideoCapture sCapture(videoPass,PREFETCH_LENGTH);
+//    seekableVideoCapture sCapture(videoPass,PREFETCH_LENGTH);
+    Capture = new cv::VideoCapture(videoPass);//動画をオープン
 
     cv::namedWindow("Preview",cv::WINDOW_NORMAL);
 
     for(int32_t i=0;i<e;++i){
         cv::Mat simg;
-        if(0 != v2.spin_once(i,sCapture,simg)){
+        if(0 != v2.spin_once(i,*Capture,simg)){
             break;
         }
 
@@ -504,6 +505,9 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
 
     }
 
+    if(Capture != NULL){
+        delete Capture;
+    }
     v2.stop_opengl();
 
     //動画書き出しのマルチスレッド処理の終了処理

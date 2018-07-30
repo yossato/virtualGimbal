@@ -763,7 +763,21 @@ int vsp::stop_opengl(){
     glfwTerminate();
 }
 
-int vsp::spin_once(int frame,seekableVideoCapture &capture, cv::Mat &simg){
+int vsp::spin_once(int frame,cv::VideoCapture &capture, cv::Mat &simg){
+#if MULTITHREAD_CAPTURE
+    {
+        std::lock_guard<std::mutex> lock(mtvc.mtx);
+        img = mtvc.images.front().clone();
+        mtvc.images.pop_front();//先頭を削除
+    }
+#else
+    capture >> img;
+    if(img.empty()){
+        std::cout << "Empty" << std::endl;
+        return -1;
+    }
+#endif
+
     getDistortUnrollingMapQuaternion(frame,vecVtx);
 
 #ifdef TEST2D
@@ -788,15 +802,7 @@ int vsp::spin_once(int frame,seekableVideoCapture &capture, cv::Mat &simg){
     glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
     glBufferData(GL_ARRAY_BUFFER, vecVtx.size()*sizeof(GLfloat), vecVtx.data(),GL_DYNAMIC_DRAW);
 
-#if MULTITHREAD_CAPTURE
-    {
-        std::lock_guard<std::mutex> lock(mtvc.mtx);
-        img = mtvc.images.front().clone();
-        mtvc.images.pop_front();//先頭を削除
-    }
-#else
-    capture.getFrame(frame,img);
-#endif
+
 
 #ifdef TEST2D
     // Bind our texture in Texture Unit 0
@@ -886,6 +892,9 @@ int vsp::spin_once(int frame,seekableVideoCapture &capture, cv::Mat &simg){
         cv::putText(simg, "Stabilized", cv::Point(625,150+image_height*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,CV_AA);
         cv::imshow("Stabilized Image2",simg);
         break;
+    case 'q':
+        exit(0);
+        break;
     default: //KEY_STABILIZED
 
         static cv::Mat sidebyside(cv::Size(image_width,image_height),CV_8UC3,cv::Scalar(0));
@@ -929,4 +938,5 @@ int vsp::spin_once(int frame,seekableVideoCapture &capture, cv::Mat &simg){
             glfwWindowShouldClose(window) != 0 ){
         return 1;
     }
+    return 0;
 }
