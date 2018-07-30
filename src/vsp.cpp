@@ -873,7 +873,21 @@ int vsp::spin_once(int frame,seekableVideoCapture &capture, cv::Mat &simg){
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
 
-    if(1){
+    cv::Rect roi_dst(0,image_height/4,image_width/2,image_height/2);
+    cv::Rect roi_src(image_width/2,image_height/4,image_width/2,image_height/2);
+
+    switch (key) {
+    case KEY_ORIGINAL:
+        cv::putText(img, "Original", cv::Point(625,150+image_height*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,CV_AA);
+        cv::imshow("Stabilized Image2",img);
+        break;
+
+    case KEY_STABILIZED:
+        cv::putText(simg, "Stabilized", cv::Point(625,150+image_height*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,CV_AA);
+        cv::imshow("Stabilized Image2",simg);
+        break;
+    default: //KEY_STABILIZED
+
         static cv::Mat sidebyside(cv::Size(image_width,image_height),CV_8UC3,cv::Scalar(0));
         static bool first_time = true;
         if(first_time){
@@ -881,8 +895,7 @@ int vsp::spin_once(int frame,seekableVideoCapture &capture, cv::Mat &simg){
             cv::putText(sidebyside, "Stabilized", cv::Point(1050,150+image_height*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,CV_AA);
             first_time = false;
         }
-        cv::Rect roi_dst(0,image_height/4,image_width/2,image_height/2);
-        cv::Rect roi_src(image_width/2,image_height/4,image_width/2,image_height/2);
+
 
         cv::resize(simg,sidebyside(roi_src),cv::Size(),0.5,0.5,cv::INTER_LINEAR);
         cv::resize(img,sidebyside(roi_dst),cv::Size(),0.5,0.5,cv::INTER_LINEAR);
@@ -890,11 +903,14 @@ int vsp::spin_once(int frame,seekableVideoCapture &capture, cv::Mat &simg){
 
 
         cv::imshow("Stabilized Image2",sidebyside);
-    }else{
 
-    cv::imshow("Stabilized Image2",simg);
+        break;
     }
-    char key =cv::waitKey(1);
+
+    char pressed_key = cv::waitKey(1);
+    if(pressed_key != -1){
+        key = pressed_key;
+    }
 
 //    if(outputStabilizedVideo){
 //        std::lock_guard<std::mutex> lock(buffer.mtx);

@@ -741,6 +741,12 @@ public:
     int stop_opengl();
     int spin_once(int frame,seekableVideoCapture &capture,cv::Mat &simg);
 private:
+    enum KEY {
+        KEY_SIDEBYSIDE = '1',
+        KEY_ORIGINAL = '2',
+        KEY_STABILIZED = '3'
+    };
+
     Eigen::MatrixXd raw_angle;
     Eigen::MatrixXd raw_quaternion;
     std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond>> raw_quaternion_with_margin;
@@ -764,6 +770,8 @@ private:
     double frame_offset=0;
     int32_t video_frames=0;
     int32_t filter_tap_length=0;
+
+    char key = '1';
 
     //OpenGL
     cv::Size textureSize;
