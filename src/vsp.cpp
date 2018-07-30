@@ -882,6 +882,11 @@ int vsp::spin_once(int frame,cv::VideoCapture &capture, cv::Mat &simg){
     cv::Rect roi_dst(0,image_height/4,image_width/2,image_height/2);
     cv::Rect roi_src(image_width/2,image_height/4,image_width/2,image_height/2);
 
+    char pressed_key = cv::waitKey(1);
+    if(pressed_key != -1){
+        key = pressed_key;
+    }
+
     switch (key) {
     case KEY_ORIGINAL:
         cv::putText(img, "Original", cv::Point(625,150+image_height*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,CV_AA);
@@ -892,8 +897,8 @@ int vsp::spin_once(int frame,cv::VideoCapture &capture, cv::Mat &simg){
         cv::putText(simg, "Stabilized", cv::Point(625,150+image_height*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,CV_AA);
         cv::imshow("Stabilized Image2",simg);
         break;
-    case 'q':
-        exit(0);
+    case KEY_QUIT:
+        return -1;
         break;
     default: //KEY_STABILIZED
 
@@ -916,10 +921,7 @@ int vsp::spin_once(int frame,cv::VideoCapture &capture, cv::Mat &simg){
         break;
     }
 
-    char pressed_key = cv::waitKey(1);
-    if(pressed_key != -1){
-        key = pressed_key;
-    }
+
 
 //    if(outputStabilizedVideo){
 //        std::lock_guard<std::mutex> lock(buffer.mtx);
@@ -939,4 +941,8 @@ int vsp::spin_once(int frame,cv::VideoCapture &capture, cv::Mat &simg){
         return 1;
     }
     return 0;
+}
+
+bool vsp::ok(){
+    return key != KEY_QUIT;
 }

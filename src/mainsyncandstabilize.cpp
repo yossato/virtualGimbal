@@ -472,41 +472,51 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
     int32_t e=Capture->get(CV_CAP_PROP_FRAME_COUNT);
     delete Capture;
 //    seekableVideoCapture sCapture(videoPass,PREFETCH_LENGTH);
-    Capture = new cv::VideoCapture(videoPass);//動画をオープン
+
 
     cv::namedWindow("Preview",cv::WINDOW_NORMAL);
 
-    for(int32_t i=0;i<e;++i){
-        cv::Mat simg;
-        if(0 != v2.spin_once(i,*Capture,simg)){
-            break;
+    while(v2.ok()){
+        Capture = new cv::VideoCapture(videoPass);//動画をオープン
+        for(int32_t i=0;i<e;++i){
+            cv::Mat simg;
+            if(0 != v2.spin_once(i,*Capture,simg)){
+                break;
+            }
+
+            if(outputStabilizedVideo){
+                std::lock_guard<std::mutex> lock(buffer.mtx);
+                buffer.images.push_back(cv::Mat());
+                buffer.images.back() = simg.clone();
+            }
+
+
+            //Show fps
+            auto t4 = std::chrono::system_clock::now();
+            static auto t3 = t4;
+            // 処理の経過時間
+            double elapsedmicroseconds = std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count() ;
+            static double fps = 0.0;
+            if(elapsedmicroseconds != 0.0){
+                fps = 0.03*(1e6/elapsedmicroseconds) +  0.97*fps;
+            }
+            t3 = t4;
+            printf("fps:%4.2f\r",fps);
+            fflush(stdout);
+
+
         }
 
-        if(outputStabilizedVideo){
-            std::lock_guard<std::mutex> lock(buffer.mtx);
-            buffer.images.push_back(cv::Mat());
-            buffer.images.back() = simg.clone();
+        if(Capture != NULL){
+            delete Capture;
+            Capture = NULL;
         }
-
-
-        //Show fps
-        auto t4 = std::chrono::system_clock::now();
-        static auto t3 = t4;
-        // 処理の経過時間
-        double elapsedmicroseconds = std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count() ;
-        static double fps = 0.0;
-        if(elapsedmicroseconds != 0.0){
-            fps = 0.03*(1e6/elapsedmicroseconds) +  0.97*fps;
-        }
-        t3 = t4;
-        printf("fps:%4.2f\r",fps);
-        fflush(stdout);
-
 
     }
 
     if(Capture != NULL){
         delete Capture;
+        Capture = NULL;
     }
     v2.stop_opengl();
 

@@ -740,11 +740,13 @@ public:
     int init_opengl(cv::Size textureSize);
     int stop_opengl();
     int spin_once(int frame,cv::VideoCapture &capture,cv::Mat &simg);
+    bool ok();
 private:
     enum KEY {
         KEY_SIDEBYSIDE = '1',
         KEY_ORIGINAL = '2',
-        KEY_STABILIZED = '3'
+        KEY_STABILIZED = '3',
+        KEY_QUIT = 'q'
     };
 
     Eigen::MatrixXd raw_angle;
