@@ -874,12 +874,21 @@ int vsp::spin_once(int frame,seekableVideoCapture &capture, cv::Mat &simg){
     glDisableVertexAttribArray(1);
 
     if(1){
-        cv::Mat sidebyside(cv::Size(image_width,image_height),CV_8UC3);
-        cv::Rect roi_src(0,image_height/4,image_width/2,image_height/2);
-        cv::Rect roi_dst(image_width/2,image_height/4,image_width/2,image_height/2);
+        static cv::Mat sidebyside(cv::Size(image_width,image_height),CV_8UC3,cv::Scalar(0));
+        static bool first_time = true;
+        if(first_time){
+            cv::putText(sidebyside, "Original", cv::Point(200,150+image_height*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,CV_AA);
+            cv::putText(sidebyside, "Stabilized", cv::Point(1050,150+image_height*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,CV_AA);
+            first_time = false;
+        }
+        cv::Rect roi_dst(0,image_height/4,image_width/2,image_height/2);
+        cv::Rect roi_src(image_width/2,image_height/4,image_width/2,image_height/2);
 
         cv::resize(simg,sidebyside(roi_src),cv::Size(),0.5,0.5,cv::INTER_LINEAR);
         cv::resize(img,sidebyside(roi_dst),cv::Size(),0.5,0.5,cv::INTER_LINEAR);
+
+
+
         cv::imshow("Stabilized Image2",sidebyside);
     }else{
 
