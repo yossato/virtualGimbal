@@ -890,12 +890,12 @@ int vsp::spin_once(int frame,cv::VideoCapture &capture, cv::Mat &simg){
     switch (key) {
     case KEY_ORIGINAL:
         cv::putText(img, "Original", cv::Point(625,150+image_height*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,CV_AA);
-        cv::imshow("Stabilized Image2",img);
+        cv::imshow("Preview",img);
         break;
 
     case KEY_STABILIZED:
         cv::putText(simg, "Stabilized", cv::Point(625,150+image_height*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,CV_AA);
-        cv::imshow("Stabilized Image2",simg);
+        cv::imshow("Preview",simg);
         break;
     case KEY_QUIT:
         return -1;
@@ -916,7 +916,7 @@ int vsp::spin_once(int frame,cv::VideoCapture &capture, cv::Mat &simg){
 
 
 
-        cv::imshow("Stabilized Image2",sidebyside);
+        cv::imshow("Preview",sidebyside);
 
         break;
     }

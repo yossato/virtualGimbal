@@ -475,7 +475,7 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
 
 
     cv::namedWindow("Preview",cv::WINDOW_NORMAL);
-
+    cv::setWindowProperty("Preview",CV_WND_PROP_FULLSCREEN,CV_WINDOW_FULLSCREEN);
     while(v2.ok()){
         Capture = new cv::VideoCapture(videoPass);//動画をオープン
         for(int32_t i=0;i<e;++i){
