@@ -103,7 +103,7 @@ git clone http://github.com/yossato/virtualGimbal
 cd virtualGimbal  
 mkdir build  
 cd build  
-cmake ..  
+cmake ../software/  
 make
 ```
 
