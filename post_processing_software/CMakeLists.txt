@@ -16,11 +16,11 @@ if( CMAKE_BINARY_DIR MATCHES " " )
 endif()
 
 # Copy setting files
-configure_file(intrinsic.txt intrinsic.txt @COPYONLY)
-configure_file(distortion.txt distortion.txt  @COPYONLY)
-configure_file(CheckerBoardSettings.ini CheckerBoardSettings.ini  @COPYONLY)
-configure_file(TextureFragmentShader.fragmentshader TextureFragmentShader.fragmentshader @COPYONLY)
-configure_file(TransformVertexShader.vertexshader TransformVertexShader.vertexshader  @COPYONLY)
+configure_file(intrinsic.txt intrinsic.txt)
+configure_file(distortion.txt distortion.txt)
+configure_file(CheckerBoardSettings.ini CheckerBoardSettings.ini)
+configure_file(TextureFragmentShader.fragmentshader TextureFragmentShader.fragmentshader)
+configure_file(TransformVertexShader.vertexshader TransformVertexShader.vertexshader)
 
 
 # Compile external dependencies
