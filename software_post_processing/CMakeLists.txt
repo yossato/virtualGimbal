@@ -15,6 +15,12 @@ if( CMAKE_BINARY_DIR MATCHES " " )
         message( "Your Build Directory contains spaces. If you experience problems when compiling, this can be the cause." )
 endif()
 
+# Copy setting files
+configure_file(intrinsic.txt intrinsic.txt @COPYONLY)
+configure_file(distortion.txt distortion.txt  @COPYONLY)
+configure_file(CheckerBoardSettings.ini CheckerBoardSettings.ini  @COPYONLY)
+configure_file(TextureFragmentShader.fragmentshader TextureFragmentShader.fragmentshader @COPYONLY)
+configure_file(TransformVertexShader.vertexshader TransformVertexShader.vertexshader  @COPYONLY)
 
 
 # Compile external dependencies
