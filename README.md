@@ -103,8 +103,8 @@ git clone http://github.com/yossato/virtualGimbal
 cd virtualGimbal  
 mkdir build  
 cd build  
-cmake ../software/  
-make
+cmake ../post_processing_software/  
+make -j4  
 ```
 
 ## Copy setting files
