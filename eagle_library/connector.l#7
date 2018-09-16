@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="1.1" unitdist="mm" unit="mm" style="lines" multiple="1" display="yes" altdistance="5" altunitdist="mil" altunit="mm"/>
+<grid distance="50" unitdist="mil" unit="mil" style="lines" multiple="1" display="yes" altdistance="5" altunitdist="mil" altunit="mil"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
@@ -60,31 +60,17 @@
 <library>
 <packages>
 <package name="BLOCK_SD_CONNECTOR">
-<smd name="P$1" x="4.4" y="-0.48" dx="0.55" dy="1.2" layer="1"/>
-<smd name="P$2" x="3.3" y="6.77" dx="0.45" dy="1.2" layer="1"/>
-<smd name="P$3" x="2.2" y="6.77" dx="0.45" dy="1.2" layer="1"/>
-<smd name="P$4" x="1.45" y="7.13" dx="0.5" dy="1.2" layer="1"/>
-<smd name="P$5" x="-1.45" y="7.13" dx="0.5" dy="1.2" layer="1"/>
-<smd name="P$6" x="-2.2" y="6.77" dx="0.45" dy="1.2" layer="1"/>
-<smd name="P$7" x="-3.3" y="6.77" dx="0.45" dy="1.2" layer="1"/>
-<smd name="P$8" x="-4.4" y="-0.48" dx="0.55" dy="1.2" layer="1"/>
-<smd name="P$9" x="-2.18" y="-0.48" dx="0.5" dy="1.2" layer="1"/>
-<smd name="P$10" x="0" y="-0.48" dx="0.5" dy="1.2" layer="1"/>
-<smd name="P$11" x="2.18" y="-0.48" dx="0.5" dy="1.2" layer="1"/>
-<rectangle x1="-4.575" y1="-0.56" x2="-4.225" y2="0" layer="51"/>
-<wire x1="-4.8" y1="6.15" x2="4.8" y2="6.15" width="0.127" layer="51"/>
-<wire x1="4.8" y1="6.15" x2="4.8" y2="0" width="0.127" layer="51"/>
-<wire x1="4.8" y1="0" x2="-4.8" y2="0" width="0.127" layer="51"/>
-<wire x1="-4.8" y1="0" x2="-4.8" y2="6.15" width="0.127" layer="51"/>
-<rectangle x1="-3.425" y1="6.15" x2="-3.175" y2="6.85" layer="51"/>
-<smd name="P$12" x="-0.55" y="4.5" dx="0.8" dy="2" layer="1" cream="no"/>
-<smd name="P$13" x="-1.65" y="4.5" dx="0.8" dy="2" layer="1" cream="no"/>
-<smd name="P$14" x="-2.75" y="4.5" dx="0.8" dy="2" layer="1" cream="no"/>
-<smd name="P$15" x="-3.85" y="4.5" dx="0.8" dy="2" layer="1" cream="no"/>
-<smd name="P$16" x="0.55" y="4.5" dx="0.8" dy="2" layer="1" cream="no"/>
-<smd name="P$17" x="1.65" y="4.5" dx="0.8" dy="2" layer="1" cream="no"/>
-<smd name="P$18" x="2.75" y="4.5" dx="0.8" dy="2" layer="1" cream="no"/>
-<smd name="P$19" x="3.85" y="4.5" dx="0.8" dy="2" layer="1" cream="no"/>
+<smd name="P$1" x="8.89" y="0" dx="0.55" dy="1" layer="1"/>
+<smd name="P$2" x="8.89" y="6.35" dx="0.55" dy="1" layer="1"/>
+<smd name="P$3" x="5.08" y="6.35" dx="0.55" dy="1" layer="1"/>
+<smd name="P$4" x="2.54" y="8.89" dx="1" dy="0.55" layer="1"/>
+<smd name="P$5" x="-2.54" y="8.89" dx="1" dy="0.55" layer="1"/>
+<smd name="P$6" x="-5.08" y="6.35" dx="0.55" dy="1" layer="1"/>
+<smd name="P$7" x="-8.89" y="6.35" dx="0.55" dy="1" layer="1"/>
+<smd name="P$8" x="-8.89" y="0" dx="0.55" dy="1" layer="1"/>
+<smd name="P$9" x="-5.08" y="0" dx="1.27" dy="0.635" layer="1"/>
+<smd name="P$10" x="1.27" y="0" dx="1.27" dy="0.635" layer="1"/>
+<smd name="P$11" x="3.81" y="0" dx="1.27" dy="0.635" layer="1"/>
 </package>
 </packages>
 <symbols>
