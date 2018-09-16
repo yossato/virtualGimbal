@@ -4030,7 +4030,7 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <instance part="C2CK" gate="G$1" x="-66.04" y="-43.18" rot="R270"/>
 <instance part="C2D" gate="G$1" x="-66.04" y="-48.26" rot="R270"/>
 <instance part="+3V1" gate="G$1" x="-38.1" y="-10.16"/>
-<instance part="CN2" gate="G$1" x="-215.9" y="-17.78"/>
+<instance part="CN2" gate="G$1" x="-213.36" y="-17.78"/>
 <instance part="SW2" gate="G$1" x="12.7" y="43.18" rot="R90"/>
 <instance part="R2" gate="G$1" x="-58.42" y="-22.86" rot="R90"/>
 <instance part="+3V2" gate="G$1" x="-58.42" y="-15.24"/>
@@ -4123,7 +4123,7 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 </segment>
 <segment>
 <wire x1="-167.64" y1="-20.32" x2="-177.8" y2="-20.32" width="0.1524" layer="91"/>
-<wire x1="-177.8" y1="-20.32" x2="-213.36" y2="-20.32" width="0.1524" layer="91"/>
+<wire x1="-177.8" y1="-20.32" x2="-210.82" y2="-20.32" width="0.1524" layer="91"/>
 <junction x="-177.8" y="-20.32"/>
 <label x="-208.28" y="-20.32" size="1.778" layer="95"/>
 <pinref part="SUPPLY5" gate="G$1" pin="DGND"/>
@@ -4380,7 +4380,7 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <wire x1="-76.2" y1="-7.62" x2="-78.74" y2="-7.62" width="0.1524" layer="91"/>
 <wire x1="-78.74" y1="-7.62" x2="-109.22" y2="-7.62" width="0.1524" layer="91"/>
 <wire x1="-109.22" y1="-7.62" x2="-187.96" y2="-7.62" width="0.1524" layer="91"/>
-<wire x1="-187.96" y1="-12.7" x2="-213.36" y2="-12.7" width="0.1524" layer="91"/>
+<wire x1="-187.96" y1="-12.7" x2="-210.82" y2="-12.7" width="0.1524" layer="91"/>
 <wire x1="-109.22" y1="-7.62" x2="-109.22" y2="-12.7" width="0.1524" layer="91"/>
 <junction x="-187.96" y="-12.7"/>
 <junction x="-109.22" y="-7.62"/>
@@ -4405,7 +4405,7 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <wire x1="-22.86" y1="0" x2="-104.14" y2="0" width="0.1524" layer="91"/>
 <wire x1="-104.14" y1="0" x2="-185.42" y2="0" width="0.1524" layer="91"/>
 <wire x1="-185.42" y1="0" x2="-185.42" y2="-15.24" width="0.1524" layer="91"/>
-<wire x1="-213.36" y1="-15.24" x2="-185.42" y2="-15.24" width="0.1524" layer="91"/>
+<wire x1="-210.82" y1="-15.24" x2="-185.42" y2="-15.24" width="0.1524" layer="91"/>
 <wire x1="-104.14" y1="-12.7" x2="-104.14" y2="0" width="0.1524" layer="91"/>
 <junction x="-104.14" y="0"/>
 <label x="-208.28" y="-15.24" size="1.778" layer="95"/>
@@ -4420,7 +4420,7 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <wire x1="-182.88" y1="2.54" x2="-99.06" y2="2.54" width="0.1524" layer="91"/>
 <wire x1="-99.06" y1="2.54" x2="-22.86" y2="2.54" width="0.1524" layer="91"/>
 <wire x1="-99.06" y1="-12.7" x2="-99.06" y2="2.54" width="0.1524" layer="91"/>
-<wire x1="-182.88" y1="-17.78" x2="-213.36" y2="-17.78" width="0.1524" layer="91"/>
+<wire x1="-182.88" y1="-17.78" x2="-210.82" y2="-17.78" width="0.1524" layer="91"/>
 <junction x="-99.06" y="2.54"/>
 <label x="-208.28" y="-17.78" size="1.778" layer="95"/>
 <pinref part="IC1" gate="G$1" pin="D+"/>

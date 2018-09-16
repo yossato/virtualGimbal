@@ -1,6 +1,6 @@
 [Eagle]
-Version="09 00 01"
-Platform="Linux"
+Version="09 01 03"
+Platform="Windows"
 Globals="Globals"
 Desktop="Desktop"
 
@@ -348,43 +348,13 @@ UsedLibraryUrn="urn:adsk.eagle:library:174"
 UsedLibraryUrn="urn:adsk.eagle:library:175"
 UsedLibraryUrn="urn:adsk.eagle:library:176"
 UsedLibraryUrn="urn:adsk.eagle:library:177"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/LilyPad-Wearables.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-Aesthetics.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-Batteries.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-Boards.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-Capacitors.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-Clocks.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-Coils.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-Connectors.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-DiscreteSemi.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-Displays.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-Electromechanical.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-Fuses.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-GPS.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-Hardware.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-IC-Amplifiers.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-IC-Comms.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-IC-Conversion.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-IC-Logic.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-IC-Memory.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-IC-Microcontroller.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-IC-Power.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-IC-Special-Function.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-Jumpers.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-LED.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-PowerSymbols.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-RF.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-Resistors.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-Retired.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-Sensors.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/SparkFun-Switches.lbr"
-UsedLibrary="/home/yoshiaki/eagle/SparkFun-Eagle-Libraries/User-Submitted.lbr"
+UsedLibrary="C:/Users/z00_3/project/virtualGimbal/eagle_library/connector.lbr"
 
 [Win_1]
 Type="Schematic Editor"
 Number=2
 File="main.sch"
-View="-181.724 -133.891 97.5179 82.2291"
+View="-251.069 -112.948 -89.4707 12.1218"
 WireWidths=" 0 0.3048 0.6096 0.8128 1.016 1.27 1.4224 1.6764 1.778 1.9304 2.1844 2.54 3.81 6.4516 0.4064 0.1524"
 PadDiameters=" 0.254 0.3048 0.4064 0.6096 0.8128 1.016 1.27 1.4224 1.6764 1.778 1.9304 2.1844 2.54 3.81 6.4516 0"
 PadDrills=" 0.5 0.6 0.7 0.9 1 1.1 1.2 1.3 1.4 1.5 1.6 2 2.2 2.8 3.2 0.8"
@@ -423,14 +393,14 @@ ArcDirection=0
 AddLevel=2
 PadsSameType=0
 Layer=91
-Views=" 1: -181.724 -133.891 97.5179 82.2291"
+Views=" 1: -251.069 -112.948 -89.4707 12.1218"
 Sheet="1"
 
 [Win_2]
 Type="Board Editor"
 Number=1
 File="main.brd"
-View="-36.7755 -17.2004 60.9127 50.0559"
+View="-13.1269 -2.04 33.9835 30.3946"
 WireWidths=" 0 0.254 0.3048 0.6096 0.8128 1.016 1.27 1.4224 1.6764 1.778 1.9304 2.1844 2.54 3.81 6.4516 0.4064"
 PadDiameters=" 0.254 0.3048 0.4064 0.6096 0.8128 1.016 1.27 1.4224 1.6764 1.778 1.9304 2.1844 2.54 3.81 6.4516 0"
 PadDrills=" 0.5 0.6 0.7 0.9 1 1.1 1.2 1.3 1.4 1.5 1.6 2 2.2 2.8 3.2 0.8"
@@ -475,7 +445,7 @@ Type="Control Panel"
 Number=0
 
 [Desktop]
-Screen="3840 2160"
+Screen="960 600"
 Window="Win_1"
 Window="Win_2"
 Window="Win_3"

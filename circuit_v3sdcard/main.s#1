@@ -1752,6 +1752,17 @@
 <smd name="2" x="1" y="-3.205" dx="1" dy="6.41" layer="1" roundness="40"/>
 <smd name="1" x="3.5" y="-3.705" dx="1" dy="7.41" layer="1" roundness="50"/>
 </package>
+<package name="SD">
+<smd name="RSV(DAT2)" x="0" y="-0.05" dx="2" dy="4.4" layer="1" roundness="40"/>
+<smd name="!CS!(DAT3)" x="2.5" y="2" dx="2" dy="4.9" layer="1"/>
+<smd name="DI(CMD)" x="5" y="2" dx="2" dy="4.9" layer="1"/>
+<smd name="VSS1" x="7.5" y="2.25" dx="2" dy="5.4" layer="1" roundness="50"/>
+<smd name="VDD" x="10" y="2.25" dx="2" dy="5.4" layer="1" roundness="50"/>
+<smd name="SCLK" x="12.5" y="2" dx="2" dy="4.9" layer="1"/>
+<smd name="VSS2" x="15" y="2" dx="2" dy="4.9" layer="1"/>
+<smd name="DO(DAT0)" x="17.425" y="2" dx="1.6" dy="4.9" layer="1"/>
+<smd name="RSV(DAT1)" x="19.125" y="2" dx="1.25" dy="4.9" layer="1"/>
+</package>
 </packages>
 <symbols>
 <symbol name="USB_BARE">
@@ -1768,6 +1779,25 @@
 <pin name="P$3" x="2.54" y="0" visible="pad" length="short" direction="pas" rot="R180"/>
 <pin name="P$4" x="2.54" y="-2.54" visible="pad" length="short" direction="pas" rot="R180"/>
 </symbol>
+<symbol name="SD">
+<wire x1="-5.08" y1="12.7" x2="-2.54" y2="12.7" width="0.254" layer="94"/>
+<wire x1="-2.54" y1="12.7" x2="0" y2="10.16" width="0.254" layer="94"/>
+<wire x1="0" y1="10.16" x2="0" y2="-10.16" width="0.254" layer="94"/>
+<wire x1="-5.08" y1="12.7" x2="-5.08" y2="-12.7" width="0.254" layer="94"/>
+<wire x1="-5.08" y1="-12.7" x2="-2.54" y2="-12.7" width="0.254" layer="94"/>
+<wire x1="-2.54" y1="-12.7" x2="0" y2="-10.16" width="0.254" layer="94"/>
+<text x="-6.35" y="-17.653" size="1.778" layer="95">&gt;NAME</text>
+<text x="-6.35" y="-15.24" size="1.778" layer="96">&gt;VALUE</text>
+<pin name="P$1" x="2.54" y="10.16" visible="pad" length="short" direction="pas" rot="R180"/>
+<pin name="P$2" x="2.54" y="7.62" visible="pad" length="short" direction="pas" rot="R180"/>
+<pin name="P$3" x="2.54" y="5.08" visible="pad" length="short" direction="pas" rot="R180"/>
+<pin name="P$4" x="2.54" y="2.54" visible="pad" length="short" direction="pas" rot="R180"/>
+<pin name="P$5" x="2.54" y="0" visible="pad" length="short" direction="pas" rot="R180"/>
+<pin name="P$6" x="2.54" y="-2.54" visible="pad" length="short" direction="pas" rot="R180"/>
+<pin name="P$7" x="2.54" y="-5.08" visible="pad" length="short" direction="pas" rot="R180"/>
+<pin name="P$8" x="2.54" y="-7.62" visible="pad" length="short" direction="pas" rot="R180"/>
+<pin name="P$9" x="2.54" y="-10.16" visible="pad" length="short" direction="pas" rot="R180"/>
+</symbol>
 </symbols>
 <devicesets>
 <deviceset name="USB_BARE" prefix="CN">
@@ -1781,6 +1811,29 @@
 <connect gate="G$1" pin="P$2" pad="2"/>
 <connect gate="G$1" pin="P$3" pad="3"/>
 <connect gate="G$1" pin="P$4" pad="4"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="SD" prefix="CN">
+<gates>
+<gate name="G$1" symbol="SD" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="SD">
+<connects>
+<connect gate="G$1" pin="P$1" pad="RSV(DAT2)"/>
+<connect gate="G$1" pin="P$2" pad="!CS!(DAT3)"/>
+<connect gate="G$1" pin="P$3" pad="DI(CMD)"/>
+<connect gate="G$1" pin="P$4" pad="VSS1"/>
+<connect gate="G$1" pin="P$5" pad="VDD"/>
+<connect gate="G$1" pin="P$6" pad="SCLK"/>
+<connect gate="G$1" pin="P$7" pad="VSS2"/>
+<connect gate="G$1" pin="P$8" pad="DO(DAT0)"/>
+<connect gate="G$1" pin="P$9" pad="RSV(DAT1)"/>
 </connects>
 <technologies>
 <technology name=""/>
@@ -3974,6 +4027,7 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <part name="+3V2" library="supply1" deviceset="+3V3" device=""/>
 <part name="R1" library="reg,cap" deviceset="R-" device="1005" value="100k"/>
 <part name="SUPPLY2" library="supply2" deviceset="DGND" device=""/>
+<part name="CN1" library="Connector" deviceset="SD" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -4036,6 +4090,7 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <instance part="+3V2" gate="G$1" x="-58.42" y="-15.24"/>
 <instance part="R1" gate="G$1" x="-78.74" y="-12.7" rot="R90"/>
 <instance part="SUPPLY2" gate="G$1" x="-78.74" y="-17.78"/>
+<instance part="CN1" gate="G$1" x="-129.54" y="-55.88"/>
 </instances>
 <busses>
 </busses>
