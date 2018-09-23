@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="50" unitdist="mil" unit="mil" style="lines" multiple="1" display="yes" altdistance="5" altunitdist="mil" altunit="mil"/>
+<grid distance="0.4" unitdist="mm" unit="mm" style="lines" multiple="1" display="yes" altdistance="5" altunitdist="mil" altunit="mm"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
@@ -129,6 +129,36 @@
 <rectangle x1="-0.575" y1="-1" x2="-0.225" y2="-0.27" layer="21"/>
 <rectangle x1="-0.975" y1="-1" x2="-0.625" y2="-0.27" layer="21"/>
 </package>
+<package name="5035521020">
+<smd name="1" x="0.8" y="-1.4" dx="0.24" dy="1" layer="1"/>
+<smd name="NC1" x="1.43" y="0.92" dx="0.3" dy="1" layer="1"/>
+<wire x1="-1.73" y1="0.835" x2="1.73" y2="0.835" width="0.0762" layer="51"/>
+<wire x1="1.73" y1="0.835" x2="1.73" y2="-0.835" width="0.0762" layer="51"/>
+<wire x1="1.73" y1="-0.835" x2="-1.73" y2="-0.835" width="0.0762" layer="51"/>
+<wire x1="-1.73" y1="-0.835" x2="-1.73" y2="0.835" width="0.0762" layer="51"/>
+<rectangle x1="-0.15" y1="0.4" x2="0.15" y2="0.9" layer="21"/>
+<rectangle x1="0.25" y1="0.4" x2="0.55" y2="0.9" layer="21"/>
+<rectangle x1="0.65" y1="0.4" x2="0.95" y2="0.9" layer="21"/>
+<rectangle x1="-0.55" y1="0.4" x2="-0.25" y2="0.9" layer="21"/>
+<rectangle x1="-0.95" y1="0.4" x2="-0.65" y2="0.9" layer="21"/>
+<rectangle x1="-0.15" y1="-0.9" x2="0.15" y2="-0.4" layer="21"/>
+<rectangle x1="0.25" y1="-0.9" x2="0.55" y2="-0.4" layer="21"/>
+<rectangle x1="0.65" y1="-0.9" x2="0.95" y2="-0.4" layer="21"/>
+<rectangle x1="-0.55" y1="-0.9" x2="-0.25" y2="-0.4" layer="21"/>
+<rectangle x1="-0.95" y1="-0.9" x2="-0.65" y2="-0.4" layer="21"/>
+<smd name="3" x="0.4" y="-1.4" dx="0.24" dy="1" layer="1"/>
+<smd name="5" x="0" y="-1.4" dx="0.24" dy="1" layer="1"/>
+<smd name="7" x="-0.4" y="-1.4" dx="0.24" dy="1" layer="1"/>
+<smd name="9" x="-0.8" y="-1.4" dx="0.24" dy="1" layer="1"/>
+<smd name="2" x="0.8" y="1.4" dx="0.24" dy="1" layer="1"/>
+<smd name="4" x="0.4" y="1.4" dx="0.24" dy="1" layer="1"/>
+<smd name="6" x="0" y="1.4" dx="0.24" dy="1" layer="1"/>
+<smd name="8" x="-0.4" y="1.4" dx="0.24" dy="1" layer="1"/>
+<smd name="10" x="-0.8" y="1.4" dx="0.24" dy="1" layer="1"/>
+<smd name="NC2" x="-1.43" y="0.92" dx="0.3" dy="1" layer="1"/>
+<smd name="NC3" x="1.43" y="-0.92" dx="0.3" dy="1" layer="1"/>
+<smd name="NC4" x="-1.43" y="-0.92" dx="0.3" dy="1" layer="1"/>
+</package>
 </packages>
 <symbols>
 <symbol name="MICROSD">
@@ -211,11 +241,24 @@
 </device>
 </devices>
 </deviceset>
-<deviceset name="5035481020">
+<deviceset name="5035481020" prefix="CN">
 <gates>
+<gate name="G$1" symbol="CON-2X05" x="-1.27" y="0"/>
 </gates>
 <devices>
-<device name="">
+<device name="" package="5035481020">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="10" pad="10"/>
+<connect gate="G$1" pin="2" pad="2"/>
+<connect gate="G$1" pin="3" pad="3"/>
+<connect gate="G$1" pin="4" pad="4"/>
+<connect gate="G$1" pin="5" pad="5"/>
+<connect gate="G$1" pin="6" pad="6"/>
+<connect gate="G$1" pin="7" pad="7"/>
+<connect gate="G$1" pin="8" pad="8"/>
+<connect gate="G$1" pin="9" pad="9"/>
+</connects>
 <technologies>
 <technology name=""/>
 </technologies>
