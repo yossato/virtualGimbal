@@ -1806,6 +1806,36 @@
 <rectangle x1="-1.45" y1="6.955" x2="-1.1" y2="7.255" layer="51"/>
 <rectangle x1="1.1" y1="6.955" x2="1.45" y2="7.255" layer="51"/>
 </package>
+<package name="5035481020">
+<smd name="10" x="-0.8" y="-1.5" dx="0.24" dy="1" layer="1"/>
+<smd name="8" x="-0.4" y="-1.5" dx="0.24" dy="1" layer="1"/>
+<smd name="6" x="0" y="-1.5" dx="0.24" dy="1" layer="1"/>
+<smd name="4" x="0.4" y="-1.5" dx="0.24" dy="1" layer="1"/>
+<smd name="2" x="0.8" y="-1.5" dx="0.24" dy="1" layer="1"/>
+<smd name="1" x="0.8" y="1.5" dx="0.24" dy="1" layer="1"/>
+<smd name="3" x="0.4" y="1.5" dx="0.24" dy="1" layer="1"/>
+<smd name="5" x="0" y="1.5" dx="0.24" dy="1" layer="1"/>
+<smd name="7" x="-0.4" y="1.5" dx="0.24" dy="1" layer="1"/>
+<smd name="9" x="-0.8" y="1.5" dx="0.24" dy="1" layer="1"/>
+<smd name="NC4" x="-1.55" y="-1.46" dx="0.5" dy="1" layer="1"/>
+<smd name="NC2" x="1.55" y="-1.46" dx="0.5" dy="1" layer="1"/>
+<smd name="NC1" x="1.55" y="1.46" dx="0.5" dy="1" layer="1"/>
+<smd name="NC3" x="-1.55" y="1.46" dx="0.5" dy="1" layer="1"/>
+<wire x1="-2.35" y1="1.3" x2="2.35" y2="1.3" width="0.0762" layer="51"/>
+<wire x1="2.35" y1="1.3" x2="2.35" y2="-1.3" width="0.0762" layer="51"/>
+<wire x1="2.35" y1="-1.3" x2="-2.35" y2="-1.3" width="0.0762" layer="51"/>
+<wire x1="-2.35" y1="-1.3" x2="-2.35" y2="1.3" width="0.0762" layer="51"/>
+<rectangle x1="-0.175" y1="0.27" x2="0.175" y2="1" layer="21"/>
+<rectangle x1="-0.575" y1="0.27" x2="-0.225" y2="1" layer="21"/>
+<rectangle x1="-0.975" y1="0.27" x2="-0.625" y2="1" layer="21"/>
+<rectangle x1="0.225" y1="0.27" x2="0.575" y2="1" layer="21"/>
+<rectangle x1="0.625" y1="0.27" x2="0.975" y2="1" layer="21"/>
+<rectangle x1="0.625" y1="-1" x2="0.975" y2="-0.27" layer="21"/>
+<rectangle x1="0.225" y1="-1" x2="0.575" y2="-0.27" layer="21"/>
+<rectangle x1="-0.175" y1="-1" x2="0.175" y2="-0.27" layer="21"/>
+<rectangle x1="-0.575" y1="-1" x2="-0.225" y2="-0.27" layer="21"/>
+<rectangle x1="-0.975" y1="-1" x2="-0.625" y2="-0.27" layer="21"/>
+</package>
 </packages>
 <symbols>
 <symbol name="USB_BARE">
@@ -1858,6 +1888,44 @@
 <pin name="P$6" x="5.08" y="-2.54" visible="pad" length="short" direction="pas" rot="R180"/>
 <pin name="P$7" x="5.08" y="-5.08" visible="pad" length="short" direction="pas" rot="R180"/>
 <pin name="P$8" x="5.08" y="-7.62" visible="pad" length="short" direction="pas" rot="R180"/>
+</symbol>
+<symbol name="CON-2X05">
+<wire x1="4.445" y1="6.35" x2="-1.905" y2="6.35" width="0.254" layer="94"/>
+<wire x1="-1.905" y1="-6.35" x2="-1.905" y2="6.35" width="0.254" layer="94"/>
+<wire x1="-1.905" y1="-6.35" x2="4.445" y2="-6.35" width="0.254" layer="94"/>
+<wire x1="4.445" y1="6.35" x2="4.445" y2="-6.35" width="0.254" layer="94"/>
+<wire x1="-2.54" y1="5.08" x2="-0.635" y2="5.08" width="0.1524" layer="94"/>
+<wire x1="-2.54" y1="2.54" x2="-0.635" y2="2.54" width="0.1524" layer="94"/>
+<wire x1="5.08" y1="5.08" x2="3.175" y2="5.08" width="0.1524" layer="94"/>
+<wire x1="5.08" y1="2.54" x2="3.175" y2="2.54" width="0.1524" layer="94"/>
+<wire x1="-2.54" y1="0" x2="-0.635" y2="0" width="0.1524" layer="94"/>
+<wire x1="5.08" y1="0" x2="3.175" y2="0" width="0.1524" layer="94"/>
+<wire x1="-2.54" y1="-2.54" x2="-0.635" y2="-2.54" width="0.1524" layer="94"/>
+<wire x1="5.08" y1="-2.54" x2="3.175" y2="-2.54" width="0.1524" layer="94"/>
+<wire x1="-2.54" y1="-5.08" x2="-0.635" y2="-5.08" width="0.1524" layer="94"/>
+<wire x1="5.08" y1="-5.08" x2="3.175" y2="-5.08" width="0.1524" layer="94"/>
+<wire x1="-0.635" y1="5.08" x2="0.635" y2="5.08" width="0.4064" layer="94"/>
+<wire x1="-0.635" y1="2.54" x2="0.635" y2="2.54" width="0.4064" layer="94"/>
+<wire x1="-0.635" y1="0" x2="0.635" y2="0" width="0.4064" layer="94"/>
+<wire x1="-0.635" y1="-2.54" x2="0.635" y2="-2.54" width="0.4064" layer="94"/>
+<wire x1="-0.635" y1="-5.08" x2="0.635" y2="-5.08" width="0.4064" layer="94"/>
+<wire x1="1.905" y1="5.08" x2="3.175" y2="5.08" width="0.4064" layer="94"/>
+<wire x1="1.905" y1="2.54" x2="3.175" y2="2.54" width="0.4064" layer="94"/>
+<wire x1="1.905" y1="0" x2="3.175" y2="0" width="0.4064" layer="94"/>
+<wire x1="1.905" y1="-2.54" x2="3.175" y2="-2.54" width="0.4064" layer="94"/>
+<wire x1="1.905" y1="-5.08" x2="3.175" y2="-5.08" width="0.4064" layer="94"/>
+<text x="-1.905" y="7.62" size="1.778" layer="95">&gt;NAME</text>
+<text x="-1.905" y="-9.2075" size="1.778" layer="96">&gt;VALUE</text>
+<pin name="1" x="-5.08" y="5.08" visible="pad" length="short" direction="pas"/>
+<pin name="2" x="7.62" y="5.08" visible="pad" length="short" direction="pas" rot="R180"/>
+<pin name="3" x="-5.08" y="2.54" visible="pad" length="short" direction="pas"/>
+<pin name="4" x="7.62" y="2.54" visible="pad" length="short" direction="pas" rot="R180"/>
+<pin name="5" x="-5.08" y="0" visible="pad" length="short" direction="pas"/>
+<pin name="6" x="7.62" y="0" visible="pad" length="short" direction="pas" rot="R180"/>
+<pin name="7" x="-5.08" y="-2.54" visible="pad" length="short" direction="pas"/>
+<pin name="8" x="7.62" y="-2.54" visible="pad" length="short" direction="pas" rot="R180"/>
+<pin name="9" x="-5.08" y="-5.08" visible="pad" length="short" direction="pas"/>
+<pin name="10" x="7.62" y="-5.08" visible="pad" length="short" direction="pas" rot="R180"/>
 </symbol>
 </symbols>
 <devicesets>
@@ -1917,6 +1985,30 @@
 <connect gate="G$1" pin="P$6" pad="VSS"/>
 <connect gate="G$1" pin="P$7" pad="DAT0"/>
 <connect gate="G$1" pin="P$8" pad="DAT1"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="5035481020" prefix="CN">
+<gates>
+<gate name="G$1" symbol="CON-2X05" x="-1.27" y="0"/>
+</gates>
+<devices>
+<device name="" package="5035481020">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="10" pad="10"/>
+<connect gate="G$1" pin="2" pad="2"/>
+<connect gate="G$1" pin="3" pad="3"/>
+<connect gate="G$1" pin="4" pad="4"/>
+<connect gate="G$1" pin="5" pad="5"/>
+<connect gate="G$1" pin="6" pad="6"/>
+<connect gate="G$1" pin="7" pad="7"/>
+<connect gate="G$1" pin="8" pad="8"/>
+<connect gate="G$1" pin="9" pad="9"/>
 </connects>
 <technologies>
 <technology name=""/>
@@ -4112,6 +4204,7 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <part name="SUPPLY2" library="supply2" deviceset="DGND" device=""/>
 <part name="CN1" library="Connector" deviceset="SD" device=""/>
 <part name="CN3" library="Connector" deviceset="MICROSD" device=""/>
+<part name="CN4" library="Connector" deviceset="5035481020" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -4176,6 +4269,7 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <instance part="SUPPLY2" gate="G$1" x="-78.74" y="-17.78"/>
 <instance part="CN1" gate="G$1" x="-129.54" y="-55.88"/>
 <instance part="CN3" gate="G$1" x="-203.2" y="-58.42"/>
+<instance part="CN4" gate="G$1" x="-226.06" y="-45.72"/>
 </instances>
 <busses>
 </busses>

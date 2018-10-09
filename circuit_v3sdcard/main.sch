@@ -1767,17 +1767,17 @@
 <smd name="RSV(DAT1)" x="19.125" y="2" dx="1.25" dy="4.9" layer="1"/>
 </package>
 <package name="BLOCK_SD_CONNECTOR">
-<smd name="DAT2" x="4.4" y="-0.48" dx="0.55" dy="1.2" layer="1"/>
+<smd name="DAT2" x="4.4" y="-0.43" dx="0.55" dy="1.1" layer="1"/>
 <smd name="CD/DAT3" x="3.3" y="6.77" dx="0.45" dy="1.2" layer="1"/>
 <smd name="CMD" x="2.2" y="6.77" dx="0.45" dy="1.2" layer="1"/>
 <smd name="VDD" x="1.45" y="7.13" dx="0.5" dy="1.2" layer="1"/>
 <smd name="CLK" x="-1.45" y="7.13" dx="0.5" dy="1.2" layer="1"/>
 <smd name="VSS" x="-2.2" y="6.77" dx="0.45" dy="1.2" layer="1"/>
 <smd name="DAT0" x="-3.3" y="6.77" dx="0.45" dy="1.2" layer="1"/>
-<smd name="DAT1" x="-4.4" y="-0.48" dx="0.55" dy="1.2" layer="1"/>
-<smd name="P$9" x="-2.18" y="-0.48" dx="0.5" dy="1.2" layer="1"/>
-<smd name="P$10" x="0" y="-0.48" dx="0.5" dy="1.2" layer="1"/>
-<smd name="P$11" x="2.18" y="-0.48" dx="0.5" dy="1.2" layer="1"/>
+<smd name="DAT1" x="-4.4" y="-0.43" dx="0.55" dy="1.1" layer="1"/>
+<smd name="P$9" x="-2.18" y="-0.43" dx="0.5" dy="1.1" layer="1"/>
+<smd name="P$10" x="0" y="-0.43" dx="0.5" dy="1.1" layer="1"/>
+<smd name="P$11" x="2.18" y="-0.43" dx="0.5" dy="1.1" layer="1"/>
 <rectangle x1="-4.575" y1="-0.56" x2="-4.225" y2="0" layer="51"/>
 <wire x1="-4.8" y1="6.15" x2="-1.38" y2="6.15" width="0.127" layer="51"/>
 <wire x1="1.38" y1="6.15" x2="4.8" y2="6.15" width="0.127" layer="51"/>
