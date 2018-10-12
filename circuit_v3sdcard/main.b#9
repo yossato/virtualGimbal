@@ -93,23 +93,40 @@
 <text x="14.48" y="42.79" size="0.8128" layer="26" font="vector" ratio="12" rot="SMR0">virtualGimbal</text>
 <text x="14.4" y="38.39" size="0.8128" layer="26" font="vector" ratio="12" rot="SMR0">Designed by</text>
 <text x="14.44" y="35.89" size="0.8128" layer="26" font="vector" ratio="12" rot="SMR0">Y. Sato</text>
-<wire x1="2.05" y1="0" x2="2.05" y2="7.15" width="0" layer="20"/>
-<wire x1="2.05" y1="7.15" x2="0" y2="7.15" width="0" layer="20"/>
-<wire x1="0" y1="7.15" x2="0" y2="24.05" width="0" layer="20"/>
-<wire x1="0" y1="24.05" x2="-0.4" y2="24.05" width="0" layer="20"/>
-<wire x1="-0.4" y1="24.05" x2="-0.4" y2="29.7" width="0" layer="20"/>
-<wire x1="-0.4" y1="29.7" x2="18.08" y2="29.7" width="0" layer="20"/>
-<wire x1="18.08" y1="29.7" x2="21.5" y2="26.28" width="0" layer="20"/>
-<wire x1="21.5" y1="26.28" x2="21.5" y2="22.35" width="0" layer="20"/>
-<wire x1="21.5" y1="22.35" x2="21.1" y2="22.35" width="0" layer="20"/>
-<wire x1="21.1" y1="22.35" x2="21.1" y2="6.85" width="0" layer="20"/>
-<wire x1="21.1" y1="6.85" x2="10.7" y2="6.85" width="0" layer="20"/>
-<wire x1="9.65" y1="7.15" x2="7.05" y2="7.15" width="0" layer="20"/>
-<wire x1="7.05" y1="7.15" x2="7.05" y2="0" width="0" layer="20"/>
-<wire x1="7.05" y1="0" x2="2.05" y2="0" width="0" layer="20"/>
-<wire x1="10.7" y1="6.85" x2="10.7" y2="17" width="0" layer="20"/>
-<wire x1="10.7" y1="17" x2="9.65" y2="17" width="0" layer="20"/>
-<wire x1="9.65" y1="17" x2="9.65" y2="7.15" width="0" layer="20"/>
+<wire x1="2.15" y1="0.1" x2="2.15" y2="7.25" width="0" layer="20"/>
+<wire x1="2.15" y1="7.25" x2="0.1" y2="7.25" width="0" layer="20"/>
+<wire x1="0.1" y1="7.25" x2="0.1" y2="24.15" width="0" layer="20"/>
+<wire x1="0.1" y1="24.15" x2="-0.3" y2="24.15" width="0" layer="20"/>
+<wire x1="-0.3" y1="24.15" x2="-0.3" y2="29.6" width="0" layer="20"/>
+<wire x1="-0.3" y1="29.6" x2="18.15" y2="29.6" width="0" layer="20"/>
+<wire x1="18.15" y1="29.6" x2="21.4" y2="26.35" width="0" layer="20"/>
+<wire x1="21.4" y1="26.35" x2="21.4" y2="22.45" width="0" layer="20"/>
+<wire x1="21.4" y1="22.45" x2="21" y2="22.45" width="0" layer="20"/>
+<wire x1="21" y1="22.45" x2="21" y2="6.95" width="0" layer="20"/>
+<wire x1="21" y1="6.95" x2="10.75" y2="6.95" width="0" layer="20"/>
+<wire x1="9.6" y1="7.25" x2="6.95" y2="7.25" width="0" layer="20"/>
+<wire x1="6.95" y1="7.25" x2="6.95" y2="0.1" width="0" layer="20"/>
+<wire x1="6.95" y1="0.1" x2="2.15" y2="0.1" width="0" layer="20"/>
+<wire x1="10.75" y1="6.95" x2="10.75" y2="17.1" width="0" layer="20"/>
+<wire x1="10.75" y1="17.1" x2="9.6" y2="17.1" width="0" layer="20"/>
+<wire x1="9.6" y1="17.1" x2="9.6" y2="7.25" width="0" layer="20"/>
+<wire x1="0" y1="7.15" x2="0" y2="24.05" width="0" layer="51"/>
+<wire x1="0" y1="24.05" x2="-0.4" y2="24.05" width="0" layer="51"/>
+<wire x1="-0.4" y1="24.05" x2="-0.4" y2="29.7" width="0" layer="51"/>
+<wire x1="-0.4" y1="29.7" x2="18.08" y2="29.7" width="0" layer="51"/>
+<wire x1="18.08" y1="29.7" x2="21.5" y2="26.28" width="0" layer="51"/>
+<wire x1="21.5" y1="26.28" x2="21.5" y2="22.35" width="0" layer="51"/>
+<wire x1="21.5" y1="22.35" x2="21.1" y2="22.35" width="0" layer="51"/>
+<wire x1="21.1" y1="22.35" x2="21.1" y2="6.85" width="0" layer="51"/>
+<wire x1="21.1" y1="6.85" x2="10.7" y2="6.85" width="0" layer="51"/>
+<wire x1="10.7" y1="6.85" x2="10.7" y2="17" width="0" layer="51"/>
+<wire x1="10.7" y1="17" x2="9.65" y2="17" width="0" layer="51"/>
+<wire x1="9.65" y1="17" x2="9.65" y2="7.15" width="0" layer="51"/>
+<wire x1="9.65" y1="7.15" x2="7.05" y2="7.15" width="0" layer="51"/>
+<wire x1="7.05" y1="7.15" x2="7.05" y2="0" width="0" layer="51"/>
+<wire x1="7.05" y1="0" x2="2.05" y2="0" width="0" layer="51"/>
+<wire x1="2.05" y1="0" x2="2.05" y2="7.15" width="0" layer="51"/>
+<wire x1="2.05" y1="7.15" x2="0" y2="7.15" width="0" layer="51"/>
 </plain>
 <libraries>
 <library name="C8051F34x">
