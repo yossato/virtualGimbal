@@ -4135,7 +4135,7 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <part name="SUPPLY27" library="supply2" deviceset="DGND" device=""/>
 <part name="SUPPLY28" library="supply2" deviceset="DGND" device=""/>
 <part name="IC6" library="GYRO" deviceset="MPU-9250" device=""/>
-<part name="P0.0" library="testpad" deviceset="PTR1" device="TP10R"/>
+<part name="TP" library="testpad" deviceset="PTR1" device="TP10R"/>
 <part name="+3V9" library="supply1" deviceset="+3V3" device=""/>
 <part name="+3V11" library="supply1" deviceset="+3V3" device=""/>
 <part name="R26" library="reg,cap" deviceset="R-" device="1005" value="1k"/>
@@ -4194,7 +4194,7 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <instance part="SUPPLY27" gate="G$1" x="48.26" y="15.24"/>
 <instance part="SUPPLY28" gate="G$1" x="-22.86" y="58.42"/>
 <instance part="IC6" gate="G$1" x="55.88" y="-99.06"/>
-<instance part="P0.0" gate="G$1" x="-20.32" y="-63.5" rot="R180"/>
+<instance part="TP" gate="G$1" x="-20.32" y="-63.5" rot="R180"/>
 <instance part="+3V9" gate="G$1" x="22.86" y="-83.82"/>
 <instance part="+3V11" gate="G$1" x="-60.96" y="96.52"/>
 <instance part="R26" gate="G$1" x="-7.62" y="68.58"/>
@@ -4560,7 +4560,7 @@ Source: http://www.diodes.com/datasheets/ds23001.pdf</description>
 <wire x1="-2.54" y1="-66.04" x2="-20.32" y2="-66.04" width="0.1524" layer="91"/>
 <junction x="-20.32" y="-66.04"/>
 <pinref part="R7" gate="G$1" pin="P$2"/>
-<pinref part="P0.0" gate="G$1" pin="TP"/>
+<pinref part="TP" gate="G$1" pin="TP"/>
 <pinref part="IC1" gate="G$1" pin="P2.7"/>
 </segment>
 </net>
