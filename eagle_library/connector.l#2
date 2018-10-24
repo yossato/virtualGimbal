@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="50" unitdist="mil" unit="mm" style="lines" multiple="1" display="yes" altdistance="5" altunitdist="mil" altunit="mm"/>
+<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
@@ -228,6 +228,25 @@
 <pin name="9" x="-5.08" y="-5.08" visible="pad" length="short" direction="pas"/>
 <pin name="10" x="7.62" y="-5.08" visible="pad" length="short" direction="pas" rot="R180"/>
 </symbol>
+<symbol name="SD">
+<wire x1="-5.08" y1="12.7" x2="-2.54" y2="12.7" width="0.254" layer="94"/>
+<wire x1="-2.54" y1="12.7" x2="0" y2="10.16" width="0.254" layer="94"/>
+<wire x1="0" y1="10.16" x2="0" y2="-10.16" width="0.254" layer="94"/>
+<wire x1="-5.08" y1="12.7" x2="-5.08" y2="-12.7" width="0.254" layer="94"/>
+<wire x1="-5.08" y1="-12.7" x2="-2.54" y2="-12.7" width="0.254" layer="94"/>
+<wire x1="-2.54" y1="-12.7" x2="0" y2="-10.16" width="0.254" layer="94"/>
+<text x="-6.35" y="-17.653" size="1.778" layer="95">&gt;NAME</text>
+<text x="-6.35" y="-15.24" size="1.778" layer="96">&gt;VALUE</text>
+<pin name="P$1" x="2.54" y="10.16" visible="pad" length="short" direction="pas" rot="R180"/>
+<pin name="P$2" x="2.54" y="7.62" visible="pad" length="short" direction="pas" rot="R180"/>
+<pin name="P$3" x="2.54" y="5.08" visible="pad" length="short" direction="pas" rot="R180"/>
+<pin name="P$4" x="2.54" y="2.54" visible="pad" length="short" direction="pas" rot="R180"/>
+<pin name="P$5" x="2.54" y="0" visible="pad" length="short" direction="pas" rot="R180"/>
+<pin name="P$6" x="2.54" y="-2.54" visible="pad" length="short" direction="pas" rot="R180"/>
+<pin name="P$7" x="2.54" y="-5.08" visible="pad" length="short" direction="pas" rot="R180"/>
+<pin name="P$8" x="2.54" y="-7.62" visible="pad" length="short" direction="pas" rot="R180"/>
+<pin name="P$9" x="2.54" y="-10.16" visible="pad" length="short" direction="pas" rot="R180"/>
+</symbol>
 </symbols>
 <devicesets>
 <deviceset name="MICROSD" prefix="CN">
@@ -293,6 +312,29 @@
 <connect gate="G$1" pin="7" pad="7"/>
 <connect gate="G$1" pin="8" pad="8"/>
 <connect gate="G$1" pin="9" pad="9"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="SD" prefix="CN">
+<gates>
+<gate name="G$1" symbol="SD" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="SD_V3">
+<connects>
+<connect gate="G$1" pin="P$1" pad="RSV(DAT2)"/>
+<connect gate="G$1" pin="P$2" pad="!CS!(DAT3)"/>
+<connect gate="G$1" pin="P$3" pad="DI(CMD)"/>
+<connect gate="G$1" pin="P$4" pad="VSS1"/>
+<connect gate="G$1" pin="P$5" pad="VDD"/>
+<connect gate="G$1" pin="P$6" pad="SCLK"/>
+<connect gate="G$1" pin="P$7" pad="VSS2"/>
+<connect gate="G$1" pin="P$8" pad="DO(DAT0)"/>
+<connect gate="G$1" pin="P$9" pad="RSV(DAT1)"/>
 </connects>
 <technologies>
 <technology name=""/>

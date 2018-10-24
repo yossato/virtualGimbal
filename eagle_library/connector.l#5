@@ -159,6 +159,17 @@
 <smd name="NC3" x="1.43" y="-0.92" dx="0.3" dy="1" layer="1"/>
 <smd name="NC4" x="-1.43" y="-0.92" dx="0.3" dy="1" layer="1"/>
 </package>
+<package name="SD_V3">
+<smd name="RSV(DAT2)" x="-10.16" y="-2.59" dx="2" dy="4.4" layer="1" roundness="40"/>
+<smd name="!CS!(DAT3)" x="-7.66" y="-0.54" dx="2" dy="4.9" layer="1"/>
+<smd name="DI(CMD)" x="-5.16" y="-0.54" dx="2" dy="4.9" layer="1"/>
+<smd name="VSS1" x="-2.66" y="-0.29" dx="2" dy="4.05" layer="1" roundness="50"/>
+<smd name="VDD" x="-0.16" y="-0.29" dx="2" dy="4.05" layer="1" roundness="50"/>
+<smd name="SCLK" x="2.34" y="-0.54" dx="2" dy="4.9" layer="1"/>
+<smd name="VSS2" x="4.84" y="-0.54" dx="2" dy="4.9" layer="1"/>
+<smd name="DO(DAT0)" x="7.265" y="-0.54" dx="1.6" dy="4.9" layer="1"/>
+<smd name="RSV(DAT1)" x="8.965" y="-0.54" dx="1.25" dy="4.9" layer="1"/>
+</package>
 </packages>
 <symbols>
 <symbol name="MICROSD">

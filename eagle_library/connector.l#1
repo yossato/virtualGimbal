@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="9.1.3">
+<eagle version="9.2.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
+<grid distance="50" unitdist="mil" unit="mil" style="lines" multiple="1" display="yes" altdistance="5" altunitdist="mil" altunit="mil"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
@@ -118,16 +118,16 @@
 <wire x1="2.35" y1="1.3" x2="2.35" y2="-1.3" width="0.0762" layer="51"/>
 <wire x1="2.35" y1="-1.3" x2="-2.35" y2="-1.3" width="0.0762" layer="51"/>
 <wire x1="-2.35" y1="-1.3" x2="-2.35" y2="1.3" width="0.0762" layer="51"/>
-<rectangle x1="-0.175" y1="0.27" x2="0.175" y2="1" layer="21"/>
-<rectangle x1="-0.575" y1="0.27" x2="-0.225" y2="1" layer="21"/>
-<rectangle x1="-0.975" y1="0.27" x2="-0.625" y2="1" layer="21"/>
-<rectangle x1="0.225" y1="0.27" x2="0.575" y2="1" layer="21"/>
-<rectangle x1="0.625" y1="0.27" x2="0.975" y2="1" layer="21"/>
-<rectangle x1="0.625" y1="-1" x2="0.975" y2="-0.27" layer="21"/>
-<rectangle x1="0.225" y1="-1" x2="0.575" y2="-0.27" layer="21"/>
-<rectangle x1="-0.175" y1="-1" x2="0.175" y2="-0.27" layer="21"/>
-<rectangle x1="-0.575" y1="-1" x2="-0.225" y2="-0.27" layer="21"/>
-<rectangle x1="-0.975" y1="-1" x2="-0.625" y2="-0.27" layer="21"/>
+<rectangle x1="-0.175" y1="0.27" x2="0.175" y2="1" layer="51"/>
+<rectangle x1="-0.575" y1="0.27" x2="-0.225" y2="1" layer="51"/>
+<rectangle x1="-0.975" y1="0.27" x2="-0.625" y2="1" layer="51"/>
+<rectangle x1="0.225" y1="0.27" x2="0.575" y2="1" layer="51"/>
+<rectangle x1="0.625" y1="0.27" x2="0.975" y2="1" layer="51"/>
+<rectangle x1="0.625" y1="-1" x2="0.975" y2="-0.27" layer="51"/>
+<rectangle x1="0.225" y1="-1" x2="0.575" y2="-0.27" layer="51"/>
+<rectangle x1="-0.175" y1="-1" x2="0.175" y2="-0.27" layer="51"/>
+<rectangle x1="-0.575" y1="-1" x2="-0.225" y2="-0.27" layer="51"/>
+<rectangle x1="-0.975" y1="-1" x2="-0.625" y2="-0.27" layer="51"/>
 </package>
 <package name="5035521020">
 <smd name="1" x="0.8" y="-1.4" dx="0.24" dy="1" layer="1"/>
@@ -326,15 +326,15 @@
 <devices>
 <device name="" package="SD_V3">
 <connects>
-<connect gate="G$1" pin="P$1" pad="!CS!(DAT3)"/>
-<connect gate="G$1" pin="P$2" pad="DI(CMD)"/>
-<connect gate="G$1" pin="P$3" pad="VSS1"/>
-<connect gate="G$1" pin="P$4" pad="VDD"/>
-<connect gate="G$1" pin="P$5" pad="SCLK"/>
-<connect gate="G$1" pin="P$6" pad="VSS2"/>
-<connect gate="G$1" pin="P$7" pad="DO(DAT0)"/>
-<connect gate="G$1" pin="P$8" pad="RSV(DAT1)"/>
-<connect gate="G$1" pin="P$9" pad="RSV(DAT2)"/>
+<connect gate="G$1" pin="P$1" pad="RSV(DAT2)"/>
+<connect gate="G$1" pin="P$2" pad="!CS!(DAT3)"/>
+<connect gate="G$1" pin="P$3" pad="DI(CMD)"/>
+<connect gate="G$1" pin="P$4" pad="VSS1"/>
+<connect gate="G$1" pin="P$5" pad="VDD"/>
+<connect gate="G$1" pin="P$6" pad="SCLK"/>
+<connect gate="G$1" pin="P$7" pad="VSS2"/>
+<connect gate="G$1" pin="P$8" pad="DO(DAT0)"/>
+<connect gate="G$1" pin="P$9" pad="RSV(DAT1)"/>
 </connects>
 <technologies>
 <technology name=""/>

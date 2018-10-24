@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.4" unitdist="mm" unit="mm" style="lines" multiple="1" display="yes" altdistance="5" altunitdist="mil" altunit="mm"/>
+<grid distance="50" unitdist="mil" unit="mm" style="lines" multiple="1" display="yes" altdistance="5" altunitdist="mil" altunit="mm"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
@@ -60,17 +60,17 @@
 <library>
 <packages>
 <package name="BLOCK_SD_CONNECTOR">
-<smd name="DAT2" x="4.4" y="-0.48" dx="0.55" dy="1.2" layer="1"/>
+<smd name="DAT2" x="4.4" y="-0.43" dx="0.55" dy="1.1" layer="1"/>
 <smd name="CD/DAT3" x="3.3" y="6.77" dx="0.45" dy="1.2" layer="1"/>
 <smd name="CMD" x="2.2" y="6.77" dx="0.45" dy="1.2" layer="1"/>
 <smd name="VDD" x="1.45" y="7.13" dx="0.5" dy="1.2" layer="1"/>
 <smd name="CLK" x="-1.45" y="7.13" dx="0.5" dy="1.2" layer="1"/>
 <smd name="VSS" x="-2.2" y="6.77" dx="0.45" dy="1.2" layer="1"/>
 <smd name="DAT0" x="-3.3" y="6.77" dx="0.45" dy="1.2" layer="1"/>
-<smd name="DAT1" x="-4.4" y="-0.48" dx="0.55" dy="1.2" layer="1"/>
-<smd name="P$9" x="-2.18" y="-0.48" dx="0.5" dy="1.2" layer="1"/>
-<smd name="P$10" x="0" y="-0.48" dx="0.5" dy="1.2" layer="1"/>
-<smd name="P$11" x="2.18" y="-0.48" dx="0.5" dy="1.2" layer="1"/>
+<smd name="DAT1" x="-4.4" y="-0.43" dx="0.55" dy="1.1" layer="1"/>
+<smd name="P$9" x="-2.18" y="-0.43" dx="0.5" dy="1.1" layer="1"/>
+<smd name="P$10" x="0" y="-0.43" dx="0.5" dy="1.1" layer="1"/>
+<smd name="P$11" x="2.18" y="-0.43" dx="0.5" dy="1.1" layer="1"/>
 <rectangle x1="-4.575" y1="-0.56" x2="-4.225" y2="0" layer="51"/>
 <wire x1="-4.8" y1="6.15" x2="-1.38" y2="6.15" width="0.127" layer="51"/>
 <wire x1="1.38" y1="6.15" x2="4.8" y2="6.15" width="0.127" layer="51"/>
@@ -247,6 +247,30 @@
 </gates>
 <devices>
 <device name="" package="5035481020">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="10" pad="10"/>
+<connect gate="G$1" pin="2" pad="2"/>
+<connect gate="G$1" pin="3" pad="3"/>
+<connect gate="G$1" pin="4" pad="4"/>
+<connect gate="G$1" pin="5" pad="5"/>
+<connect gate="G$1" pin="6" pad="6"/>
+<connect gate="G$1" pin="7" pad="7"/>
+<connect gate="G$1" pin="8" pad="8"/>
+<connect gate="G$1" pin="9" pad="9"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="5035521020" prefix="CN">
+<gates>
+<gate name="G$1" symbol="CON-2X05" x="-1.27" y="0"/>
+</gates>
+<devices>
+<device name="" package="5035521020">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
 <connect gate="G$1" pin="10" pad="10"/>
