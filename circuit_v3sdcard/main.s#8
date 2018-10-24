@@ -1353,7 +1353,7 @@ Source: &lt;a href="http://www.farnell.com/datasheets/461166.pdf"&gt; Data sheet
 <classes>
 <class number="0" name="signal" width="0.1524" drill="0">
 </class>
-<class number="1" name="power" width="0.254" drill="0">
+<class number="1" name="power" width="0.2032" drill="0">
 </class>
 </classes>
 <parts>
