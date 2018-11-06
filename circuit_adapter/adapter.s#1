@@ -300,6 +300,12 @@ Source: 3M</description>
 <vertex x="3.81" y="-1.45"/>
 </polygon>
 </package>
+<package name="USB">
+<smd name="GND" x="0" y="0" dx="1" dy="6.94" layer="1"/>
+<smd name="VBUS" x="7" y="0" dx="1" dy="6.94" layer="1"/>
+<smd name="D-" x="4.5" y="0.5" dx="1" dy="5.94" layer="1"/>
+<smd name="D+" x="2.5" y="0.5" dx="1" dy="5.94" layer="1"/>
+</package>
 </packages>
 <symbols>
 <symbol name="CON-2X05">
@@ -355,6 +361,20 @@ Source: 3M</description>
 <pin name="4" x="-5.08" y="-2.54" visible="pin" direction="in"/>
 <pin name="5" x="-5.08" y="-5.08" visible="pin" direction="in"/>
 </symbol>
+<symbol name="USB">
+<wire x1="0" y1="5.08" x2="0" y2="-2.54" width="0.254" layer="94"/>
+<wire x1="0" y1="-2.54" x2="1.27" y2="-3.81" width="0.254" layer="94"/>
+<wire x1="1.27" y1="-3.81" x2="3.81" y2="-3.81" width="0.254" layer="94"/>
+<wire x1="3.81" y1="-3.81" x2="3.81" y2="6.35" width="0.254" layer="94"/>
+<wire x1="3.81" y1="6.35" x2="1.27" y2="6.35" width="0.254" layer="94"/>
+<wire x1="1.27" y1="6.35" x2="0" y2="5.08" width="0.254" layer="94"/>
+<text x="-2.54" y="8.89" size="1.778" layer="95">&gt;NAME</text>
+<text x="10.16" y="-5.08" size="1.778" layer="96" rot="R90">&gt;VALUE</text>
+<pin name="1" x="-5.08" y="5.08" visible="pin" direction="in"/>
+<pin name="2" x="-5.08" y="2.54" visible="pin" direction="in"/>
+<pin name="3" x="-5.08" y="0" visible="pin" direction="in"/>
+<pin name="4" x="-5.08" y="-2.54" visible="pin" direction="in"/>
+</symbol>
 </symbols>
 <devicesets>
 <deviceset name="5035521020" prefix="CN">
@@ -393,6 +413,24 @@ Source: 3M</description>
 <connect gate="G$1" pin="3" pad="3_D+"/>
 <connect gate="G$1" pin="4" pad="4_ID"/>
 <connect gate="G$1" pin="5" pad="5_GND"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="USB" prefix="CN" uservalue="yes">
+<gates>
+<gate name="G$1" symbol="USB" x="0" y="-1.27"/>
+</gates>
+<devices>
+<device name="" package="USB">
+<connects>
+<connect gate="G$1" pin="1" pad="VBUS"/>
+<connect gate="G$1" pin="2" pad="D-"/>
+<connect gate="G$1" pin="3" pad="D+"/>
+<connect gate="G$1" pin="4" pad="GND"/>
 </connects>
 <technologies>
 <technology name=""/>
@@ -6940,6 +6978,7 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 <part name="SUPPLY3" library="supply2" library_urn="urn:adsk.eagle:library:372" deviceset="DGND" device=""/>
 <part name="SUPPLY4" library="supply2" library_urn="urn:adsk.eagle:library:372" deviceset="DGND" device=""/>
 <part name="SUPPLY5" library="supply2" library_urn="urn:adsk.eagle:library:372" deviceset="DGND" device=""/>
+<part name="CN4" library="connector" deviceset="USB" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -7027,6 +7066,10 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 </instance>
 <instance part="SUPPLY5" gate="G$1" x="93.98" y="2.54">
 <attribute name="VALUE" x="91.313" y="-0.635" size="1.778" layer="96"/>
+</instance>
+<instance part="CN4" gate="G$1" x="127" y="-5.08">
+<attribute name="NAME" x="124.46" y="3.81" size="1.778" layer="95"/>
+<attribute name="VALUE" x="137.16" y="-10.16" size="1.778" layer="96" rot="R90"/>
 </instance>
 </instances>
 <busses>
