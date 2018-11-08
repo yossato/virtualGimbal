@@ -1,0 +1,24 @@
+{
+    "Header": {
+        "Comment": "All values are metric (mm)",
+        "CreationDate": "2018-11-07T23:43:30Z",
+        "GenerationSoftware": {
+            "Application": "EAGLE",
+            "Vendor": "Autodesk",
+            "Version": "9.2.0"
+        },
+        "Part": "Single"
+    },
+    "Overall": {
+        "BoardThickness": 1.57,
+        "LayerNumber": 2,
+        "Name": {
+            "ProjectId": "adapter"
+        },
+        "Owner": "Yoshiaki Sato <sa.to.yb.a+fusion360@gmail.com>",
+        "Size": {
+            "X": 9.6,
+            "Y": 7.6
+        }
+    }
+}
