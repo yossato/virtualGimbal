@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="9.1.3">
+<eagle version="9.2.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -66,10 +66,6 @@
 <wire x1="22" y1="23.495" x2="22" y2="3" width="0.1524" layer="20"/>
 <wire x1="22" y1="3" x2="0" y2="3" width="0.1524" layer="20"/>
 <wire x1="-2.54" y1="26.74" x2="12.7" y2="26.74" width="0.0762" layer="51" style="shortdash"/>
-<wire x1="30" y1="7.6" x2="39.6" y2="7.6" width="0.01" layer="20"/>
-<wire x1="39.6" y1="7.6" x2="39.6" y2="0" width="0.01" layer="20"/>
-<wire x1="39.6" y1="0" x2="30" y2="0" width="0.01" layer="20"/>
-<wire x1="30" y1="0" x2="30" y2="7.6" width="0.01" layer="20"/>
 </plain>
 <libraries>
 <library name="con-3m" urn="urn:adsk.eagle:library:119">
@@ -185,12 +181,6 @@ Source: 3M</description>
 <vertex x="3.81" y="-1.27"/>
 <vertex x="3.81" y="-1.45"/>
 </polygon>
-</package>
-<package name="USB">
-<smd name="GND" x="0" y="0" dx="1" dy="6.94" layer="1"/>
-<smd name="VBUS" x="7" y="0" dx="1" dy="6.94" layer="1"/>
-<smd name="D-" x="4.5" y="0.5" dx="1" dy="5.94" layer="1"/>
-<smd name="D+" x="2.5" y="0.5" dx="1" dy="5.94" layer="1"/>
 </package>
 </packages>
 </library>
@@ -1601,7 +1591,7 @@ design rules under a new name.</description>
 <attribute name="VALUE" x="5.12" y="6.53" size="1.27" layer="27" rot="R180"/>
 </element>
 <element name="LED3" library="led" library_urn="urn:adsk.eagle:library:259" package="SML0603" package3d_urn="urn:adsk.eagle:package:15832/1" value="" x="12.02" y="11.57" rot="R180">
-<attribute name="NAME" x="13.02" y="9.3" size="1.27" layer="25" rot="R180"/>
+<attribute name="NAME" x="13.02" y="10.57" size="1.27" layer="25" rot="R180"/>
 <attribute name="VALUE" x="13.02" y="13.57" size="1.27" layer="27" rot="R180"/>
 </element>
 <element name="R1" library="rcl" library_urn="urn:adsk.eagle:library:334" package="R0402" package3d_urn="urn:adsk.eagle:package:23547/2" value="5.1k" x="2.54" y="25.4" rot="R180">
@@ -1619,8 +1609,6 @@ design rules under a new name.</description>
 <attribute name="SPICEPREFIX" value="R" x="12.02" y="9.98" size="1.778" layer="27" display="off"/>
 <attribute name="VALUE" x="11.385" y="8.075" size="1.27" layer="27"/>
 </element>
-<element name="CN4" library="connector" package="USB" value="" x="31.3" y="3.82"/>
-<element name="CN3" library="connector" package="5035521020" value="5035521020" x="34.8" y="4.35" rot="MR90"/>
 </elements>
 <signals>
 <signal name="VBUS">
@@ -1879,59 +1867,6 @@ design rules under a new name.</description>
 <contactref element="R3" pad="2"/>
 <wire x1="12.77" y1="11.57" x2="12.52" y2="11.32" width="0.254" layer="1"/>
 <wire x1="12.52" y1="9.98" x2="12.52" y2="11.32" width="0.254" layer="1"/>
-</signal>
-<signal name="VBUS2">
-<contactref element="CN4" pad="VBUS"/>
-<contactref element="CN3" pad="1"/>
-<wire x1="37.465" y1="6.35" x2="37.592" y2="6.223" width="0.254" layer="16"/>
-<via x="37.592" y="6.223" extent="1-16" drill="0.3048"/>
-<wire x1="37.592" y1="6.223" x2="38.3" y2="5.515" width="0.254" layer="1"/>
-<wire x1="38.3" y1="5.515" x2="38.3" y2="3.82" width="0.254" layer="1"/>
-<wire x1="35.5261875" y1="6.35" x2="37.465" y2="6.35" width="0.254" layer="16"/>
-<wire x1="35.3855875" y1="6.2094" x2="35.5261875" y2="6.35" width="0.254" layer="16"/>
-<wire x1="33.0594" y1="6.2094" x2="35.3855875" y2="6.2094" width="0.254" layer="16"/>
-<wire x1="32.85" y1="6" x2="33.0594" y2="6.2094" width="0.254" layer="16"/>
-<wire x1="32.85" y1="5.25" x2="32.85" y2="6" width="0.254" layer="16"/>
-<wire x1="33.4" y1="5.15" x2="32.95" y2="5.15" width="0.254" layer="16"/>
-<wire x1="32.95" y1="5.15" x2="32.85" y2="5.25" width="0.254" layer="16"/>
-</signal>
-<signal name="D-2" class="1">
-<contactref element="CN4" pad="D-"/>
-<contactref element="CN3" pad="3"/>
-<wire x1="35.15" y1="6.8" x2="34.9658" y2="6.6158" width="0.2032" layer="16"/>
-<via x="35.15" y="6.8" extent="1-16" drill="0.3048"/>
-<wire x1="34.9658" y1="6.6158" x2="34.29" y2="6.6158" width="0.2032" layer="16"/>
-<wire x1="35.15" y1="6.8" x2="35.8" y2="6.15" width="0.254" layer="1"/>
-<wire x1="35.8" y1="6.15" x2="35.8" y2="4.32" width="0.254" layer="1"/>
-<wire x1="34.29" y1="6.6158" x2="34.2646" y2="6.5904" width="0.2032" layer="16"/>
-<wire x1="34.2646" y1="6.5904" x2="32.90158125" y2="6.5904" width="0.2032" layer="16"/>
-<wire x1="32.90158125" y1="6.5904" x2="32.469" y2="6.15781875" width="0.2032" layer="16"/>
-<wire x1="32.469" y1="6.15781875" x2="32.469" y2="5.09218125" width="0.2032" layer="16"/>
-<wire x1="32.79218125" y1="4.769" x2="33.381" y2="4.769" width="0.2032" layer="16"/>
-<wire x1="33.381" y1="4.769" x2="33.4" y2="4.75" width="0.2032" layer="16"/>
-<wire x1="32.469" y1="5.09218125" x2="32.79218125" y2="4.769" width="0.2032" layer="16"/>
-</signal>
-<signal name="D+2">
-<contactref element="CN4" pad="D+"/>
-<contactref element="CN3" pad="5"/>
-<wire x1="34.63" y1="4.36" x2="33.84" y2="4.36" width="0.254" layer="1"/>
-<wire x1="33.8" y1="4.32" x2="33.84" y2="4.36" width="0.254" layer="1"/>
-<via x="34.63" y="4.36" extent="1-16" drill="0.3048"/>
-<wire x1="34.62" y1="4.35" x2="34.63" y2="4.36" width="0.254" layer="16"/>
-<wire x1="33.4" y1="4.35" x2="34.62" y2="4.35" width="0.254" layer="16"/>
-</signal>
-<signal name="GND2">
-<contactref element="CN4" pad="GND"/>
-<contactref element="CN3" pad="7"/>
-<wire x1="31.977" y1="6.827" x2="31.3" y2="6.15" width="0.254" layer="1"/>
-<wire x1="31.3" y1="3.82" x2="31.3" y2="6.15" width="0.254" layer="1"/>
-<via x="31.977" y="6.827" extent="1-16" drill="0.3048"/>
-<polygon width="0.15" layer="16">
-<vertex x="29.21" y="8.89"/>
-<vertex x="40.64" y="8.89"/>
-<vertex x="40.64" y="-1.27"/>
-<vertex x="29.21" y="-1.27"/>
-</polygon>
 </signal>
 </signals>
 <mfgpreviewcolors>

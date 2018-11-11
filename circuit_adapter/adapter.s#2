@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="9.2.0">
+<eagle version="9.1.3">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -6979,6 +6979,7 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 <part name="SUPPLY4" library="supply2" library_urn="urn:adsk.eagle:library:372" deviceset="DGND" device=""/>
 <part name="SUPPLY5" library="supply2" library_urn="urn:adsk.eagle:library:372" deviceset="DGND" device=""/>
 <part name="CN4" library="connector" deviceset="USB" device=""/>
+<part name="CN3" library="connector" deviceset="5035521020" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -7067,9 +7068,13 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 <instance part="SUPPLY5" gate="G$1" x="93.98" y="2.54">
 <attribute name="VALUE" x="91.313" y="-0.635" size="1.778" layer="96"/>
 </instance>
-<instance part="CN4" gate="G$1" x="127" y="-5.08">
-<attribute name="NAME" x="124.46" y="3.81" size="1.778" layer="95"/>
-<attribute name="VALUE" x="137.16" y="-10.16" size="1.778" layer="96" rot="R90"/>
+<instance part="CN4" gate="G$1" x="53.34" y="124.46" rot="MR0">
+<attribute name="NAME" x="55.88" y="133.35" size="1.778" layer="95" rot="MR0"/>
+<attribute name="VALUE" x="43.18" y="119.38" size="1.778" layer="96" rot="MR90"/>
+</instance>
+<instance part="CN3" gate="G$1" x="73.66" y="124.46">
+<attribute name="NAME" x="71.755" y="132.08" size="1.778" layer="95"/>
+<attribute name="VALUE" x="71.755" y="115.2525" size="1.778" layer="96"/>
 </instance>
 </instances>
 <busses>
@@ -7241,6 +7246,38 @@ Source: http://www.murata.com .. GRM43DR72E224KW01.pdf</description>
 <segment>
 <pinref part="LED3" gate="G$1" pin="C"/>
 <pinref part="R3" gate="G$1" pin="2"/>
+</segment>
+</net>
+<net name="VBUS2" class="0">
+<segment>
+<pinref part="CN4" gate="G$1" pin="1"/>
+<pinref part="CN3" gate="G$1" pin="1"/>
+<wire x1="58.42" y1="129.54" x2="68.58" y2="129.54" width="0.1524" layer="91"/>
+<label x="58.42" y="129.54" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="D-2" class="1">
+<segment>
+<pinref part="CN4" gate="G$1" pin="2"/>
+<pinref part="CN3" gate="G$1" pin="3"/>
+<wire x1="58.42" y1="127" x2="68.58" y2="127" width="0.1524" layer="91"/>
+<label x="58.42" y="127" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="D+2" class="0">
+<segment>
+<pinref part="CN4" gate="G$1" pin="3"/>
+<pinref part="CN3" gate="G$1" pin="5"/>
+<wire x1="58.42" y1="124.46" x2="68.58" y2="124.46" width="0.1524" layer="91"/>
+<label x="58.42" y="124.46" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="GND2" class="0">
+<segment>
+<pinref part="CN4" gate="G$1" pin="4"/>
+<pinref part="CN3" gate="G$1" pin="7"/>
+<wire x1="58.42" y1="121.92" x2="68.58" y2="121.92" width="0.1524" layer="91"/>
+<label x="58.42" y="121.92" size="1.778" layer="95"/>
 </segment>
 </net>
 </nets>

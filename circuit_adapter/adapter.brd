@@ -1595,7 +1595,7 @@ design rules under a new name.</description>
 <attribute name="SPICEPREFIX" value="R" x="2.54" y="25.4" size="1.778" layer="27" rot="R180" display="off"/>
 <attribute name="VALUE" x="3.175" y="27.305" size="1.27" layer="27" rot="R180"/>
 </element>
-<element name="R2" library="rcl" library_urn="urn:adsk.eagle:library:334" package="R0402" package3d_urn="urn:adsk.eagle:package:23547/2" value="5.1" x="2.53" y="4.98" rot="R180">
+<element name="R2" library="rcl" library_urn="urn:adsk.eagle:library:334" package="R0402" package3d_urn="urn:adsk.eagle:package:23547/2" value="5.1k" x="2.53" y="4.98" rot="R180">
 <attribute name="SPICEPREFIX" value="R" x="2.53" y="4.98" size="1.778" layer="27" rot="R180" display="off"/>
 <attribute name="VALUE" x="3.165" y="6.885" size="1.27" layer="27" rot="R180"/>
 </element>
