@@ -4,7 +4,10 @@ project (virtualGimbal)
 
 find_package(OpenGL REQUIRED)
 find_package(OpenCV REQUIRED )
-find_package(PythonLibs REQUIRED)
+set(Python_ADDITIONAL_VERSIONS 3.5)
+find_package(PythonInterp 3.5 REQUIRED)
+find_package(PythonLibs 3.5 REQUIRED)
+
 if( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
     message( FATAL_ERROR "Please select another Build Directory ! (and give it a clever name, like bin_Visual2012_64bits/)" )
 endif()

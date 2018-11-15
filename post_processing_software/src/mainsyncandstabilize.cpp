@@ -212,7 +212,7 @@ int main(int argc, char** argv){
     //show(opticShift,"opticShift");
     cv::VideoCapture *Capture = new cv::VideoCapture(videoPass);//動画をオープン
     assert(Capture->isOpened());
-    cv::Size imageSize = cv::Size(Capture->get(CV_CAP_PROP_FRAME_WIDTH),Capture->get(CV_CAP_PROP_FRAME_HEIGHT));//解像度を読む
+    cv::Size imageSize = cv::Size(Capture->get(cv::CAP_PROP_FRAME_WIDTH),Capture->get(cv::CAP_PROP_FRAME_HEIGHT));//解像度を読む
     std::cout << "Static size:" << textureSize << std::endl;
 
     //テキスチャーのサイズをここで計算する
@@ -221,7 +221,7 @@ int main(int argc, char** argv){
     std::cout << "Adaptive size:" << textureSize << std::endl;
 
 
-    double Tvideo = 1.0/Capture->get(CV_CAP_PROP_FPS);
+    double Tvideo = 1.0/Capture->get(cv::CAP_PROP_FPS);
     std::cout << "resolution" << imageSize << std::endl;
     std::cout << "samplingPeriod" << Tvideo << std::endl;
 
@@ -239,7 +239,7 @@ int main(int argc, char** argv){
     if(outputStabilizedVideo){
         std::string outputPass= videoPass;
         outputPass = outputPass + "_deblured.avi";
-        buffer.vw = cv::VideoWriter(outputPass,CV_FOURCC('F', 'M', 'P', '4'),1/Tvideo,cv::Size(imageSize.width,imageSize.height),true);
+        buffer.vw = cv::VideoWriter(outputPass,cv::VideoWriter::fourcc('F', 'M', 'P', '4'),1/Tvideo,cv::Size(imageSize.width,imageSize.height),true);
         if(!buffer.vw.isOpened()){
             printf("Error:Can't Open Video Writer.");
             return -1;
@@ -379,21 +379,21 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
                Tvideo,
                Tav,
                min_position + subframeOffset,
-               (int32_t)(Capture->get(CV_CAP_PROP_FRAME_COUNT)));
+               (int32_t)(Capture->get(cv::CAP_PROP_FRAME_COUNT)));
         std::vector<string> legends_quaternion = {"x","y","z","w"};
         vgp::plot(v2.toQuaternion(),"Raw Quaternion",legends_quaternion);
-        vgp::plot(v2.filteredQuaternion(100,Capture->get(CV_CAP_PROP_FPS),1.0),"Filtered Quaternion",legends_quaternion);
+        vgp::plot(v2.filteredQuaternion(100,Capture->get(cv::CAP_PROP_FPS),1.0),"Filtered Quaternion",legends_quaternion);
 
         std::vector<string> legends = {"x","y","z"};
         vgp::plot(v2.data(),"Raw DFT",legends);
 
         //平滑化を試す
         //時間波形補正実装済み平滑化
-        Eigen::MatrixXd coeffs = Eigen::MatrixXd::Ones(v2.data().rows()*1.0/Capture->get(CV_CAP_PROP_FPS)+2,v2.data().cols());
+        Eigen::MatrixXd coeffs = Eigen::MatrixXd::Ones(v2.data().rows()*1.0/Capture->get(cv::CAP_PROP_FPS)+2,v2.data().cols());
 
-        vgp::plot(v2.filteredDataDFTTimeDomainOptimize(Capture->get(CV_CAP_PROP_FPS),1.0,coeffs),"Filtered DFT DO",legends);
+        vgp::plot(v2.filteredDataDFTTimeDomainOptimize(Capture->get(cv::CAP_PROP_FPS),1.0,coeffs),"Filtered DFT DO",legends);
         //通常版平滑化
-        vgp::plot(v2.filteredDataDFT(Capture->get(CV_CAP_PROP_FPS),1.0),"Filterd DFT",legends);
+        vgp::plot(v2.filteredDataDFT(Capture->get(cv::CAP_PROP_FPS),1.0),"Filterd DFT",legends);
 
 
 
@@ -406,7 +406,7 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
         //最適化
         cout << "let's optimize time domain!" << endl;
         //初期値を準備
-        Eigen::VectorXd wave_form_coefficients = Eigen::VectorXd::Zero((v2.data().rows()*1.0/Capture->get(CV_CAP_PROP_FPS)+2)*3);
+        Eigen::VectorXd wave_form_coefficients = Eigen::VectorXd::Zero((v2.data().rows()*1.0/Capture->get(cv::CAP_PROP_FPS)+2)*3);
         TimeDomainOptimizer<double> functor4(wave_form_coefficients.rows(),v2.data().rows(),v2);
 
         NumericalDiff<TimeDomainOptimizer<double>> numDiff4(functor4);
@@ -460,22 +460,22 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
            Tvideo,
            Tav,
            min_position + subframeOffset,
-           (int32_t)(Capture->get(CV_CAP_PROP_FRAME_COUNT)),
+           (int32_t)(Capture->get(cv::CAP_PROP_FRAME_COUNT)),
            199);
     //平滑化
-    v2.filteredDataDFT(Capture->get(CV_CAP_PROP_FPS),1.0);//TODO:引数修正。もはやあまり意味がない。
-    v2.filteredQuaternion(100,Capture->get(CV_CAP_PROP_FPS),1.0);
+    v2.filteredDataDFT(Capture->get(cv::CAP_PROP_FPS),1.0);//TODO:引数修正。もはやあまり意味がない。
+    v2.filteredQuaternion(100,Capture->get(cv::CAP_PROP_FPS),1.0);
 
     v2.init_opengl(textureSize);
 
     //一度動画を閉じて、seek可能版に置き換える
-    int32_t e=Capture->get(CV_CAP_PROP_FRAME_COUNT);
+    int32_t e=Capture->get(cv::CAP_PROP_FRAME_COUNT);
     delete Capture;
 //    seekableVideoCapture sCapture(videoPass,PREFETCH_LENGTH);
 
 
     cv::namedWindow("Preview",cv::WINDOW_NORMAL);
-    cv::setWindowProperty("Preview",CV_WND_PROP_FULLSCREEN,CV_WINDOW_FULLSCREEN);
+    cv::setWindowProperty("Preview",cv::WND_PROP_FULLSCREEN,cv::WINDOW_FULLSCREEN);
     while(v2.ok()){
         Capture = new cv::VideoCapture(videoPass);//動画をオープン
         for(int32_t i=0;i<e;++i){

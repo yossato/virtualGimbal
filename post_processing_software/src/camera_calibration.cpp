@@ -30,20 +30,20 @@ typedef struct{
 * @param [in] Finish 計算が終わったかどうか。0:未完　1:完了
 *
 **/
-std::vector<cv::Point2f> findChessboardCornersInMultithread(cv::Mat &image, cv::Size patternSize, int &Finish, int flags = CV_CALIB_CB_FAST_CHECK)
+std::vector<cv::Point2f> findChessboardCornersInMultithread(cv::Mat &image, cv::Size patternSize, int &Finish, int flags = cv::CALIB_CB_FAST_CHECK)
 {
 	Finish = 0;//コーナ検索未完
 	std::vector<cv::Point2f>		tempImagePoints;
 	static int n = 0;//この関数は何回呼ばれた？
 	int cn = n++;
 	cv::Mat GrayImage;
-	cv::TermCriteria						criteria(CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 20, 0.001);
+    cv::TermCriteria						criteria(cv::TermCriteria::MAX_ITER | cv::TermCriteria::EPS, 20, 0.001);
 	//std::cout << "Finding corners from Image " << cn;
 	if (cv::findChessboardCorners(image, patternSize, tempImagePoints, flags)) {
 		//std::cout << " ... All corners are found at Image " << cn << "." << std::endl;
 		// 検出点をカラー画像のほうへ、描画する
 		if ((image.channels() == 3) || (image.channels() == 4)){
-			cv::cvtColor(image, GrayImage, CV_RGB2GRAY);
+            cv::cvtColor(image, GrayImage, cv::COLOR_RGB2GRAY);
 			cv::cornerSubPix(GrayImage, tempImagePoints, cv::Size(11, 11), cv::Size(-1, -1), criteria);
 		}
 		else{
@@ -150,7 +150,7 @@ int main(int argc, char** argv){
 
 
 	int c;
-	cv::namedWindow(WindowName[0],CV_WINDOW_AUTOSIZE);
+    cv::namedWindow(WindowName[0],cv::WINDOW_AUTOSIZE);
 	cv::Mat colorImg;
 	while(!_Quit){	//信号が来るまで
 		//ここからキャリブレーションの本体
@@ -164,7 +164,7 @@ int main(int argc, char** argv){
 		    break;
 		}
 		
-		cv::cvtColor(colorImg,grayImg,CV_RGB2GRAY);
+        cv::cvtColor(colorImg,grayImg,cv::COLOR_RGB2GRAY);
 		    
 		//~ if(Captured){
 		cv::imshow(WindowName[0],grayImg);//生画像を表示
@@ -188,12 +188,12 @@ int main(int argc, char** argv){
 		}
 		auto result = cbResults.get();
 #else      //シングルスレッド
-		auto result = findChessboardCornersInMultithread(grayImg, PatternSize, Finish, CV_CALIB_CB_FAST_CHECK);
+        auto result = findChessboardCornersInMultithread(grayImg, PatternSize, Finish, cv::CALIB_CB_FAST_CHECK);
 #endif
 		if (result.size()==PatternSize.area()) {//結果が入っていれば
 			static int CapturedTimes = 0;
 			static cv::Mat colorImg = cv::Mat::zeros(height,width,CV_8UC3);	//画面表示用のカラー画像の準備
-			cv::cvtColor(grayImg,colorImg,CV_GRAY2RGB);
+            cv::cvtColor(grayImg,colorImg,cv::COLOR_GRAY2RGB);
 			imagePoints.push_back(result);//asyncで計算していた結果を受け取る
 			cv::drawChessboardCorners(colorImg, PatternSize, (cv::Mat)imagePoints.back(), true);
 			cv::imshow(WindowName[0], colorImg);//IR画像を表示
@@ -211,7 +211,7 @@ int main(int argc, char** argv){
 		shrinkImagePoints.push_back(imagePoints[(int)round((double)(imagePoints.size())/(double)(Dcbp.NumberOfCaptureImage)*(double)i)]);
 	}
 	
-	printf("shrink size:%d\n",shrinkImagePoints.size());
+    printf("shrink size:%d\n",(int)shrinkImagePoints.size());
 	imagePoints = shrinkImagePoints;//入れ替え
 	
 	//ここからカメラパラメータを求める

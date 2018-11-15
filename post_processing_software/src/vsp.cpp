@@ -889,12 +889,12 @@ int vsp::spin_once(int frame,cv::VideoCapture &capture, cv::Mat &simg){
 
     switch (key) {
     case KEY_ORIGINAL:
-        cv::putText(img, "Original", cv::Point(625,150+image_height*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,CV_AA);
+        cv::putText(img, "Original", cv::Point(625,150+image_height*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,cv::LINE_AA);
         cv::imshow("Preview",img);
         break;
 
     case KEY_STABILIZED:
-        cv::putText(simg, "Stabilized", cv::Point(625,150+image_height*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,CV_AA);
+        cv::putText(simg, "Stabilized", cv::Point(625,150+image_height*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,cv::LINE_AA);
         cv::imshow("Preview",simg);
         break;
     case KEY_QUIT:
@@ -905,8 +905,8 @@ int vsp::spin_once(int frame,cv::VideoCapture &capture, cv::Mat &simg){
         static cv::Mat sidebyside(cv::Size(image_width,image_height),CV_8UC3,cv::Scalar(0));
         static bool first_time = true;
         if(first_time){
-            cv::putText(sidebyside, "Original", cv::Point(200,150+image_height*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,CV_AA);
-            cv::putText(sidebyside, "Stabilized", cv::Point(1050,150+image_height*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,CV_AA);
+            cv::putText(sidebyside, "Original", cv::Point(200,150+image_height*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,cv::LINE_AA);
+            cv::putText(sidebyside, "Stabilized", cv::Point(1050,150+image_height*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,cv::LINE_AA);
             first_time = false;
         }
 

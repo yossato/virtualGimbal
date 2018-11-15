@@ -25,7 +25,7 @@ std::vector<cv::Vec3d> CalcShiftFromVideo(char *filename, int calcPeriod){
     // Step 1 - Get previous to current frame transformation (dx, dy, da) for all frames
     std::vector <cv::Vec3d> prev_to_cur_transform; // previous to current
     int k=1;
-    int max_frames = cap.get(CV_CAP_PROP_FRAME_COUNT);
+    int max_frames = cap.get(cv::CAP_PROP_FRAME_COUNT);
     cv::Mat last_T;
 
     //繰り返し処理
