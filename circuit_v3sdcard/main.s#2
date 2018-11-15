@@ -1661,7 +1661,7 @@ Source: &lt;a href="http://www.farnell.com/datasheets/461166.pdf"&gt; Data sheet
 </segment>
 <segment>
 <pinref part="SUPPLY1" gate="G$1" pin="DGND"/>
-<label x="-190.5" y="-40.64" size="1.778" layer="95"/>
+<label x="-190.5" y="-48.26" size="1.778" layer="95"/>
 <pinref part="CN4" gate="G$1" pin="7"/>
 <wire x1="-182.88" y1="-48.26" x2="-218.44" y2="-48.26" width="0.1524" layer="91"/>
 </segment>
@@ -1967,7 +1967,7 @@ Source: &lt;a href="http://www.farnell.com/datasheets/461166.pdf"&gt; Data sheet
 <segment>
 <wire x1="-109.22" y1="-7.62" x2="-157.48" y2="-7.62" width="0.1524" layer="91"/>
 <wire x1="-157.48" y1="-7.62" x2="-157.48" y2="-38.1" width="0.1524" layer="91"/>
-<label x="-190.5" y="-48.26" size="1.778" layer="95"/>
+<label x="-190.5" y="-40.64" size="1.778" layer="95"/>
 <pinref part="D3" gate="G$1" pin="4"/>
 <wire x1="-109.22" y1="-7.62" x2="-109.22" y2="-12.7" width="0.1524" layer="91"/>
 <wire x1="-55.88" y1="-7.62" x2="-109.22" y2="-7.62" width="0.1524" layer="91"/>
@@ -1982,8 +1982,9 @@ Source: &lt;a href="http://www.farnell.com/datasheets/461166.pdf"&gt; Data sheet
 <junction x="-109.22" y="-7.62"/>
 <pinref part="R3" gate="G$1" pin="P$2"/>
 <pinref part="CN4" gate="G$1" pin="1"/>
-<wire x1="-182.88" y1="-38.1" x2="-157.48" y2="-38.1" width="0.1524" layer="91"/>
-<wire x1="-182.88" y1="-40.64" x2="-182.88" y2="-38.1" width="0.1524" layer="91"/>
+<wire x1="-193.04" y1="-38.1" x2="-157.48" y2="-38.1" width="0.1524" layer="91"/>
+<wire x1="-182.88" y1="-40.64" x2="-193.04" y2="-40.64" width="0.1524" layer="91"/>
+<wire x1="-193.04" y1="-40.64" x2="-193.04" y2="-38.1" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="RX1" class="0">
