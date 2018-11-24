@@ -1,24 +1,13 @@
-{
-    "Header": {
-        "Comment": "All values are metric (mm)",
-        "CreationDate": "2018-10-24T00:00:24Z",
-        "GenerationSoftware": {
-            "Application": "EAGLE",
-            "Vendor": "Autodesk",
-            "Version": "9.2.0"
-        },
-        "Part": "Single"
-    },
-    "Overall": {
-        "BoardThickness": 1.57,
-        "LayerNumber": 2,
-        "Name": {
-            "ProjectId": "main"
-        },
-        "Owner": "Yoshiaki Sato <sa.to.yb.a+fusion360@gmail.com>",
-        "Size": {
-            "X": 21.7,
-            "Y": 29.5
-        }
-    }
-}
+G04 Gerber job file.*
+%TF.FileFunction,JobInfo*%
+%TF.GenerationSoftware,Autodesk,EAGLE,9.1.3*%
+%TF.CreationDate,2018-11-24T03:49:42Z*%
+%TF.Part,Single*%
+%MOMM*%
+%TJ.B_Owner,Yoshiaki Sato <sa.to.yb.a+fusion360@gmail.com>*%
+%TJ.B_ID,main*%
+%TJ.B_LayerNum,2*%
+%TJ.B_Thickness,1.570000*%
+%TJ.B_Size_X,21.500000*%
+%TJ.B_Size_Y,30.700000*%
+M02*
