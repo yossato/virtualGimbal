@@ -60,14 +60,14 @@
 <library>
 <packages>
 <package name="BLOCK_SD_CONNECTOR">
-<smd name="1" x="4.4" y="-0.43" dx="0.55" dy="1.1" layer="1"/>
+<smd name="1" x="4.3" y="-0.43" dx="0.55" dy="1.1" layer="1"/>
 <smd name="2" x="3.3" y="6.77" dx="0.45" dy="1.2" layer="1"/>
 <smd name="3" x="2.2" y="6.77" dx="0.45" dy="1.2" layer="1"/>
 <smd name="4" x="1.45" y="7.13" dx="0.5" dy="1.2" layer="1"/>
 <smd name="5" x="-1.45" y="7.13" dx="0.5" dy="1.2" layer="1"/>
 <smd name="6" x="-2.2" y="6.77" dx="0.45" dy="1.2" layer="1"/>
 <smd name="7" x="-3.3" y="6.77" dx="0.45" dy="1.2" layer="1"/>
-<smd name="8" x="-4.4" y="-0.43" dx="0.55" dy="1.1" layer="1"/>
+<smd name="8" x="-4.3" y="-0.43" dx="0.55" dy="1.1" layer="1"/>
 <smd name="9" x="-2.18" y="-0.43" dx="0.5" dy="1.1" layer="1"/>
 <smd name="10" x="0" y="-0.43" dx="0.5" dy="1.1" layer="1"/>
 <smd name="11" x="2.18" y="-0.43" dx="0.5" dy="1.1" layer="1"/>
@@ -206,6 +206,26 @@
 <smd name="VBUS" x="7" y="0" dx="1" dy="6.94" layer="1"/>
 <smd name="D-" x="4.5" y="0.5" dx="1" dy="5.94" layer="1"/>
 <smd name="D+" x="2.5" y="0.5" dx="1" dy="5.94" layer="1"/>
+</package>
+<package name="MICROSD">
+<smd name="1" x="0" y="0" dx="0.8" dy="2.9" layer="1"/>
+<smd name="2" x="1.1" y="0" dx="0.8" dy="2.9" layer="1"/>
+<smd name="3" x="2.2" y="0" dx="0.8" dy="2.9" layer="1"/>
+<smd name="4" x="3.3" y="0.15" dx="0.8" dy="3.2" layer="1"/>
+<smd name="5" x="4.4" y="0" dx="0.8" dy="2.9" layer="1"/>
+<smd name="6" x="5.5" y="0.15" dx="0.8" dy="3.3" layer="1"/>
+<smd name="7" x="6.6" y="0" dx="0.8" dy="2.9" layer="1"/>
+<smd name="8" x="7.7" y="0" dx="0.8" dy="2.9" layer="1"/>
+</package>
+<package name="VIRTUALGIMBAL">
+<smd name="1" x="0" y="0" dx="0.8" dy="2.9" layer="1"/>
+<smd name="2" x="1.1" y="0" dx="0.8" dy="2.9" layer="1"/>
+<smd name="3" x="2.2" y="0" dx="0.8" dy="2.9" layer="1"/>
+<smd name="4" x="3.3" y="0.15" dx="0.8" dy="3.2" layer="1"/>
+<smd name="5" x="4.4" y="0" dx="0.8" dy="2.9" layer="1"/>
+<smd name="6" x="5.5" y="0.15" dx="0.8" dy="3.3" layer="1"/>
+<smd name="7" x="6.6" y="0" dx="0.8" dy="2.9" layer="1"/>
+<smd name="8" x="7.7" y="0" dx="0.8" dy="2.9" layer="1"/>
 </package>
 </packages>
 <symbols>
@@ -438,6 +458,50 @@
 <connect gate="G$1" pin="2" pad="D-"/>
 <connect gate="G$1" pin="3" pad="D+"/>
 <connect gate="G$1" pin="4" pad="GND"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="MICROSD_BARE" prefix="CN">
+<gates>
+<gate name="G$1" symbol="MICROSD" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="MICROSD">
+<connects>
+<connect gate="G$1" pin="P$1" pad="1"/>
+<connect gate="G$1" pin="P$2" pad="2"/>
+<connect gate="G$1" pin="P$3" pad="3"/>
+<connect gate="G$1" pin="P$4" pad="4"/>
+<connect gate="G$1" pin="P$5" pad="5"/>
+<connect gate="G$1" pin="P$6" pad="6"/>
+<connect gate="G$1" pin="P$7" pad="7"/>
+<connect gate="G$1" pin="P$8" pad="8"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="VIRTUALGIMAL" prefix="CN">
+<gates>
+<gate name="G$1" symbol="MICROSD" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="VIRTUALGIMBAL">
+<connects>
+<connect gate="G$1" pin="P$1" pad="1"/>
+<connect gate="G$1" pin="P$2" pad="2"/>
+<connect gate="G$1" pin="P$3" pad="3"/>
+<connect gate="G$1" pin="P$4" pad="4"/>
+<connect gate="G$1" pin="P$5" pad="5"/>
+<connect gate="G$1" pin="P$6" pad="6"/>
+<connect gate="G$1" pin="P$7" pad="7"/>
+<connect gate="G$1" pin="P$8" pad="8"/>
 </connects>
 <technologies>
 <technology name=""/>
