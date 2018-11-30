@@ -1,0 +1,422 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
+<style type="text/css" media="all">
+/*
+	Copyright (c) 2015 Silicon Laboratories
+	All rights reserved.
+	
+	================================
+	OFFICIAL SILICON LABS WEB COLORS (2013)
+	Red: #7b001f (R: 102 G: 0 B: 0)
+	Blue: #11568c (R: 17 G: 86 B: 140)
+	Black: #000000 (R: 0 G: 0 B: 0)
+	Green: #629080 (R: 98 G: 144 B: 128)
+	Warm Gray: #9e948d (R: 158 G: 148 B: 141)
+	Dark Blue: #0b3556
+	Red Gradient: #990033 (light), #660000 (dark), #330000 (darkest)
+	Blue Gradient: #006699 (light), #003366 (dark), #000033 (darkest)
+	Keil 8051 blue: #DFDFDF
+	================================
+	SIMPLICITY STUDIO COLORS
+	Green: #B5D300
+	Dark Gray: #4F4F4F
+	Mid-Gray: #BFBFBF
+	Light Gray: #DFDFDF
+	Dark Blue: #376078 
+	Mid-Blue: #355768
+	Light Blue: #90BEDD
+	=================================
+
+*/
+/* ------------------------------ */
+/* reset browser styles           */
+/* From: CSS3: The Missing Manual */
+
+html, body, div, span, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, 
+abbr, acronym, address, big, cite, code, del, dfn, em, img, ins, kbd, q, s, samp,small, 
+strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li, fieldset, 
+form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td, article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: 100%;
+	font: inherit;
+	vertical-align: baseline;
+}
+article, aside, details, figcaption, figure, footer, header, hgroup, menu, nav, section {
+	display: block;
+}
+body {
+	line-height: 1.2;
+}
+ol { 
+	padding-left: 1.4em;
+	list-style: decimal;
+}
+ul {
+	padding-left: 1.4em;
+	list-style: square;
+}
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+} 
+/* end reset browser styles */
+/* ------------------------ */
+
+
+/* -------------------------------- */
+/* basic reset of styles for Studio */
+/* CREATED: 20131213                */
+
+/*	Add whitespace around entire display to avoid crowding edges of view 	*/
+html { 
+	/* Simplicity Studio logo */
+	min-width: 500px;
+	max-width: 1400px;
+	height: 100%;
+	margin: 5px;
+}
+
+body, .NavList {
+	margin: 5px;
+	font-family: Georgia, "Times New Roman", Times, serif;
+	font-size: 1.0em;
+	font-weight: inherit;
+	color: #000000;	
+	line-height: normal;
+}
+
+h1, h2, h3 , h4, h5, h6,
+.NavTitle, .NavListTitle,
+/* efm32 styles */
+.toc-title, .table-title, .figure-title
+{
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 1.0em;
+	font-weight: bold;
+	font-style: normal;
+	color: #376078; /* 376078; */
+}
+
+h1, h2, h3, section h3 {
+	padding-top: 10px;
+	padding-bottom: 10px;
+}
+
+p, ul, ol, .include { 
+	margin-top: 10px; 
+}
+
+li {
+	margin-left: 1em;
+	margin-top: 10px;
+	padding-left: 10px;
+}
+
+blockquote { margin-left: 1.25em; }
+
+strong, .NavTitle, .NavListTitle { 
+	font-weight: bold; 
+}
+
+em { font-style: italic; }
+
+
+/* end basic style reset for Studio */
+/* -------------------------------- */
+
+
+/* ------------------------------ */
+/* note and warning styles */
+
+.note, .warning {
+	padding: 6px;
+	border-top: 2px solid #B5D300;
+	border-bottom: 2px solid #B5D300;
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+
+td .note, td .warning {
+	padding: 3px;
+	margin-top: 6px;
+	margin-bottom: 6px;
+}
+
+.note:before {
+    content: "NOTE ";
+	font-family: Arial, Helvetica, sans-serif;	
+	font-weight: bold;
+	color: #376078;
+}
+
+.warning:before {
+	content: "WARNING ";
+	font-family: Arial, Helvetica, sans-serif;
+	font-weight: bold;
+	color: #990000;
+}
+/* ------------------------------ */
+/* code and programming styles */
+
+.code, pre {
+	font-family: "Courier New", Courier, monospace;
+	font-size: 1.1em;
+	color: #376078;
+}
+
+/* ------------------------------ */
+/* image styles */
+
+figure {
+	float: center;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	text-align: center;
+}
+
+figcaption {
+	font-family: Arial, Helvetica, sans-serif;	
+	font-weight: bold;
+	font-style: normal;
+	color: #376078;
+	padding: 5px;
+}
+
+img.middle {
+	vertical-align: middle;
+}
+
+/* ------------------------------ */
+/* option table styles for ui element */
+
+.studio,
+.ui-options {
+	padding: 10px 0px;
+}
+
+.studio h3,
+.ui-options h3 {
+	padding-bottom: 5px;
+	color: #376078;
+}
+
+.studio table,
+.ui-options table {
+	table-layout: auto;
+	width: 90%;
+	min-width: 500px;
+	border: solid #90BEDD 2px;
+	border-collapse: collapse;
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+
+.studio td, .studio th,
+.ui-options td, .ui-options th {
+	padding: 4px;
+	border: solid #90BEDD 1px;
+	vertical-align: top;
+}
+
+.studio th,
+.ui-options th {
+	color: #FFF;
+	background-color: #90BEDD; 
+	font-family: Arial, Helvetica, sans-serif;	
+	font-weight: bold;
+	font-style: normal;
+}
+
+.studio strong,
+.ui-options strong { 
+	font-weight: bold;
+	font-style: normal;
+	color: #376078;
+}
+
+/* provides a very light gray shade to designated cell */
+.hilite, .shade {
+	background-color: #FAFAFA;
+}
+
+/* adds a 3px separator line above row and lightly grays out cells */
+.group-title {
+	border-top: solid #90BEDD 3px;
+	background-color: #F8F8F8;
+}
+
+/* ------------------------------ */
+/* instructional step styles */
+
+.taskstep {
+	margin-top: 15px;
+}
+
+.taskstep ul li,  .taskstep ol li, ul li, ol li {
+	margin-left: 10px;
+	margin-top: 5px;
+}
+
+/* ------------------------------ */
+/* other reference header styles */
+
+.ref-links h3 {
+	margin-top: 15px;
+	padding-bottom: 5px;
+	color: #376078;
+}
+
+/* show ul/ol item decorations in color */
+
+.ref-links ul li {
+	list-style-type: none;
+	font-family:Arial, Helvetica, sans-serif;
+	font-size: .8em;
+}
+.ref-links ul li:before {
+	content: counter(item, disc) " ";
+	color: #000;	
+}
+
+.ref-links ol li:before {
+	content: counter(item, disc) " ";
+	color: #F00;
+}
+
+/* ------------------------------ */
+/* title page styles */
+
+html.title-page {
+	background-image: none;
+}
+
+body.title-page {
+	background-image: url(../com.silabs.ss.platform.docs/help/images/background.png);
+	background-position: 0px 0px;
+	background-repeat: no-repeat;
+}
+
+h1.title-page, h2.title-page, h3.title-page, 
+h4.title-page, h5.title-page {
+	text-align: center;
+	text-shadow: 2px 2px 2px white;
+	color: #376078;
+}
+
+h1.title-page {
+	background-image: url(../com.silabs.ss.platform.docs/help/images/simplicity_studio_logotype.png);
+	background-position: center 0px;
+	background-repeat: no-repeat;
+	padding-top: 40px;
+	padding-bottom: 20px;
+	margin-top: 100px;
+}
+
+h2.title-page, h3.title-page, h4.title-page {
+	margin-top: 10px;
+	margin-bottom: 10px;
+	padding: 10px;
+	border-top: 2px #376078 solid;
+	border-bottom: 2px #376078 solid;
+}
+
+h5.title-page {
+	background-image: url(../com.silabs.ss.platform.docs/help/images/silabs_logo.png);
+	background-position: center 0px;
+	background-repeat: no-repeat;
+	padding-top: 60px;
+	margin-top: 40px;
+}
+
+/* ------------------------------ */
+/* banner top and bottom styles */
+
+.studio_logo {
+	display: inline;
+	background-image: url(../com.silabs.ss.platform.docs/help/images/silabs_logo.png);
+	background-position: right 5px;
+	background-repeat: no-repeat;
+	margin-right: 5px;
+}
+
+.banner-top {
+	background-color: #DFDFDF;
+}
+
+.banner-bottom {
+	display: block;
+	margin-top: 20px;
+	margin-bottom: 20px;
+	/* Silicon Labs logo */
+	background-image: url(../com.silabs.ss.platform.docs/help/images/copyright.png);
+	background-position: right 0px;
+	background-repeat: no-repeat;
+	background-color: #DFDFDF;
+	color: #FFF;
+}
+
+.help_breadcrumbs {
+	color: #000;
+}
+
+h1 {
+	font-size: 1.8em;
+}
+
+h2 {
+	font-size: 1.4em;
+}
+
+h3 {
+	font-size: 1.0em;
+}
+</style>
+<title>
+Project Import Report for firmware_sdcard_rev.4.1</title>
+</head>
+<body>
+<h1>
+Project Import Summary</h1>
+<table style="border:1px solid">
+<tr style="border:1px solid">
+<td style="border:1px solid">
+Import time</td>
+<td style="border:1px solid">
+2018/11/30 21:14:00</td>
+</tr>
+<tr style="border:1px solid">
+<td style="border:1px solid">
+Original location</td>
+<td style="border:1px solid">
+C:\Users\yoshiaki\project\virtualGimbal\firmware_sdcard_rev.4.1\.cproject</td>
+</tr>
+<tr style="border:1px solid">
+<td style="border:1px solid">
+Original project name</td>
+<td style="border:1px solid">
+firmware_sdcard_rev.4.1</td>
+</tr>
+<tr style="border:1px solid">
+<td style="border:1px solid">
+Original project type</td>
+<td style="border:1px solid">
+Simplicity Studio (.sls)</td>
+</tr>
+<tr style="border:1px solid">
+<td style="border:1px solid">
+Import mode</td>
+<td style="border:1px solid">
+Copy contents</td>
+</tr>
+</table>
+</body>
+</html>
