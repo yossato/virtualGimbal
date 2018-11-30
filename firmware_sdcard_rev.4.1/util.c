@@ -29,7 +29,7 @@
  * 
  */
 
-#include "util.h"
+#include "inc/util.h"
 #include <string.h>
 #include <limits.h>
 
@@ -113,7 +113,7 @@ void wait_ms(unsigned int count){
 }
 
 /**
- * CRC16ŒvŽZ
+ * CRC16ï¿½vï¿½Z
  *
  */
 static const  uint16_t crc16_table[] = {

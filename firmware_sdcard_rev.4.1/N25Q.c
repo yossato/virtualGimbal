@@ -42,7 +42,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <SI_C8051F380_Register_Enums.h>                // SFR declarations
-#include "N25Q.h" 			/* Header file with global prototypes */
+#include "inc/N25Q.h" 			/* Header file with global prototypes */
 //#include "type.h"
 /* Serialize.h
  *
@@ -79,7 +79,7 @@
  * use a generic SPI controller, some changes may be necessary.
  *
  */
-#include "NAND.h"
+#include "inc/NAND.h"
 
 #ifdef TIME_H_EXISTS
 #include <time.h>

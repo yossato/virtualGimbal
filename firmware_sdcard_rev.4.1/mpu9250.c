@@ -34,9 +34,9 @@
 
 #include <string.h>
 
-#include "mpu9250.h"
+#include "inc/mpu9250.h"
 
-#include "util.h"
+#include "inc/util.h"
 //#include "type.h"
 //#include "data_hub.h"
 #include <stdio.h>

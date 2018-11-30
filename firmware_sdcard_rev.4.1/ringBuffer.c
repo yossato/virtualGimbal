@@ -9,24 +9,24 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include "ringBuffer.h"
+#include "inc/ringBuffer.h"
 
-static uint8_t Ring[RINGSIZE];  /* ƒŠƒ“ƒOƒoƒbƒtƒ@ */
-static uint32_t Rp = 0;          /* “Ç‚İ‚İƒ|ƒCƒ“ƒ^ */
-static uint32_t Wp = 0;          /* ‘‚«‚İƒ|ƒCƒ“ƒ^ */
-static bool putingFailed = false;	//PutŠÖ”‚ª¸”s‚µ‚½‚çtrueAˆÙí‚ª‚È‚¯‚ê‚Îfalse
+static uint8_t Ring[RINGSIZE];  /* ï¿½ï¿½ï¿½ï¿½ï¿½Oï¿½oï¿½bï¿½tï¿½@ */
+static uint32_t Rp = 0;          /* ï¿½Ç‚İï¿½ï¿½İƒ|ï¿½Cï¿½ï¿½ï¿½^ */
+static uint32_t Wp = 0;          /* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½İƒ|ï¿½Cï¿½ï¿½ï¿½^ */
+static bool putingFailed = false;	//Putï¿½Öï¿½ï¿½ï¿½ï¿½ï¿½ï¿½sï¿½ï¿½ï¿½ï¿½ï¿½ï¿½trueï¿½Aï¿½Ùí‚ªï¿½È‚ï¿½ï¿½ï¿½ï¿½false
 
 /**
- * @brief ƒŠƒ“ƒOƒoƒbƒtƒ@‚É1•¶š‘‚«‚İ‚Ü‚·
+ * @brief ï¿½ï¿½ï¿½ï¿½ï¿½Oï¿½oï¿½bï¿½tï¿½@ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½İ‚Ü‚ï¿½
  **/
 void rbPut(int8_t val){
 	uint32_t next = (Wp + 1) & (RINGSIZE-1);
-	if(next == Rp){//ƒŠƒ“ƒOƒoƒbƒtƒ@‚ª–ƒ^ƒ“‚Ì‚ÍŒx‚ğo‚µ‚Äƒf[ƒ^‚ğ”pŠüB
+	if(next == Rp){//ï¿½ï¿½ï¿½ï¿½ï¿½Oï¿½oï¿½bï¿½tï¿½@ï¿½ï¿½ï¿½ï¿½ï¿½^ï¿½ï¿½ï¿½Ìï¿½ï¿½ÍŒxï¿½ï¿½ï¿½ï¿½ï¿½oï¿½ï¿½ï¿½Äƒfï¿½[ï¿½^ï¿½ï¿½pï¿½ï¿½ï¿½B
 		putingFailed = true;
 		return;
 	}
 //	if( next == Rp ) {
-//		fprintf( stderr, "ƒŠƒ“ƒOƒoƒbƒtƒ@‚ª–”t‚Å‚·B“Ç‚Ü‚È‚¢ŒÀ‚èƒf[ƒ^‚ğ—‚µ‚Ü‚·\n" );
+//		fprintf( stderr, "ï¿½ï¿½ï¿½ï¿½ï¿½Oï¿½oï¿½bï¿½tï¿½@ï¿½ï¿½ï¿½ï¿½ï¿½tï¿½Å‚ï¿½ï¿½Bï¿½Ç‚Ü‚È‚ï¿½ï¿½ï¿½ï¿½ï¿½fï¿½[ï¿½^ï¿½ğ—‚ï¿½ï¿½Ü‚ï¿½\n" );
 //		return;
 //	}
 	Ring[Wp] = val;
@@ -34,19 +34,19 @@ void rbPut(int8_t val){
 }
 
 /**
- * @brief ƒŠƒ“ƒOƒoƒbƒtƒ@‚©‚ç•¶š—ñ‚ğ“Ç‚İo‚µ‚Ü‚·
- * @param [out] buf			•¶š—ñ‚ğŠi”[‚·‚éŠÖ”
- * @param [in]  maxLength	ƒŠƒ“ƒOƒoƒbƒtƒ@‚©‚ç“Ç‚İæ‚éÅ‘å‚Ì•¶š—ñ‚Ì’·‚³
- * @retval “Ç‚İæ‚ê‚½•¶š—ñ‚Ì’·‚³
+ * @brief ï¿½ï¿½ï¿½ï¿½ï¿½Oï¿½oï¿½bï¿½tï¿½@ï¿½ï¿½ï¿½ç•¶ï¿½ï¿½ï¿½ï¿½ï¿½Ç‚İoï¿½ï¿½ï¿½Ü‚ï¿½
+ * @param [out] buf			ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½iï¿½[ï¿½ï¿½ï¿½ï¿½Öï¿½
+ * @param [in]  maxLength	ï¿½ï¿½ï¿½ï¿½ï¿½Oï¿½oï¿½bï¿½tï¿½@ï¿½ï¿½ï¿½ï¿½Ç‚İï¿½ï¿½Å‘ï¿½Ì•ï¿½ï¿½ï¿½ï¿½ï¿½Ì’ï¿½ï¿½ï¿½
+ * @retval ï¿½Ç‚İï¿½ê‚½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì’ï¿½ï¿½ï¿½
  **/
 uint32_t rbGet(int8_t *buf, int32_t maxLength){
 	uint32_t retval = 0;
 	const uint8_t warning[] = "ring buf is full!\r\n";
 
-	//ˆê“xput‚É¸”s‚µ‚½Œ`Õ‚ª‚ ‚ê‚ÎŒx‚ğo‚·
+	//ï¿½ï¿½xputï¿½Éï¿½ï¿½sï¿½ï¿½ï¿½ï¿½ï¿½`ï¿½Õ‚ï¿½ï¿½ï¿½ï¿½ï¿½ÎŒxï¿½ï¿½ï¿½ï¿½ï¿½oï¿½ï¿½
 	if(putingFailed == true){
 		while(retval<maxLength){
-			if(retval==strlen(warning)){//•¶š—ñ‚Ì––”ö
+			if(retval==strlen(warning)){//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì–ï¿½ï¿½ï¿½
 				putingFailed = false;
 				break;
 			}
@@ -55,16 +55,16 @@ uint32_t rbGet(int8_t *buf, int32_t maxLength){
 		}
 	}
 
-	while((Rp != Wp)&&(retval<maxLength)) {    /* ƒŠƒ“ƒOƒoƒbƒtƒ@‚ª‹ó‚Å‚È‚¢ */
+	while((Rp != Wp)&&(retval<maxLength)) {    /* ï¿½ï¿½ï¿½ï¿½ï¿½Oï¿½oï¿½bï¿½tï¿½@ï¿½ï¿½ï¿½ï¿½Å‚È‚ï¿½ */
 		buf[retval] = Ring[Rp];
 		Rp = (Rp + 1) & (RINGSIZE-1);
 		retval++;
 	}
-//	if( Rp != Wp ) {    /* ƒŠƒ“ƒOƒoƒbƒtƒ@‚ª‹ó‚Å‚È‚¢ */
+//	if( Rp != Wp ) {    /* ï¿½ï¿½ï¿½ï¿½ï¿½Oï¿½oï¿½bï¿½tï¿½@ï¿½ï¿½ï¿½ï¿½Å‚È‚ï¿½ */
 //		*buf = Ring[Rp];
 //		Rp = (Rp + 1) & (RINGSIZE-1);
 //		return 0;
-//	}else {            /* ƒŠƒ“ƒOƒoƒbƒtƒ@‚ª‹ó */
+//	}else {            /* ï¿½ï¿½ï¿½ï¿½ï¿½Oï¿½oï¿½bï¿½tï¿½@ï¿½ï¿½ï¿½ï¿½ */
 //		return -1;
 //	}
 	return retval;

@@ -14,13 +14,13 @@
 #include "stdlib.h"
 #include <stdint.h>
 #include <stdarg.h>
-#include "NAND.h"
+#include "inc/NAND.h"
 #include <string.h>
-#include "ringBuffer.h"
-#include "mpu9250.h"
+#include "inc/ringBuffer.h"
+#include "inc/mpu9250.h"
 #define M_PI 3.14159265358
 #include "math.h"
-#include "util.h"
+#include "inc/util.h"
 /**************************************************************************//**
  * VCPXpress_Echo_main.c
  *
@@ -736,7 +736,7 @@ static void Port_Init (void)
  **/
 INTERRUPT(Timer3_ISR, TIMER3_IRQn) {
 	static uint8_t Times=0;
-	static uint16_t oldStatus = 0;
+//	static uint16_t oldStatus = 0;
 //	static FrameData angularVelocity;
 
 	if((++Times) & 0x01){	//2回に1回実行、60Hz
