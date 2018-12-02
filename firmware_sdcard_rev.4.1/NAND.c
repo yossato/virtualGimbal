@@ -6,7 +6,7 @@
  */
 
 #include <SI_C8051F380_Register_Enums.h>                // SFR declarations
-#include "NAND.h"
+#include "inc/NAND.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -17,7 +17,7 @@
 
 ReturnType nandWriteData32(NMX_uint32 n, NMX_uint32 data2write){
 	ParameterType para;// parameters used for all operation
-	NMX_uint8 xdata * data pt = (NMX_uint8 *)&data2write;//char‚Ídata,long‚Íxdata‚É’u‚©‚ê‚é‚Ì‚ÅA—Ìˆæ‚ğ‚Ü‚½‚®ƒ|ƒCƒ“ƒ^‚ğ€”õ
+	NMX_uint8 xdata * data pt = (NMX_uint8 *)&data2write;//charï¿½ï¿½data,longï¿½ï¿½xdataï¿½É’uï¿½ï¿½ï¿½ï¿½ï¿½Ì‚ÅAï¿½Ìˆï¿½ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½ï¿½|ï¿½Cï¿½ï¿½ï¿½^ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	para.PageProgram.udAddr = n*sizeof(NMX_uint32); // program 16 byte at address 0
 	para.PageProgram.pArray = pt;
 	para.PageProgram.udNrOfElementsInArray = sizeof(NMX_uint32);
@@ -27,17 +27,17 @@ ReturnType nandWriteData32(NMX_uint32 n, NMX_uint32 data2write){
 NMX_uint32 nandReadData32(NMX_uint32 n){
 	ParameterType para;/* parameters used for all operation */
 	NMX_uint32 rbuffer;
-	NMX_uint8 xdata * data pt = (NMX_uint8 *)&rbuffer;//char‚Ídata,long‚Íxdata‚É’u‚©‚ê‚é‚Ì‚ÅA—Ìˆæ‚ğ‚Ü‚½‚®ƒ|ƒCƒ“ƒ^‚ğ€”õ
+	NMX_uint8 xdata * data pt = (NMX_uint8 *)&rbuffer;//charï¿½ï¿½data,longï¿½ï¿½xdataï¿½É’uï¿½ï¿½ï¿½ï¿½ï¿½Ì‚ÅAï¿½Ìˆï¿½ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½ï¿½|ï¿½Cï¿½ï¿½ï¿½^ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	para.Read.udAddr = n*sizeof(rbuffer); /* read 16 byte at address 0 */
 	para.Read.pArray = pt;
 	para.Read.udNrOfElementsToRead = sizeof(rbuffer);
 	DataRead(Read, &para);
-	return rbuffer;//strVec‚Í1ŒÂ‚ ‚½‚è6byte
+	return rbuffer;//strVecï¿½ï¿½1ï¿½Â‚ï¿½ï¿½ï¿½ï¿½ï¿½6byte
 }
 
 ReturnType nandWriteData16(NMX_uint32 n, NMX_uint16 data2write){
 	ParameterType para;// parameters used for all operation
-	NMX_uint8 xdata * data pt = (NMX_uint8 *)&data2write;//char‚Ídata,long‚Íxdata‚É’u‚©‚ê‚é‚Ì‚ÅA—Ìˆæ‚ğ‚Ü‚½‚®ƒ|ƒCƒ“ƒ^‚ğ€”õ
+	NMX_uint8 xdata * data pt = (NMX_uint8 *)&data2write;//charï¿½ï¿½data,longï¿½ï¿½xdataï¿½É’uï¿½ï¿½ï¿½ï¿½ï¿½Ì‚ÅAï¿½Ìˆï¿½ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½ï¿½|ï¿½Cï¿½ï¿½ï¿½^ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	para.PageProgram.udAddr = n*sizeof(NMX_uint16); // program 16 byte at address 0
 	para.PageProgram.pArray = pt;
 	para.PageProgram.udNrOfElementsInArray = sizeof(NMX_uint16);
@@ -48,25 +48,25 @@ ReturnType nandWriteData16(NMX_uint32 n, NMX_uint16 data2write){
 NMX_uint16 nandReadData16(NMX_uint32 n){
 	ParameterType para;/* parameters used for all operation */
 	NMX_uint16 rbuffer;
-	NMX_uint8 xdata * data pt = (NMX_uint8 *)&rbuffer;//char‚Ídata,long‚Íxdata‚É’u‚©‚ê‚é‚Ì‚ÅA—Ìˆæ‚ğ‚Ü‚½‚®ƒ|ƒCƒ“ƒ^‚ğ€”õ
+	NMX_uint8 xdata * data pt = (NMX_uint8 *)&rbuffer;//charï¿½ï¿½data,longï¿½ï¿½xdataï¿½É’uï¿½ï¿½ï¿½ï¿½ï¿½Ì‚ÅAï¿½Ìˆï¿½ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½ï¿½|ï¿½Cï¿½ï¿½ï¿½^ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	para.Read.udAddr = n*sizeof(rbuffer); /* read 16 byte at address 0 */
 	para.Read.pArray = pt;
 	para.Read.udNrOfElementsToRead = sizeof(rbuffer);
 	DataRead(Read, &para);
-	return rbuffer;//strVec‚Í1ŒÂ‚ ‚½‚è6byte
+	return rbuffer;//strVecï¿½ï¿½1ï¿½Â‚ï¿½ï¿½ï¿½ï¿½ï¿½6byte
 }
 
 bool nandWriteFrame(uint32_t frame, FrameData *angularVelocity){
 	ParameterType para;// parameters used for all operation
-//	NMX_uint8 xdata * data pt = (uint8_t *)angularVelocity;//char‚Ídata,long‚Íxdata‚É’u‚©‚ê‚é‚Ì‚ÅA—Ìˆæ‚ğ‚Ü‚½‚®ƒ|ƒCƒ“ƒ^‚ğ€”õ
+//	NMX_uint8 xdata * data pt = (uint8_t *)angularVelocity;//charï¿½ï¿½data,longï¿½ï¿½xdataï¿½É’uï¿½ï¿½ï¿½ï¿½ï¿½Ì‚ÅAï¿½Ìˆï¿½ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½ï¿½|ï¿½Cï¿½ï¿½ï¿½^ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 //	para.PageProgram.udAddr = frame*sizeof(FrameData); // program 16 byte at address 0
 //	para.PageProgram.pArray = pt;
 //	para.PageProgram.udNrOfElementsInArray = sizeof(FrameData);
 //	return DataProgram(PageProgram, &para);
 
-	//Flashƒƒ‚ƒŠ‚Ìƒ_ƒC‚Ì‹«ŠE‚ğ“¥‚Ü‚È‚¢—vˆö2byte‚Ã‚Â‘‚«‚ŞB
+	//Flashï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ìƒ_ï¿½Cï¿½Ì‹ï¿½ï¿½Eï¿½ğ“¥‚Ü‚È‚ï¿½ï¿½vï¿½ï¿½2byteï¿½Ã‚Âï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ŞB
 
-	NMX_uint8 xdata * data pt = (uint8_t *)&angularVelocity->x;//char‚Ídata,long‚Íxdata‚É’u‚©‚ê‚é‚Ì‚ÅA—Ìˆæ‚ğ‚Ü‚½‚®ƒ|ƒCƒ“ƒ^‚ğ€”õ
+	NMX_uint8 xdata * data pt = (uint8_t *)&angularVelocity->x;//charï¿½ï¿½data,longï¿½ï¿½xdataï¿½É’uï¿½ï¿½ï¿½ï¿½ï¿½Ì‚ÅAï¿½Ìˆï¿½ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½ï¿½|ï¿½Cï¿½ï¿½ï¿½^ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	para.PageProgram.udAddr = frame*sizeof(FrameData); // program 16 byte at address 0
 	para.PageProgram.pArray = pt;
 	para.PageProgram.udNrOfElementsInArray = sizeof(angularVelocity->x);
@@ -122,45 +122,45 @@ bool nandReadFrame(uint32_t frame, FrameData *angularVelocity){
 }
 
 /**
- * @brief ƒtƒŒ[ƒ€‚Éƒf[ƒ^‚ª‚ ‚é‚©‚Ç‚¤‚©Šm”F‚µ‚Ü‚·
- * @param [in] frame ƒtƒŒ[ƒ€ˆÊ’u
- * @retval false:–¢g—p true:g—pÏ‚İ
+ * @brief ï¿½tï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½Éƒfï¿½[ï¿½^ï¿½ï¿½ï¿½ï¿½ï¿½é‚©ï¿½Ç‚ï¿½ï¿½ï¿½ï¿½mï¿½Fï¿½ï¿½ï¿½Ü‚ï¿½
+ * @param [in] frame ï¿½tï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½Ê’u
+ * @retval false:ï¿½ï¿½ï¿½gï¿½p true:ï¿½gï¿½pï¿½Ï‚ï¿½
  **/
 int16_t isFull(uint32_t frame){
-	//TODO:—ÌˆæŠO‚Ì‚Í‚Ç‚¤‚·‚éHHH
+	//TODO:ï¿½Ìˆï¿½Oï¿½Ìï¿½ï¿½Í‚Ç‚ï¿½ï¿½ï¿½ï¿½ï¿½Hï¿½Hï¿½H
 	static FrameData f;
-//	uint32_t position16 = frame*1*3;//ƒtƒŒ[ƒ€”~16bit~3²
-	//3²‚Ìƒf[ƒ^‚ğæ‚èo‚·
+//	uint32_t position16 = frame*1*3;//ï¿½tï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½ï¿½ï¿½~16bitï¿½~3ï¿½ï¿½
+	//3ï¿½ï¿½ï¿½Ìƒfï¿½[ï¿½^ï¿½ï¿½ï¿½ï¿½ï¿½oï¿½ï¿½
 	nandReadFrame(frame,&f);
 	++frame;
 //	f.x = nandReadData16(position16);
 //	f.y = nandReadData16(position16+1);
 //	f.z = nandReadData16(position16+2);
-	//‘S²‚ª0xFFFF‚©‚Ç‚¤‚©Šm”F
+	//ï¿½Sï¿½ï¿½ï¿½ï¿½0xFFFFï¿½ï¿½ï¿½Ç‚ï¿½ï¿½ï¿½ï¿½mï¿½F
 	if(f.x==0xffff && f.y==0xffff && f.z==0xffff){
-		//–¢g—p‚Ì‰Â”\«‚ª‚‚¢‚ªAŸ‚ÌƒtƒŒ[ƒ€‚à•¹‚¹‚ÄŠm”F‚·‚é
-		//Ÿ‚ÌƒtƒŒ[ƒ€‚àŠm”F
+		//ï¿½ï¿½ï¿½gï¿½pï¿½Ì‰Â”\ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Aï¿½ï¿½ï¿½Ìƒtï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÄŠmï¿½Fï¿½ï¿½ï¿½ï¿½
+		//ï¿½ï¿½ï¿½Ìƒtï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½ï¿½ï¿½mï¿½F
 		nandReadFrame(frame,&f);
 		++frame;
 //		f.x = nandReadData16(position16+3);
 //		f.y = nandReadData16(position16+4);
 //		f.z = nandReadData16(position16+5);
 		if(f.x==0xffff && f.y==0xffff && f.z==0xffff){
-			//–¢g—p
+			//ï¿½ï¿½ï¿½gï¿½p
 			return 0;
 		}else{
-			//g—pÏ‚İ
+			//ï¿½gï¿½pï¿½Ï‚ï¿½
 			return 1;
 		}
 	}else{
-		//g—pÏ‚İ
+		//ï¿½gï¿½pï¿½Ï‚ï¿½
 		return 1;
 	}
 }
 
 /**
- * @brief “ñ•ª–@‚Åƒf[ƒ^––”ö‚ÌŸ‚ÌˆÊ’u‚ğ’T‚µ‚Ü‚·B‘‚«‚İ‚Í‚±‚ÌˆÊ’u‚©‚çÀs‚µ‚Ä‚­‚¾‚³‚¢B
- * 0xffff x 3 + 0xfefe x 3‚Ì2ƒtƒŒ[ƒ€‚Å0xffff‚Ìƒf[ƒ^‚ğ•\‚·B0xffff x 6‚Å•s’èiŠî–{“I‚É‹ó‚«—ÌˆæjB0xffff x 3 + 0x0000 x 3‚Åƒf[ƒ^‚Ì‹æØ‚è
+ * @brief ï¿½ñ•ª–@ï¿½Åƒfï¿½[ï¿½^ï¿½ï¿½ï¿½ï¿½ï¿½Ìï¿½ï¿½ÌˆÊ’uï¿½ï¿½Tï¿½ï¿½ï¿½Ü‚ï¿½ï¿½Bï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½İ‚Í‚ï¿½ï¿½ÌˆÊ’uï¿½ï¿½ï¿½ï¿½ï¿½ï¿½sï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½B
+ * 0xffff x 3 + 0xfefe x 3ï¿½ï¿½2ï¿½tï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½ï¿½0xffffï¿½Ìƒfï¿½[ï¿½^ï¿½ï¿½\ï¿½ï¿½ï¿½B0xffff x 6ï¿½Å•sï¿½ï¿½iï¿½ï¿½{ï¿½Iï¿½É‹ó‚«—Ìˆï¿½jï¿½B0xffff x 3 + 0x0000 x 3ï¿½Åƒfï¿½[ï¿½^ï¿½Ì‹ï¿½Ø‚ï¿½
  *
  **/
 
@@ -172,20 +172,20 @@ uint32_t findNext(){
 	na = 0;
 	nb = MAX_FRAMES-2;
 	while(1){
-		nm=(na+nb)/2;//‰¼‚Ì‰ğ
+		nm=(na+nb)/2;//ï¿½ï¿½ï¿½Ì‰ï¿½
 		if(isFull(nm)){
 			na=nm;
-			if((nb-na)<=1){//I—¹ğŒ,‚½‚Ô‚ñNAND‚ª‚·‚×‚Ä‹ó‚Á‚Û‚Ì
+			if((nb-na)<=1){//ï¿½Iï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½Ô‚ï¿½NANDï¿½ï¿½ï¿½ï¿½ï¿½×‚Ä‹ï¿½ï¿½ï¿½Û‚Ìï¿½
 				return nb;
 			}
 		}else{
-			if((nb-na)<=1){//I—¹ğŒ
+			if((nb-na)<=1){//ï¿½Iï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 				return nm;
 			}
 			nb=nm;
 		}
 
-	}//while((nb-na)>1);//–{“–H
+	}//while((nb-na)>1);//ï¿½{ï¿½ï¿½ï¿½H
 //	return na;
 }
 
@@ -195,7 +195,7 @@ void nand_wait_8n6clk(uint8_t i){
 #define nand_cs_wait() nand_wait_8n6clk(100)//(50)
 #define nand_clk_wait() nand_wait_8n6clk(5)//(5)
 
-//ƒsƒ“ƒAƒTƒCƒ“
+//ï¿½sï¿½ï¿½ï¿½Aï¿½Tï¿½Cï¿½ï¿½
 #define nand_clk_up()      (P0 |=  0x10)
 #define nand_clk_down()    (P0 &= ~0x10)
 #define nand_out_up()      (P0 |=  0x20)
