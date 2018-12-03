@@ -9,7 +9,7 @@
 #define NAND_H_
 
 #include <SI_C8051F380_Register_Enums.h>                // SFR declarations
-#include "N25Q.h"
+#include "SPI-NAND.h"
 
 void NAND_write(NMX_uint8 *buf, NMX_uint16 size);
 void NAND_read(NMX_uint8 *buf, NMX_uint16 size);
@@ -25,7 +25,7 @@ int16_t isFull(uint32_t frame);
 uint32_t findNext();
 
 
-#define MAX_FRAMES 256UL*1024*1024/8/sizeof(FrameData)	//512[Mb]/8[bit/byte]/sizeof(Frame)[byte/Frame]-1=11184810-1=11184809[Frame]B-1‚ÍƒGƒXƒP[ƒvƒV[ƒPƒ“ƒX•ªH
+#define MAX_FRAMES 256UL*1024*1024/8/sizeof(FrameData)	//512[Mb]/8[bit/byte]/sizeof(Frame)[byte/Frame]-1=11184810-1=11184809[Frame]ï¿½B-1ï¿½ÍƒGï¿½Xï¿½Pï¿½[ï¿½vï¿½Vï¿½[ï¿½Pï¿½ï¿½ï¿½Xï¿½ï¿½ï¿½H
 
 
 /*#define FIND_NEXT(na,nb,next)\

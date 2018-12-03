@@ -14,7 +14,7 @@
 #include "stdlib.h"
 #include <stdint.h>
 #include <stdarg.h>
-#include "inc/NAND.h"
+#include "NAND.h"
 #include <string.h>
 #include "inc/ringBuffer.h"
 #include "inc/mpu9250.h"

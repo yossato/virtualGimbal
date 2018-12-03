@@ -225,7 +225,7 @@ enum
 
 typedef enum
 {
-	SPI_NAND_PROTECTED_ALL_UNLOCKED		= 0x00, // None—all unlocked
+	SPI_NAND_PROTECTED_ALL_UNLOCKED		= 0x00, // Noneï¿½all unlocked
 	SPI_NAND_PROTECTED_1_64_UPPER		= 0x01, // Upper 1/64 locked
 	SPI_NAND_PROTECTED_1_32_UPPER		= 0x02, // Upper 1/32 locked
 	SPI_NAND_PROTECTED_1_16_UPPER		= 0x03, // Upper 1/16 locked
@@ -263,9 +263,9 @@ ReturnType FlashWriteDisable(void);
 ReturnType FlashBlockErase(uAddrType udBlockAddr);
 ReturnType FlashPageRead(uAddrType udAddr, NMX_uint8 *pArray);
 ReturnType FlashPageReadDual(uAddrType udAddr, NMX_uint8 *pArray);
-ReturnType FlashPageReadQuad(uAddrType udAddr, NMX_uint8 *pArray);
+ReturnType FlashPageReadQuad(uAddrType udAddr, NMX_uint8 *pArray, PageReadMode Mode);
 ReturnType FlashReadDeviceIdentification(NMX_uint16 *uwpDeviceIdentification);
-ReturnType FlashPageProgram(uAddrType udAddr, NMX_uint8 *pArray);
+ReturnType FlashPageProgram(uAddrType udAddr, NMX_uint8 *pArray, NMX_uint32 udNrOfElementsInArray);
 ReturnType FlashRandomProgram(uAddrType rowAddr, chunk* cks, NMX_uint8 num_of_chunk);
 ReturnType FlashInternalDataMove(uAddrType udSourceAddr, uAddrType udDestAddr);
 ReturnType FlashUnlock(ProtectedRows pr);

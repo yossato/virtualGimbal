@@ -47,7 +47,10 @@
 ********************************************************************************/
 
 #include "SPI-NAND.h"
-#include "Serialize.h" /* Header file with SPI master abstract prototypes */
+//#include "Serialize.h" /* Header file with SPI master abstract prototypes */
+#include "NAND.h"
+
+#define NULL_PTR 0
 
 #ifdef MT29FG01AAAED
 /*
@@ -68,8 +71,8 @@
  *
  *		Notes:
  *		The 12-bit column address is capable of addressing from 0 to 4095 bytes; however, only
- *		bytes 0 through 2111 are valid. Bytes 2112 through 4095 of each page are “out of
- *		bounds,” do not exist in the device, and cannot be addressed.
+ *		bytes 0 through 2111 are valid. Bytes 2112 through 4095 of each page are ï¿½out of
+ *		bounds,ï¿½ do not exist in the device, and cannot be addressed.
  *
  *
  */
@@ -78,7 +81,7 @@
  * void Build_Row_Stream(NMX_uint32 udAddr, NMX_uint8 cCMD, NMX_uint8 *chars);
  * (This is not an api function)
  */
-static inline void Build_Row_Stream(NMX_uint32 udAddr, NMX_uint8 cCMD, NMX_uint8 *chars)
+static void Build_Row_Stream(NMX_uint32 udAddr, NMX_uint8 cCMD, NMX_uint8 *chars)
 {
 	udAddr &= 0xFFFFF000ul; /* row mask */
 	chars[0] = (NMX_uint8) cCMD;
@@ -93,7 +96,7 @@ static inline void Build_Row_Stream(NMX_uint32 udAddr, NMX_uint8 cCMD, NMX_uint8
  * (This is not an api function)
  */
 
-static inline void Build_Column_Stream(NMX_uint32 udAddr, NMX_uint8 cCMD, NMX_uint8 *chars)
+static void Build_Column_Stream(NMX_uint32 udAddr, NMX_uint8 cCMD, NMX_uint8 *chars)
 {
 	udAddr &= 0x1FFFul; /* column mask: 1 bit plane select + 12 bit column address */
 	chars[0] = (NMX_uint8) cCMD;
@@ -189,7 +192,7 @@ int IsFlashBusy()
  *
  * (This is not an api function)
  */
-static inline ReturnType WAIT_EXECUTION_COMPLETE(NMX_sint16 second)
+static ReturnType WAIT_EXECUTION_COMPLETE(NMX_sint16 second)
 {
     FlashTimeOut(0);
     while(IsFlashBusy())
@@ -354,9 +357,9 @@ ReturnType FlashWriteDisable(void)
  * command (D8h) operates on one block at a time. The command sequence for the
  * BLOCK ERASE operation is as follows:
  *
- * • 06h (WRITE ENBALE command)
- * • D8h (BLOCK ERASE command)
- * • 0Fh (GET FEATURES command to read the status register)
+ * ï¿½ 06h (WRITE ENBALE command)
+ * ï¿½ D8h (BLOCK ERASE command)
+ * ï¿½ 0Fh (GET FEATURES command to read the status register)
  *
  * Prior to performing the BLOCK ERASE operation, a WRITE ENABLE (06h) command
  * must be issued. As with any command that changes the memory contents, the WRITE
@@ -422,9 +425,9 @@ ReturnType FlashBlockErase(uAddrType udBlockAddr)
  * The PAGE READ (13h) command transfers the data from the NAND Flash array to the
  * cache register. The command sequence is follows:
  *
- * • 13h (PAGE READ to cache)
- * • 0Fh (GET FEATURES command to read the status)
- * • 0Bh or 03h (Random data read)
+ * ï¿½ 13h (PAGE READ to cache)
+ * ï¿½ 0Fh (GET FEATURES command to read the status)
+ * ï¿½ 0Bh or 03h (Random data read)
  *
  * The PAGE READ command requires a 24-bit address consisting of 7 dummy bits followed
  * by a 17-bit block/page address. After the block/page addresses are registered, the
@@ -631,10 +634,10 @@ ReturnType FlashReadDeviceIdentification(NMX_uint16 *uwpDeviceIdentification)
  * The PAGE PROGRAM operation sequence programs 1 byte to 2112 bytes of data within
  * a page. The page program sequence is as follows:
  *
- * • 06h (WRITE ENABLE
- * • 02h (PROGRAM LOAD)
- * • 10h (PROGRAM EXECUTE)
- * • 0Fh (GET FEATURE command to read the status)
+ * ï¿½ 06h (WRITE ENABLE
+ * ï¿½ 02h (PROGRAM LOAD)
+ * ï¿½ 10h (PROGRAM EXECUTE)
+ * ï¿½ 0Fh (GET FEATURE command to read the status)
  *
  * Prior to performing the PROGRAM LOAD operation, a WRITE ENABLE (06h) command
  * must be issued. As with any command that changes the memory contents, the WRITE
@@ -726,10 +729,10 @@ ReturnType FlashPageProgram(uAddrType udAddr, NMX_uint8 *pArray, NMX_uint32 udNr
  *
  * The RANDOM DATA PROGRAM sequence programs or replaces data in a page with
  * existing data. The random data program sequence is as follows:
- * • 06h (WRITE ENABLE
- * • 84h (PROGRAM LOAD RANDOM DATA)
- * • 10h (PROGRAM EXECUTE)
- * • 0Fh (GET FEATURE command to read the status)
+ * ï¿½ 06h (WRITE ENABLE
+ * ï¿½ 84h (PROGRAM LOAD RANDOM DATA)
+ * ï¿½ 10h (PROGRAM EXECUTE)
+ * ï¿½ 0Fh (GET FEATURE command to read the status)
  * Prior to performing a PROGRAM LOAD RANDOM DATA operation, a WRITE ENABLE
  * (06h) command must be issued to change the contents of the memory array. Following
  * a WRITE ENABLE (06) command, a PROGRAM LOAD RANDOM DATA (84h) command
@@ -811,12 +814,12 @@ ReturnType FlashRandomProgram(uAddrType udAddr, chunk* cks, NMX_uint8 num_of_chu
  *
  * The INTERNAL DATA MOVE command sequence programs or replaces data in a page
  * with existing data. The INTERNAL DATA MOVE command sequence is as follows:
- * • 13h (PAGE READ to cache)
+ * ï¿½ 13h (PAGE READ to cache)
  *
- * • 06h (WRITE ENABLE
- * • 84h (PROGRAM LOAD RANDOM DATA)
- * • 10h (PROGRAM EXECUTE)
- * • 0Fh (GET FEATURE command to read the status)
+ * ï¿½ 06h (WRITE ENABLE
+ * ï¿½ 84h (PROGRAM LOAD RANDOM DATA)
+ * ï¿½ 10h (PROGRAM EXECUTE)
+ * ï¿½ 0Fh (GET FEATURE command to read the status)
  *
  * Prior to performing an internal data move operation, the target page content must be
  * read into the cache register. This is done by issuing a PAGE READ (13h) command (see
@@ -909,7 +912,7 @@ ReturnType FlashInternalDataMove(uAddrType udSourceAddr, uAddrType udDestAddr)
  *
  * The block lock feature provides the ability to protect the entire device, or ranges of
  * blocks, from the PROGRAM and ERASE operations. After power-up, the device is in the
- * “locked” state, i.e., bits 3, 4, and 5 of the block lock register are set to 1. To unlock all the
+ * ï¿½lockedï¿½ state, i.e., bits 3, 4, and 5 of the block lock register are set to 1. To unlock all the
  * blocks, or a range of blocks, the SET FEATURES command must be issued with the A0h
  * feature address, including the data bits shown in Table 6. The operation for the SET
  * FEATURES command is shown in Figure 10 on page 15. When BRWD is set and WP is
@@ -936,7 +939,7 @@ ReturnType FlashInternalDataMove(uAddrType udSourceAddr, uAddrType udDestAddr)
  *
  * (*) Tables of Protected Rows (BP2, BP1, BP0):
  *
- *    0 0 0 -> None—all unlocked
+ *    0 0 0 -> Noneï¿½all unlocked
  *    0 0 1 -> Upper 1/64 locked
  *    0 1 0 -> Upper 1/32 locked
  *    0 1 1 -> Upper 1/16 locked
@@ -1012,7 +1015,7 @@ ReturnType FlashUnlockAll(void)
  * range is guaranteed to be good. Customers can use the OTP area any way they want;
  * typical uses include programming serial numbers, or other data, for permanent storage.
  * To access the OTP feature, the user must issue the SET FEATURES command, followed
- * by feature address B0h. When the OTP is ready for access, pages 02h–0Bh can be programmed
+ * by feature address B0h. When the OTP is ready for access, pages 02hï¿½0Bh can be programmed
  * in sequential order. The PROGRAM LOAD (02h) and PROGRAM EXECUTE
  * (10h) commands can be used to program the pages. Also, the PAGE READ (13h) command
  * can be used to read the OTP area. The data bits used in feature address B0h to
@@ -1021,9 +1024,9 @@ ReturnType FlashUnlockAll(void)
  * OTP Access
  * To access OTP, perform the following command sequence:
  *
- * • Issue the SET FEATURES register write (1Fh)
- * • Issue the OTP feature address (B0h)
- * • Issue the PAGE PROGRAM or PAGE READ command
+ * ï¿½ Issue the SET FEATURES register write (1Fh)
+ * ï¿½ Issue the OTP feature address (B0h)
+ * ï¿½ Issue the PAGE PROGRAM or PAGE READ command
  *
  * It is important to note that after bits 6 and 7 of the OTP register are set by the user, the
  * OTP area becomes read-only and no further programming is supported. For OTP states,
@@ -1095,15 +1098,15 @@ ReturnType FlashReadOTPStatus(NMX_uint8 *otp_reg_value)
  * The serial device offers data corruption protection by offering 4-bit internal ECC.
  * READs and PROGRAMs with internal ECC can be enabled or disabled by setting the
  * ECC bit in the OTP register. ECC is enabled after device power up, so the default READ
- * and PROGRAM commands operate with internal ECC in the “active” state.
+ * and PROGRAM commands operate with internal ECC in the ï¿½activeï¿½ state.
  * To enable/disable ECC, perform the following command sequence:
  *
- * • Issue the SET FEATURES register write (1Fh).
- * • Issue the OTP feature address (B0h).
- * • Then:
+ * ï¿½ Issue the SET FEATURES register write (1Fh).
+ * ï¿½ Issue the OTP feature address (B0h).
+ * ï¿½ Then:
  *
- * – To enable ECC: Set Bit 4 (ECC Enable) to 1.
- * – To disable ECC: Clear Bit 4 (ECC Enable) to 0.
+ * ï¿½ To enable ECC: Set Bit 4 (ECC Enable) to 1.
+ * ï¿½ To disable ECC: Clear Bit 4 (ECC Enable) to 0.
  *
  * During a PROGRAM operation, the device calculates an ECC code on the 2k page in the
  * cache register, before the page is written to the NAND Flash array. The ECC code is stored
@@ -1115,13 +1118,13 @@ ReturnType FlashReadOTPStatus(NMX_uint8 *otp_reg_value)
  * error correction was successful. The ECC Protection table below shows the ECC protection
  * scheme used throughout a page.
  * With internal ECC, the user must accommodate the following:
- * • Spare area definitions provided in the ECC Protection table below.
- * • WRITEs to ECC are supported for main and spare areas 0, and 1. WRITEs to the ECC
+ * ï¿½ Spare area definitions provided in the ECC Protection table below.
+ * ï¿½ WRITEs to ECC are supported for main and spare areas 0, and 1. WRITEs to the ECC
  * area are prohibited (see the ECC Protection table below).
- * • When using partial-page programming, the following conditions must both be met:
- * – In the main user area and in user meta data area I, single partial-page programming
+ * ï¿½ When using partial-page programming, the following conditions must both be met:
+ * ï¿½ In the main user area and in user meta data area I, single partial-page programming
  * operations must be used (see the ECC Protection table below).
- * – Within a page, the user can perform a maximum of four partial-page programming
+ * ï¿½ Within a page, the user can perform a maximum of four partial-page programming
  * operations.
  *
  *

@@ -42,7 +42,7 @@
 									<listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/Device/C8051F380/VCPXpress&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/Device/shared/si8051base&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/Device/C8051F380/inc&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/VCP2/inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/firmware_sdcard_rev.4.1/inc}&quot;"/>
 								</option>
 								<inputType id="com.silabs.ide.si8051.keil.compiler.inputType.1113059825" superClass="com.silabs.ide.si8051.keil.compiler.inputType"/>
 							</tool>
