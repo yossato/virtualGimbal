@@ -62,7 +62,7 @@ SBIT(PWM_bit, SFR_P0,2);                  // Motor driver gate bit. PWM_bit = 1 
 uint8_t readyToWriteVCP = 0;	//VCPでwriteする準備が整っている時は1、準備が整ってないときは0とする。
 uint8_t readyToReadVCP = 0;
 uint8_t readyToPrintf = 0;
-extern FLASH_DEVICE_OBJECT *fdo;
+//extern FLASH_DEVICE_OBJECT *fdo;
 const char welcome[] = "\n"
 		"***********************************************\n"
 		"* Watzhdog                                    *\n"
@@ -125,11 +125,8 @@ void powerOff();
  *****************************************************************************/
 void main (void)
 {
-	//	int16_t len;
-	//	const char *pos = &welcome;
-
 	static ReturnType ret;				// return variable
-	static FLASH_DEVICE_OBJECT mfdo;	//フラッシュメモリの構造体を準備
+//	static FLASH_DEVICE_OBJECT mfdo;	//フラッシュメモリの構造体を準備
 	uint32_t power_on_time;
 
 	PCA0MD &= ~PCA0MD_WDTE__BMASK;             // Disable watchdog timer
@@ -146,78 +143,36 @@ void main (void)
 
 
 	initVG(&d);
-	//Wait for two seconds
-//	IE_EA = 1;       // Enable global interrupts
-//	power_on_time = d.time_ms;
-//	while(d.time_ms < (power_on_time + 2000)){
-//
-//	}
-//	//Power on
-//	keepPowerOn();
-//
-////	//LED on
-////	turnOnBlueLED();
-//	IE_EA = 0;       // Diable global interrupts
 
-
-	ret = Driver_Init(&mfdo);	//Flashメモリドライバを初期化
+//	ret = Driver_Init(&mfdo);	//Flashメモリドライバを初期化
 	if (Flash_WrongType == ret)	//Flashメモリが正常に動いているか確認
 	{
 		vcpPrintf("Sorry, no device detected.\n");//エラーが発生した場合はここで停止
 		while(1);
 	}
 
-	fdo = &mfdo;
-	//   	aaa = 1;
-	//   	bbb = 2;
-	//   	aaa = TEST_FUNC(aaa,bbb);
-	//   	vcpPrintf("result:%d",aaa);
-	//あらかじめFlashメモリの末端を検索しておく
-	//FIND_NEXT(na,nb,next);
-	//d.Wp = next;
+//	fdo = &mfdo;
+
 	IE_EA = 0;
 	d.Wp = findNext();
 	IE_EA = 1;
-	//nandReadFrame((MAX_FRAMES-0)/2,&testFrame);
-	//nandReadFrame((MAX_FRAMES-0)/2+1,&testFrame);
-	//nandReadFrame((MAX_FRAMES-0)/2+2,&testFrame);
 
 	//ジャイロセンサ初期化
 	mpu9250_init();				//ジャイロセンサを初期化
-//	powerOff();
+
 	//USB接続かHDMI接続かチェック
 	if(REG01CN & REG01CN_VBSTAT__BMASK){
-//	if(0){
-
 
 		//USB接続の場合
 		char key = 0;
 
-
-
-		//		uint32_t num[3];
-
-//		while(1){
-//			if(tact_switch == true){
-//				PWM_bit = 1;
-//			}else{
-//				PWM_bit = 0;
-//			}
-//		}
-
 		// VCPXpress Initialization
 		USB_Init(&InitStruct);
-
-
-		//		//Clock Recovery Mode
-		//		USB0ADR |= CLKREC_CRE__ENABLED;
 
 		// Enable VCPXpress API interrupts
 		API_Callback_Enable(myAPICallback);
 
 		IE_EA = 1;       // Enable global interrupts
-
-
 
 		//USBに接続されVCPが初期化されるまで待機
 		while(readyToWriteVCP==0);
@@ -231,7 +186,6 @@ void main (void)
 			uint32_t validFrame;
 			uint32_t record = 0;
 			vcpPrintf("Press key.\n");
-			//			vcpPrintf("e:Erase, r:Read & Write, q:exit,\na:Erase sector(0), s:Record angular velocity, t:Read angular velocity\ng:Show Acceleration");
 			vcpPrintf("e:Erase All, t:Read angular velocity\ng:Show Acceleration");
 			key = getchar();//キーボード入力
 
@@ -243,74 +197,17 @@ void main (void)
 				key = getchar();
 				if((key == 'y') || (key == 'Y')){
 					vcpPrintf("Eraseing. Wait for about 400 seconds...\n");
-					//						vcpPrintf("Die 0...");
-					FlashDieErase(0);
-					//						vcpPrintf(" OK\nDie 1...");
-					//						FlashDieErase(1);
+//					FlashDieErase(0);
 					vcpPrintf(" OK\n");
 				}
 				d.Wp = 0;
 				break;
-				/*case 'r':
-					//読み書きテスト
-
-					num[0]=rand();
-					num[1]=rand();
-					num[2]=rand();
-					vcpPrintf("\nTEST MODE 1...\n");
-					IE_EA = 0;
-					FlashSectorErase(0);	//セクタ消去。忘れるとデータが化けるはず。
-					nandWriteData32(0,num[0]);	//テストデータとして乱数をアドレス0から2に書き込み。
-					nandWriteData32(1,num[1]);
-					nandWriteData32(2,num[2]);
-					//テストデータの読み込み
-					vcpPrintf("Write 0:%lu 1:%lu 2:%lu\n",num[0],num[1],num[2]);
-					num[0]=nandReadData32(0);
-					num[1]=nandReadData32(1);
-					num[2]=nandReadData32(2);
-//					vcpPrintf("Read  0:%lu 1:%lu 2:%lu\n",nandReadData32(0),nandReadData32(1),nandReadData32(2));
-//					vcpPrintf("Read  0:%lu 1:%lu 2:%lu\n",num[0],num[1],num[2]);
-					vcpPrintf("Read  0:%lu ",num[0]);
-					vcpPrintf("1:%lu ",num[1]);
-					vcpPrintf("2:%lu\n",num[2]);
-					IE_EA = 1;
-					break;
-				case 'a':
-					//セクタ0を消去
-					FlashSectorErase(0);	//セクタ0消去。
-					vcpPrintf("Sector 0 is erased.\n");
-					d.Wp = 0;//TODO:データが64KB以上あったときに、不正な処理となってしまう。。。直す。
-					break;
-
-				case 's':
-					//波形記録テスト セクタ0のみ有効
-
-
-					//データの末尾を検索
-//					frame = findNext();
-					//TODO:満タンかどうか判断
-					//記録開始
-//					d.Wp = findNext();
-					d.status |= recordingAngularVelocityInInterrupt;//開始
-					vcpPrintf("Recording started...\n");
-					vcpPrintf("Press s key to stop recording.\n");
-					//記録停止
-					key = 'a';
-					while(key != 's'){//sキーが押されるまで待機
-						key = getchar();
-					}
-					vcpPrintf("Recording stopped.\n");
-					d.status &= ~recordingAngularVelocityInInterrupt;//停止
-					break;*/
 
 			case 't'://TODO:データを順番に出力
 				d.Rp = 0;
-				//					record = 0;
 				validFrame = 1;
 				EIE1 &= ~0x80;
 				while(validFrame){//レコードのループ
-					//						vcpPrintf("Press any key to read record %lu",record);
-					//						getchar();
 					vcpPrintf("Record %lu",record);
 					vcpPrintf("\n");
 					while(1){//フレームのループ
@@ -331,8 +228,6 @@ void main (void)
 						nandReadFrame(d.Rp+1,&angularVelocity);
 						IE_EA = 1;
 						if(angularVelocity.x==0xfffe && angularVelocity.y==0xfffe && angularVelocity.z==0xfffe){
-							//(0xffff,0xffff,0xffff)
-							//vcpPrintf("%d,%d,%d\n",(uint16_t)0xffff,(uint16_t)0xffff,(uint16_t)0xffff);
 							vcpPrintf("%f,%f,%f\n",(float)((uint16_t)0xffff)/16.4*M_PI/180.0,(float)((uint16_t)0xffff)/16.4*M_PI/180.0,-(float)((uint16_t)0xffff)/16.4*M_PI/180.0);
 							d.Rp += 2;//エスケープシーケンス分の2フレームを加算
 							continue;
@@ -407,16 +302,9 @@ void main (void)
 					vcpPrintf("LD:%4.3f ",tLowDown/3.1415*180.0);
 					vcpPrintf("HD:%4.3f\n",tHighDown/3.1415*180.0);
 
-//					if((tLowFront<thF)||(tHighFront<thF)){//カメラが前向きになったとき
-//						LED1=1;
-//					}else if((tLowDown<thD)&&(tHighDown<thD)){//カメラが下向きになったとき
-//						LED1=0;
-//					}
 				}
 				break;
 			default:
-				//					vcpPrintf("\nExit.\n");
-				//					return;
 				;
 			}
 		}
@@ -476,15 +364,6 @@ void main (void)
 				beginMeasurementTime = d.time_ms;
 			}
 
-
-
-//			if(angular_velocity_norm > threshold){
-//				turnOffBlueLED();
-//			}else{
-//				turnOnBlueLED();
-//			}
-
-
 			if(tact_switch == 1){
 				startTime = d.time_ms;
 				while(tact_switch == 1){
@@ -495,57 +374,8 @@ void main (void)
 					}
 				}
 			}
-
-
-			//加速度計を監視
-			//			mpu9250_pollingAcceleration(&accel);
-
-			//時定数の異なるLPFをかける。
-
-//			accelLow[0] = 0.005 * (float)d.acceleration.x + 0.995 * accelLow[0];
-//			accelLow[1] = 0.005 * (float)d.acceleration.y + 0.995 * accelLow[1];
-//			accelLow[2] = 0.005 * (float)d.acceleration.z + 0.995 * accelLow[2];
-//
-//			accelHigh[0] = 0.1 * (float)d.acceleration.x + 0.9 * accelHigh[0];
-//			accelHigh[1] = 0.1 * (float)d.acceleration.y + 0.9 * accelHigh[1];
-//			accelHigh[2] = 0.1 * (float)d.acceleration.z + 0.9 * accelHigh[2];
-//
-//			tLowFront = acos(dot(accelLow,vecFront)/(norm(accelLow)*norm(vecFront)));
-//			tHighFront = acos(dot(accelHigh,vecFront)/(norm(accelHigh)*norm(vecFront)));
-//			tLowDown = acos(dot(accelLow,vecDown)/(norm(accelLow)*norm(vecDown)));
-//			tHighDown = acos(dot(accelHigh,vecDown)/(norm(accelHigh)*norm(vecDown)));
-//
-//			vcpPrintf("LF:%4.3f ",tLowFront/3.1415*180.0);
-//			vcpPrintf("HF:%4.3f ",tHighFront/3.1415*180.0);
-//			vcpPrintf("LD:%4.3f ",tLowDown/3.1415*180.0);
-//			vcpPrintf("HD:%4.3f\n",tHighDown/3.1415*180.0);
-
-//			if((tLowFront<thF)||(tHighFront<thF)){//カメラが前向きになったとき
-//				//				LED1=1;
-//				d.status |= recordingAngularVelocityInInterrupt;//録画開始
-//			}else if((tLowDown<thD)&&(tHighDown<thD)){//カメラが下向きになったとき
-//				//				LED1=0;
-//				d.status &= ~recordingAngularVelocityInInterrupt;//停止
-//			}
 		}
-
-
-
 	}
-
-
-
-	while (1)
-	{
-		//	   static int n=0;
-		//	   printf("%d\n",n++);
-		//printf("-0X");
-		//	   len = strlen(welcome)+1;
-		//	   while(len > 0){
-		//		   Block_Write(pos, len, &OutCount);
-		//		   len -= OutCount;
-		//	   }
-	}                                // Spin forever
 }
 
 void turnOnBlueLED(){

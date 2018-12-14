@@ -13,110 +13,99 @@
 #include <stdint.h>
 //SBIT(LED1, SFR_P0, 0);                  // LED1='1' means ON
 //SBIT(LED2, SFR_P0, 1);                  // LED2='1' means ON
-
+#define NULL_PTR 0
 
 ReturnType nandWriteData32(NMX_uint32 n, NMX_uint32 data2write){
-	ParameterType para;// parameters used for all operation
-	NMX_uint8 xdata * data pt = (NMX_uint8 *)&data2write;//charはdata,longはxdataに置かれるので、領域をまたぐポインタを準備
-	para.PageProgram.udAddr = n*sizeof(NMX_uint32); // program 16 byte at address 0
-	para.PageProgram.pArray = pt;
-	para.PageProgram.udNrOfElementsInArray = sizeof(NMX_uint32);
-	return DataProgram(PageProgram, &para);
+//	ParameterType para;// parameters used for all operation
+//	NMX_uint8 xdata * data pt = (NMX_uint8 *)&data2write;//charはdata,longはxdataに置かれるので、領域をまたぐポインタを準備
+//	para.PageProgram.udAddr = n*sizeof(NMX_uint32); // program 16 byte at address 0
+//	para.PageProgram.pArray = pt;
+//	para.PageProgram.udNrOfElementsInArray = sizeof(NMX_uint32);
+//	return DataProgram(PageProgram, &para);
+	return Flash_Success;
 }
 
 NMX_uint32 nandReadData32(NMX_uint32 n){
-	ParameterType para;/* parameters used for all operation */
-	NMX_uint32 rbuffer;
-	NMX_uint8 xdata * data pt = (NMX_uint8 *)&rbuffer;//charはdata,longはxdataに置かれるので、領域をまたぐポインタを準備
-	para.Read.udAddr = n*sizeof(rbuffer); /* read 16 byte at address 0 */
-	para.Read.pArray = pt;
-	para.Read.udNrOfElementsToRead = sizeof(rbuffer);
-	DataRead(Read, &para);
-	return rbuffer;//strVecは1個あたり6byte
+//	ParameterType para;/* parameters used for all operation */
+//	NMX_uint32 rbuffer;
+//	NMX_uint8 xdata * data pt = (NMX_uint8 *)&rbuffer;//charはdata,longはxdataに置かれるので、領域をまたぐポインタを準備
+//	para.Read.udAddr = n*sizeof(rbuffer); /* read 16 byte at address 0 */
+//	para.Read.pArray = pt;
+//	para.Read.udNrOfElementsToRead = sizeof(rbuffer);
+//	DataRead(Read, &para);
+//	return rbuffer;//strVecは1個あたり6byte
+	return (NMX_uint32)0;
 }
 
 ReturnType nandWriteData16(NMX_uint32 n, NMX_uint16 data2write){
-	ParameterType para;// parameters used for all operation
-	NMX_uint8 xdata * data pt = (NMX_uint8 *)&data2write;//charはdata,longはxdataに置かれるので、領域をまたぐポインタを準備
-	para.PageProgram.udAddr = n*sizeof(NMX_uint16); // program 16 byte at address 0
-	para.PageProgram.pArray = pt;
-	para.PageProgram.udNrOfElementsInArray = sizeof(NMX_uint16);
-	return DataProgram(PageProgram, &para);
+//	ParameterType para;// parameters used for all operation
+//	NMX_uint8 xdata * data pt = (NMX_uint8 *)&data2write;//charはdata,longはxdataに置かれるので、領域をまたぐポインタを準備
+//	para.PageProgram.udAddr = n*sizeof(NMX_uint16); // program 16 byte at address 0
+//	para.PageProgram.pArray = pt;
+//	para.PageProgram.udNrOfElementsInArray = sizeof(NMX_uint16);
+//	return DataProgram(PageProgram, &para);
+	return Flash_Success;
 }
 
 
 NMX_uint16 nandReadData16(NMX_uint32 n){
-	ParameterType para;/* parameters used for all operation */
-	NMX_uint16 rbuffer;
-	NMX_uint8 xdata * data pt = (NMX_uint8 *)&rbuffer;//charはdata,longはxdataに置かれるので、領域をまたぐポインタを準備
-	para.Read.udAddr = n*sizeof(rbuffer); /* read 16 byte at address 0 */
-	para.Read.pArray = pt;
-	para.Read.udNrOfElementsToRead = sizeof(rbuffer);
-	DataRead(Read, &para);
-	return rbuffer;//strVecは1個あたり6byte
+//	ParameterType para;/* parameters used for all operation */
+//	NMX_uint16 rbuffer;
+//	NMX_uint8 xdata * data pt = (NMX_uint8 *)&rbuffer;//charはdata,longはxdataに置かれるので、領域をまたぐポインタを準備
+//	para.Read.udAddr = n*sizeof(rbuffer); /* read 16 byte at address 0 */
+//	para.Read.pArray = pt;
+//	para.Read.udNrOfElementsToRead = sizeof(rbuffer);
+//	DataRead(Read, &para);
+//	return rbuffer;//strVecは1個あたり6byte
+	return (NMX_uint16)0;
 }
 
 bool nandWriteFrame(uint32_t frame, FrameData *angularVelocity){
-	ParameterType para;// parameters used for all operation
-//	NMX_uint8 xdata * data pt = (uint8_t *)angularVelocity;//charはdata,longはxdataに置かれるので、領域をまたぐポインタを準備
+//	ParameterType para;// parameters used for all operation
+//
+//	//Flashメモリのダイの境界を踏まない要因2byteづつ書き込む。
+//	NMX_uint8 xdata * data pt = (uint8_t *)&angularVelocity->x;//charはdata,longはxdataに置かれるので、領域をまたぐポインタを準備
 //	para.PageProgram.udAddr = frame*sizeof(FrameData); // program 16 byte at address 0
 //	para.PageProgram.pArray = pt;
-//	para.PageProgram.udNrOfElementsInArray = sizeof(FrameData);
-//	return DataProgram(PageProgram, &para);
-
-	//Flashメモリのダイの境界を踏まない要因2byteづつ書き込む。
-
-	NMX_uint8 xdata * data pt = (uint8_t *)&angularVelocity->x;//charはdata,longはxdataに置かれるので、領域をまたぐポインタを準備
-	para.PageProgram.udAddr = frame*sizeof(FrameData); // program 16 byte at address 0
-	para.PageProgram.pArray = pt;
-	para.PageProgram.udNrOfElementsInArray = sizeof(angularVelocity->x);
-	if(Flash_Success != DataProgram(PageProgram, &para)) return false;
-
-	pt = (uint8_t *)&angularVelocity->y;
-	para.PageProgram.udAddr = frame*sizeof(FrameData)+sizeof(angularVelocity->x); // program 16 byte at address 0
-	para.PageProgram.pArray = pt;
-	para.PageProgram.udNrOfElementsInArray = sizeof(angularVelocity->y);
-	if(Flash_Success != DataProgram(PageProgram, &para)) return false;
-
-	pt = (uint8_t *)&angularVelocity->z;
-	para.PageProgram.udAddr = frame*sizeof(FrameData)+sizeof(angularVelocity->x)+sizeof(angularVelocity->y); // program 16 byte at address 0
-	para.PageProgram.pArray = pt;
-	para.PageProgram.udNrOfElementsInArray = sizeof(angularVelocity->z);
-	if(Flash_Success != DataProgram(PageProgram, &para)) return false;
-
+//	para.PageProgram.udNrOfElementsInArray = sizeof(angularVelocity->x);
+//	if(Flash_Success != DataProgram(PageProgram, &para)) return false;
+//
+//	pt = (uint8_t *)&angularVelocity->y;
+//	para.PageProgram.udAddr = frame*sizeof(FrameData)+sizeof(angularVelocity->x); // program 16 byte at address 0
+//	para.PageProgram.pArray = pt;
+//	para.PageProgram.udNrOfElementsInArray = sizeof(angularVelocity->y);
+//	if(Flash_Success != DataProgram(PageProgram, &para)) return false;
+//
+//	pt = (uint8_t *)&angularVelocity->z;
+//	para.PageProgram.udAddr = frame*sizeof(FrameData)+sizeof(angularVelocity->x)+sizeof(angularVelocity->y); // program 16 byte at address 0
+//	para.PageProgram.pArray = pt;
+//	para.PageProgram.udNrOfElementsInArray = sizeof(angularVelocity->z);
+//	if(Flash_Success != DataProgram(PageProgram, &para)) return false;
+//
+//	return true;
 	return true;
 }
 
 bool nandReadFrame(uint32_t frame, FrameData *angularVelocity){
-	static ParameterType para;
-	//uint8_t buff[2];
-	uint8_t  xdata * data pt = (uint8_t *)&angularVelocity->x;
-	para.Read.udAddr = frame*sizeof(FrameData);
-	//para.Read.pArray = (void *)&buff[0];
-	para.Read.pArray = pt;
-	para.Read.udNrOfElementsToRead = sizeof(angularVelocity->x);
-	if(Flash_Success != DataRead(Read, &para)) return false;
-	//pt[0]=buff[0];
-	//pt[1]=buff[1];
-
-
-	pt = (uint8_t *)&angularVelocity->y;
-	para.Read.udAddr = frame*sizeof(FrameData)+sizeof(angularVelocity->x);
-	//para.Read.pArray = buff;
-	para.Read.pArray = pt;
-	para.Read.udNrOfElementsToRead = sizeof(angularVelocity->y);
-	if(Flash_Success != DataRead(Read, &para)) return false;
-	//pt[0]=buff[0];
-	//pt[1]=buff[1];
-
-	pt = (uint8_t *)&angularVelocity->z;
-	para.Read.udAddr = frame*sizeof(FrameData)+sizeof(angularVelocity->x)+sizeof(angularVelocity->y);
-	//para.Read.pArray = buff;
-	para.Read.pArray = pt;
-	para.Read.udNrOfElementsToRead = sizeof(angularVelocity->z);
-	if(Flash_Success != DataRead(Read, &para)) return false;
-//	pt[0]=buff[0];
-//	pt[1]=buff[1];
+//	static ParameterType para;
+//	uint8_t  xdata * data pt = (uint8_t *)&angularVelocity->x;
+//	para.Read.udAddr = frame*sizeof(FrameData);
+//	para.Read.pArray = pt;
+//	para.Read.udNrOfElementsToRead = sizeof(angularVelocity->x);
+//	if(Flash_Success != DataRead(Read, &para)) return false;
+//
+//	pt = (uint8_t *)&angularVelocity->y;
+//	para.Read.udAddr = frame*sizeof(FrameData)+sizeof(angularVelocity->x);
+//	para.Read.pArray = pt;
+//	para.Read.udNrOfElementsToRead = sizeof(angularVelocity->y);
+//	if(Flash_Success != DataRead(Read, &para)) return false;
+//
+//	pt = (uint8_t *)&angularVelocity->z;
+//	para.Read.udAddr = frame*sizeof(FrameData)+sizeof(angularVelocity->x)+sizeof(angularVelocity->y);
+//	para.Read.pArray = pt;
+//	para.Read.udNrOfElementsToRead = sizeof(angularVelocity->z);
+//	if(Flash_Success != DataRead(Read, &para)) return false;
+//	return true;
 
 	return true;
 }
@@ -300,17 +289,17 @@ void ConfigureSpi(SpiConfigOptions opt)
 }
 
 void ResetNAND(void){
-	NMX_uint8  cRDID = SPI_FLASH_INS_REN;
-	NMX_uint16 tx_len = 1;
-	ConfigureSpi(OpsWakeUp);
-
-	NAND_write(&cRDID,tx_len);
-	ConfigureSpi(OpsEndTransfer);
-
-	cRDID = SPI_FLASH_INS_RMEM;
-	ConfigureSpi(OpsWakeUp);
-		NAND_write(&cRDID,tx_len);
-		ConfigureSpi(OpsEndTransfer);
+//	NMX_uint8  cRDID = SPI_FLASH_INS_REN;
+//	NMX_uint16 tx_len = 1;
+//	ConfigureSpi(OpsWakeUp);
+//
+//	NAND_write(&cRDID,tx_len);
+//	ConfigureSpi(OpsEndTransfer);
+//
+//	cRDID = SPI_FLASH_INS_RMEM;
+//	ConfigureSpi(OpsWakeUp);
+//		NAND_write(&cRDID,tx_len);
+//		ConfigureSpi(OpsEndTransfer);
 }
 
 
