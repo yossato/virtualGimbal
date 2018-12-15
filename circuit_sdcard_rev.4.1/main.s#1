@@ -853,7 +853,7 @@
 <wire x1="1.55" y1="1.55" x2="1.55" y2="1.25" width="0.1016" layer="21"/>
 <circle x="-1.1" y="1.1" radius="0.2" width="0.127" layer="51"/>
 <smd name="1" x="-1.89" y="1" dx="1.22" dy="0.2" layer="1" roundness="25"/>
-<smd name="B" x="0" y="0" dx="1.59" dy="1.75" layer="1" stop="no"/>
+<smd name="B" x="0" y="0" dx="1.59" dy="1.75" layer="1" stop="no" cream="no"/>
 <smd name="2" x="-1.89" y="0.6" dx="1.22" dy="0.2" layer="1" roundness="25"/>
 <smd name="3" x="-1.89" y="0.2" dx="1.22" dy="0.2" layer="1" roundness="25"/>
 <smd name="4" x="-1.89" y="-0.2" dx="1.22" dy="0.2" layer="1" roundness="25"/>

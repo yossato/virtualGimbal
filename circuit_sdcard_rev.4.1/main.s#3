@@ -1320,7 +1320,7 @@ Source: &lt;a href="http://www.farnell.com/datasheets/461166.pdf"&gt; Data sheet
 <attribute name="NAME" x="12.7" y="25.4" size="1.27" layer="95"/>
 <attribute name="VALUE" x="12.7" y="22.86" size="1.27" layer="96"/>
 </instance>
-<instance part="IC1" gate="G$2" x="48.26" y="20.32"/>
+<instance part="IC1" gate="G$2" x="50.8" y="10.16"/>
 <instance part="C2" gate="G$1" x="48.26" y="-137.16" rot="R90">
 <attribute name="NAME" x="46.482" y="-139.7" size="1.778" layer="95" rot="R90"/>
 <attribute name="VALUE" x="51.816" y="-139.7" size="1.778" layer="96" rot="R90"/>
@@ -1393,8 +1393,8 @@ Source: &lt;a href="http://www.farnell.com/datasheets/461166.pdf"&gt; Data sheet
 <attribute name="NAME" x="-83.058" y="27.94" size="1.778" layer="95" rot="R90"/>
 <attribute name="VALUE" x="-77.724" y="27.94" size="1.778" layer="96" rot="R90"/>
 </instance>
-<instance part="SUPPLY27" gate="G$1" x="48.26" y="15.24">
-<attribute name="VALUE" x="45.593" y="12.065" size="1.778" layer="96"/>
+<instance part="SUPPLY27" gate="G$1" x="50.8" y="5.08">
+<attribute name="VALUE" x="48.133" y="1.905" size="1.778" layer="96"/>
 </instance>
 <instance part="SUPPLY28" gate="G$1" x="-22.86" y="58.42">
 <attribute name="VALUE" x="-25.527" y="55.245" size="1.778" layer="96"/>
@@ -1535,10 +1535,6 @@ Source: &lt;a href="http://www.farnell.com/datasheets/461166.pdf"&gt; Data sheet
 <pinref part="SUPPLY16" gate="G$1" pin="DGND"/>
 </segment>
 <segment>
-<pinref part="IC1" gate="G$2" pin="BOTTOM/GND"/>
-<pinref part="SUPPLY27" gate="G$1" pin="DGND"/>
-</segment>
-<segment>
 <pinref part="IC3" gate="G$2" pin="BOTTOM/GND"/>
 <pinref part="SUPPLY28" gate="G$1" pin="DGND"/>
 </segment>
@@ -1574,6 +1570,10 @@ Source: &lt;a href="http://www.farnell.com/datasheets/461166.pdf"&gt; Data sheet
 <wire x1="-215.9" y1="-93.98" x2="-215.9" y2="-96.52" width="0.1524" layer="91"/>
 <wire x1="-215.9" y1="-93.98" x2="-215.9" y2="-91.44" width="0.1524" layer="91"/>
 <wire x1="-215.9" y1="-91.44" x2="-220.98" y2="-91.44" width="0.1524" layer="91"/>
+</segment>
+<segment>
+<pinref part="SUPPLY27" gate="G$1" pin="DGND"/>
+<pinref part="IC1" gate="G$2" pin="BOTTOM/GND"/>
 </segment>
 </net>
 <net name="C2CK" class="0">
