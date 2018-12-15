@@ -140,7 +140,7 @@ void main (void)
 	timer_init();
 
 
-
+while(1);
 
 	initVG(&d);
 
@@ -349,31 +349,31 @@ void main (void)
 			if(angular_velocity_norm > threshold){
 				beginMeasurementTime = d.time_ms;
 			}
-			if((uint32_t)(d.time_ms - beginMeasurementTime) > periodOfWaitingTime_ms ){
-				PWM_bit = 1;
-				while((uint32_t)(d.time_ms - beginMeasurementTime) < (periodOfVibratingTime_ms + periodOfWaitingTime_ms)){
-					//Blink LED
-					turnOffBlueLED();
-					startTime = d.time_ms;
-					while((d.time_ms - startTime) < 100);
-					turnOnBlueLED();
-					startTime = d.time_ms;
-					while((d.time_ms - startTime) < 100);
-				}
-				PWM_bit = 0;
-				beginMeasurementTime = d.time_ms;
-			}
-
-			if(tact_switch == 1){
-				startTime = d.time_ms;
-				while(tact_switch == 1){
-					if(d.time_ms > (startTime + 2000)){
-						powerOff();
-						turnOffBlueLED();
-						while(1);
-					}
-				}
-			}
+//			if((uint32_t)(d.time_ms - beginMeasurementTime) > periodOfWaitingTime_ms ){
+//				PWM_bit = 1;
+//				while((uint32_t)(d.time_ms - beginMeasurementTime) < (periodOfVibratingTime_ms + periodOfWaitingTime_ms)){
+//					//Blink LED
+//					turnOffBlueLED();
+//					startTime = d.time_ms;
+//					while((d.time_ms - startTime) < 100);
+//					turnOnBlueLED();
+//					startTime = d.time_ms;
+//					while((d.time_ms - startTime) < 100);
+//				}
+//				PWM_bit = 0;
+//				beginMeasurementTime = d.time_ms;
+//			}
+//
+//			if(tact_switch == 1){
+//				startTime = d.time_ms;
+//				while(tact_switch == 1){
+//					if(d.time_ms > (startTime + 2000)){
+//						powerOff();
+//						turnOffBlueLED();
+//						while(1);
+//					}
+//				}
+//			}
 		}
 	}
 }
@@ -512,34 +512,29 @@ void Sysclk_Init (void)
 /**************************************************************************//**
  * @breif Port initialization
  *
- * P2.2   digital   push-pull    LED1
- * P2.3   digital   push-pull    LED2
  *
  *****************************************************************************/
 static void Port_Init (void)
 {
-	P0MDIN 	= 0xFF;//F4;		// Flash Memory's SPI(P0.4-P0.7) and P0.2(PWN) are digital.
-	P0MDOUT = 0xB4;		// enable Flash Memory and PWM
-	P0 		= 0xEB;		// Enable SPI, disable PWM (output low).
+	P0MDIN 	= 0xFF;		// Flash memory SPI(P0.4-P0.7), P0.0-P0.1 (UART1) and P0.3 (XTAL2) are digital.
+	P0MDOUT = 0xB7;		// Enable Flash Memory and UART
+	P0 		= 0xE8;		// Enable SPI, disable UART1 (output low). An adapter circuit has two LEDs that connected to UART lines.
+                        // If you set UART lines as low, LEDs are turned off.
 
 	P1MDIN	= 0x00;		// All pins on P1 are analog.
 	P1MDOUT	= 0x00;		// All pins are open-drain.
 	P1		= 0xFF;		// All pins are high (open).
 
-	P2MDIN = 0xFE;		// IMU_CS, IMU_SCK, IMU_MOSI, IMU_MISO, P2.7, P2.6, P2.1 are digital.
-	P2MDOUT	= 0x5C;		// IMU_CS, IMU_SCK, IMU_MOSI and P2.6(LED) are push-pull. from 10011100 to 1011110
-	P2		= 0xBF;	    // P2.6(LED) and P2.1 are low initially.
-//
-//	P2MDIN = 0xFE;		// IMU_CS, IMU_SCK, IMU_MOSI, IMU_MISO, P2.7, P2.6, P2.1 are digital.
-//	P2MDOUT	= 0x5E;		// IMU_CS, IMU_SCK, IMU_MOSI and P2.6(LED), P2.1(PWR_EN_2) are push-pull. from 10011100 to 1011110
-//	P2		= 0xBD;	    // P2.6(LED) and P2.1 are low initially.
-//
+	P2MDIN = 0x3C;		// IMU_CS, IMU_SCK, IMU_MOSI and IMU_MISO are digital.
+	P2MDOUT	= 0x1C;		// IMU_CS, IMU_SCK and IMU_MOSI are push-pull.
+	P2		= 0xFF;	    // All pins are high.
+
 	P3MDIN	|= 0x01;    // P3.0 is digital
 	P3MDOUT	= 0x00;
 	P3		|= 0x01;
 
 	//Skip
-	P0SKIP = 0xF3;
+	P0SKIP = 0xFF; //If you use UART 1, Set this value to 0xF3.
 	P1SKIP = 0xFF;
 	P2SKIP = 0xFF;
 
