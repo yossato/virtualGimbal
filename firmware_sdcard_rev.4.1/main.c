@@ -54,7 +54,8 @@ uint8_t xdata RX_Packet[PACKET_SIZE];     // Packet received from host
 uint8_t xdata TX_Packet[PACKET_SIZE];     // Packet to transmit to host
 
 //SBIT(LED1, SFR_P2, 7);                  // LED1='1' means ON
-SBIT(LED_blue, SFR_P2, 6);                // LED_blue=1 means ON
+SBIT(LED_blue, SFR_P0, 1);                // LED_blue=1 means ON
+SBIT(LED_green, SFR_P0, 0);               // LED_green=1 means ON
 SBIT(power_enable_bit, SFR_P2, 1);        // power_enable_bit=1 means POWER ON
 SBIT(tact_switch, SFR_P2, 7);             // Tact Switch tact_switch == 1 means switch is pressed, ON
 SBIT(PWM_bit, SFR_P0,2);                  // Motor driver gate bit. PWM_bit = 1 means drive a motor.
@@ -94,7 +95,7 @@ typedef struct _VG_STATUS{
 }VG_STATUS;
 
 VG_STATUS xdata d;
-FrameData testFrame;
+FrameData accel;
 // Function Prototypes
 //-----------------------------------------------------------------------------
 void Delay (void);
@@ -140,21 +141,21 @@ void main (void)
 	timer_init();
 
 
-while(1);
+//while(1);
 
 	initVG(&d);
 
 //	ret = Driver_Init(&mfdo);	//Flashメモリドライバを初期化
-	if (Flash_WrongType == ret)	//Flashメモリが正常に動いているか確認
-	{
-		vcpPrintf("Sorry, no device detected.\n");//エラーが発生した場合はここで停止
-		while(1);
-	}
+//	if (Flash_WrongType == ret)	//Flashメモリが正常に動いているか確認
+//	{
+//		vcpPrintf("Sorry, no device detected.\n");//エラーが発生した場合はここで停止
+//		while(1);
+//	}
 
 //	fdo = &mfdo;
 
 	IE_EA = 0;
-	d.Wp = findNext();
+//	d.Wp = findNext();
 	IE_EA = 1;
 
 	//ジャイロセンサ初期化
@@ -260,7 +261,7 @@ while(1);
 				break;
 			case 'g':
 				//重力を表示
-				//					mpu9250_pollingAcceleration(&accel);
+									mpu9250_pollingAcceleration(&accel);
 				vcpPrintf("%ld,%ld,%ld\n",(int32_t)d.acceleration.x,(int32_t)d.acceleration.y,(int32_t)d.acceleration.z);
 				break;
 			case 'f':
@@ -386,6 +387,16 @@ void turnOnBlueLED(){
 void turnOffBlueLED(){
 	//LED on
 	LED_blue = 0;
+}
+
+void turnOnGreenLED(){
+	//LED on
+	LED_green = 1;
+}
+
+void turnOffGreenLED(){
+	//LED on
+	LED_green = 0;
 }
 
 void keepPowerOn(){
