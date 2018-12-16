@@ -21,6 +21,7 @@
 #define M_PI 3.14159265358
 #include "math.h"
 #include "inc/util.h"
+#include "SPI-NAND.h"
 /**************************************************************************//**
  * VCPXpress_Echo_main.c
  *
@@ -66,7 +67,7 @@ uint8_t readyToPrintf = 0;
 //extern FLASH_DEVICE_OBJECT *fdo;
 const char welcome[] = "\n"
 		"***********************************************\n"
-		"* Watzhdog                                    *\n"
+		"* virtualGimbal rev.4.1                       *\n"
 		"***********************************************\n";
 enum Status {
 	recordingAngularVelocityInInterrupt	= 0x0001 << 0,//各速度記録中
@@ -175,7 +176,7 @@ void main (void)
 
 		IE_EA = 1;       // Enable global interrupts
 
-		//USBに接続されVCPが初期化されるまで待機
+		//Wait for opening virtual com port on USB.
 		while(readyToWriteVCP==0);
 		vcpPrintf(welcome);
 
@@ -186,20 +187,42 @@ void main (void)
 		while(1){
 			uint32_t validFrame;
 			uint32_t record = 0;
+			uAddrType block_addr;
+			ReturnType return_value;
 			vcpPrintf("Press key.\n");
 			vcpPrintf("e:Erase All, t:Read angular velocity\ng:Show Acceleration");
-			key = getchar();//キーボード入力
+			key = getchar();//Keyboard input
 
 			switch (key) {
-			case 'e':	//データの全消去。ダイが2個載っているので、順番に消す。
-				//違うな。ダイ1は書き込みできないから、無視しよう。
+			case 'u':	//Disable Volatile Block Protection. This operation is required before erase or programming.
+			case 'U':
+				FlashUnlockAll();
+				vcpPrintf("All blocks are unlocked.\n");
+				break;
+			case 'e':	//Erase
 			case 'E':
-				vcpPrintf("\nDo you really want to erase all data?\nYes:y No:N\n");
+				vcpPrintf("\nDo you really want to erase data?\nYes:y No:N\n");
 				key = getchar();
 				if((key == 'y') || (key == 'Y')){
-					vcpPrintf("Eraseing. Wait for about 400 seconds...\n");
+					vcpPrintf("Erasing...\n");
 //					FlashDieErase(0);
-					vcpPrintf(" OK\n");
+					block_addr = 0 << 18;
+					return_value = FlashBlockErase(block_addr);
+					switch (return_value) {
+						case Flash_OperationOngoing:
+							vcpPrintf("Flash_OperationOngoing\n");
+							break;
+						case Flash_BlockEraseFailed:
+							vcpPrintf("Flash_BlockEraseFailed\n");
+							break;
+						case Flash_Success:
+							vcpPrintf("Flash_Success\n");
+							vcpPrintf("FlashBlockErase is succeeded.\n");
+							break;
+						default:
+							vcpPrintf("Undefined Error while FlashBlockErase\n");
+							break;
+					}
 				}
 				d.Wp = 0;
 				break;
