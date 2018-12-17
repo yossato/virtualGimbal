@@ -46,13 +46,17 @@
 //#define TIMER_RELOAD_LOW (TIMER_RELOAD & 0x00FF)
 
 #define PACKET_SIZE 64
-
 //#define FRAME_POSITIONS
 
 uint16_t xdata InCount;                   // Holds size of received packet
 uint16_t xdata OutCount;                  // Holds size of transmitted packet
 uint8_t xdata RX_Packet[PACKET_SIZE];     // Packet received from host
 uint8_t xdata TX_Packet[PACKET_SIZE];     // Packet to transmit to host
+
+//See http://www.keil.com/support/man/docs/c51/c51_init_mempool.htm
+//unsigned char xdata malloc_mempool [2048];
+
+NMX_uint8 xdata pArray[2048];
 
 //SBIT(LED1, SFR_P2, 7);                  // LED1='1' means ON
 SBIT(LED_blue, SFR_P0, 1);                // LED_blue=1 means ON
@@ -127,7 +131,7 @@ void powerOff();
  *****************************************************************************/
 void main (void)
 {
-	static ReturnType ret;				// return variable
+//	static ReturnType ret;				// return variable
 //	static FLASH_DEVICE_OBJECT mfdo;	//フラッシュメモリの構造体を準備
 	uint32_t power_on_time;
 
@@ -136,6 +140,8 @@ void main (void)
 	VDM0CN = VDM0CN_VDMEN__ENABLED;            // Enable VDD Monitor
 	Delay ();                                  // Wait for VDD Monitor to stabilize
 	RSTSRC = RSTSRC_PORSF__SET;                // Enable VDD Monitor as a reset source
+
+//	init_mempool (&malloc_mempool, sizeof(malloc_mempool));
 
 	Sysclk_Init ();                            // Initialize system clock
 	Port_Init ();                              // Initialize crossbar and GPIO
@@ -189,11 +195,21 @@ void main (void)
 			uint32_t record = 0;
 			uAddrType block_addr;
 			ReturnType return_value;
+			uint8_t character;
+			int32_t i;
 			vcpPrintf("Press key.\n");
-			vcpPrintf("e:Erase All, t:Read angular velocity\ng:Show Acceleration");
+			vcpPrintf("e:Erase All, t:Read angular velocity\ng:Show Acceleration\n");
 			key = getchar();//Keyboard input
 
 			switch (key) {
+			case 'p':
+			case 'P':
+				vcpPrintf("Print test character string for vcpPrintf\n");
+				for(character = 0x20;character<0x7f;++character){
+					vcpPrintf("%c,",character);
+				}
+				vcpPrintf("\n");
+				break;
 			case 'u':	//Disable Volatile Block Protection. This operation is required before erase or programming.
 			case 'U':
 				FlashUnlockAll();
@@ -227,6 +243,39 @@ void main (void)
 				d.Wp = 0;
 				break;
 
+			case 'r':
+			case 'R':
+//				pArray = malloc(2048);
+//				if(NULL == pArray){
+//					vcpPrintf("Allocation faild.\n");
+//					break;
+//				}
+				return_value = FlashPageRead(0 << 12,pArray);
+				switch (return_value) {
+					case Flash_AddressInvalid:
+						vcpPrintf("Flash_AddressInvalid\n");
+						break;
+					case Flash_Success:
+						vcpPrintf("Flash_Success\n");
+
+						vcpPrintf("{");
+						for(i=0;i<10;++i){
+							int num = pArray[i];
+							vcpPrintf("%d,",num);
+						}
+						vcpPrintf("}\n\n");
+
+
+
+						break;
+					default:
+						vcpPrintf("Undefined Error while FlashPageRead");
+						break;
+				}
+
+//				free(pArray);
+
+				break;
 			case 't'://TODO:データを順番に出力
 				d.Rp = 0;
 				validFrame = 1;
@@ -756,7 +805,7 @@ void spin(){
 	while(!rbIsEmpty()){//バッファに残りがある
 		int32_t length = rbGet(readBuff,128);//リングバッファからデータを読み出す
 		while(readyToWriteVCP != 1);//送信完了を待つ
-		//	   wait_ms(5);
+			   wait_ms(5);
 		EIE1 &= ~EIE1_EUSB0__BMASK;
 		Block_Write(readBuff, length, &OutCount);     // Start USB Write
 		EIE1 |= EIE1_EUSB0__BMASK;
