@@ -22,6 +22,7 @@
 #include "math.h"
 #include "inc/util.h"
 #include "SPI-NAND.h"
+#include <stdbool.h>
 /**************************************************************************//**
  * VCPXpress_Echo_main.c
  *
@@ -120,7 +121,77 @@ void turnOffBlueLED();
 void keepPowerOn();
 void powerOff();
 
-
+bool printReturnType(ReturnType return_value){
+	switch (return_value) {
+	case Flash_Success:
+		vcpPrintf("Flash_Success\n");
+		return true;
+	case Flash_AddressInvalid:
+		vcpPrintf("Flash_AddressInvalid\n");
+		break;
+	case Flash_RegAddressInvalid:
+		vcpPrintf("Flash_RegAddressInvalid\n");
+		break;
+	case Flash_MemoryOverflow:
+		vcpPrintf("Flash_MemoryOverflow\n");
+		break;
+	case Flash_BlockEraseFailed:
+		vcpPrintf("Flash_BlockEraseFailed\n");
+		break;
+	case Flash_PageNrInvalid:
+		vcpPrintf("Flash_PageNrInvalid\n");
+		break;
+	case Flash_SubSectorNrInvalid:
+		vcpPrintf("Flash_SubSectorNrInvalid\n");
+		break;
+	case Flash_SectorNrInvalid:
+		vcpPrintf("Flash_SectorNrInvalid\n");
+		break;
+	case Flash_FunctionNotSupported:
+		vcpPrintf("Flash_FunctionNotSupported\n");
+		break;
+	case Flash_NoInformationAvailable:
+		vcpPrintf("Flash_NoInformationAvailable\n");
+		break;
+	case Flash_OperationOngoing:
+		vcpPrintf("Flash_OperationOngoing\n");
+		break;
+	case Flash_OperationTimeOut:
+		vcpPrintf("Flash_OperationTimeOut\n");
+		break;
+	case Flash_ProgramFailed:
+		vcpPrintf("Flash_ProgramFailed\n");
+		break;
+	case Flash_SectorProtected:
+		vcpPrintf("Flash_SectorProtected\n");
+		break;
+	case Flash_SectorUnprotected:
+		vcpPrintf("Flash_SectorUnprotected\n");
+		break;
+	case Flash_SectorProtectFailed:
+		vcpPrintf("Flash_SectorProtectFailed\n");
+		break;
+	case Flash_SectorUnprotectFailed:
+		vcpPrintf("Flash_SectorUnprotectFailed\n");
+		break;
+	case Flash_SectorLocked:
+		vcpPrintf("Flash_SectorLocked\n");
+		break;
+	case Flash_SectorUnlocked:
+		vcpPrintf("Flash_SectorUnlocked\n");
+		break;
+	case Flash_SectorLockDownFailed:
+		vcpPrintf("Flash_SectorLockDownFailed\n");
+		break;
+	case Flash_WrongType:
+		vcpPrintf("Flash_WrongType\n");
+		break;
+	default:
+		vcpPrintf("Undefined Error\n");
+		break;
+	}
+	return false;
+}
 
 /**************************************************************************//**
  * @breif Main loop
@@ -131,8 +202,6 @@ void powerOff();
  *****************************************************************************/
 void main (void)
 {
-//	static ReturnType ret;				// return variable
-//	static FLASH_DEVICE_OBJECT mfdo;	//フラッシュメモリの構造体を準備
 	uint32_t power_on_time;
 
 	PCA0MD &= ~PCA0MD_WDTE__BMASK;             // Disable watchdog timer
@@ -141,14 +210,9 @@ void main (void)
 	Delay ();                                  // Wait for VDD Monitor to stabilize
 	RSTSRC = RSTSRC_PORSF__SET;                // Enable VDD Monitor as a reset source
 
-//	init_mempool (&malloc_mempool, sizeof(malloc_mempool));
-
 	Sysclk_Init ();                            // Initialize system clock
 	Port_Init ();                              // Initialize crossbar and GPIO
 	timer_init();
-
-
-//while(1);
 
 	initVG(&d);
 
@@ -165,13 +229,13 @@ void main (void)
 //	d.Wp = findNext();
 	IE_EA = 1;
 
-	//ジャイロセンサ初期化
+	//Initialize a gyro sensor.
 	mpu9250_init();				//ジャイロセンサを初期化
 
 	//USB接続かHDMI接続かチェック
 	if(REG01CN & REG01CN_VBSTAT__BMASK){
+		//USB VCP
 
-		//USB接続の場合
 		char key = 0;
 
 		// VCPXpress Initialization
@@ -202,7 +266,7 @@ void main (void)
 			key = getchar();//Keyboard input
 
 			switch (key) {
-			case 'p':
+			case 'p':   //VCP Printf Verification
 			case 'P':
 				vcpPrintf("Print test character string for vcpPrintf\n");
 				for(character = 0x20;character<0x7f;++character){
@@ -224,32 +288,15 @@ void main (void)
 //					FlashDieErase(0);
 					block_addr = 0 << 18;
 					return_value = FlashBlockErase(block_addr);
-					switch (return_value) {
-						case Flash_OperationOngoing:
-							vcpPrintf("Flash_OperationOngoing\n");
-							break;
-						case Flash_BlockEraseFailed:
-							vcpPrintf("Flash_BlockEraseFailed\n");
-							break;
-						case Flash_Success:
-							vcpPrintf("Flash_Success\n");
-							vcpPrintf("FlashBlockErase is succeeded.\n");
-							break;
-						default:
-							vcpPrintf("Undefined Error while FlashBlockErase\n");
-							break;
+					if(printReturnType(return_value)){
+						vcpPrintf("FlashBlockErase is succeeded.\n");
 					}
 				}
 				d.Wp = 0;
 				break;
 
-			case 'r':
+			case 'r':	//Read data from a flash memory
 			case 'R':
-//				pArray = malloc(2048);
-//				if(NULL == pArray){
-//					vcpPrintf("Allocation faild.\n");
-//					break;
-//				}
 				return_value = FlashPageRead(0 << 12,pArray);
 				switch (return_value) {
 					case Flash_AddressInvalid:
@@ -257,25 +304,27 @@ void main (void)
 						break;
 					case Flash_Success:
 						vcpPrintf("Flash_Success\n");
-
 						vcpPrintf("{");
 						for(i=0;i<10;++i){
 							int num = pArray[i];
 							vcpPrintf("%d,",num);
 						}
 						vcpPrintf("}\n\n");
-
-
-
 						break;
 					default:
 						vcpPrintf("Undefined Error while FlashPageRead");
 						break;
 				}
-
-//				free(pArray);
-
 				break;
+
+			case 'w':	//Write data to a flash memory
+			case 'W':
+				for(i=0;i<2048;++i){
+					pArray[i] = (uint8_t)i;
+				}
+				return_value = FlashPageProgram(0 << 12, pArray,2048);
+				break;
+
 			case 't'://TODO:データを順番に出力
 				d.Rp = 0;
 				validFrame = 1;
