@@ -297,32 +297,22 @@ void main (void)
 
 			case 'r':	//Read data from a flash memory
 			case 'R':
-				return_value = FlashPageRead(0 << 12,pArray);
-				switch (return_value) {
-					case Flash_AddressInvalid:
-						vcpPrintf("Flash_AddressInvalid\n");
-						break;
-					case Flash_Success:
-						vcpPrintf("Flash_Success\n");
-						vcpPrintf("{");
-						for(i=0;i<10;++i){
-							int num = pArray[i];
-							vcpPrintf("%d,",num);
-						}
-						vcpPrintf("}\n\n");
-						break;
-					default:
-						vcpPrintf("Undefined Error while FlashPageRead");
-						break;
+				if(printReturnType(FlashPageRead(0 << 12, pArray))){
+					vcpPrintf("{");
+					for(i=0;i<10;++i){
+						int num = pArray[i];
+						vcpPrintf("%d,",num);
+					}
+					vcpPrintf("}\n\n");
 				}
 				break;
 
 			case 'w':	//Write data to a flash memory
 			case 'W':
-				for(i=0;i<2048;++i){
+				for(i=0;i<2048;++i){	//Generate data to write
 					pArray[i] = (uint8_t)i;
 				}
-				return_value = FlashPageProgram(0 << 12, pArray,2048);
+				printReturnType(FlashPageProgram(0 << 12, pArray, 2048));
 				break;
 
 			case 't'://TODO:データを順番に出力
