@@ -66,9 +66,9 @@ SBIT(power_enable_bit, SFR_P2, 1);        // power_enable_bit=1 means POWER ON
 SBIT(tact_switch, SFR_P2, 7);             // Tact Switch tact_switch == 1 means switch is pressed, ON
 SBIT(PWM_bit, SFR_P0,2);                  // Motor driver gate bit. PWM_bit = 1 means drive a motor.
 
-uint8_t readyToWriteVCP = 0;	//VCPでwriteする準備が整っている時は1、準備が整ってないときは0とする。
-uint8_t readyToReadVCP = 0;
-uint8_t readyToPrintf = 0;
+volatile uint8_t readyToWriteVCP = 0;	//VCPでwriteする準備が整っている時は1、準備が整ってないときは0とする。
+volatile uint8_t readyToReadVCP = 0;
+volatile uint8_t readyToPrintf = 0;
 //extern FLASH_DEVICE_OBJECT *fdo;
 const char welcome[] = "\n"
 		"***********************************************\n"
@@ -271,6 +271,7 @@ void main (void)
 				vcpPrintf("Print test character string for vcpPrintf\n");
 				for(character = 0x20;character<0x7f;++character){
 					vcpPrintf("%c,",character);
+//					wait_ms(1);
 				}
 				vcpPrintf("\n");
 				break;
@@ -843,12 +844,13 @@ void spin(){
 
 	while(!rbIsEmpty()){//バッファに残りがある
 		int32_t length = rbGet(readBuff,128);//リングバッファからデータを読み出す
-		while(readyToWriteVCP != 1);//送信完了を待つ
-			   wait_ms(5);
+		readyToWriteVCP = 0;
+//			   wait_ms(5);
 		EIE1 &= ~EIE1_EUSB0__BMASK;
 		Block_Write(readBuff, length, &OutCount);     // Start USB Write
 		EIE1 |= EIE1_EUSB0__BMASK;
-		readyToWriteVCP = 0;
+		while(readyToWriteVCP != 1);//送信完了を待つ
+
 
 	}
 }
