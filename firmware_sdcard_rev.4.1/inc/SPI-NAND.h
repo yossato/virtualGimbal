@@ -49,13 +49,15 @@
 #ifndef _NAND4224_
 #define _NAND4224_
 
+#include <stdint.h>
+
 /* Basic Data-type */
-typedef unsigned char        NMX_uint8;
-typedef signed char          NMX_sint8;
-typedef unsigned short       NMX_uint16;
-typedef signed short         NMX_sint16;
-typedef unsigned int         NMX_uint32;
-typedef signed int           NMX_sint32;
+typedef uint8_t          NMX_uint8;
+typedef int8_t           NMX_sint8;
+typedef uint16_t         NMX_uint16;
+typedef int16_t          NMX_sint16;
+typedef uint32_t         NMX_uint32;
+typedef int32_t          NMX_sint32;
 
 typedef NMX_uint32 uAddrType;
 

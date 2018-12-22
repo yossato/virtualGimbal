@@ -11,7 +11,7 @@
 #include "VCPXpress.h"
 #include "descriptor.h"
 #include <stdio.h>
-#include "stdlib.h"
+#include <stdlib.h>
 #include <stdint.h>
 #include <stdarg.h>
 #include "NAND.h"
@@ -57,7 +57,7 @@ uint8_t xdata TX_Packet[PACKET_SIZE];     // Packet to transmit to host
 //See http://www.keil.com/support/man/docs/c51/c51_init_mempool.htm
 //unsigned char xdata malloc_mempool [2048];
 
-NMX_uint8 xdata pArray[2048];
+NMX_uint8 xdata pArray[2048+128];
 
 //SBIT(LED1, SFR_P2, 7);                  // LED1='1' means ON
 SBIT(LED_blue, SFR_P0, 1);                // LED_blue=1 means ON
@@ -120,8 +120,6 @@ void turnOnBlueLED();
 void turnOffBlueLED();
 void turnOnGreenLED();
 void turnOffGreenLED();
-void keepPowerOn();
-void powerOff();
 
 bool printReturnType(ReturnType return_value){
 	switch (return_value) {
@@ -195,6 +193,10 @@ bool printReturnType(ReturnType return_value){
 	return false;
 }
 
+void reset(){
+	RSTSRC |= RSTSRC_SWRSF__BMASK;
+}
+
 /**************************************************************************//**
  * @breif Main loop
  *
@@ -258,10 +260,13 @@ void main (void)
 		while(1){
 			uint32_t validFrame;
 			uint32_t record = 0;
-			uAddrType block_addr;
+			uAddrType byte_addr;
+			uAddrType row_addr;
+			uAddrType col_addr;
 			ReturnType return_value;
 			uint8_t character;
 			int32_t i;
+			int srand_value;
 			vcpPrintf("Press key.\n");
 			vcpPrintf("e:Erase All, t:Read angular velocity\ng:Show Acceleration\n");
 			key = getchar();//Keyboard input
@@ -288,8 +293,8 @@ void main (void)
 				if((key == 'y') || (key == 'Y')){
 					vcpPrintf("Erasing...\n");
 //					FlashDieErase(0);
-					block_addr = 0 << 18;
-					return_value = FlashBlockErase(block_addr);
+					byte_addr = 0 << 18;
+					return_value = FlashBlockErase(byte_addr);
 					if(printReturnType(return_value)){
 						vcpPrintf("FlashBlockErase is succeeded.\n");
 					}
@@ -317,6 +322,55 @@ void main (void)
 				printReturnType(FlashPageProgram(0 << 12, pArray, 2048));
 				break;
 
+			case 'a':	//Erase, Program and Read all byte. Verify flash memory driver.
+			case 'A':
+				//Erase
+				vcpPrintf("Erasing...\n");
+				byte_addr = ((uAddrType)1<<29);
+				vcpPrintf("size:%d",(int)sizeof(byte_addr));
+				for(row_addr = 0; row_addr < ((uAddrType)1<<29); row_addr+=((uAddrType)1<<18)){
+					if(!printReturnType(FlashBlockErase(row_addr))){
+						vcpPrintf("FlashBlockErase failed at %ld",row_addr);
+						reset();
+					}
+					vcpPrintf("E:%ld\n",row_addr);
+				}
+				vcpPrintf("Erase complete.\n");
+
+				//Program
+				vcpPrintf("Programming...\n");
+				srand_value = d.time_ms;
+				srand(srand_value);
+				for(row_addr = 0;row_addr<((uAddrType)1<<29);row_addr += ((uAddrType)1<<18)){
+					vcpPrintf("P:%ld\n",row_addr);
+					for(col_addr=0;col_addr<2048;++col_addr){
+						pArray[col_addr] = (uint8_t)rand();
+					}
+					if(!printReturnType(FlashPageProgram(row_addr,pArray,2048))){
+						vcpPrintf("FlashPageProgram failed at %ld",row_addr);
+						reset();
+					}
+				}
+				vcpPrintf("Program complete.\n");
+
+				//Read
+				vcpPrintf("Reading...\n");
+				srand(srand_value);
+				for(row_addr=0;row_addr<((uAddrType)1<<29);row_addr+=((uAddrType)1<<18)){
+					if(!printReturnType(FlashPageRead(row_addr,pArray))){
+						vcpPrintf("FlashPageRead failed at %ld",row_addr);
+						reset();
+					}
+					for(col_addr=0;col_addr<2048;++col_addr){
+						character = (uint8_t)rand();
+						if(character != pArray[col_addr]){
+							vcpPrintf("Verify failed ad %ld\n",row_addr|col_addr);
+						}
+					}
+				}
+				vcpPrintf("Reading complete.\n");
+
+				break;
 			case 't'://TODO:データを順番に出力
 				d.Rp = 0;
 				validFrame = 1;
