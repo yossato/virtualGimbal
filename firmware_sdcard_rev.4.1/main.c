@@ -232,10 +232,9 @@ void main (void)
 	//Initialize a gyro sensor.
 	mpu9250_init();				//ジャイロセンサを初期化
 
-	//USB接続かHDMI接続かチェック
+	//Check VBUS to check that USB is connected or not.
 	if(REG01CN & REG01CN_VBSTAT__BMASK){
-		//USB VCP
-
+		//USB is connected.
 		char key = 0;
 
 		// VCPXpress Initialization
@@ -423,15 +422,10 @@ void main (void)
 		}
 
 	}else{
-		//HDMI接続の場合
+		//Inside a SD card slot of a camera
 		static uint32_t beginMeasurementTime;
 		IE_EA = 1;       // Enable global interrupts
-		power_on_time = d.time_ms;
-		while(d.time_ms < (power_on_time + 2000)){
 
-		}
-		//Power on
-		keepPowerOn();
 
 		//LED on
 		turnOnBlueLED();
@@ -509,15 +503,6 @@ void turnOnGreenLED(){
 void turnOffGreenLED(){
 	//LED on
 	LED_green = 0;
-}
-
-void keepPowerOn(){
-	P2MDOUT	|= 0x02;		// P2.1(PWR_EN_2) is push-pull.
-	power_enable_bit = 1;	    // P2.1 is high.
-}
-
-void powerOff(){
-	power_enable_bit = 0;
 }
 
 float norm(float a[]){
