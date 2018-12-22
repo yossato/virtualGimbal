@@ -281,6 +281,10 @@ void main (void)
 				}
 				vcpPrintf("\n");
 				break;
+			case '!':
+				FlashReset();
+				vcpPrintf("Flash reseted.\n");
+				break;
 			case 'u':	//Disable Volatile Block Protection. This operation is required before erase or programming.
 			case 'U':
 				FlashUnlockAll();
