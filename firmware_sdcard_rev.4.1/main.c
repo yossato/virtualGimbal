@@ -118,6 +118,8 @@ float dot(float a[],float b[]);
 
 void turnOnBlueLED();
 void turnOffBlueLED();
+void turnOnGreenLED();
+void turnOffGreenLED();
 void keepPowerOn();
 void powerOff();
 
@@ -422,65 +424,49 @@ void main (void)
 		}
 
 	}else{
-		//Inside a SD card slot of a camera
-		static uint32_t beginMeasurementTime;
+		//Turned on as SD Card.
+		//Record anguler velocity to Flash memory.
 		IE_EA = 1;       // Enable global interrupts
-
-
-		//LED on
-		turnOnBlueLED();
-
-//		LED1 = 0;		//LED消灯
-		beginMeasurementTime = d.time_ms;
-		while(1){
+    	turnOnGreenLED();
+    	while(1){
 			static uint32_t startTime;
-
-
 			//フィルタの計算に用いるベクトル
-			const float threshold = 0.1;//[rad]
-			const uint32_t periodOfWaitingTime_ms = 3000;
-			const uint32_t periodOfVibratingTime_ms = 3000;
-			float angular_velocity_norm;
-			float angular_velocity[3];
-
-			//60Hzに同期させる
+			const float vecFront[3] = {-16384,0,0};//撮影中、カメラが正面を向いている状況
+			const float vecDown[3] = {0,0,16384};//下向き。撮影中断中。
+			static float accelLow[3]={0,0,16384};
+			static float accelHigh[3]={0,0,16384};
+			const float thF = 30.f/180.f*3.1415;//前向きの閾値
+			const float thD = 30.f/180.f*3.1415;//下向きの閾値
+			float tLowFront,tHighFront,tLowDown,tHighDown;
+			//Sync 60 Hz
 			startTime = d.time_ms;
 			while(startTime==d.time_ms);
 
-			//角速度を監視
-			angular_velocity[0] = (float)d.angular_velocity.x/16.4*M_PI/180.0;
-			angular_velocity[1] = (float)d.angular_velocity.y/16.4*M_PI/180.0;
-			angular_velocity[2] = (float)d.angular_velocity.z/16.4*M_PI/180.0;
+			//時定数の異なるLPFをかける。
 
-			angular_velocity_norm = norm(angular_velocity);
-			if(angular_velocity_norm > threshold){
-				beginMeasurementTime = d.time_ms;
+			accelLow[0] = 0.005 * (float)d.acceleration.x + 0.995 * accelLow[0];
+			accelLow[1] = 0.005 * (float)d.acceleration.y + 0.995 * accelLow[1];
+			accelLow[2] = 0.005 * (float)d.acceleration.z + 0.995 * accelLow[2];
+
+			accelHigh[0] = 0.1 * (float)d.acceleration.x + 0.9 * accelHigh[0];
+			accelHigh[1] = 0.1 * (float)d.acceleration.y + 0.9 * accelHigh[1];
+			accelHigh[2] = 0.1 * (float)d.acceleration.z + 0.9 * accelHigh[2];
+
+			tLowFront = acos(dot(accelLow,vecFront)/(norm(accelLow)*norm(vecFront)));
+			tHighFront = acos(dot(accelHigh,vecFront)/(norm(accelHigh)*norm(vecFront)));
+			tLowDown = acos(dot(accelLow,vecDown)/(norm(accelLow)*norm(vecDown)));
+			tHighDown = acos(dot(accelHigh,vecDown)/(norm(accelHigh)*norm(vecDown)));
+
+			vcpPrintf("LF:%4.3f ",tLowFront/3.1415*180.0);
+			vcpPrintf("HF:%4.3f ",tHighFront/3.1415*180.0);
+			vcpPrintf("LD:%4.3f ",tLowDown/3.1415*180.0);
+			vcpPrintf("HD:%4.3f\n",tHighDown/3.1415*180.0);
+
+			if((tLowFront<thF)||(tHighFront<thF)){//カメラが前向きになったとき
+				d.status |= recordingAngularVelocityInInterrupt;//録画開始
+			}else if((tLowDown<thD)&&(tHighDown<thD)){//カメラが下向きになったとき
+				d.status &= ~recordingAngularVelocityInInterrupt;//停止
 			}
-//			if((uint32_t)(d.time_ms - beginMeasurementTime) > periodOfWaitingTime_ms ){
-//				PWM_bit = 1;
-//				while((uint32_t)(d.time_ms - beginMeasurementTime) < (periodOfVibratingTime_ms + periodOfWaitingTime_ms)){
-//					//Blink LED
-//					turnOffBlueLED();
-//					startTime = d.time_ms;
-//					while((d.time_ms - startTime) < 100);
-//					turnOnBlueLED();
-//					startTime = d.time_ms;
-//					while((d.time_ms - startTime) < 100);
-//				}
-//				PWM_bit = 0;
-//				beginMeasurementTime = d.time_ms;
-//			}
-//
-//			if(tact_switch == 1){
-//				startTime = d.time_ms;
-//				while(tact_switch == 1){
-//					if(d.time_ms > (startTime + 2000)){
-//						powerOff();
-//						turnOffBlueLED();
-//						while(1);
-//					}
-//				}
-//			}
 		}
 	}
 }
@@ -516,22 +502,6 @@ float dot(float a[],float b[]){
 //-----------------------------------------------------------------------------
 
 /**************************************************************************//**
- * @brief Timer2_ISR
- *
- * This routine changes the state of the LED whenever Timer2 overflows.
- *
- *****************************************************************************/
-//INTERRUPT(Timer0_ISR, TIMER0_IRQn)
-//{
-//  TMR2CN_TF2H = 0;                    // Clear Timer2 interrupt flag
-//  TH0 = TIMER_RELOAD_HIGH;            // Reload Timer0 High register
-//  TL0 = TIMER_RELOAD_LOW;             // Reload Timer0 Low register
-//
-//  LED1 = !LED1;                       // Change state of LED
-//}
-
-
-/**************************************************************************//**
  * @brief VCPXpress callback
  *
  * This function is called by VCPXpress. In this example any received data
@@ -542,53 +512,27 @@ float dot(float a[],float b[]){
 VCPXpress_API_CALLBACK(myAPICallback)
 {
 	uint32_t INTVAL = Get_Callback_Source();
-	//   uint8_t i;
-
 
 	if (INTVAL & DEVICE_OPEN)
 	{
-		//PC側が安定するまで待つ
-		//	uint32_t ae;
-		//	for(ae=0;ae<200000;ae++){
-		//		Delay ();
-		//	}
-
 		readyToWriteVCP = 1;
-		readyToPrintf = 1;	//USBに接続されたら、初めてprintf関数を有効にする
-		//      Block_Read(RX_Packet, PACKET_SIZE, &InCount);   // Start first USB Read
+		readyToPrintf = 1;					// Enable vcpPrintf after USB VCP is connected.
 	}
 
 	if (INTVAL & RX_COMPLETE)                          // USB Read complete
 	{
 		readyToReadVCP = 1;
-		//      for (i=0; i<InCount;i++)                        // Copy received packet to output buffer
-		//      {
-		//         TX_Packet[i] = RX_Packet[i];
-		//      }
-		//      Block_Write(TX_Packet, InCount, &OutCount);     // Start USB Write
 	}
 
 	if (INTVAL & TX_COMPLETE)                          // USB Write complete
 	{
-
-		//      Block_Read(RX_Packet, PACKET_SIZE, &InCount);   // Start next USB Read
 		readyToWriteVCP = 1;
-		//
-		//	   int8_t readBuff[RINGSIZE];
-		//	   //VCPの仕事をこなす
-		//	   if((!rbIsEmpty())){//バッファに残りがある
-		//		   int32_t length = rbGet(readBuff,RINGSIZE-1);//リングバッファからデータを読み出す
-		//		   Block_Write(readBuff, length, &OutCount);     // Start USB Write
-		//		   //	   readyToWriteVCP = 0;
-		//	   }else{
-		//		   readyToWriteVCP = 1;
-		//	   }
-
 	}
 
 	if(INTVAL & DEVICE_CLOSE)
 	{
-		//VCP接続が解除されたら、ソフトウェアでリセットする。たぶん、PC側のソフトを終了したときに発生する。
+		//Reset me if USB VCP is disconnected.
+		//This reset may occurs when a terminal software on pc is closed.
 		RSTSRC |= RSTSRC_SWRSF__BMASK;
 	}
 }
@@ -601,19 +545,10 @@ VCPXpress_API_CALLBACK(myAPICallback)
  *****************************************************************************/
 void Sysclk_Init (void)
 {
-//	OSCICN |= 0x03;                     // Configure internal oscillator for
-//	CLKSEL  = 0x01;                     // External Oscillator
-
-//	OSCICN  = OSCICN_IOSCEN__ENABLED
-//			| OSCICN_IFCN__SYSCLK_DIV_2;        // Enable intosc (/4 / 2 = 6Mhz)
-//	CLKSEL = CLKSEL_CLKSL__DIVIDED_HFOSC_DIV_4;   // select full speed sysclk
-//
 	   OSCICN  = OSCICN_IOSCEN__ENABLED;          // Enable intosc (48Mhz)
 	   FLSCL  |= FLSCL_FLRT__SYSCLK_BELOW_48_MHZ; // Set flash scale
 	   PFE0CN |= PFE0CN_PFEN__ENABLED;            // Enable prefetch
 	   CLKSEL = CLKSEL_CLKSL__HFOSC;              // select full speed sysclk
-
-
 }
 
 
@@ -651,13 +586,6 @@ static void Port_Init (void)
 	//UART1
 //	//	XBR2 = 0x01;                        // route UART 1 to crossbar
 
-
-	/////////////
-	//   P2MDOUT   = P2MDOUT_B2__PUSH_PULL
-	//               | P2MDOUT_B3__PUSH_PULL; // P2.2 - P2.3 are push-pull
-	//   P2SKIP    = P2SKIP_B2__SKIPPED
-	//               | P2SKIP_B3__SKIPPED;    // P2.2 - P2.3 skipped
-	//   XBR1      = XBR1_XBARE__ENABLED;     // Enable the crossbar
 }
 
 //-----------------------------------------------------------------------------
