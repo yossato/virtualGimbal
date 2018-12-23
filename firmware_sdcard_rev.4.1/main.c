@@ -280,6 +280,12 @@ void main (void)
 //					wait_ms(1);
 				}
 				vcpPrintf("\n");
+				FlashGetFeature(SPI_NAND_BLKLOCK_REG_ADDR,&character);
+				vcpPrintf("%x|",(int)character);
+				FlashGetFeature(SPI_NAND_OTP_REG_ADDR,&character);
+				vcpPrintf("%x|",(int)character);
+				FlashGetFeature(SPI_NAND_STATUS_REG_ADDR,&character);
+				vcpPrintf("%x",(int)character);
 				break;
 			case '!':
 				FlashReset();
