@@ -52,7 +52,7 @@
 
 #define NULL_PTR 0
 
-#ifdef MT29FG01AAAED
+#ifdef MT29F2G01ABAGD
 /*
  *
  *  ADDRESS STRUCTURE for MT29FG01x devices
@@ -71,7 +71,7 @@
  *
  *		Notes:
  *		The 12-bit column address is capable of addressing from 0 to 4095 bytes; however, only
- *		bytes 0 through 2111 are valid. Bytes 2112 through 4095 of each page are �out of
+ *		bytes 0 through 2111 are valid. Bytes 2176 through 4095 of each page are �out of
  *		bounds,� do not exist in the device, and cannot be addressed.
  *
  *
@@ -100,7 +100,7 @@ static void Build_Column_Stream(NMX_uint32 udAddr, NMX_uint8 cCMD, NMX_uint8 *ch
 {
 	udAddr &= 0x1FFFul; /* column mask: 1 bit plane select + 12 bit column address */
 	chars[0] = (NMX_uint8) cCMD;
-	chars[1] = ( (((NMX_uint8) ((udAddr>>8) & 0x3))) | ((NMX_uint8) ((udAddr>>18) & 0x1)) );
+	chars[1] = (NMX_uint8) ((udAddr>>8) & 0x1f);
 	chars[2] = (NMX_uint8) (udAddr);
 	return;
 }
@@ -352,8 +352,8 @@ ReturnType FlashWriteDisable(void)
  * WRDI Instruction.
  *
  * The BLOCK ERASE (D8h) command is used to erase at the block level.
- * For the MT29FG01 The blocks are organized as 64 pages per block, 2112 bytes
- * per page (2048 + 64 bytes). Each block is 132 Kbytes. The BLOCK ERASE
+ * For the MT29FG01 The blocks are organized as 64 pages per block, 2176 bytes
+ * per page (2048 + 128 bytes). Each block is 132 Kbytes. The BLOCK ERASE
  * command (D8h) operates on one block at a time. The command sequence for the
  * BLOCK ERASE operation is as follows:
  *
@@ -631,7 +631,7 @@ ReturnType FlashReadDeviceIdentification(NMX_uint16 *uwpDeviceIdentification)
  * 					Flash_ProgramFailed
  * Description:
  *
- * The PAGE PROGRAM operation sequence programs 1 byte to 2112 bytes of data within
+ * The PAGE PROGRAM operation sequence programs 1 byte to 2176 bytes of data within
  * a page. The page program sequence is as follows:
  *
  * � 06h (WRITE ENABLE
@@ -645,8 +645,8 @@ ReturnType FlashReadDeviceIdentification(NMX_uint16 *uwpDeviceIdentification)
  * then the rest of the program sequence is ignored. WRITE ENABLE must be followed by
  * a PROGRAM LOAD (02h) command. PROGRAM LOAD consists of an 8-bit Op code, followed
  * by 3 dummy bits, a plane select and a 12-bit column address, then the data bytes
- * to be programmed. The data bytes are loaded into a cache register that is 2112 bytes
- * long. __Only four partial-page programs are allowed on a single page__. If more than 2112
+ * to be programmed. The data bytes are loaded into a cache register that is 2176 bytes
+ * long. __Only four partial-page programs are allowed on a single page__. If more than 2176
  * bytes are loaded, then those additional bytes are ignored by the cache register. The command
  * sequence ends when CS goes from LOW to HIGH.
  * After the data is loaded, a PROGRAM EXECUTE (10h) command must be issued to initiate
@@ -663,7 +663,7 @@ ReturnType FlashReadDeviceIdentification(NMX_uint16 *uwpDeviceIdentification)
  *    - Send Write enable Command
  *    - Send Program Load Command (0x02)
  *    - Send address (16bit): 3 dummy bit + 1 bit plane select + 12 bit column address
- *    - Send data (2112 bytes)
+ *    - Send data (2176 bytes)
  *    - CS: Low->High
  *    - Send Program Execute command (0x10)
  *    - Send address (24bit): 8 bit dummy + 16 bit address (page/Block)
@@ -954,24 +954,24 @@ ReturnType FlashInternalDataMove(uAddrType udSourceAddr, uAddrType udDestAddr)
  *   - Send address 0xA0 Block Lock status register
  *
  ******************************************************************************/
-ReturnType FlashUnlock(ProtectedRows pr)
-{
-    CharStream char_stream_send;
-	NMX_uint8 chars[3];
-
-	chars[0]= (NMX_uint8) SPI_NAND_SET_FEATURE;
-	chars[1]= (NMX_uint8) SPI_NAND_BLKLOCK_REG_ADDR;
-	chars[2]= (NMX_uint8) pr << 3;
-
-    // Step 1: Initialize the data (i.e. Instruction) packet to be sent serially
-    char_stream_send.length  = 3;
-    char_stream_send.pChar   = chars;
-
-    // Step 2: Send the packet serially, get the Status Register content
-    Serialize_SPI(&char_stream_send, NULL_PTR, OpsWakeUp, OpsEndTransfer);
-
-    return Flash_Success;
-}
+//ReturnType FlashUnlock(ProtectedRows pr)
+//{
+//    CharStream char_stream_send;
+//	NMX_uint8 chars[3];
+//
+//	chars[0]= (NMX_uint8) SPI_NAND_SET_FEATURE;
+//	chars[1]= (NMX_uint8) SPI_NAND_BLKLOCK_REG_ADDR;
+//	chars[2]= (NMX_uint8) pr << 3;
+//
+//    // Step 1: Initialize the data (i.e. Instruction) packet to be sent serially
+//    char_stream_send.length  = 3;
+//    char_stream_send.pChar   = chars;
+//
+//    // Step 2: Send the packet serially, get the Status Register content
+//    Serialize_SPI(&char_stream_send, NULL_PTR, OpsWakeUp, OpsEndTransfer);
+//
+//    return Flash_Success;
+//}
 
 
 /******************************************************************************
@@ -1011,7 +1011,7 @@ ReturnType FlashUnlockAll(void)
  * Description:
  *
  * The serial device offers a protected, one-time programmable NAND Flash memory
- * area. Ten full pages (2112 bytes per page) are available on the device, and the entire
+ * area. Ten full pages (2176 bytes per page) are available on the device, and the entire
  * range is guaranteed to be good. Customers can use the OTP area any way they want;
  * typical uses include programming serial numbers, or other data, for permanent storage.
  * To access the OTP feature, the user must issue the SET FEATURES command, followed
@@ -1084,7 +1084,7 @@ ReturnType FlashUnlockAll(void)
 
 ReturnType FlashReadOTPStatus(NMX_uint8 *otp_reg_value)
 {
-	return FlashGetFeature(SPI_NAND_OTP_REG_ADDR, otp_reg_value);
+	return FlashGetFeature(SPI_NAND_CONFIGURATION_REG_ADDR, otp_reg_value);
 }
 
 /******************************************************************************
@@ -1160,8 +1160,9 @@ ReturnType FlashGetFeature(NMX_uint8 ucRegAddr, NMX_uint8 *ucpRegValue)
 
 	// Step 1: Check the register address
 	if (ucRegAddr != SPI_NAND_BLKLOCK_REG_ADDR &&
-	    ucRegAddr != SPI_NAND_OTP_REG_ADDR &&
-		ucRegAddr != SPI_NAND_STATUS_REG_ADDR)
+	    ucRegAddr != SPI_NAND_CONFIGURATION_REG_ADDR &&
+		ucRegAddr != SPI_NAND_STATUS_REG_ADDR &&
+		ucRegAddr != SPI_NAND_DIE_SELECT_REC_ADDR)
 		return Flash_RegAddressInvalid;
 
 	chars[0]= (NMX_uint8) SPI_NAND_GET_FEATURE_INS;
@@ -1194,8 +1195,9 @@ ReturnType FlashSetFeature(Register ucRegAddr, NMX_uint8 ucpRegValue)
 
 	// Step 1: Check the register address
 	if (ucRegAddr != SPI_NAND_BLKLOCK_REG_ADDR &&
-	    ucRegAddr != SPI_NAND_OTP_REG_ADDR &&
-		ucRegAddr != SPI_NAND_STATUS_REG_ADDR)
+	    ucRegAddr != SPI_NAND_CONFIGURATION_REG_ADDR &&
+		ucRegAddr != SPI_NAND_STATUS_REG_ADDR &&
+		ucRegAddr != SPI_NAND_DIE_SELECT_REC_ADDR)
 		return Flash_RegAddressInvalid;
 
 	chars[0]= (NMX_uint8) SPI_NAND_SET_FEATURE;

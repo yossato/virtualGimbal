@@ -62,16 +62,17 @@ typedef int32_t          NMX_sint32;
 typedef NMX_uint32 uAddrType;
 
 /* List of supported device */
-#define MT29FG01AAAED
+//#define MT29FG01AAAED
+#define MT29F2G01ABAGD
 
-#ifdef MT29FG01AAAED
+#ifdef MT29F2G01ABAGD
 	/* device details */
 	typedef NMX_uint8 dataWidth;					/* Flash data type */
 	#define FLASH_WIDTH				8				/* Flash data width */
 	#define FLASH_SIZE				0x80000000		/* Flash size in bytes */
-	#define PAGE_SIZE				2112			/* Page size in bytes */
+	#define PAGE_SIZE				2176			/* Page size in bytes */
 	#define PAGE_DATA_SIZE			2048			/* Page data size in bytes */
-	#define PAGE_SPARE_SIZE			64				/* Page spare size in bytes*/
+	#define PAGE_SPARE_SIZE			128				/* Page spare size in bytes*/
 	#define NUM_BLOCKS				2048			/* Number of blocks*/
 	#define NUM_PAGE_BLOCK			64				/* Number of pages for block*/
 
@@ -168,9 +169,10 @@ enum
 
 typedef enum
 {
-	SPI_NAND_BLKLOCK_REG_ADDR 	= 0xA0,
-	SPI_NAND_OTP_REG_ADDR 		= 0xB0,
-	SPI_NAND_STATUS_REG_ADDR 	= 0xC0,
+	SPI_NAND_BLKLOCK_REG_ADDR 		= 0xA0,
+	SPI_NAND_CONFIGURATION_REG_ADDR = 0xB0,
+	SPI_NAND_STATUS_REG_ADDR 		= 0xC0,
+	SPI_NAND_DIE_SELECT_REC_ADDR	= 0xD0,
 } Register;
 
 
@@ -180,22 +182,26 @@ typedef enum
 
 enum
 {
-	SPI_NAND_PF   = 0x08, /* program fail */
-	SPI_NAND_EF   = 0x04, /* erase fail */
-	SPI_NAND_WE   = 0x02, /* write enable */
-	SPI_NAND_OIP  = 0x01, /* operation in progress */
+	SPI_NAND_CRBSY  = 0x80, // Cache read busy
+	SPI_NAND_ECCS2  = 0x40,	// ECC status register 0
+	SPI_NAND_ECCS1  = 0x20,	// ECC status register 0
+	SPI_NAND_ECCS0  = 0x10,	// ECC status register 0
+	SPI_NAND_PF   	= 0x08, /* program fail */
+	SPI_NAND_EF   	= 0x04, /* erase fail */
+	SPI_NAND_WE   	= 0x02, /* write enable */
+	SPI_NAND_OIP  	= 0x01, /* operation in progress */
 };
 
 /*
  * Block Lock bits:
  *
  * BL7 - BRWD1 (*)
- * BL6 - reserved
+ * BL6 - BP3
  * BL5 - BP2
  * BL4 - BP1
  * BL3 - BP0
- * BL2 - reserved
- * BL1 - reserved
+ * BL2 - TB
+ * BL1 - WP#/HOLD#/Disable
  * BL0 - reserved
  *
  * (*) If BRWD (block register write disable) is enabled and WP# is LOW,
@@ -204,38 +210,56 @@ enum
 
 /*
  * Tables of Protected Rows
- *
- * (BP2, BP1, BP0)
- *   0    0    0   ->  None (all unlocked)
- *   0    0    1   ->  Upper 1/64 locked
- *   0    1    0   ->  Upper 1/32 locked
- *   0    1    1   ->  Upper 1/16 locked
- *   1    0    0   ->  Upper 1/8 locked
- *   1    0    1   ->  Upper 1/4 locked
- *   1    1    0   ->  Upper 1/2 locked
- *   1    1    1   ->  All locked (default)
- *
- */
+TB | BP3 | BP2 | BP1 | BP0 | Protected Portion | Protected Blocks
+0 0 0 0 0 None—all unlocked None
+0 0 0 0 1 Upper 1/1024 locked 2046:2047
+0 0 0 1 0 Upper 1/512 locked 2044:2047
+0 0 0 1 1 Upper 1/256 locked 2040:2047
+0 0 1 0 0 Upper 1/128 locked 2032:2047
+0 0 1 0 1 Upper 1/64 locked 2016:2047
+0 0 1 1 0 Upper 1/32 locked 1984:2047
+0 0 1 1 1 Upper 1/16 locked 1920:2047
+0 1 0 0 0 Upper 1/8 locked 1792:2047
+0 1 0 0 1 Upper 1/4 locked 1536:2047
+0 1 0 1 0 Upper 1/2 locked 1024:2047
+1 0 0 0 0 All unlocked None
+All others All locked 0:2047
+1 0 0 0 1 Lower 1/1024 locked 0:1
+1 0 0 1 0 Lower 1/512 locked 0:3
+1 0 0 1 1 Lower 1/256 locked 0:7
+1 0 1 0 0 Lower 1/128 locked 0:15
+1 0 1 0 1 Lower 1/64 locked 0:31
+1 0 1 1 0 Lower 1/32 locked 0:63
+1 0 1 1 1 Lower 1/16 locked 0:127
+1 1 0 0 0 Upper 1/8 locked 0:255
+1 1 0 0 1 Lower 1/4 locked 0:511
+1 1 0 1 0 Lower 1/2 locked 0:1023
+1 1 1 1 1 All locked (default) 0:2047
+*/
 
 enum
 {
 	SPI_NAND_BRWD1 	= 0x80, // block register write disable
+	SPI_NAND_BP3 	= 0x40,
 	SPI_NAND_BP2 	= 0x20,
 	SPI_NAND_BP1 	= 0x10,
 	SPI_NAND_BP0 	= 0x08,
+	SPI_NAND_TB 	= 0x04,
+	SPI_NAND_WP_HOLD_DISABLE 	= 0x02,
 };
 
-typedef enum
-{
-	SPI_NAND_PROTECTED_ALL_UNLOCKED		= 0x00, // None�all unlocked
-	SPI_NAND_PROTECTED_1_64_UPPER		= 0x01, // Upper 1/64 locked
-	SPI_NAND_PROTECTED_1_32_UPPER		= 0x02, // Upper 1/32 locked
-	SPI_NAND_PROTECTED_1_16_UPPER		= 0x03, // Upper 1/16 locked
-	SPI_NAND_PROTECTED_1_8_UPPER		= 0x04, // Upper 1/8 locked
-	SPI_NAND_PROTECTED_1_4_UPPER		= 0x05, // Upper 1/4 locked
-	SPI_NAND_PROTECTED_1_2_UPPER		= 0x06, // Upper 1/2 locked
-	SPI_NAND_PROTECTED_ALL_LOCKED		= 0x07, // All locked (default)
-} ProtectedRows;
+// This feature is difficult to implement with insufficient time.
+//typedef enum
+//{
+//	SPI_NAND_PROTECTED_ALL_UNLOCKED		= 0x00, // None�all unlocked
+//	SPI_NAND_PROTECTED_1_64_UPPER		= 0x01, // Upper 1/64 locked
+//	SPI_NAND_PROTECTED_1_32_UPPER		= 0x02, // Upper 1/32 locked
+//	SPI_NAND_PROTECTED_1_16_UPPER		= 0x03, // Upper 1/16 locked
+//	SPI_NAND_PROTECTED_1_8_UPPER		= 0x04, // Upper 1/8 locked
+//	SPI_NAND_PROTECTED_1_4_UPPER		= 0x05, // Upper 1/4 locked
+//	SPI_NAND_PROTECTED_1_2_UPPER		= 0x06, // Upper 1/2 locked
+//	SPI_NAND_PROTECTED_ALL_LOCKED		= 0x07, // All locked (default)
+//} ProtectedRows;
 
 /*
  * Page read mode
@@ -270,7 +294,7 @@ ReturnType FlashReadDeviceIdentification(NMX_uint16 *uwpDeviceIdentification);
 ReturnType FlashPageProgram(uAddrType udAddr, NMX_uint8 *pArray, NMX_uint32 udNrOfElementsInArray);
 ReturnType FlashRandomProgram(uAddrType rowAddr, chunk* cks, NMX_uint8 num_of_chunk);
 ReturnType FlashInternalDataMove(uAddrType udSourceAddr, uAddrType udDestAddr);
-ReturnType FlashUnlock(ProtectedRows pr);
+//ReturnType FlashUnlock(ProtectedRows pr);
 ReturnType FlashUnlockAll(void);
 ReturnType FlashReadOTPStatus(NMX_uint8 *otp_reg_value);
 ReturnType FlashGetFeature(NMX_uint8 ucRegAddr, NMX_uint8 *ucpRegValue);

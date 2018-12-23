@@ -57,7 +57,7 @@ uint8_t xdata TX_Packet[PACKET_SIZE];     // Packet to transmit to host
 //See http://www.keil.com/support/man/docs/c51/c51_init_mempool.htm
 //unsigned char xdata malloc_mempool [2048];
 
-NMX_uint8 xdata pArray[2048+128];
+NMX_uint8  pArray[2048+128];
 
 //SBIT(LED1, SFR_P2, 7);                  // LED1='1' means ON
 SBIT(LED_blue, SFR_P0, 1);                // LED_blue=1 means ON
@@ -282,7 +282,7 @@ void main (void)
 				vcpPrintf("\n");
 				FlashGetFeature(SPI_NAND_BLKLOCK_REG_ADDR,&character);
 				vcpPrintf("%x|",(int)character);
-				FlashGetFeature(SPI_NAND_OTP_REG_ADDR,&character);
+				FlashGetFeature(SPI_NAND_CONFIGURATION_REG_ADDR,&character);
 				vcpPrintf("%x|",(int)character);
 				FlashGetFeature(SPI_NAND_STATUS_REG_ADDR,&character);
 				vcpPrintf("%x",(int)character);
@@ -314,10 +314,13 @@ void main (void)
 
 			case 'r':	//Read data from a flash memory
 			case 'R':
-				if(printReturnType(FlashPageRead(0 << 12, pArray))){
+				for(i=0;i<2048;++i){
+					pArray[i] = 3;
+				}
+				if(printReturnType(FlashPageRead(1 << 12, pArray))){
 					vcpPrintf("{");
 					for(i=0;i<10;++i){
-						int num = pArray[i];
+						int num = (int)pArray[i];
 						vcpPrintf("%d,",num);
 					}
 					vcpPrintf("}\n\n");
@@ -329,7 +332,7 @@ void main (void)
 				for(i=0;i<2048;++i){	//Generate data to write
 					pArray[i] = (uint8_t)i;
 				}
-				printReturnType(FlashPageProgram(0 << 12, pArray, 2048));
+				printReturnType(FlashPageProgram(1 << 12, pArray, 2048));
 				break;
 
 			case 'a':	//Erase, Program and Read all byte. Verify flash memory driver.

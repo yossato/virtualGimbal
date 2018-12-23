@@ -56,7 +56,7 @@ typedef enum
 // char stream definition for
 typedef struct _structCharStream
 {
-	NMX_uint8* pChar;                                // buffer address that holds the streams
+	NMX_uint8 xdata* pChar;                                // buffer address that holds the streams
 	NMX_uint32 length;                               // length of the stream in bytes
 } CharStream;
 
