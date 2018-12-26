@@ -265,11 +265,13 @@ void main (void)
 			uAddrType col_addr;
 			ReturnType return_value;
 			uint8_t character;
+			uint8_t regs[4];
 			int32_t i;
 			int srand_value;
 			vcpPrintf("Press key.\n");
 			vcpPrintf("e:Erase All, t:Read angular velocity\ng:Show Acceleration\n");
 			key = getchar();//Keyboard input
+			vcpPrintf("\n");
 
 			switch (key) {
 			case 'p':   //VCP Printf Verification
@@ -280,12 +282,15 @@ void main (void)
 //					wait_ms(1);
 				}
 				vcpPrintf("\n");
-				FlashGetFeature(SPI_NAND_BLKLOCK_REG_ADDR,&character);
-				vcpPrintf("%x|",(int)character);
-				FlashGetFeature(SPI_NAND_CONFIGURATION_REG_ADDR,&character);
-				vcpPrintf("%x|",(int)character);
-				FlashGetFeature(SPI_NAND_STATUS_REG_ADDR,&character);
-				vcpPrintf("%x",(int)character);
+				FlashGetFeature(SPI_NAND_BLKLOCK_REG_ADDR,&regs[0]);
+				FlashGetFeature(SPI_NAND_CONFIGURATION_REG_ADDR,&regs[1]);
+				FlashGetFeature(SPI_NAND_STATUS_REG_ADDR,&regs[2]);
+				FlashGetFeature(SPI_NAND_DIE_SELECT_REC_ADDR,&regs[3]);
+				vcpPrintf("SPI_NAND_BLKLOCK_REG_ADDR:%x\n",(int)regs[0]);
+				vcpPrintf("SPI_NAND_CONFIGURATION_REG_ADDR:%x\n",(int)regs[1]);
+				vcpPrintf("SPI_NAND_STATUS_REG_ADDR:%x\n",(int)regs[2]);
+				vcpPrintf("SPI_NAND_DIE_SELECT_REC_ADDR:%x\n",(int)regs[3]);
+
 				break;
 			case '!':
 				FlashReset();
@@ -294,6 +299,8 @@ void main (void)
 			case 'u':	//Disable Volatile Block Protection. This operation is required before erase or programming.
 			case 'U':
 				FlashUnlockAll();
+				FlashGetFeature(SPI_NAND_BLKLOCK_REG_ADDR,&character);
+				vcpPrintf("SPI_NAND_BLKLOCK_REG_ADDR:%x\n");
 				vcpPrintf("All blocks are unlocked.\n");
 				break;
 			case 'e':	//Erase
@@ -317,7 +324,8 @@ void main (void)
 				for(i=0;i<2048;++i){
 					pArray[i] = 3;
 				}
-				if(printReturnType(FlashPageRead(1 << 12, pArray))){
+				byte_addr = 0x0eUL << 12;
+				if(printReturnType(FlashPageRead(byte_addr, pArray))){
 					vcpPrintf("{");
 					for(i=0;i<10;++i){
 						int num = (int)pArray[i];
@@ -329,10 +337,11 @@ void main (void)
 
 			case 'w':	//Write data to a flash memory
 			case 'W':
+				byte_addr = 0x0eUL << 12;
 				for(i=0;i<2048;++i){	//Generate data to write
-					pArray[i] = (uint8_t)i;
+					pArray[i] = (uint8_t)i*2;
 				}
-				printReturnType(FlashPageProgram(1 << 12, pArray, 2048));
+				printReturnType(FlashPageProgram(byte_addr, pArray, 10));
 				break;
 
 			case 'a':	//Erase, Program and Read all byte. Verify flash memory driver.

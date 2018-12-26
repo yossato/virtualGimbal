@@ -100,7 +100,8 @@ static void Build_Column_Stream(NMX_uint32 udAddr, NMX_uint8 cCMD, NMX_uint8 *ch
 {
 	udAddr &= 0x1FFFul; /* column mask: 1 bit plane select + 12 bit column address */
 	chars[0] = (NMX_uint8) cCMD;
-	chars[1] = (NMX_uint8) ((udAddr>>8) & 0x1f);
+//	chars[1] = (NMX_uint8) ((udAddr>>8) & 0x1f);
+	chars[1] = ( (((NMX_uint8) ((udAddr>>8) & 0x3))) | ((NMX_uint8) ((udAddr>>18) & 0x1)) );
 	chars[2] = (NMX_uint8) (udAddr);
 	return;
 }
