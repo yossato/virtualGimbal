@@ -335,7 +335,7 @@ void main (void)
 				for(i=0;i<2048;++i){
 					pArray[i] = 3;
 				}
-				byte_addr = 0x0fUL << 12;
+				byte_addr = (0x0fUL << 12) + (0x01UL << 18UL);
 				if(printReturnType(FlashPageRead(byte_addr, pArray))){
 					vcpPrintf("{");
 					for(i=0;i<10;++i){
@@ -345,10 +345,20 @@ void main (void)
 					vcpPrintf("}\n\n");
 				}
 				break;
-
+			case 'q':
+				byte_addr = 0x0fUL << 12;
+								if(printReturnType(FlashPageRead(byte_addr, pArray))){
+									vcpPrintf("{");
+									for(i=0;i<10;++i){
+										int num = (int)pArray[i];
+										vcpPrintf("%d,",num);
+									}
+									vcpPrintf("}\n\n");
+								}
+				break;
 			case 'w':	//Write data to a flash memory
 			case 'W':
-				byte_addr = 0x0fUL << 12;
+				byte_addr = (0x0fUL << 12) + (0x01UL << 18UL);
 				for(i=0;i<2048;++i){	//Generate data to write
 					pArray[i] = (uint8_t)i*2;
 				}
