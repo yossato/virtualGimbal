@@ -70,10 +70,22 @@ volatile uint8_t readyToWriteVCP = 0;	//VCPでwriteする準備が整ってい�
 volatile uint8_t readyToReadVCP = 0;
 volatile uint8_t readyToPrintf = 0;
 //extern FLASH_DEVICE_OBJECT *fdo;
-const char welcome[] = "\n"
+code char welcome[] = "\n"
 		"***********************************************\n"
 		"* virtualGimbal rev.4.1                       *\n"
 		"***********************************************\n";
+
+code char help[] = "Press key.\n"
+		"\n"
+		"e:Erase all flash block\n"
+		"u:Unlock Flash\n"
+		"r:Read Flash\r"
+		"w:Write Flash\n"
+		"!:Reset Flash\n"
+		"h:Show help\n"
+		"t:Read angular velocity\n"
+		"g:Show Acceleration\n";
+
 enum Status {
 	recordingAngularVelocityInInterrupt	= 0x0001 << 0,//各速度記録中
 };
@@ -256,7 +268,7 @@ void main (void)
 		//LED on
 		turnOnBlueLED();
 
-
+		vcpPrintf(help);
 		while(1){
 			uint32_t validFrame;
 			uint32_t record = 0;
@@ -268,8 +280,7 @@ void main (void)
 			uint8_t regs[4];
 			int32_t i;
 			int srand_value;
-			vcpPrintf("Press key.\n");
-			vcpPrintf("e:Erase All, t:Read angular velocity\ng:Show Acceleration\n");
+
 			key = getchar();//Keyboard input
 			vcpPrintf("\n");
 
@@ -324,7 +335,7 @@ void main (void)
 				for(i=0;i<2048;++i){
 					pArray[i] = 3;
 				}
-				byte_addr = 0x0eUL << 12;
+				byte_addr = 0x0fUL << 12;
 				if(printReturnType(FlashPageRead(byte_addr, pArray))){
 					vcpPrintf("{");
 					for(i=0;i<10;++i){
@@ -337,7 +348,7 @@ void main (void)
 
 			case 'w':	//Write data to a flash memory
 			case 'W':
-				byte_addr = 0x0eUL << 12;
+				byte_addr = 0x0fUL << 12;
 				for(i=0;i<2048;++i){	//Generate data to write
 					pArray[i] = (uint8_t)i*2;
 				}
@@ -392,6 +403,10 @@ void main (void)
 				}
 				vcpPrintf("Reading complete.\n");
 
+				break;
+			case 'h':
+			case 'H':
+				vcpPrintf(help);
 				break;
 			case 't'://TODO:データを順番に出力
 				d.Rp = 0;
