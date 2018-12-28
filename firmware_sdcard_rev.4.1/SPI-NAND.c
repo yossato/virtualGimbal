@@ -71,7 +71,7 @@
  *
  *		Notes:
  *		The 12-bit column address is capable of addressing from 0 to 4095 bytes; however, only
- *		bytes 0 through 2111 are valid. Bytes 2176 through 4095 of each page are �out of
+ *		bytes 0 through 2175 are valid. Bytes 2176 through 4095 of each page are �out of
  *		bounds,� do not exist in the device, and cannot be addressed.
  *
  *
@@ -99,7 +99,7 @@ static void Build_Row_Stream(NMX_uint32 udAddr, NMX_uint8 cCMD, NMX_uint8 *chars
 static void Build_Column_Stream(NMX_uint32 udAddr, NMX_uint8 cCMD, NMX_uint8 *chars)
 {
 	chars[0] = (NMX_uint8) cCMD;
-	chars[1] = (NMX_uint8) ((udAddr>>8) & 0x7) | ((NMX_uint8) ((udAddr>>14) & 0x10)); //3 bit column address + 1 bit plane select
+	chars[1] = (NMX_uint8) ((udAddr>>8) & 0x0f) | ((NMX_uint8) ((udAddr>>14) & 0x10)); //3 bit column address + 1 bit plane select
 	chars[2] = (NMX_uint8) (udAddr);	//8 bit column address
 	return;
 }
