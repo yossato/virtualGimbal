@@ -181,8 +181,8 @@ uint32_t findNext(){
 void nand_wait_8n6clk(uint8_t i){
   while(i--);
 }
-#define nand_cs_wait() nand_wait_8n6clk(100)//(50)
-#define nand_clk_wait() nand_wait_8n6clk(5)//(5)
+#define nand_cs_wait() nand_wait_8n6clk(10)//(50)
+#define nand_clk_wait() nand_wait_8n6clk(0)//(5)
 
 //ピンアサイン
 #define nand_clk_up()      (P0 |=  0x10)
@@ -197,7 +197,7 @@ void nand_wait_8n6clk(uint8_t i){
 
 
 
-void NAND_write(NMX_uint8 *buf, NMX_uint16 size){
+void NAND_write(NMX_uint8 xdata *buf, NMX_uint16 size){
 	int i=0;
   for(; size--; buf++){
     NMX_uint8 mask = 0x80;
@@ -214,7 +214,7 @@ void NAND_write(NMX_uint8 *buf, NMX_uint16 size){
   }
 }
 
-void NAND_read(NMX_uint8 *buf, NMX_uint16 size){
+void NAND_read(NMX_uint8 xdata *buf, NMX_uint16 size){
   for(; size--; buf++){
     NMX_uint8 temp = 0;
     NMX_uint8 mask = 0x80;

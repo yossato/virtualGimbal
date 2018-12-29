@@ -127,7 +127,7 @@ int vcpPrintf(const char* format, ...);
 void initVG(VG_STATUS *st);
 float norm(float a[]);
 float dot(float a[],float b[]);
-
+ReturnType Build_Address(NMX_uint16 block, NMX_uint8 page, NMX_uint16 col, NMX_uint32* addr);
 void turnOnBlueLED();
 void turnOffBlueLED();
 void turnOnGreenLED();
@@ -275,6 +275,10 @@ void main (void)
 			uAddrType byte_addr;
 			uAddrType row_addr;
 			uAddrType col_addr;
+			NMX_uint16 block;
+			NMX_uint8 page;
+			NMX_uint16 col;
+			NMX_uint32 addr;
 			ReturnType return_value;
 			uint8_t character;
 			uint8_t regs[4];
@@ -369,14 +373,15 @@ void main (void)
 			case 'A':
 				//Erase
 				vcpPrintf("Erasing...\n");
-				byte_addr = ((uAddrType)1<<29);
-				vcpPrintf("size:%d",(int)sizeof(byte_addr));
-				for(row_addr = 0; row_addr < ((uAddrType)1<<29); row_addr+=((uAddrType)1<<18)){
-					if(!printReturnType(FlashBlockErase(row_addr))){
+				byte_addr = 0;
+
+				for(row_addr = 0; row_addr < (0x01UL<<29); row_addr+=(0x01UL<<18)){
+					return_value = FlashBlockErase(row_addr);
+					if(Flash_Success != return_value){
+						printReturnType(return_value);
 						vcpPrintf("FlashBlockErase failed at %ld",row_addr);
-						reset();
 					}
-					vcpPrintf("E:%ld\n",row_addr);
+					vcpPrintf("Erased row_addr:%ld\n",row_addr);
 				}
 				vcpPrintf("Erase complete.\n");
 
@@ -384,32 +389,49 @@ void main (void)
 				vcpPrintf("Programming...\n");
 				srand_value = d.time_ms;
 				srand(srand_value);
-				for(row_addr = 0;row_addr<((uAddrType)1<<29);row_addr += ((uAddrType)1<<18)){
-					vcpPrintf("P:%ld\n",row_addr);
-					for(col_addr=0;col_addr<2048;++col_addr){
-						pArray[col_addr] = (uint8_t)rand();
+
+				for(block = 0;block<2;++block){
+					vcpPrintf("Programming block %d ...\n",block);
+					for(page = 0;page<64;++page){
+						for(col = 0;col<2048;++col){
+							pArray[col] = (uint8_t)rand();
+						}
+						Build_Address(block,page,0,&addr);
+						IE_EA = 0;
+						return_value = FlashPageProgram(addr,pArray,2048);
+						IE_EA = 1;
+						if(Flash_Success != return_value){
+							printReturnType(return_value);
+							vcpPrintf("FlashPageProgram failed at %ld\n",addr);
+						}
 					}
-					if(!printReturnType(FlashPageProgram(row_addr,pArray,2048))){
-						vcpPrintf("FlashPageProgram failed at %ld",row_addr);
-						reset();
-					}
+
 				}
-				vcpPrintf("Program complete.\n");
+				vcpPrintf("Program complete.\n\n");
 
 				//Read
 				vcpPrintf("Reading...\n");
 				srand(srand_value);
-				for(row_addr=0;row_addr<((uAddrType)1<<29);row_addr+=((uAddrType)1<<18)){
-					if(!printReturnType(FlashPageRead(row_addr,pArray))){
-						vcpPrintf("FlashPageRead failed at %ld",row_addr);
-						reset();
-					}
-					for(col_addr=0;col_addr<2048;++col_addr){
-						character = (uint8_t)rand();
-						if(character != pArray[col_addr]){
-							vcpPrintf("Verify failed ad %ld\n",row_addr|col_addr);
+
+				for(block = 0;block<2;++block){
+					vcpPrintf("Reading block %d ...\n",block);
+					for(page = 0;page<64;++page){
+
+						Build_Address(block,page,0,&addr);
+						IE_EA = 0;
+						return_value = FlashPageRead(addr,pArray);
+						IE_EA = 1;
+						if(Flash_Success != return_value){
+							printReturnType(return_value);
+							vcpPrintf("FlashPageRead failed at %ld\n",addr);
+						}
+						for(col = 0;col<2048;++col){
+							if((uint8_t)rand()!=pArray[col]){
+								vcpPrintf("Verify faild ad block:%u page:%u col:%u\n",block,(uint16_t)page,col);
+							}
 						}
 					}
+
 				}
 				vcpPrintf("Reading complete.\n");
 

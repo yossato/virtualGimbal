@@ -120,7 +120,7 @@ ReturnType Build_Address(NMX_uint16 block, NMX_uint8 page, NMX_uint16 col, NMX_u
 	block = block & 0x07FF; // 11 bit
 	page = page & 0x3F; // 6 bit
 	col = col & 0x0FFF;  // 12 bit
-	*addr = ((block << 18) | (page << 12) | col);
+	*addr = (((uint32_t)block << 18) | ((uint32_t)page << 12) | (uint32_t)col);
 	return Flash_Success;
 }
 #endif

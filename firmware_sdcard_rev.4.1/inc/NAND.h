@@ -11,8 +11,8 @@
 #include <SI_C8051F380_Register_Enums.h>                // SFR declarations
 #include "SPI-NAND.h"
 
-void NAND_write(NMX_uint8 *buf, NMX_uint16 size);
-void NAND_read(NMX_uint8 *buf, NMX_uint16 size);
+void NAND_write(NMX_uint8 xdata *buf, NMX_uint16 size);
+void NAND_read(NMX_uint8 xdata *buf, NMX_uint16 size);
 
 
 #define FOUR_BYTE_ENABLE \
