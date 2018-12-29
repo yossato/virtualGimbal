@@ -284,6 +284,8 @@ void main (void)
 			uint8_t regs[4];
 			int32_t i;
 			int srand_value;
+			bool skip_vcpPrint = false;
+			uint8_t value;
 
 			key = getchar();//Keyboard input
 			vcpPrintf("\n");
@@ -325,7 +327,7 @@ void main (void)
 				if((key == 'y') || (key == 'Y')){
 					vcpPrintf("Erasing...\n");
 //					FlashDieErase(0);
-					byte_addr = 0 << 18;
+					byte_addr = 0x01UL << 18;
 					return_value = FlashBlockErase(byte_addr);
 					if(printReturnType(return_value)){
 						vcpPrintf("FlashBlockErase is succeeded.\n");
@@ -340,7 +342,14 @@ void main (void)
 					pArray[i] = 3;
 				}
 				byte_addr = (0x0fUL << 12) + (0x01UL << 18UL);
-				if(printReturnType(FlashPageRead(byte_addr, pArray))){
+				IE_EA = 0;
+				return_value = FlashPageRead(byte_addr,pArray);
+				IE_EA = 1;
+				if(Flash_Success != return_value){
+					printReturnType(return_value);
+					vcpPrintf("FlashPageRead failed at %ld\n",addr);
+				}
+				else{
 					vcpPrintf("{");
 					for(i=0;i<10;++i){
 						int num = (int)pArray[i];
@@ -349,24 +358,19 @@ void main (void)
 					vcpPrintf("}\n\n");
 				}
 				break;
-			case 'q':
-				byte_addr = 0x0fUL << 12;
-								if(printReturnType(FlashPageRead(byte_addr, pArray))){
-									vcpPrintf("{");
-									for(i=0;i<10;++i){
-										int num = (int)pArray[i];
-										vcpPrintf("%d,",num);
-									}
-									vcpPrintf("}\n\n");
-								}
-				break;
 			case 'w':	//Write data to a flash memory
 			case 'W':
 				byte_addr = (0x0fUL << 12) + (0x01UL << 18UL);
 				for(i=0;i<2048;++i){	//Generate data to write
 					pArray[i] = (uint8_t)i*2;
 				}
-				printReturnType(FlashPageProgram(byte_addr, pArray, 10));
+				IE_EA = 0;
+				return_value = FlashPageProgram(byte_addr,pArray,10);
+				IE_EA = 1;
+				if(Flash_Success != return_value){
+					printReturnType(return_value);
+					vcpPrintf("FlashPageProgram failed\n",addr);
+				}
 				break;
 
 			case 'a':	//Erase, Program and Read all byte. Verify flash memory driver.
@@ -390,9 +394,16 @@ void main (void)
 				srand_value = d.time_ms;
 				srand(srand_value);
 
-				for(block = 0;block<2;++block){
+
+				for(block = 0;block<20;++block){
 					vcpPrintf("Programming block %d ...\n",block);
 					for(page = 0;page<64;++page){
+						//Skip ECC spare, parameters and OTP regions.
+						if(0 == block){
+							if(0x0c > page){
+								continue;
+							}
+						}
 						for(col = 0;col<2048;++col){
 							pArray[col] = (uint8_t)rand();
 						}
@@ -413,10 +424,15 @@ void main (void)
 				vcpPrintf("Reading...\n");
 				srand(srand_value);
 
-				for(block = 0;block<2;++block){
+				for(block = 0;block<20;++block){
 					vcpPrintf("Reading block %d ...\n",block);
 					for(page = 0;page<64;++page){
-
+						//Skip ECC spare, parameters and OTP regions.
+						if(0 == block){
+							if(0x0c > page){
+								continue;
+							}
+						}
 						Build_Address(block,page,0,&addr);
 						IE_EA = 0;
 						return_value = FlashPageRead(addr,pArray);
@@ -425,9 +441,16 @@ void main (void)
 							printReturnType(return_value);
 							vcpPrintf("FlashPageRead failed at %ld\n",addr);
 						}
+						skip_vcpPrint = false;
 						for(col = 0;col<2048;++col){
-							if((uint8_t)rand()!=pArray[col]){
-								vcpPrintf("Verify faild ad block:%u page:%u col:%u\n",block,(uint16_t)page,col);
+							value = (uint8_t)rand();
+							if(value!=pArray[col]){
+								if(skip_vcpPrint != true){
+									vcpPrintf("pArray:%d value:%d\n",(int16_t)pArray[col],(int16_t)value);
+									vcpPrintf("Verify faild ad block:%u page:%u col:%u\n",block,(uint16_t)page,col);
+									skip_vcpPrint = true;
+								}
+
 							}
 						}
 					}

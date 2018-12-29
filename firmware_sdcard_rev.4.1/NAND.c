@@ -181,8 +181,8 @@ uint32_t findNext(){
 void nand_wait_8n6clk(uint8_t i){
   while(i--);
 }
-#define nand_cs_wait() nand_wait_8n6clk(10)//(50)
-#define nand_clk_wait() nand_wait_8n6clk(0)//(5)
+#define nand_cs_wait() nand_wait_8n6clk(20) 	// No wait required because a flash memory is enough fast.
+#define nand_clk_wait() nand_wait_8n6clk(50) 	// Data broken if there is no wait.
 
 //ピンアサイン
 #define nand_clk_up()      (P0 |=  0x10)
