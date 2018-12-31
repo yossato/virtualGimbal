@@ -287,6 +287,7 @@ ReturnType FlashReadStatusRegister(NMX_uint8 *ucpStatusRegister);
 ReturnType FlashWriteEnable(void);
 ReturnType FlashWriteDisable(void);
 ReturnType FlashBlockErase(uAddrType udBlockAddr);
+ReturnType FlashRead(uAddrType udAddr, NMX_uint8 *pArray, NMX_uint32 udNrOfElementsInArray);
 ReturnType FlashPageRead(uAddrType udAddr, NMX_uint8 *pArray);
 ReturnType FlashPageReadDual(uAddrType udAddr, NMX_uint8 *pArray);
 ReturnType FlashPageReadQuad(uAddrType udAddr, NMX_uint8 *pArray, PageReadMode Mode);

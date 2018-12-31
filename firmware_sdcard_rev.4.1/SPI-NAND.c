@@ -413,6 +413,43 @@ ReturnType FlashBlockErase(uAddrType udBlockAddr)
 
 }
 
+ReturnType FlashRead(uAddrType udAddr, NMX_uint8 *pArray, NMX_uint32 udNrOfElementsInArray)
+{
+    CharStream char_stream_send;
+    CharStream char_stream_recv;
+    NMX_uint8  chars[4];
+	NMX_uint8  cReadFromCacheCMD;
+
+    // Step 1: Validate address input
+	if(ADDRESS_2_COL(udAddr) >= PAGE_SIZE)
+		return Flash_AddressInvalid;
+
+    // Step 2: Initialize the data (i.e. Instruction) packet to be sent serially
+	Build_Row_Stream(udAddr, SPI_NAND_PAGE_READ_INS, chars);
+    char_stream_send.length   = 4;
+    char_stream_send.pChar    = chars;
+
+    // Step 3: Send the packet serially, and fill the buffer with the data being returned
+    Serialize_SPI(&char_stream_send, NULL_PTR, OpsWakeUp, OpsEndTransfer);
+
+	// Step 4: Wait until the operation completes or a timeout occurs.
+	WAIT_EXECUTION_COMPLETE(SE_TIMEOUT);
+
+	// Standard read
+	cReadFromCacheCMD = SPI_NAND_READ_CACHE_INS;
+
+    // Step 5: Initialize the data (i.e. Instruction) packet to be sent serially
+	Build_Column_Stream(udAddr, cReadFromCacheCMD, chars);
+    char_stream_send.length   = 4;
+    char_stream_send.pChar    = chars;
+	char_stream_recv.length   = udNrOfElementsInArray;
+    char_stream_recv.pChar    = pArray;
+
+    // Step 6: Send the packet serially, and fill the buffer with the data being returned
+    Serialize_SPI(&char_stream_send, &char_stream_recv, OpsWakeUp, OpsEndTransfer);
+
+    return Flash_Success;
+}
 
 /******************************************************************************
  *

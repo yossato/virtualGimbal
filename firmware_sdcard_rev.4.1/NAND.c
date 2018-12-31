@@ -60,7 +60,7 @@ NMX_uint16 nandReadData16(NMX_uint32 n){
 	return (NMX_uint16)0;
 }
 
-bool nandWriteFrame(uint32_t frame, FrameData *angularVelocity){
+ReturnType nandWriteFrame(uint32_t frame, FrameData *angularVelocity){
 //	ParameterType para;// parameters used for all operation
 //
 //	//Flashメモリのダイの境界を踏まない要因2byteづつ書き込む。
@@ -83,10 +83,14 @@ bool nandWriteFrame(uint32_t frame, FrameData *angularVelocity){
 //	if(Flash_Success != DataProgram(PageProgram, &para)) return false;
 //
 //	return true;
-	return true;
+
+	uint32_t addr = frame * sizeof(FrameData);
+	addr = (0x1FFFF000UL & (addr << 1)) + (addr & 0x7FFUL); // | BLOCK 11 bits | PAGE 6 bits | DUMMU 1 bit | BYTE 11 bits |
+	return FlashPageProgram(addr,(uint8_t *)angularVelocity,sizeof(FrameData));
+
 }
 
-bool nandReadFrame(uint32_t frame, FrameData *angularVelocity){
+ReturnType nandReadFrame(uint32_t frame, FrameData *angularVelocity){
 //	static ParameterType para;
 //	uint8_t  xdata * data pt = (uint8_t *)&angularVelocity->x;
 //	para.Read.udAddr = frame*sizeof(FrameData);
@@ -107,7 +111,9 @@ bool nandReadFrame(uint32_t frame, FrameData *angularVelocity){
 //	if(Flash_Success != DataRead(Read, &para)) return false;
 //	return true;
 
-	return true;
+	uint32_t addr = frame * sizeof(FrameData);
+	addr = (0x1FFFF000UL & (addr << 1)) + (addr & 0x7FFUL); // | BLOCK 11 bits | PAGE 6 bits | DUMMU 1 bit | BYTE 11 bits |
+	return FlashRead(addr,(uint8_t *)angularVelocity,sizeof(FrameData));
 }
 
 /**

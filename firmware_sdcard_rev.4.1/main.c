@@ -124,7 +124,7 @@ void timer_init();
 void myAPICallback(void);
 void spin();
 int vcpPrintf(const char* format, ...);
-void initVG(VG_STATUS *st);
+void resetSystemStatus(VG_STATUS *st);
 float norm(float a[]);
 float dot(float a[],float b[]);
 ReturnType Build_Address(NMX_uint16 block, NMX_uint8 page, NMX_uint16 col, NMX_uint32* addr);
@@ -209,6 +209,9 @@ void reset(){
 	RSTSRC |= RSTSRC_SWRSF__BMASK;
 }
 
+void spinAsSdCard();
+void resetRpToBeginAddress(VG_STATUS *st);
+
 /**************************************************************************//**
  * @breif Main loop
  *
@@ -230,7 +233,7 @@ void main (void)
 	Port_Init ();                              // Initialize crossbar and GPIO
 	timer_init();
 
-	initVG(&d);
+	resetSystemStatus(&d);
 
 //	ret = Driver_Init(&mfdo);	//Flashメモリドライバを初期化
 //	if (Flash_WrongType == ret)	//Flashメモリが正常に動いているか確認
@@ -325,15 +328,27 @@ void main (void)
 				vcpPrintf("\nDo you really want to erase data?\nYes:y No:N\n");
 				key = getchar();
 				if((key == 'y') || (key == 'Y')){
+					//Erase
 					vcpPrintf("Erasing...\n");
-//					FlashDieErase(0);
-					byte_addr = 0x01UL << 18;
-					return_value = FlashBlockErase(byte_addr);
-					if(printReturnType(return_value)){
-						vcpPrintf("FlashBlockErase is succeeded.\n");
+					byte_addr = 0;
+
+					for(block = 0;block<20;++block){
+						Build_Address(block,0,0,&addr);
+						return_value = FlashBlockErase(row_addr);
+						if(Flash_Success != return_value){
+							printReturnType(return_value);
+							vcpPrintf("FlashBlockErase failed at block %u\n",block);
+							vcpPrintf("Did you unlocked flash?\n");
+							break;
+						}
+						vcpPrintf("Block:%u erased\n",block);
+					}
+					if(Flash_Success == return_value){
+						vcpPrintf("Erase complete.\n");
 					}
 				}
-				d.Wp = 0;
+
+				resetSystemStatus(&d);
 				break;
 
 			case 'r':	//Read data from a flash memory
@@ -463,8 +478,16 @@ void main (void)
 			case 'H':
 				vcpPrintf(help);
 				break;
+			case 's':
+			case 'S':
+
+				vcpPrintf("Spin as a SD Card...\n");
+				EIE1 &= ~EIE1_EUSB0__BMASK;
+				spinAsSdCard();
+				break;
+
 			case 't'://TODO:データを順番に出力
-				d.Rp = 0;
+				resetRpToBeginAddress(&d);
 				validFrame = 1;
 				EIE1 &= ~0x80;
 				while(validFrame){//レコードのループ
@@ -570,50 +593,9 @@ void main (void)
 		}
 
 	}else{
-		//Turned on as SD Card.
-		//Record anguler velocity to Flash memory.
-		IE_EA = 1;       // Enable global interrupts
-    	turnOnGreenLED();
-    	while(1){
-			static uint32_t startTime;
-			//フィルタの計算に用いるベクトル
-			const float vecFront[3] = {-16384,0,0};//撮影中、カメラが正面を向いている状況
-			const float vecDown[3] = {0,0,16384};//下向き。撮影中断中。
-			static float accelLow[3]={0,0,16384};
-			static float accelHigh[3]={0,0,16384};
-			const float thF = 30.f/180.f*3.1415;//前向きの閾値
-			const float thD = 30.f/180.f*3.1415;//下向きの閾値
-			float tLowFront,tHighFront,tLowDown,tHighDown;
-			//Sync 60 Hz
-			startTime = d.time_ms;
-			while(startTime==d.time_ms);
 
-			//時定数の異なるLPFをかける。
 
-			accelLow[0] = 0.005 * (float)d.acceleration.x + 0.995 * accelLow[0];
-			accelLow[1] = 0.005 * (float)d.acceleration.y + 0.995 * accelLow[1];
-			accelLow[2] = 0.005 * (float)d.acceleration.z + 0.995 * accelLow[2];
-
-			accelHigh[0] = 0.1 * (float)d.acceleration.x + 0.9 * accelHigh[0];
-			accelHigh[1] = 0.1 * (float)d.acceleration.y + 0.9 * accelHigh[1];
-			accelHigh[2] = 0.1 * (float)d.acceleration.z + 0.9 * accelHigh[2];
-
-			tLowFront = acos(dot(accelLow,vecFront)/(norm(accelLow)*norm(vecFront)));
-			tHighFront = acos(dot(accelHigh,vecFront)/(norm(accelHigh)*norm(vecFront)));
-			tLowDown = acos(dot(accelLow,vecDown)/(norm(accelLow)*norm(vecDown)));
-			tHighDown = acos(dot(accelHigh,vecDown)/(norm(accelHigh)*norm(vecDown)));
-
-			vcpPrintf("LF:%4.3f ",tLowFront/3.1415*180.0);
-			vcpPrintf("HF:%4.3f ",tHighFront/3.1415*180.0);
-			vcpPrintf("LD:%4.3f ",tLowDown/3.1415*180.0);
-			vcpPrintf("HD:%4.3f\n",tHighDown/3.1415*180.0);
-
-			if((tLowFront<thF)||(tHighFront<thF)){//カメラが前向きになったとき
-				d.status |= recordingAngularVelocityInInterrupt;//録画開始
-			}else if((tLowDown<thD)&&(tHighDown<thD)){//カメラが下向きになったとき
-				d.status &= ~recordingAngularVelocityInInterrupt;//停止
-			}
-		}
+    	spinAsSdCard();
 	}
 }
 
@@ -642,6 +624,56 @@ float norm(float a[]){
 }
 float dot(float a[],float b[]){
 	return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+}
+
+void spinAsSdCard(){
+	FlashUnlockAll();
+	//Turned on as SD Card.
+	//Record anguler velocity to Flash memory.
+	IE_EA = 1;       // Enable global interrupts
+//	turnOnGreenLED();
+
+	d.status |= recordingAngularVelocityInInterrupt;//録画開始
+	while(1){
+				static uint32_t startTime;
+				//フィルタの計算に用いるベクトル
+	//			const float vecFront[3] = {-16384,0,0};//撮影中、カメラが正面を向いている状況
+	//			const float vecDown[3] = {0,0,16384};//下向き。撮影中断中。
+	//			static float accelLow[3]={0,0,16384};
+	//			static float accelHigh[3]={0,0,16384};
+	//			const float thF = 30.f/180.f*3.1415;//前向きの閾値
+	//			const float thD = 30.f/180.f*3.1415;//下向きの閾値
+	//			float tLowFront,tHighFront,tLowDown,tHighDown;
+				//Sync 60 Hz
+				startTime = d.time_ms;
+				while(startTime==d.time_ms);
+
+				//時定数の異なるLPFをかける。
+
+	//			accelLow[0] = 0.005 * (float)d.acceleration.x + 0.995 * accelLow[0];
+	//			accelLow[1] = 0.005 * (float)d.acceleration.y + 0.995 * accelLow[1];
+	//			accelLow[2] = 0.005 * (float)d.acceleration.z + 0.995 * accelLow[2];
+	//
+	//			accelHigh[0] = 0.1 * (float)d.acceleration.x + 0.9 * accelHigh[0];
+	//			accelHigh[1] = 0.1 * (float)d.acceleration.y + 0.9 * accelHigh[1];
+	//			accelHigh[2] = 0.1 * (float)d.acceleration.z + 0.9 * accelHigh[2];
+	//
+	//			tLowFront = acos(dot(accelLow,vecFront)/(norm(accelLow)*norm(vecFront)));
+	//			tHighFront = acos(dot(accelHigh,vecFront)/(norm(accelHigh)*norm(vecFront)));
+	//			tLowDown = acos(dot(accelLow,vecDown)/(norm(accelLow)*norm(vecDown)));
+	//			tHighDown = acos(dot(accelHigh,vecDown)/(norm(accelHigh)*norm(vecDown)));
+
+	//			vcpPrintf("LF:%4.3f ",tLowFront/3.1415*180.0);
+	//			vcpPrintf("HF:%4.3f ",tHighFront/3.1415*180.0);
+	//			vcpPrintf("LD:%4.3f ",tLowDown/3.1415*180.0);
+	//			vcpPrintf("HD:%4.3f\n",tHighDown/3.1415*180.0);
+
+	//			if((tLowFront<thF)||(tHighFront<thF)){//カメラが前向きになったとき
+	//				d.status |= recordingAngularVelocityInInterrupt;//録画開始
+	//			}else if((tLowDown<thD)&&(tHighDown<thD)){//カメラが下向きになったとき
+	//				d.status &= ~recordingAngularVelocityInInterrupt;//停止
+	//			}
+			}
 }
 
 // Interrupt Service Routines
@@ -743,81 +775,82 @@ static void Port_Init (void)
  **/
 INTERRUPT(Timer3_ISR, TIMER3_IRQn) {
 	static uint8_t Times=0;
-//	static uint16_t oldStatus = 0;
+	static uint16_t oldStatus = 0;
 //	static FrameData angularVelocity;
-
+	ReturnType return_value;
 	if((++Times) & 0x01){	//2回に1回実行、60Hz
-		//角速度の計測
-		mpu9250_polling2(&d.angular_velocity);
-		//加速度の計測
-		mpu9250_pollingAcceleration(&d.acceleration);
+//		//角速度の計測
+//		mpu9250_polling2(&d.angular_velocity);
+//		//加速度の計測
+//		mpu9250_pollingAcceleration(&d.acceleration);
 
-		d.time_ms += 17;//17ms追加
 
 		//フラッシュメモリへの波形書き込み
-//		if(d.status & recordingAngularVelocityInInterrupt){
-//			//Flashメモリの末尾に達したら書き込みを停止
-//			if(MAX_FRAMES-2 <= d.Wp){//If データの末尾がFlashメモリの末尾-1(すなわちMAX_FRAMES-2)ならデータの区切りが必要なのでここで無限ループ then
-//				while(1){//LED点滅の無限ループ
-////					LED1 = 1;
-//					turnOnBlueLED();
-//					wait_ms(100);
-//					turnOffBlueLED();
-//					wait_ms(100);
-//				}
-//			}//end if
-//
-//			//書き込み開始時の立ち上がりエッジを監視
-//			if((!(oldStatus & recordingAngularVelocityInInterrupt))&&(d.Wp!=0)){//d.Wp==0の時は、前回の記録がないのでスキップ
-//				turnOnBlueLED();
-//				//前回の記録の末端に、記録終了の合図を書き込む
-//				d.angular_velocity.x = 0xffff;//初期値が0xffffなのだから書き込む意味ない気がする。
-//				d.angular_velocity.y = 0xffff;
-//				d.angular_velocity.z = 0xffff;
-//				nandWriteFrame(d.Wp,&d.angular_velocity);
-//				d.Wp += 1;
-//
-//				d.angular_velocity.x = 0;
-//				d.angular_velocity.y = 0;
-//				d.angular_velocity.z = 0;
-//				nandWriteFrame(d.Wp,&d.angular_velocity);
-//				d.Wp += 1;
-//
-//				turnOffBlueLED();
-//			}
-//
-//
-//			turnOnBlueLED();
-//			//		mpu9250_polling();
-//			mpu9250_polling2(&d.angular_velocity);
-//
-////			d.angular_velocity[0] = (float)d.angular_velocity.x/16.4*M_PI/180.0;
-////			d.angular_velocity[1] = (float)d.angular_velocity.y/16.4*M_PI/180.0;
-////			d.angular_velocity[2] = (float)d.angular_velocity.z/16.4*M_PI/180.0;
-//
-//			//フラッシュメモリにデータを書き込む
-//			nandWriteFrame(d.Wp,&d.angular_velocity);
-//			d.Wp += 1;		//書き込みポインタを進める
-//
-//			//書き込んだデータが万が一エスケープシーケンス(0xffff,0xffff,0xffff)なら、続けて1フレーム付加する
-//			if(d.angular_velocity.x==0xffff && d.angular_velocity.y==0xffff && d.angular_velocity.z==0xffff){
-//				d.angular_velocity.x = 0xfffe;
-//				d.angular_velocity.y = 0xfffe;
-//				d.angular_velocity.z = 0xfffe;
-//				nandWriteFrame(d.Wp,&d.angular_velocity);
-//				d.Wp += 1;		//書き込みポインタを進める
-//			}
-//
-//			//LEDを消灯
-//			turnOffBlueLED();
-//			//TODO:Flashメモリが満タンの時の処理が必要だな。。。。
-//		}
-//
-//		//状態の保存
-//		oldStatus = d.status;
+		if(d.status & recordingAngularVelocityInInterrupt){
+			//Flashメモリの末尾に達したら書き込みを停止
+			if(MAX_FRAMES-2 <= d.Wp){//If データの末尾がFlashメモリの末尾-1(すなわちMAX_FRAMES-2)ならデータの区切りが必要なのでここで無限ループ then
+				while(1){//LED点滅の無限ループ
+//					LED1 = 1;
+					turnOnBlueLED();
+					wait_ms(100);
+					turnOffBlueLED();
+					wait_ms(100);
+				}
+			}//end if
 
-		//加速度の計測
-//		mpu9250_pollingAcceleration(&d.acceleration);
+			//書き込み開始時の立ち上がりエッジを監視
+			if((!(oldStatus & recordingAngularVelocityInInterrupt))&&(d.Wp!=0)){//d.Wp==0の時は、前回の記録がないのでスキップ
+				turnOnBlueLED();
+				//前回の記録の末端に、記録終了の合図を書き込む
+				d.angular_velocity.x = 0xffff;//初期値が0xffffなのだから書き込む意味ない気がする。
+				d.angular_velocity.y = 0xffff;
+				d.angular_velocity.z = 0xffff;
+				nandWriteFrame(d.Wp,&d.angular_velocity);
+				d.Wp += 1;
+
+				d.angular_velocity.x = 0;
+				d.angular_velocity.y = 0;
+				d.angular_velocity.z = 0;
+				nandWriteFrame(d.Wp,&d.angular_velocity);
+				d.Wp += 1;
+
+				turnOffBlueLED();
+			}
+
+
+			turnOnBlueLED();
+			mpu9250_polling2(&d.angular_velocity);
+			mpu9250_pollingAcceleration(&d.acceleration);
+
+			//Write angular velocity to the flash memory
+			return_value = nandWriteFrame(d.Wp,&d.angular_velocity);
+			if(Flash_Success != return_value){
+				turnOnGreenLED();
+			}
+			d.Wp += 1;		//書き込みポインタを進める
+
+			//書き込んだデータが万が一エスケープシーケンス(0xffff,0xffff,0xffff)なら、続けて1フレーム付加する
+			if(d.angular_velocity.x==0xffff && d.angular_velocity.y==0xffff && d.angular_velocity.z==0xffff){
+				d.angular_velocity.x = 0xfffe;
+				d.angular_velocity.y = 0xfffe;
+				d.angular_velocity.z = 0xfffe;
+				return_value = nandWriteFrame(d.Wp,&d.angular_velocity);
+				if(Flash_Success != return_value){
+					turnOnGreenLED();
+				}
+				d.Wp += 1;		//書き込みポインタを進める
+			}
+
+			//LEDを消灯
+			turnOffBlueLED();
+
+			d.time_ms += 17;//17ms追加
+
+		}
+
+		//状態の保存
+		oldStatus = d.status;
+
 	}
 	TMR3CN &= ~0x80; // Clear interrupt
 }
@@ -928,9 +961,17 @@ int vcpPrintf(const char* format, ...){
  * @brief virtualGimbalの状態を初期化します
  *
  **/
-void initVG(VG_STATUS *st){
-	st->Wp = 0;
-	st->Rp = 0;
+void resetSystemStatus(VG_STATUS *st){
+	uint32_t addr;
+	Build_Address(0,0x0C,0,&addr);
+	st->Wp = addr/sizeof(FrameData);
+	st->Rp = addr/sizeof(FrameData);;
 	st->status = 0;
 	st->time_ms = 0;
+}
+
+void resetRpToBeginAddress(VG_STATUS *st){
+	uint32_t addr;
+		Build_Address(0,0x0C,0,&addr);
+	st->Rp = addr/sizeof(FrameData);
 }

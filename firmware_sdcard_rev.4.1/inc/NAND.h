@@ -91,8 +91,8 @@ ReturnType nandWriteData32(NMX_uint32 n, NMX_uint32 data2write);
 NMX_uint32 nandReadData32(NMX_uint32 n);
 ReturnType nandWriteData16(NMX_uint32 n, NMX_uint16 data2write);
 NMX_uint16 nandReadData16(NMX_uint32 n);
-bool nandWriteFrame(uint32_t frame, FrameData *angularVelocity);
-bool nandReadFrame(uint32_t frame, FrameData *angularVelocity);
+ReturnType nandWriteFrame(uint32_t frame, FrameData *angularVelocity);
+ReturnType nandReadFrame(uint32_t frame, FrameData *angularVelocity);
 
 
 
