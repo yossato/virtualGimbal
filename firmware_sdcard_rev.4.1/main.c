@@ -385,6 +385,7 @@ void main (void)
 				if(Flash_Success != return_value){
 					printReturnType(return_value);
 					vcpPrintf("FlashPageProgram failed\n",addr);
+					vcpPrintf("Did you unlocked flash?\n");
 				}
 				break;
 
@@ -399,6 +400,8 @@ void main (void)
 					if(Flash_Success != return_value){
 						printReturnType(return_value);
 						vcpPrintf("FlashBlockErase failed at %ld",row_addr);
+						vcpPrintf("Did you unlocked flash?\n");
+						return;
 					}
 					vcpPrintf("Erased row_addr:%ld\n",row_addr);
 				}
