@@ -353,12 +353,9 @@ void main (void)
 
 			case 'r':	//Read data from a flash memory
 			case 'R':
-				for(i=0;i<2048;++i){
-					pArray[i] = 3;
-				}
-				byte_addr = (0x0fUL << 12) + (0x01UL << 18UL);
 				IE_EA = 0;
-				return_value = FlashPageRead(byte_addr,pArray);
+				Build_Address(0,0x0c,0,&addr);
+				return_value = FlashPageRead(addr,pArray);
 				IE_EA = 1;
 				if(Flash_Success != return_value){
 					printReturnType(return_value);
@@ -375,12 +372,12 @@ void main (void)
 				break;
 			case 'w':	//Write data to a flash memory
 			case 'W':
-				byte_addr = (0x0fUL << 12) + (0x01UL << 18UL);
-				for(i=0;i<2048;++i){	//Generate data to write
-					pArray[i] = (uint8_t)i*2;
-				}
+				Build_Address(0,0x0c,0,&addr);
 				IE_EA = 0;
-				return_value = FlashPageProgram(byte_addr,pArray,10);
+				for(i=0;i<2048;++i){	//Generate data to write
+					pArray[i] = (uint8_t)i;
+				}
+				return_value = FlashPageProgram(addr,pArray,10);
 				IE_EA = 1;
 				if(Flash_Success != return_value){
 					printReturnType(return_value);
@@ -399,9 +396,9 @@ void main (void)
 					return_value = FlashBlockErase(row_addr);
 					if(Flash_Success != return_value){
 						printReturnType(return_value);
-						vcpPrintf("FlashBlockErase failed at %ld",row_addr);
+						vcpPrintf("FlashBlockErase failed at %ld\n",row_addr);
 						vcpPrintf("Did you unlocked flash?\n");
-						return;
+						reset();
 					}
 					vcpPrintf("Erased row_addr:%ld\n",row_addr);
 				}
