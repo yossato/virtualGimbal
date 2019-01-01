@@ -332,20 +332,19 @@ void main (void)
 					vcpPrintf("Erasing...\n");
 					byte_addr = 0;
 
-					for(block = 0;block<20;++block){
-						Build_Address(block,0,0,&addr);
+					for(row_addr = 0; row_addr < (0x01UL<<29); row_addr+=(0x01UL<<18)){
 						return_value = FlashBlockErase(row_addr);
 						if(Flash_Success != return_value){
 							printReturnType(return_value);
-							vcpPrintf("FlashBlockErase failed at block %u\n",block);
+							vcpPrintf("FlashBlockErase failed at %ld\n",row_addr);
 							vcpPrintf("Did you unlocked flash?\n");
-							break;
+							reset();
 						}
-						vcpPrintf("Block:%u erased\n",block);
+						vcpPrintf("Erased row_addr:%ld\n",row_addr);
 					}
-					if(Flash_Success == return_value){
-						vcpPrintf("Erase complete.\n");
-					}
+					vcpPrintf("Erase complete.\n");
+				}else{
+					vcpPrintf("Canceled.\n");
 				}
 
 				resetSystemStatus(&d);
