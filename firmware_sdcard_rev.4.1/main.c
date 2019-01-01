@@ -82,6 +82,7 @@ code char help[] = "Press key.\n"
 		"r:Read Flash\r"
 		"w:Write Flash\n"
 		"!:Reset Flash\n"
+		"s:Spin for 1 second\n"
 		"h:Show help\n"
 		"t:Read angular velocity\n"
 		"g:Show Acceleration\n";
@@ -535,6 +536,8 @@ void main (void)
 							validFrame = 0;
 							record = 0;
 							break;
+						}else{
+							vcpPrintf("### Corrupted data. Flash memory may be end of lifetime, of software bug.\n");
 						}
 					}
 

@@ -25,7 +25,7 @@ int16_t isFull(uint32_t frame);
 uint32_t findNext(uint32_t begin, uint32_t end);
 
 
-#define MAX_FRAMES 256UL*1024*1024/8/sizeof(FrameData)	//512[Mb]/8[bit/byte]/sizeof(Frame)[byte/Frame]-1=11184810-1=11184809[Frame]�B-1�̓G�X�P�[�v�V�[�P���X���H
+#define MAX_FRAMES 2048UL*1024*1024/8/sizeof(FrameData)	//2048[Mb]/8[bit/byte]/sizeof(Frame)[byte/Frame]
 
 
 /*#define FIND_NEXT(na,nb,next)\
