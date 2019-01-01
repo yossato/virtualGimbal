@@ -160,28 +160,27 @@ int16_t isFull(uint32_t frame){
  **/
 
 
-uint32_t findNext(){
-	static uint32_t na;
-	static uint32_t nb;
-	static uint32_t nm;
-	na = 0;
-	nb = MAX_FRAMES-2;
+uint32_t findNext(uint32_t begin, uint32_t end){
+
+
+	uint32_t nm;
+
 	while(1){
-		nm=(na+nb)/2;//仮の解
+		nm=(begin+end)/2;//仮の解
 		if(isFull(nm)){
-			na=nm;
-			if((nb-na)<=1){//終了条件,たぶんNANDがすべて空っぽの時
-				return nb;
+			begin=nm;
+			if((end-begin)<=1){//終了条件,たぶんNANDがすべて空っぽの時
+				return end;
 			}
 		}else{
-			if((nb-na)<=1){//終了条件
+			if((end-begin)<=1){//終了条件
 				return nm;
 			}
-			nb=nm;
+			end=nm;
 		}
 
-	}//while((nb-na)>1);//本当？
-//	return na;
+	}//while((nb-begin)>1);//本当？
+//	return begin;
 }
 
 void nand_wait_8n6clk(uint8_t i){

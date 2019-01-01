@@ -47,7 +47,7 @@
 //#define TIMER_RELOAD_LOW (TIMER_RELOAD & 0x00FF)
 
 #define PACKET_SIZE 64
-//#define FRAME_POSITIONS
+#define FRAME_POSITIONS
 
 uint16_t xdata InCount;                   // Holds size of received packet
 uint16_t xdata OutCount;                  // Holds size of transmitted packet
@@ -110,6 +110,7 @@ typedef struct _VG_STATUS{
 	volatile uint32_t time_ms;	//!<時間[ms],フレームレート毎に更新されるので精度が低いことに注意
 	volatile FrameData acceleration;//!<加速度
 	volatile FrameData angular_velocity;//!<角速度[rad/s]
+	volatile uint32_t WRp_init_value;
 }VG_STATUS;
 
 VG_STATUS xdata d;
@@ -209,8 +210,9 @@ void reset(){
 	RSTSRC |= RSTSRC_SWRSF__BMASK;
 }
 
-void spinAsSdCard();
+void spinAsSdCard(uint32_t spin_time_ms);
 void resetRpToBeginAddress(VG_STATUS *st);
+
 
 /**************************************************************************//**
  * @breif Main loop
@@ -221,8 +223,6 @@ void resetRpToBeginAddress(VG_STATUS *st);
  *****************************************************************************/
 void main (void)
 {
-	uint32_t power_on_time;
-
 	PCA0MD &= ~PCA0MD_WDTE__BMASK;             // Disable watchdog timer
 
 	VDM0CN = VDM0CN_VDMEN__ENABLED;            // Enable VDD Monitor
@@ -245,7 +245,7 @@ void main (void)
 //	fdo = &mfdo;
 
 	IE_EA = 0;
-//	d.Wp = findNext();
+	d.Wp = findNext(d.WRp_init_value,MAX_FRAMES-2);
 	IE_EA = 1;
 
 	//Initialize a gyro sensor.
@@ -273,11 +273,10 @@ void main (void)
 
 		vcpPrintf(help);
 		while(1){
-			uint32_t validFrame;
-			uint32_t record = 0;
+			uint8_t validFrame;
+			uint16_t record = 0;
 			uAddrType byte_addr;
 			uAddrType row_addr;
-			uAddrType col_addr;
 			NMX_uint16 block;
 			NMX_uint8 page;
 			NMX_uint16 col;
@@ -285,7 +284,7 @@ void main (void)
 			ReturnType return_value;
 			uint8_t character;
 			uint8_t regs[4];
-			int32_t i;
+			int16_t i;
 			int srand_value;
 			bool skip_vcpPrint = false;
 			uint8_t value;
@@ -483,7 +482,9 @@ void main (void)
 
 				vcpPrintf("Spin as a SD Card...\n");
 				EIE1 &= ~EIE1_EUSB0__BMASK;
-				spinAsSdCard();
+				spinAsSdCard(1000UL);
+				EIE1 |= EIE1_EUSB0__BMASK;
+				vcpPrintf("Spin ends.\n\n");
 				break;
 
 			case 't'://TODO:データを順番に出力
@@ -491,8 +492,10 @@ void main (void)
 				validFrame = 1;
 				EIE1 &= ~0x80;
 				while(validFrame){//レコードのループ
-					vcpPrintf("Record %lu",record);
+#ifdef FRAME_POSITIONS
+					vcpPrintf("Record %u",record);
 					vcpPrintf("\n");
+#endif
 					while(1){//フレームのループ
 						FrameData angularVelocity;
 						//フラッシュメモリからデータを読み取る
@@ -595,7 +598,7 @@ void main (void)
 	}else{
 
 
-    	spinAsSdCard();
+    	spinAsSdCard(0);//Infinite spin
 	}
 }
 
@@ -626,16 +629,20 @@ float dot(float a[],float b[]){
 	return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
 }
 
-void spinAsSdCard(){
+void spinAsSdCard(uint32_t spin_time_ms){
+	static uint32_t endTime = 0;
+	static uint32_t startTime;
 	FlashUnlockAll();
+
 	//Turned on as SD Card.
 	//Record anguler velocity to Flash memory.
-	IE_EA = 1;       // Enable global interrupts
+//	IE_EA = 1;       // Enable global interrupts
 //	turnOnGreenLED();
 
 	d.status |= recordingAngularVelocityInInterrupt;//録画開始
+	endTime = d.time_ms + spin_time_ms;
 	while(1){
-				static uint32_t startTime;
+
 				//フィルタの計算に用いるベクトル
 	//			const float vecFront[3] = {-16384,0,0};//撮影中、カメラが正面を向いている状況
 	//			const float vecDown[3] = {0,0,16384};//下向き。撮影中断中。
@@ -647,6 +654,11 @@ void spinAsSdCard(){
 				//Sync 60 Hz
 				startTime = d.time_ms;
 				while(startTime==d.time_ms);
+
+
+				if((0 != endTime) && (d.time_ms >= endTime)){
+					break;
+				}
 
 				//時定数の異なるLPFをかける。
 
@@ -674,6 +686,7 @@ void spinAsSdCard(){
 	//				d.status &= ~recordingAngularVelocityInInterrupt;//停止
 	//			}
 			}
+	d.status &= ~recordingAngularVelocityInInterrupt;
 }
 
 // Interrupt Service Routines
@@ -799,7 +812,7 @@ INTERRUPT(Timer3_ISR, TIMER3_IRQn) {
 			}//end if
 
 			//書き込み開始時の立ち上がりエッジを監視
-			if((!(oldStatus & recordingAngularVelocityInInterrupt))&&(d.Wp!=0)){//d.Wp==0の時は、前回の記録がないのでスキップ
+			if((!(oldStatus & recordingAngularVelocityInInterrupt))&&(d.Wp!=d.WRp_init_value)){//d.Wp==0の時は、前回の記録がないのでスキップ
 				turnOnBlueLED();
 				//前回の記録の末端に、記録終了の合図を書き込む
 				d.angular_velocity.x = 0xffff;//初期値が0xffffなのだから書き込む意味ない気がする。
@@ -964,14 +977,13 @@ int vcpPrintf(const char* format, ...){
 void resetSystemStatus(VG_STATUS *st){
 	uint32_t addr;
 	Build_Address(0,0x0C,0,&addr);
-	st->Wp = addr/sizeof(FrameData);
-	st->Rp = addr/sizeof(FrameData);;
+	st->WRp_init_value = addr/sizeof(FrameData);
+	st->Wp = st->WRp_init_value;
+	st->Rp = st->WRp_init_value;
 	st->status = 0;
 	st->time_ms = 0;
 }
 
 void resetRpToBeginAddress(VG_STATUS *st){
-	uint32_t addr;
-		Build_Address(0,0x0C,0,&addr);
-	st->Rp = addr/sizeof(FrameData);
+	st->Rp = st->WRp_init_value;
 }
