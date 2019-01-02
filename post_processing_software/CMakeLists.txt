@@ -8,6 +8,8 @@ set(Python_ADDITIONAL_VERSIONS 3.5)
 find_package(PythonInterp 3.5 REQUIRED)
 find_package(PythonLibs 3.5 REQUIRED)
 
+
+
 if( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
     message( FATAL_ERROR "Please select another Build Directory ! (and give it a clever name, like bin_Visual2012_64bits/)" )
 endif()
@@ -17,6 +19,7 @@ endif()
 if( CMAKE_BINARY_DIR MATCHES " " )
         message( "Your Build Directory contains spaces. If you experience problems when compiling, this can be the cause." )
 endif()
+
 
 # Copy setting files
 configure_file(intrinsic.txt intrinsic.txt)
@@ -153,6 +156,9 @@ add_executable(camera_calibration src/camera_calibration.cpp
     src/mINIRead.cpp)
 target_link_libraries(camera_calibration ${OpenCV_LIBS})
 
+add_executable(angular_velocity_reader src/angular_velocity_reader.cpp)
+target_include_directories(angular_velocity_reader PRIVATE ${ALL_LIBS})
+# target_link_libraries(angular_velocity_reader PRIVATE ${SERIAL_LDFLAGS} ${CMAKE_THREAD_LIBS_INIT})
 
 # デバッグビルド
 IF(CMAKE_BUILD_TYPE MATCHES DEBUG)
