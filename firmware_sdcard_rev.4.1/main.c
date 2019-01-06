@@ -23,14 +23,6 @@
 #include "inc/util.h"
 #include "SPI-NAND.h"
 #include <stdbool.h>
-/**************************************************************************//**
- * VCPXpress_Echo_main.c
- *
- * Main routine for VCPXpress Echo example.
- *
- * This example simply echos any data received over USB back up to the PC.
- *
- *****************************************************************************/
 
 //-----------------------------------------------------------------------------
 // Global Constants
@@ -38,13 +30,7 @@
 
 
 
-//#define BLINK_RATE         10              // Timer2 Interrupts per second
 #define SYSCLK             48000000UL        // SYSCLK frequency in Hz
-//#define PRESCALE           64             //Timer prescaler
-//#define TIMER_RELOAD -(SYSCLK / PRESCALE / BLINK_RATE)
-//
-//#define TIMER_RELOAD_HIGH ((TIMER_RELOAD & 0xFF00)>>8)
-//#define TIMER_RELOAD_LOW (TIMER_RELOAD & 0x00FF)
 
 #define PACKET_SIZE 64
 #define FRAME_POSITIONS
@@ -54,12 +40,8 @@ uint16_t xdata OutCount;                  // Holds size of transmitted packet
 uint8_t xdata RX_Packet[PACKET_SIZE];     // Packet received from host
 uint8_t xdata TX_Packet[PACKET_SIZE];     // Packet to transmit to host
 
-//See http://www.keil.com/support/man/docs/c51/c51_init_mempool.htm
-//unsigned char xdata malloc_mempool [2048];
-
 NMX_uint8  pArray[2048+128];
 
-//SBIT(LED1, SFR_P2, 7);                  // LED1='1' means ON
 SBIT(LED_blue, SFR_P0, 1);                // LED_blue=1 means ON
 SBIT(LED_green, SFR_P0, 0);               // LED_green=1 means ON
 SBIT(power_enable_bit, SFR_P2, 1);        // power_enable_bit=1 means POWER ON
@@ -235,15 +217,6 @@ void main (void)
 	timer_init();
 
 	resetSystemStatus(&d);
-
-//	ret = Driver_Init(&mfdo);	//Flashメモリドライバを初期化
-//	if (Flash_WrongType == ret)	//Flashメモリが正常に動いているか確認
-//	{
-//		vcpPrintf("Sorry, no device detected.\n");//エラーが発生した場合はここで停止
-//		while(1);
-//	}
-
-//	fdo = &mfdo;
 
 	IE_EA = 0;
 	d.Wp = findNext(d.WRp_init_value,MAX_FRAMES-2);
@@ -545,6 +518,74 @@ void main (void)
 				EIE1 |= 0x80;
 				//TODO:Flashメモリが満タンの時の処理
 
+				break;
+			case 'j':	//Output angular velocity as JSON format.
+				resetRpToBeginAddress(&d);
+				validFrame = 1;
+				EIE1 &= ~0x80;
+				vcpPrintf("{\n");
+				vcpPrintf("    \"coefficient_adc_raw_value_to_rad_per_sec\":%0.10f,\n",1.f/16.4f*M_PI/180.0f);
+				vcpPrintf("    \"frequency\":%f,\n",60.f);
+				vcpPrintf("    \"angular_velocity\":[\n");
+				while(validFrame){//レコードのループ
+					FrameData angularVelocity;
+					vcpPrintf("        [");
+
+					//Read one frame
+					IE_EA = 0;
+					nandReadFrame(d.Rp,&angularVelocity);
+					IE_EA = 1;
+					if(angularVelocity.x!=0xffff || angularVelocity.y!=0xffff || angularVelocity.z!=0xffff){
+						//エスケープシーケンスでなければ出力
+						vcpPrintf("%d,%d,%d",angularVelocity.x,angularVelocity.y,angularVelocity.z);
+						++d.Rp;
+					}
+
+					while(1){//フレームのループ
+						//Read next frame
+						IE_EA = 0;
+						nandReadFrame(d.Rp,&angularVelocity);
+						IE_EA = 1;
+						if(angularVelocity.x!=0xffff || angularVelocity.y!=0xffff || angularVelocity.z!=0xffff){
+							//エスケープシーケンスでなければ出力
+							vcpPrintf(",%d,%d,%d",angularVelocity.x,angularVelocity.y,angularVelocity.z);
+							++d.Rp;
+							continue;
+						}
+						//エスケープシーケンスがあったら次のフレームをチェック
+						IE_EA = 0;
+						nandReadFrame(d.Rp+1,&angularVelocity);
+						IE_EA = 1;
+						if(angularVelocity.x==0xfffe && angularVelocity.y==0xfffe && angularVelocity.z==0xfffe){
+							vcpPrintf(",%d,%d,%d",0xffff,0xffff,0xffff);
+							d.Rp += 2;//エスケープシーケンス分の2フレームを加算
+							continue;
+						}else if(angularVelocity.x==0x0000 && angularVelocity.y==0x0000 && angularVelocity.z==0x0000){
+							//Go to next frame
+							vcpPrintf("],\n");
+							//エスケープシーケンス分の2フレームを加算し移動
+							d.Rp += 2;
+							++record;
+							break;
+						}else if(angularVelocity.x==0xffff && angularVelocity.y==0xffff && angularVelocity.z==0xffff){
+							// No data
+							vcpPrintf("]\n");
+							validFrame = 0;
+							record = 0;
+							break;
+						}else{
+							vcpPrintf("### Corrupted data. Flash memory may be end of lifetime, or software bug.\n");
+						}
+					}
+
+
+				}
+				vcpPrintf("    ]\n");
+				vcpPrintf("}\n");
+				EIE1 |= 0x80;
+				//TODO:Flashメモリが満タンの時の処理
+
+				break;
 				break;
 			case 'g':
 				//重力を表示
