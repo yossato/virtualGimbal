@@ -1,3 +1,4 @@
 CMakeLists.txt.*
 /build
 .vscode
+__pychache__
