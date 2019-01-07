@@ -153,6 +153,7 @@ add_executable(camera_calibration src/camera_calibration.cpp
     src/mINIRead.cpp)
 target_link_libraries(camera_calibration ${OpenCV_LIBS})
 
+add_executable(rapidjson_test src/rapidjson_test.cpp)
 
 # デバッグビルド
 IF(CMAKE_BUILD_TYPE MATCHES DEBUG)
