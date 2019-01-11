@@ -66,8 +66,9 @@ code char help[] = "Press key.\n"
 		"!:Reset Flash\n"
 		"s:Spin for 1 second\n"
 		"h:Show help\n"
-		"t:Read angular velocity\n"
-		"g:Show Acceleration\n";
+		"t:Read angular velocity from flash\n"
+		"g:Show Acceleration\n"
+		"f:Show Angular velocity";
 
 enum Status {
 	recordingAngularVelocityInInterrupt	= 0x0001 << 0,//各速度記録中
@@ -97,7 +98,7 @@ typedef struct _VG_STATUS{
 }VG_STATUS;
 
 VG_STATUS xdata d;
-FrameData accel;
+FrameData frame_data;
 // Function Prototypes
 //-----------------------------------------------------------------------------
 void Delay (void);
@@ -588,50 +589,13 @@ void main (void)
 				break;
 				break;
 			case 'g':
-				//重力を表示
-									mpu9250_pollingAcceleration(&accel);
-				vcpPrintf("%ld,%ld,%ld\n",(int32_t)d.acceleration.x,(int32_t)d.acceleration.y,(int32_t)d.acceleration.z);
+				//Show gravity
+				mpu9250_pollingAcceleration(&frame_data);
+				vcpPrintf("%ld,%ld,%ld\n",(int32_t)frame_data.x,(int32_t)frame_data.y,(int32_t)frame_data.z);
 				break;
 			case 'f':
-				while(1){
-					static uint32_t startTime;// = d.time_ms;
-					//フィルタの計算に用いるベクトル
-					const float vecFront[3] = {-16384,0,0};//撮影中、カメラが正面を向いている状況
-					const float vecDown[3] = {0,0,16384};//下向き。撮影中断中。
-					static float accelLow[3]={0,0,16384};
-					static float accelHigh[3]={0,0,16384};
-					const float thF = 30.f/180.f*3.1415;//前向きの閾値
-					const float thD = 30.f/180.f*3.1415;//下向きの閾値
-					float tLowFront,tHighFront,tLowDown,tHighDown;
-					//						FrameData accel;
-					//60Hzに同期させる
-					startTime = d.time_ms;
-					while(startTime==d.time_ms);
-
-					//加速度計を監視
-					//						mpu9250_pollingAcceleration(&accel);
-
-					//時定数の異なるLPFをかける。
-
-					accelLow[0] = 0.005 * (float)d.acceleration.x + 0.995 * accelLow[0];
-					accelLow[1] = 0.005 * (float)d.acceleration.y + 0.995 * accelLow[1];
-					accelLow[2] = 0.005 * (float)d.acceleration.z + 0.995 * accelLow[2];
-
-					accelHigh[0] = 0.1 * (float)d.acceleration.x + 0.9 * accelHigh[0];
-					accelHigh[1] = 0.1 * (float)d.acceleration.y + 0.9 * accelHigh[1];
-					accelHigh[2] = 0.1 * (float)d.acceleration.z + 0.9 * accelHigh[2];
-
-					tLowFront = acos(dot(accelLow,vecFront)/(norm(accelLow)*norm(vecFront)));
-					tHighFront = acos(dot(accelHigh,vecFront)/(norm(accelHigh)*norm(vecFront)));
-					tLowDown = acos(dot(accelLow,vecDown)/(norm(accelLow)*norm(vecDown)));
-					tHighDown = acos(dot(accelHigh,vecDown)/(norm(accelHigh)*norm(vecDown)));
-
-					vcpPrintf("LF:%4.3f ",tLowFront/3.1415*180.0);
-					vcpPrintf("HF:%4.3f ",tHighFront/3.1415*180.0);
-					vcpPrintf("LD:%4.3f ",tLowDown/3.1415*180.0);
-					vcpPrintf("HD:%4.3f\n",tHighDown/3.1415*180.0);
-
-				}
+				mpu9250_polling2(&frame_data);
+				vcpPrintf("%ld,%ld,%ld\n",(int32_t)frame_data.x,(int32_t)frame_data.y,(int32_t)frame_data.z);
 				break;
 			default:
 				;
