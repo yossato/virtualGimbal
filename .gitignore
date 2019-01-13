@@ -2,3 +2,4 @@ CMakeLists.txt.*
 /build
 .vscode
 __pycache__
+/post_processing_software/build

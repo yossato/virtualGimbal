@@ -153,6 +153,10 @@ add_executable(camera_calibration src/camera_calibration.cpp
     src/mINIRead.cpp)
 target_link_libraries(camera_calibration ${OpenCV_LIBS})
 
+add_executable(get_optical_flow src/get_optical_flow.cpp
+src/calcShift.cpp)
+target_link_libraries(get_optical_flow ${OpenCV_LIBS} ${ALL_LIBS} )
+
 add_executable(rapidjson_test src/rapidjson_test.cpp)
 
 # デバッグビルド
