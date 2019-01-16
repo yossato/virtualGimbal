@@ -114,9 +114,9 @@ void plot(vector<double> x,vector<double>  y,vector<double> z, string title, str
     plt::show();
 }
 
-void plot(const Eigen::MatrixXd mat, std::string title, std::vector<std::string> legends){
+void plot(const Eigen::MatrixXd mat, std::string title, std::vector<std::string> &legends){
     vector<double> index(mat.rows());
-
+    vector<string> format = {"r","g","b","k"};
     for(int i=0;i<index.size();i++){
         index[i] = static_cast<double>(i);
     }
@@ -127,7 +127,8 @@ void plot(const Eigen::MatrixXd mat, std::string title, std::vector<std::string>
         memcpy(value.data(),part.data(),mat.rows()*sizeof(double));
 
         if(i < legends.size()){
-            plt::named_plot(legends[i].c_str(),index,value);
+//            plt::named_plot(legends[i],index,value);
+            plt::plot(index,value,format[format.size()>i?i:format.size()-1]);
         }else{
             plt::plot(index,value);
         }

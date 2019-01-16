@@ -175,4 +175,4 @@ ENDIF(CMAKE_BUILD_TYPE MATCHES RELEASE)
 
 #gprof使う場合は以下２行の最後に-pgをつけると良いみたい
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -lm -L/usr/lib -lpthread -pthread -march=native -pthread")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lm -L/usr/lib -lpthread -pthread -march=native -std=c++0x -pthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lm -L/usr/lib -lpthread -pthread -march=native -std=c++11 -pthread")
