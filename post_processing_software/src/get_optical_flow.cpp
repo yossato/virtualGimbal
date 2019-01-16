@@ -43,7 +43,19 @@ int main(int argc, char** argv){
 
     d.AddMember("optical_flow",v,d.GetAllocator());
 
-    FILE* fp = fopen((std::string(videoPass) + std::string(".json")).c_str(), "wb"); // non-Windows use "w"
+    std::string json_file_name = std::string(videoPass);// + std::string(".json");
+    std::string::size_type pos;
+    if((pos = json_file_name.find_last_of(".")) != std::string::npos){
+        //拡張子の長さをチェック
+        if((json_file_name.length() - json_file_name.substr(0,pos).length())>4){
+            json_file_name += std::string(".json");
+        }else{
+            //拡張子の判定が3文字以下なら拡張子を削除して.jsonをつける
+            json_file_name = json_file_name.substr(0,pos) + std::string(".json");
+        }
+    }
+
+    FILE* fp = fopen(json_file_name.c_str(), "wb"); // non-Windows use "w"
 
     char writeBuffer[65536];
     FileWriteStream os(fp, writeBuffer, sizeof(writeBuffer));
