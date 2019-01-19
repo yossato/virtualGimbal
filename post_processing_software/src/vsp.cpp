@@ -62,6 +62,10 @@ vsp::vsp(/*vector<Eigen::Quaternion<T>> &angle_quaternion,*/
 
     is_filtered = false;
 }
+void vsp::setParam(double fs, double fc){
+    this->fs = fs;
+    this->fc = fc;
+}
 
 Eigen::Quaternion<double> vsp::RotationQuaternion(double theta, Eigen::Vector3d n){
     //nを規格化してから計算する
@@ -268,81 +272,89 @@ Eigen::MatrixXd &vsp::filteredDataDFT(){
     return filtered_angle;
 }
 
-Eigen::MatrixXd &vsp::filteredQuaternion(uint32_t alpha, double fs, double fc){
+//TODO:なんかframe位置ずれてそう。大丈夫か？
+Eigen::MatrixXd vsp::filteredQuaternion(int32_t frame, uint32_t alpha){
+
+    std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond>> &q = raw_quaternion_with_margin;
+    filtered_quaternion.resize(video_frames+2,4);
+    Eigen::Quaterniond qo,q_center;
+    Eigen::VectorXd kaiser_window = getKaiserWindow(filter_tap_length,alpha,false );
+    //総和が1になるように調整
+    kaiser_window.array() /= kaiser_window.sum();
+    Eigen::MatrixXd exponential_map;
+    exponential_map.resize(filter_tap_length,3);
+//    for(int frame=0,e=filtered_quaternion.rows();frame<e;++frame){
+
+        //1.タップ長分、クォータニオンを集める
+        std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond>> buff;
+        std::copy(q.begin()+frame,q.begin()+frame+filter_tap_length,back_inserter(buff));
+        //2.回転角を変換
+        q_center = buff[buff.size()/2];
+        //                q_center = Eigen::Quaterniond(1.0,0,0,0);
+        for(auto &el:buff){
+            el=(q_center.conjugate()*el).normalized();
+        }
+        //3.Exponentialを計算
+
+        for(int k=0,ek=buff.size();k<ek;++k){
+            exponential_map.row(k) = Quaternion2Vector(buff[k]).transpose();
+        }
+        //3.FIRフィルタ適用
+        exponential_map.array().colwise() *= kaiser_window.array();
+        //4.Logを計算
+        Eigen::Vector3d filtered_vector = exponential_map.colwise().sum().transpose();
+        qo = Vector2Quaternion<double>(filtered_vector);
+        //5.元の座標系に戻す もしかして戻さなくても、差分のベクトルが得られている？？？？
+        qo = (q_center*qo).normalized();
+        return qo.coeffs().transpose();
+//    }
+}
+
+Eigen::MatrixXd &vsp::filteredQuaternion(uint32_t alpha){
     if(true == quaternion_is_filtered){
         return filtered_quaternion;
     }else{
-        this->fs = fs;
-        this->fc = fc;
-        if(1){
-            int32_t half_filter_tap_length = floor(this->filter_tap_length*0.5);
+        std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond>> &q = raw_quaternion_with_margin;
+        filtered_quaternion.resize(video_frames+2,4);
+        Eigen::Quaterniond qo,q_center;
+        Eigen::VectorXd kaiser_window = getKaiserWindow(filter_tap_length,alpha,false );
+        //            kaiser_window = Eigen::VectorXd::Zero(filter_tap_length);
+        //            kaiser_window(kaiser_window.rows()/2) = 1.0;
+        //総和が1になるように調整
+        kaiser_window.array() /= kaiser_window.sum();
+        Eigen::MatrixXd exponential_map;
+        exponential_map.resize(filter_tap_length,3);
+        for(int i=0,e=filtered_quaternion.rows();i<e;++i){
 
-            std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond>> &q = raw_quaternion_with_margin;
-            filtered_quaternion.resize(video_frames+2,4);
-            Eigen::Quaterniond qo,q_center;
-            Eigen::VectorXd kaiser_window = getKaiserWindow(filter_tap_length,alpha,false );
-            //            kaiser_window = Eigen::VectorXd::Zero(filter_tap_length);
-            //            kaiser_window(kaiser_window.rows()/2) = 1.0;
+            //1.タップ長分、クォータニオンを集める
+            std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond>> buff;
+            std::copy(q.begin()+i,q.begin()+i+filter_tap_length,back_inserter(buff));
+            //2.回転角を変換
+            q_center = buff[buff.size()/2];
+            //                q_center = Eigen::Quaterniond(1.0,0,0,0);
+            for(auto &el:buff){
+                el=(q_center.conjugate()*el).normalized();
+            }
+            //3.Exponentialを計算
+
+            for(int k=0,ek=buff.size();k<ek;++k){
+                exponential_map.row(k) = Quaternion2Vector(buff[k]).transpose();
+            }
+            //3.FIRフィルタ適用
+            //                Eigen::VectorXd kaiser_window = getKaiserWindow(filter_tap_length,alpha,false );
             //総和が1になるように調整
-            kaiser_window.array() /= kaiser_window.sum();
-            Eigen::MatrixXd exponential_map;
-            exponential_map.resize(filter_tap_length,3);
-            for(int i=0,e=filtered_quaternion.rows();i<e;++i){
-
-                //1.タップ長分、クォータニオンを集める
-                std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond>> buff;
-                std::copy(q.begin()+i,q.begin()+i+filter_tap_length,back_inserter(buff));
-                //2.回転角を変換
-                q_center = buff[buff.size()/2];
-                //                q_center = Eigen::Quaterniond(1.0,0,0,0);
-                for(auto &el:buff){
-                    el=(q_center.conjugate()*el).normalized();
-                }
-                //3.Exponentialを計算
-
-                for(int k=0,ek=buff.size();k<ek;++k){
-                    exponential_map.row(k) = Quaternion2Vector(buff[k]).transpose();
-                }
-                //3.FIRフィルタ適用
-                //                Eigen::VectorXd kaiser_window = getKaiserWindow(filter_tap_length,alpha,false );
-                //総和が1になるように調整
-                //                kaiser_window.array() /= kaiser_window.sum();
-                exponential_map.array().colwise() *= kaiser_window.array();
-                //4.Logを計算
-                Eigen::Vector3d temp = exponential_map.colwise().sum().transpose();
-                qo = Vector2Quaternion<double>(temp);
-                //5.元の座標系に戻す もしかして戻さなくても、差分のベクトルが得られている？？？？
-                qo = (q_center*qo).normalized();
-                filtered_quaternion.row(i) = qo.coeffs().transpose();
-            }
-
-
-        }else{
-            Eigen::MatrixXcd clerped_quaternion_vectors;
-            Angle2CLerpedFrequency(fs,fc,raw_quaternion,clerped_quaternion_vectors);
-            Eigen::VectorXcd filter_coeff_vector = getKaiserWindowWithZerosFrequencyCoeff(clerped_quaternion_vectors.rows(),alpha,filter_tap_length);
-            //Apply LPF to each w, x, y and z axis.
-            for(int i=0,e=clerped_quaternion_vectors.cols();i<e;++i){
-                clerped_quaternion_vectors.col(i) = filter_coeff_vector.array() * clerped_quaternion_vectors.col(i).array();
-            }
-
-            Frequency2Angle(clerped_quaternion_vectors,filtered_quaternion);
-
-            //ここで末尾の余白を削除
-            Eigen::MatrixXd buf = filtered_quaternion.block(0,0,raw_quaternion.rows(),raw_quaternion.cols());
-            quaternion_is_filtered = true;
-
-            //θ/2からcos(θ/2)やn・sin(θ/2)にもどす
-            buf.block(0,0,buf.rows(),3) = buf.block(0,0,buf.rows(),3).array().colwise() * buf.block(0,0,buf.rows(),3).rowwise().norm().array().sin();
-            buf.block(0,3,buf.rows(),1) = buf.block(0,3,buf.rows(),1).array().cos();
-
-            //正規化
-            buf.array().colwise() /= buf.rowwise().norm().array();
-
-            //        std::cout << "norm:\r\n" << buf.rowwise().norm();
-            //        std::cout << "buf:\r\n" << buf;
-            filtered_quaternion = buf;
+            //                kaiser_window.array() /= kaiser_window.sum();
+            exponential_map.array().colwise() *= kaiser_window.array();
+            //4.Logを計算
+            Eigen::Vector3d temp = exponential_map.colwise().sum().transpose();
+            qo = Vector2Quaternion<double>(temp);
+            //5.元の座標系に戻す もしかして戻さなくても、差分のベクトルが得られている？？？？
+            qo = (q_center*qo).normalized();
+            filtered_quaternion.row(i) = qo.coeffs().transpose();
         }
+
+
+
         quaternion_is_filtered = true;
         return filtered_quaternion;
     }
@@ -541,6 +553,58 @@ Eigen::Vector3d vsp::angularVelocitySync(/*std::vector<Eigen::Vector3d,Eigen::al
 }
 
 #define TEST2D
+
+
+
+bool vsp::hasBlackSpace(double filter_strength, double frame){
+    std::vector<float> vecPorigonn_uv;
+    Eigen::Quaternion<double> prevQ;
+    Eigen::Quaternion<double> currQ;
+    Eigen::Quaternion<double> nextQ;
+    if(0 == frame){
+        currQ = Vector2Quaternion<double>(filteredQuaternion(filter_strength,frame).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame  ).transpose());
+        prevQ = currQ;
+        nextQ = Vector2Quaternion<double>(filteredQuaternion(filter_strength,frame+1).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame+1).transpose());
+    }else if((raw_angle.rows()-1) == frame){
+        prevQ = Vector2Quaternion<double>(filteredQuaternion(filter_strength,frame-1).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame-1).transpose());
+        currQ = Vector2Quaternion<double>(filteredQuaternion(filter_strength,frame).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame  ).transpose());
+        nextQ = currQ;
+    }else{
+        prevQ = Vector2Quaternion<double>(filteredQuaternion(filter_strength,frame-1).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame-1).transpose());
+        currQ = Vector2Quaternion<double>(filteredQuaternion(filter_strength,frame).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame  ).transpose());
+        nextQ = Vector2Quaternion<double>(filteredQuaternion(filter_strength,frame+1).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame+1).transpose());
+    }
+    getDistortUnrollingContour(
+                prevQ,
+                currQ,
+                nextQ,
+                vecPorigonn_uv
+                );
+    return check_warp(vecPorigonn_uv);
+}
+
+double vsp::bisectionMethod(int32_t frame, double minimum_filter_strength, double maximum_filter_strength, int max_iteration, double eps){
+    double a = minimum_filter_strength;
+    double b = maximum_filter_strength;
+    int count = 0;
+    double m;
+    while((abs(a-b)>=eps) && (count++ < max_iteration)){
+        m=(a+b)*0.5;
+        if(hasBlackSpace((int32_t)m,frame)){
+
+        }
+    }
+}
+
+Eigen::VectorXd vsp::calculateFilterCoefficientsWithoutBlackSpaces(double minimum_filter_strength, double maximum_filter_strength){
+    Eigen::VectorXd filter_strength(raw_quaternion.rows());
+    //Calcurate in all frame
+    for(int frame=0,e=filter_strength.rows();frame<e;++frame){
+        filter_strength[frame] = bisectionMethod(frame,minimum_filter_strength,maximum_filter_strength);
+    }
+    smoothingFilterStrength(filter_strength);
+    return(filter_strength);
+}
 
 int vsp::init_opengl(cv::Size textureSize){
     this->buff = cv::Mat(textureSize.height,textureSize.width,CV_8UC3);

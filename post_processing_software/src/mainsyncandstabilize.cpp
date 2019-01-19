@@ -380,9 +380,10 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
                Tav,
                min_position + subframeOffset,
                (int32_t)(Capture->get(cv::CAP_PROP_FRAME_COUNT)));
+        v2.setParam(Capture->get(cv::CAP_PROP_FPS),1.0);
         std::vector<string> legends_quaternion = {"x","y","z","w"};
         vgp::plot(v2.toQuaternion(),"Raw Quaternion",legends_quaternion);
-        vgp::plot(v2.filteredQuaternion(100,Capture->get(cv::CAP_PROP_FPS),1.0),"Filtered Quaternion",legends_quaternion);
+        vgp::plot(v2.filteredQuaternion(100),"Filtered Quaternion",legends_quaternion);
 
         std::vector<string> legends = {"x","y","z"};
         vgp::plot(v2.data(),"Raw DFT",legends);
@@ -464,7 +465,7 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
            199);
     //平滑化
     v2.filteredDataDFT(Capture->get(cv::CAP_PROP_FPS),1.0);//TODO:引数修正。もはやあまり意味がない。
-    v2.filteredQuaternion(100,Capture->get(cv::CAP_PROP_FPS),1.0);
+    v2.filteredQuaternion(100);
 
     v2.init_opengl(textureSize);
 

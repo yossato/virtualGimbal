@@ -129,7 +129,7 @@ public:
 
         is_filtered = false;
     }*/
-
+void setParam(double fs, double fc);
     vector<double> getRow(int r);
 
     const Eigen::MatrixXd &data();
@@ -163,7 +163,8 @@ public:
     const Eigen::MatrixXd &filteredDataDFT(double fs, double fc);
     const Eigen::MatrixXd &filteredDataDFTTimeDomainOptimize(double fs, double fc, const Eigen::MatrixXd &coeff);
     Eigen::MatrixXd &filteredDataDFT();
-    Eigen::MatrixXd &filteredQuaternion(uint32_t alpha, double fs, double fc);
+    Eigen::MatrixXd filteredQuaternion(int32_t frame, uint32_t alpha/*, double fs, double fc*/);
+    Eigen::MatrixXd &filteredQuaternion(uint32_t alpha/*, double fs, double fc*/);
     Eigen::Quaternion<double> toRawQuaternion(uint32_t frame);
     Eigen::Quaternion<double> toFilteredQuaternion(uint32_t frame);
     Eigen::Quaternion<double> toDiffQuaternion(uint32_t frame);
@@ -741,6 +742,10 @@ public:
     int stop_opengl();
     int spin_once(int frame,cv::VideoCapture &capture,cv::Mat &simg);
     bool ok();
+
+    Eigen::VectorXd calculateFilterCoefficientsWithoutBlackSpaces(double minimum_filter_strength, double maximum_filter_strength);
+    double bisectionMethod(int32_t frame, double minimum_filter_strength, double maximum_filter_strength, int max_iteration=1000, double eps=0.1);
+    bool hasBlackSpace(double filter_strength, double frame);
 private:
     enum KEY {
         KEY_SIDEBYSIDE = '1',
