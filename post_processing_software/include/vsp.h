@@ -163,7 +163,7 @@ void setParam(double fs, double fc);
     const Eigen::MatrixXd &filteredDataDFT(double fs, double fc);
     const Eigen::MatrixXd &filteredDataDFTTimeDomainOptimize(double fs, double fc, const Eigen::MatrixXd &coeff);
     Eigen::MatrixXd &filteredDataDFT();
-    Eigen::MatrixXd filteredQuaternion(int32_t frame, uint32_t alpha/*, double fs, double fc*/);
+    Eigen::MatrixXd filteredQuaternion(uint32_t alpha, int32_t frame /*, double fs, double fc*/);
     Eigen::MatrixXd &filteredQuaternion(uint32_t alpha/*, double fs, double fc*/);
     Eigen::Quaternion<double> toRawQuaternion(uint32_t frame);
     Eigen::Quaternion<double> toFilteredQuaternion(uint32_t frame);
@@ -744,8 +744,9 @@ void setParam(double fs, double fc);
     bool ok();
 
     Eigen::VectorXd calculateFilterCoefficientsWithoutBlackSpaces(double minimum_filter_strength, double maximum_filter_strength);
-    double bisectionMethod(int32_t frame, double minimum_filter_strength, double maximum_filter_strength, int max_iteration=1000, double eps=0.1);
-    bool hasBlackSpace(double filter_strength, double frame);
+    uint32_t bisectionMethod(int32_t frame, uint32_t minimum_filter_strength, uint32_t maximum_filter_strength, int max_iteration=1000, uint32_t eps=1);
+    bool hasBlackSpace(uint32_t filter_strength, int32_t frame);
+    void gradientLimit(Eigen::VectorXd &input, double maximum_gradient);
 private:
     enum KEY {
         KEY_SIDEBYSIDE = '1',
