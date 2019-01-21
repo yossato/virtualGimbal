@@ -273,7 +273,7 @@ Eigen::MatrixXd &vsp::filteredDataDFT(){
 }
 
 //TODO:なんかframe位置ずれてそう。大丈夫か？
-Eigen::MatrixXd vsp::filteredQuaternion(uint32_t alpha,int32_t frame){
+Eigen::MatrixXd vsp::filteredQuaternion(int32_t alpha,int32_t frame){
 
     std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond>> &q = raw_quaternion_with_margin;
     filtered_quaternion.resize(video_frames+2,4);
@@ -556,7 +556,7 @@ Eigen::Vector3d vsp::angularVelocitySync(/*std::vector<Eigen::Vector3d,Eigen::al
 
 
 
-bool vsp::hasBlackSpace(uint32_t filter_strength, int32_t frame){
+bool vsp::hasBlackSpace(int32_t filter_strength, int32_t frame){
     std::vector<float> vecPorigonn_uv;
     Eigen::Quaternion<double> prevQ;
     Eigen::Quaternion<double> currQ;
@@ -583,11 +583,11 @@ bool vsp::hasBlackSpace(uint32_t filter_strength, int32_t frame){
     return check_warp(vecPorigonn_uv);
 }
 
-uint32_t vsp::bisectionMethod(int32_t frame, uint32_t minimum_filter_strength, uint32_t maximum_filter_strength, int max_iteration, uint32_t eps){
-    uint32_t a = minimum_filter_strength;
-    uint32_t b = maximum_filter_strength;
+uint32_t vsp::bisectionMethod(int32_t frame, int32_t minimum_filter_strength, int32_t maximum_filter_strength, int max_iteration, uint32_t eps){
+    int32_t a = minimum_filter_strength;
+    int32_t b = maximum_filter_strength;
     int count = 0;
-    uint32_t m;
+    int32_t m;
     while((abs(a-b)>=eps) && (count++ < max_iteration)){
         m=(a+b)*0.5;
         if(hasBlackSpace(a,frame)^hasBlackSpace(m,frame)){
@@ -599,7 +599,7 @@ uint32_t vsp::bisectionMethod(int32_t frame, uint32_t minimum_filter_strength, u
     return m;
 }
 
-Eigen::VectorXd vsp::calculateFilterCoefficientsWithoutBlackSpaces(double minimum_filter_strength, double maximum_filter_strength){
+Eigen::VectorXd vsp::calculateFilterCoefficientsWithoutBlackSpaces(int32_t minimum_filter_strength, int32_t maximum_filter_strength){
     Eigen::VectorXd filter_strength(raw_quaternion.rows());
     //Calcurate in all frame
     for(int frame=0,e=filter_strength.rows();frame<e;++frame){
@@ -609,23 +609,29 @@ Eigen::VectorXd vsp::calculateFilterCoefficientsWithoutBlackSpaces(double minimu
     return(filter_strength);
 }
 
-void gradientLimit(Eigen::VectorXd &input, double maximum_gradient){
-    double limited_value = input.head();
+void vsp::gradientLimit(Eigen::VectorXd &input){
+    double limited_value = input.head(1)[0];
     for(int i=0,e=input.rows();i<e;++i){
-        if(input(i) < limited_value + maximum_gradient){
+        if(input(i) > limited_value - maximum_gradient_){
             limited_value = input(i);
         }else{
-            input(i) = limited_value + maximum_gradient;
+            limited_value -= maximum_gradient_;
+            input(i) = limited_value;
         }
     }
-    limited_value = input.tail();
+    limited_value = input.tail(1)[0];
     for(int i=input.rows()-1;i>=0;--i){
-        if(input(i) < limited_value + maximum_gradient){
+        if(input(i) > limited_value - maximum_gradient_){
             limited_value = input(i);
         }else{
-            input(i) = limited_value + maximum_gradient;
+            limited_value -= maximum_gradient_;
+            input(i) = limited_value;
         }
     }
+}
+
+void vsp::setMaximumGradient(double value){
+    maximum_gradient_ = value;
 }
 
 int vsp::init_opengl(cv::Size textureSize){
