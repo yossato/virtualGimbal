@@ -273,7 +273,7 @@ Eigen::MatrixXd &vsp::filteredDataDFT(){
 }
 
 //TODO:なんかframe位置ずれてそう。大丈夫か？
-Eigen::MatrixXd vsp::filteredQuaternion(int32_t alpha,int32_t frame){
+Eigen::Quaterniond vsp::filteredQuaternion(int32_t alpha,int32_t frame){
 
     std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond>> &q = raw_quaternion_with_margin;
     filtered_quaternion.resize(video_frames+2,4);
@@ -306,7 +306,8 @@ Eigen::MatrixXd vsp::filteredQuaternion(int32_t alpha,int32_t frame){
         qo = Vector2Quaternion<double>(filtered_vector);
         //5.元の座標系に戻す もしかして戻さなくても、差分のベクトルが得られている？？？？
         qo = (q_center*qo).normalized();
-        return qo.coeffs().transpose();
+//        return qo.coeffs().transpose();
+        return qo;
 //    }
 }
 
@@ -554,7 +555,13 @@ Eigen::Vector3d vsp::angularVelocitySync(/*std::vector<Eigen::Vector3d,Eigen::al
 
 #define TEST2D
 
-
+Eigen::Quaternion<double> vsp::toDiffQuaternion2(int32_t filter_strength, uint32_t frame){
+    Eigen::MatrixXd buf = raw_quaternion.row(frame);
+    Eigen::Quaterniond raw = Eigen::QuaternionMapAlignedd(buf.data());
+    Eigen::Quaterniond filtered = filteredQuaternion(filter_strength,frame);
+//     = Eigen::QuaternionMapAlignedd(buf2.data());
+    return filtered.conjugate()*raw;
+}
 
 bool vsp::hasBlackSpace(int32_t filter_strength, int32_t frame){
     std::vector<float> vecPorigonn_uv;
@@ -562,17 +569,17 @@ bool vsp::hasBlackSpace(int32_t filter_strength, int32_t frame){
     Eigen::Quaternion<double> currQ;
     Eigen::Quaternion<double> nextQ;
     if(0 == frame){
-        currQ = Vector2Quaternion<double>(filteredQuaternion(filter_strength,frame).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame  ).transpose());
+        currQ = toDiffQuaternion2(filter_strength,frame);
         prevQ = currQ;
-        nextQ = Vector2Quaternion<double>(filteredQuaternion(filter_strength,frame+1).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame+1).transpose());
+        nextQ = toDiffQuaternion2(filter_strength,frame+1);
     }else if((raw_angle.rows()-1) == frame){
-        prevQ = Vector2Quaternion<double>(filteredQuaternion(filter_strength,frame-1).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame-1).transpose());
-        currQ = Vector2Quaternion<double>(filteredQuaternion(filter_strength,frame).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame  ).transpose());
+        prevQ = toDiffQuaternion2(filter_strength,frame-1);
+        currQ = toDiffQuaternion2(filter_strength,frame);
         nextQ = currQ;
     }else{
-        prevQ = Vector2Quaternion<double>(filteredQuaternion(filter_strength,frame-1).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame-1).transpose());
-        currQ = Vector2Quaternion<double>(filteredQuaternion(filter_strength,frame).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame  ).transpose());
-        nextQ = Vector2Quaternion<double>(filteredQuaternion(filter_strength,frame+1).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame+1).transpose());
+        prevQ = toDiffQuaternion2(filter_strength,frame-1);
+        currQ = toDiffQuaternion2(filter_strength,frame);
+        nextQ = toDiffQuaternion2(filter_strength,frame+1);
     }
     getDistortUnrollingContour(
                 prevQ,
@@ -588,7 +595,7 @@ uint32_t vsp::bisectionMethod(int32_t frame, int32_t minimum_filter_strength, in
     int32_t b = maximum_filter_strength;
     int count = 0;
     int32_t m;
-    while((abs(a-b)>=eps) && (count++ < max_iteration)){
+    while((abs(a-b)>eps) && (count++ < max_iteration)){
         m=(a+b)*0.5;
         if(hasBlackSpace(a,frame)^hasBlackSpace(m,frame)){
             b = m;
@@ -603,6 +610,7 @@ Eigen::VectorXd vsp::calculateFilterCoefficientsWithoutBlackSpaces(int32_t minim
     Eigen::VectorXd filter_strength(raw_quaternion.rows());
     //Calcurate in all frame
     for(int frame=0,e=filter_strength.rows();frame<e;++frame){
+        if(hasBlackSpace())
         filter_strength[frame] = bisectionMethod(frame,minimum_filter_strength,maximum_filter_strength);
     }
     gradientLimit(filter_strength);

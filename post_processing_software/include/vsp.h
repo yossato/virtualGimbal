@@ -163,13 +163,13 @@ void setParam(double fs, double fc);
     const Eigen::MatrixXd &filteredDataDFT(double fs, double fc);
     const Eigen::MatrixXd &filteredDataDFTTimeDomainOptimize(double fs, double fc, const Eigen::MatrixXd &coeff);
     Eigen::MatrixXd &filteredDataDFT();
-    Eigen::MatrixXd filteredQuaternion(int32_t alpha, int32_t frame /*, double fs, double fc*/);
+    Eigen::Quaterniond filteredQuaternion(int32_t alpha, int32_t frame /*, double fs, double fc*/);
     Eigen::MatrixXd &filteredQuaternion(uint32_t alpha/*, double fs, double fc*/);
     Eigen::Quaternion<double> toRawQuaternion(uint32_t frame);
     Eigen::Quaternion<double> toFilteredQuaternion(uint32_t frame);
     Eigen::Quaternion<double> toDiffQuaternion(uint32_t frame);
     Eigen::Quaternion<double> toDiffQuaternion2(uint32_t frame);
-
+    Eigen::Quaternion<double> toDiffQuaternion2(int32_t filter_strength, uint32_t frame);
 
 
     /**
