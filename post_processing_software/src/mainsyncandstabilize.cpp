@@ -405,7 +405,7 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
         vgp::plot(errors,"Errors",legends2);
 
         v2.setMaximumGradient(1.0);
-        vgp::plot(v2.calculateFilterCoefficientsWithoutBlackSpaces(2,399),"has Black Space",legends2);
+        vgp::plot(v2.calculateFilterCoefficientsWithoutBlackSpaces(2,499),"has Black Space",legends2);
 
 //        //最適化
 //        cout << "let's optimize time domain!" << endl;
