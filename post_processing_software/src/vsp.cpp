@@ -610,8 +610,11 @@ Eigen::VectorXd vsp::calculateFilterCoefficientsWithoutBlackSpaces(int32_t minim
     Eigen::VectorXd filter_strength(raw_quaternion.rows());
     //Calcurate in all frame
     for(int frame=0,e=filter_strength.rows();frame<e;++frame){
-        if(hasBlackSpace())
-        filter_strength[frame] = bisectionMethod(frame,minimum_filter_strength,maximum_filter_strength);
+        if(hasBlackSpace(minimum_filter_strength,frame)){
+            filter_strength[frame] = bisectionMethod(frame,minimum_filter_strength,maximum_filter_strength);
+        }else{
+            filter_strength[frame] = minimum_filter_strength;
+        }
     }
     gradientLimit(filter_strength);
     return(filter_strength);
