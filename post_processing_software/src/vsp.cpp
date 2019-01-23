@@ -478,7 +478,7 @@ Eigen::VectorXd vsp::getRollingVectorError(){
                     vecPorigonn_uv
                     //                    zoom
                     );
-        return check_warp(vecPorigonn_uv);
+        return isPerfectWarp(vecPorigonn_uv);
     };
 
     Eigen::VectorXd retval = Eigen::VectorXd::Zero(raw_angle.rows());
@@ -587,7 +587,7 @@ bool vsp::hasBlackSpace(int32_t filter_strength, int32_t frame){
                 nextQ,
                 vecPorigonn_uv
                 );
-    return check_warp(vecPorigonn_uv);
+    return !isPerfectWarp(vecPorigonn_uv);
 }
 
 uint32_t vsp::bisectionMethod(int32_t frame, int32_t minimum_filter_strength, int32_t maximum_filter_strength, int max_iteration, uint32_t eps){
@@ -595,12 +595,19 @@ uint32_t vsp::bisectionMethod(int32_t frame, int32_t minimum_filter_strength, in
     int32_t b = maximum_filter_strength;
     int count = 0;
     int32_t m;
+//    while(hasBlackSpace(maximum_filter_strength,frame)){
+//        minimum_filter_strength = maximum_filter_strength;
+//        maximum_filter_strength *= 2;
+//    }
     while((abs(a-b)>eps) && (count++ < max_iteration)){
         m=(a+b)*0.5;
         if(hasBlackSpace(a,frame)^hasBlackSpace(m,frame)){
             b = m;
         }else{
             a = m;
+        }
+        if(count == max_iteration){
+            std::cout << "max_iteration" << std::endl;
         }
     }
     return m;
@@ -610,13 +617,17 @@ Eigen::VectorXd vsp::calculateFilterCoefficientsWithoutBlackSpaces(int32_t minim
     Eigen::VectorXd filter_strength(raw_quaternion.rows());
     //Calcurate in all frame
     for(int frame=0,e=filter_strength.rows();frame<e;++frame){
-        if(hasBlackSpace(minimum_filter_strength,frame)){
-            filter_strength[frame] = bisectionMethod(frame,minimum_filter_strength,maximum_filter_strength);
-        }else{
+        if(hasBlackSpace(maximum_filter_strength,frame)){
+            filter_strength[frame] = maximum_filter_strength;
+        }else if(!hasBlackSpace(minimum_filter_strength,frame)){
             filter_strength[frame] = minimum_filter_strength;
+        }else{
+            filter_strength[frame] = bisectionMethod(frame,minimum_filter_strength,maximum_filter_strength);
         }
     }
-    gradientLimit(filter_strength);
+    std::cout << filter_strength << std::endl;
+//    gradientLimit(filter_strength);
+
     return(filter_strength);
 }
 

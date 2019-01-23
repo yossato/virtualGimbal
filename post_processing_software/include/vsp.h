@@ -669,7 +669,7 @@ void setParam(double fs, double fc);
      * @brief ワープした時に欠けがないかチェックします
      * @retval false:欠けあり true:ワープが良好
      **/
-    template <typename _Tp> static bool check_warp(vector<_Tp> &contour){
+    template <typename _Tp> static bool isPerfectWarp(vector<_Tp> &contour){
         for(int i=0;i<contour.size();i+=2){
             if((abs(contour[i]) < 1.0)&&(abs(contour[i+1]) < 1.0)){
                 return false;
