@@ -165,6 +165,7 @@ void setParam(double fs, double fc);
     Eigen::MatrixXd &filteredDataDFT();
     Eigen::Quaterniond filteredQuaternion(int32_t alpha, int32_t frame /*, double fs, double fc*/);
     Eigen::MatrixXd &filteredQuaternion(uint32_t alpha/*, double fs, double fc*/);
+    Eigen::MatrixXd &filteredQuaternion(Eigen::VectorXd &filter_coefficients);
     Eigen::Quaternion<double> toRawQuaternion(uint32_t frame);
     Eigen::Quaternion<double> toFilteredQuaternion(uint32_t frame);
     Eigen::Quaternion<double> toDiffQuaternion(uint32_t frame);
@@ -756,11 +757,11 @@ private:
         KEY_QUIT = 'q'
     };
 
-    Eigen::MatrixXd raw_angle;
+    Eigen::MatrixXd raw_angle;//TODO:REMOVE
     Eigen::MatrixXd raw_quaternion;
     std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond>> raw_quaternion_with_margin;
-    Eigen::MatrixXd filtered_angle;
-    Eigen::MatrixXd filtered_quaternion;
+    Eigen::MatrixXd filtered_angle;//TODO:REMOVE
+    Eigen::MatrixXd filtered_quaternion_;
     Eigen::VectorXd filter_coeff;
     bool is_filtered;
     bool quaternion_is_filtered=false;
