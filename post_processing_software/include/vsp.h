@@ -74,65 +74,11 @@ public:
                            double T_angular_velocity,
                            double frame_offset,
                            int32_t video_frames,
-                           int32_t filter_tap_length = 399);/*{
-        is_filtered=false;
-        this->division_x = division_x;
-        this->division_y = division_y;
-        this->TRollingShutter = TRollingShutter;
-        this->IK = IK;
-        this->matIntrinsic = matIntrinsic;
-        this->image_width = image_width;
-        this->image_height = image_height;
-        this->zoom = zoom;
-
-        this->angular_velocity = angular_velocity;
-        this->T_video = T_video;
-        this->T_angular_velocity = T_angular_velocity;
-        this->frame_offset = frame_offset;
-
-        //クォータニオンをクラスの内部で計算する
-//        vector<Eigen::Quaternion<double>> angleQuaternion_vsp2;
-        raw_quaternion_vec.clear();
-        raw_quaternion_vec.push_back(Eigen::Quaterniond(1,0,0,0));
-        for(int frame= -floor(filter_tap_length/2)-1 ,e=video_frames+floor(filter_tap_length/2)+1;frame<e;++frame){//球面線形補間を考慮し前後各1フレーム追加
-            auto v_sync = angularVelocitySync(frame);
-//            Eigen::Vector3d ve_sync(v_sync[0],v_sync[1],v_sync[2]);
-            cout << "frame:" << frame << " v_sync:" << v_sync.transpose() << endl;
-            raw_quaternion_vec.push_back((raw_quaternion_vec.back()*vsp::RotationQuaternion(v_sync*this->T_video)).normalized());
-//            raw_quaternion_vec.back() = raw_quaternion_vec.back().normalized();
-        }
-
-
-        raw_angle.resize(raw_quaternion_vec.size(),3);
-
-        Eigen::Vector3d el = Quaternion2Vector(raw_quaternion_vec[0].conjugate());
-        for(int i=0,e=raw_quaternion_vec.size();i<e;++i){
-            el = Quaternion2Vector(raw_quaternion_vec[i].conjugate(),el);//require Quaternion2Matrix<3,1>()
-            raw_angle(i,0) = el[0];
-            raw_angle(i,1) = el[1];
-            raw_angle(i,2) = el[2];
-        }
-
-        raw_quaternion.resize(raw_quaternion_vec.size(),4);
-        for(int32_t i=0,e=raw_quaternion_vec.size();i<e;++i){
-            raw_quaternion.row(i)=raw_quaternion_vec[i].coeffs().transpose();
-//            //θ/2を格納する
-//            raw_quaternion(i,3) = acos(angle_quaternion[i].w());
-//            double r = sqrt(pow(angle_quaternion[i].x(),2.0)+pow(angle_quaternion[i].y(),2.0)+pow(angle_quaternion[i].z(),2.0));
-//            if(r > 0.0001){
-//                raw_quaternion.row(i).block(0,0,1,3) = angle_quaternion[i].coeffs().transpose().block(0,0,1,3)*asin(r)/r;
-//            }else{
-//                //不定形
-//                raw_quaternion.row(i).block(0,0,1,3) = angle_quaternion[i].coeffs().transpose().block(0,0,1,3);
-//            }
-        }
-
-        is_filtered = false;
-    }*/
+                           int32_t filter_tap_length = 399);
 void setParam(double fs, double fc);
-    vector<double> getRow(int r);
+//    vector<double> getRow(int r);
 
-    const Eigen::MatrixXd &data();
+//    const Eigen::MatrixXd &data();
 
     const Eigen::MatrixXd &toQuaternion();
 //    const std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond>> &toQuaternion_vec();
@@ -144,7 +90,7 @@ void setParam(double fs, double fc);
         }
     }
 
-    const Eigen::MatrixXd &filteredData();
+//    const Eigen::MatrixXd &filteredData();
 
     static Eigen::VectorXd getKaiserWindow(uint32_t tap_length, uint32_t alpha, bool swap = true);
     static Eigen::VectorXd getKaiserWindowWithZeros(int32_t data_length, double alpha, int32_t window_length);
@@ -155,20 +101,20 @@ void setParam(double fs, double fc);
     static Eigen::VectorXcd getKaiserWindowWithZerosFrequencyCoeff(int32_t data_length, double alpha, int32_t window_length);
 
 
-    static void Angle2CLerpedFrequency(double fs, double fc, const Eigen::MatrixXd &raw_angle, Eigen::MatrixXcd &freq_vectors);
-    static void Frequency2Angle(Eigen::MatrixXcd &frequency_vector_, Eigen::MatrixXd &angle_);
+//    static void Angle2CLerpedFrequency(double fs, double fc, const Eigen::MatrixXd &raw_angle, Eigen::MatrixXcd &freq_vectors);
+//    static void Frequency2Angle(Eigen::MatrixXcd &frequency_vector_, Eigen::MatrixXd &angle_);
     static void MatrixXcd2VectorXd(const Eigen::MatrixXcd &src, Eigen::VectorXd &dst);
     static void VectorXd2MatrixXcd(const Eigen::VectorXd &src, Eigen::MatrixXcd &dst);
 
-    const Eigen::MatrixXd &filteredDataDFT(double fs, double fc);
-    const Eigen::MatrixXd &filteredDataDFTTimeDomainOptimize(double fs, double fc, const Eigen::MatrixXd &coeff);
-    Eigen::MatrixXd &filteredDataDFT();
+//    const Eigen::MatrixXd &filteredDataDFT(double fs, double fc);
+//    const Eigen::MatrixXd &filteredDataDFTTimeDomainOptimize(double fs, double fc, const Eigen::MatrixXd &coeff);
+//    Eigen::MatrixXd &filteredDataDFT();
     Eigen::Quaterniond filteredQuaternion(int32_t alpha, int32_t frame /*, double fs, double fc*/);
     Eigen::MatrixXd &filteredQuaternion(uint32_t alpha/*, double fs, double fc*/);
     Eigen::MatrixXd &filteredQuaternion(Eigen::VectorXd &filter_coefficients);
-    Eigen::Quaternion<double> toRawQuaternion(uint32_t frame);
-    Eigen::Quaternion<double> toFilteredQuaternion(uint32_t frame);
-    Eigen::Quaternion<double> toDiffQuaternion(uint32_t frame);
+//    Eigen::Quaternion<double> toRawQuaternion(uint32_t frame);
+//    Eigen::Quaternion<double> toFilteredQuaternion(uint32_t frame);
+//    Eigen::Quaternion<double> toDiffQuaternion(uint32_t frame);
     Eigen::Quaternion<double> toDiffQuaternion2(uint32_t frame);
     Eigen::Quaternion<double> toDiffQuaternion2(int32_t filter_strength, uint32_t frame);
 
@@ -458,109 +404,109 @@ void setParam(double fs, double fc);
      * @param [out]	vecPorigonn_uv	OpenGLのポリゴン座標(u',v')座標(-1~1)の組、歪補正後の画面を分割した時の一つ一つのポリゴンの頂点の組
      * @retval true:成功 false:折り返し発生で失敗
      **/
-    template <typename _Tx> bool getDistortUnrollingMap(
-            int32_t frame,
-            std::vector<_Tx> &vecPorigonn_uv
-            ){
+//    template <typename _Tx> bool getDistortUnrollingMap(
+//            int32_t frame,
+//            std::vector<_Tx> &vecPorigonn_uv
+//            ){
 
 
-        Eigen::Quaternion<double> prevAngleQuaternion = this->toDiffQuaternion(frame);
-        Eigen::Quaternion<double> currAngleQuaternion = this->toDiffQuaternion(frame+1);//インデックスの付け方が気持ち悪い。TODO:何とかする
-        Eigen::Quaternion<double> nextAngleQuaternion = this->toDiffQuaternion(frame+2);
-        bool retval = true;
+//        Eigen::Quaternion<double> prevAngleQuaternion = this->toDiffQuaternion(frame);
+//        Eigen::Quaternion<double> currAngleQuaternion = this->toDiffQuaternion(frame+1);//インデックスの付け方が気持ち悪い。TODO:何とかする
+//        Eigen::Quaternion<double> nextAngleQuaternion = this->toDiffQuaternion(frame+2);
+//        bool retval = true;
 
 
-        //手順
-        //1.補正前画像を分割した時の分割点の座標(pixel)を計算
-        //2.1の座標を入力として、各行毎のW(t1,t2)を計算
-        //3.補正後の画像上のポリゴン座標(pixel)を計算、歪み補正も含める
+//        //手順
+//        //1.補正前画像を分割した時の分割点の座標(pixel)を計算
+//        //2.1の座標を入力として、各行毎のW(t1,t2)を計算
+//        //3.補正後の画像上のポリゴン座標(pixel)を計算、歪み補正も含める
 
-        double fx = matIntrinsic(0, 0);
-        double fy = matIntrinsic(1, 1);
-        double cx = matIntrinsic(0, 2);
-        double cy = matIntrinsic(1, 2);
-        double k1 = IK(0,0);
-        double k2 = IK(0,1);
-        double p1 = IK(0,2);
-        double p2 = IK(0,3);
+//        double fx = matIntrinsic(0, 0);
+//        double fy = matIntrinsic(1, 1);
+//        double cx = matIntrinsic(0, 2);
+//        double cy = matIntrinsic(1, 2);
+//        double k1 = IK(0,0);
+//        double k2 = IK(0,1);
+//        double p1 = IK(0,2);
+//        double p2 = IK(0,3);
 
-        vecPorigonn_uv.clear();
-        Eigen::MatrixXd map_x = Eigen::MatrixXd::Zero(division_y+1,division_x+1);
-        Eigen::MatrixXd map_y = Eigen::MatrixXd::Zero(division_y+1,division_x+1);
-        for(int j=0;j<=division_y;++j)
-        {
-            //W(t1,t2)を計算
-            Eigen::MatrixXd R;
-            //1
-            double v = (double)j/division_y*image_height;
+//        vecPorigonn_uv.clear();
+//        Eigen::MatrixXd map_x = Eigen::MatrixXd::Zero(division_y+1,division_x+1);
+//        Eigen::MatrixXd map_y = Eigen::MatrixXd::Zero(division_y+1,division_x+1);
+//        for(int j=0;j<=division_y;++j)
+//        {
+//            //W(t1,t2)を計算
+//            Eigen::MatrixXd R;
+//            //1
+//            double v = (double)j/division_y*image_height;
 
-            double exposureTimingInEachRow = TRollingShutter*v/image_height;	//ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
+//            double exposureTimingInEachRow = TRollingShutter*v/image_height;	//ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
 
-            Eigen::Quaternion<double> slerpedAngleQuaternion;
-            if(exposureTimingInEachRow >= 0){
-                slerpedAngleQuaternion = currAngleQuaternion.slerp(exposureTimingInEachRow,nextAngleQuaternion);
-            }else{
-                slerpedAngleQuaternion = prevAngleQuaternion.slerp(1.0+exposureTimingInEachRow,currAngleQuaternion);
-            }
-            Quaternion2Matrix(slerpedAngleQuaternion,R);
-            for(int i=0;i<=division_x;++i){
-                double u = (double)i/division_x*image_width;
-                //後々の行列演算に備えて、画像上の座標を同次座標で表現しておく。(x座標、y座標,1)T
-                Eigen::Vector3d p;
-                p << (u- cx)/fx, (v - cy)/fy, 1.0;	//1のポリゴン座標に、K^-1を掛けた結果の３x１行列
-                //2
-                Eigen::MatrixXd XYW = R * p;//inv()なし
+//            Eigen::Quaternion<double> slerpedAngleQuaternion;
+//            if(exposureTimingInEachRow >= 0){
+//                slerpedAngleQuaternion = currAngleQuaternion.slerp(exposureTimingInEachRow,nextAngleQuaternion);
+//            }else{
+//                slerpedAngleQuaternion = prevAngleQuaternion.slerp(1.0+exposureTimingInEachRow,currAngleQuaternion);
+//            }
+//            Quaternion2Matrix(slerpedAngleQuaternion,R);
+//            for(int i=0;i<=division_x;++i){
+//                double u = (double)i/division_x*image_width;
+//                //後々の行列演算に備えて、画像上の座標を同次座標で表現しておく。(x座標、y座標,1)T
+//                Eigen::Vector3d p;
+//                p << (u- cx)/fx, (v - cy)/fy, 1.0;	//1のポリゴン座標に、K^-1を掛けた結果の３x１行列
+//                //2
+//                Eigen::MatrixXd XYW = R * p;//inv()なし
 
-                if(XYW(2,0) < 0.0){
-                    retval = false;
-                }
+//                if(XYW(2,0) < 0.0){
+//                    retval = false;
+//                }
 
-                double x1 = XYW(0, 0)/XYW(2, 0);
-                double y1 = XYW(1, 0)/XYW(2, 0);
+//                double x1 = XYW(0, 0)/XYW(2, 0);
+//                double y1 = XYW(1, 0)/XYW(2, 0);
 
-                double r = sqrt(x1*x1+y1*y1);
+//                double r = sqrt(x1*x1+y1*y1);
 
-                double x2 = x1*(1.0+k1*r*r+k2*r*r*r*r)+2.0*p1*x1*y1+p2*(r*r+2.0*x1*x1);
-                double y2 = y1*(1.0+k1*r*r+k2*r*r*r*r)+p1*(r*r+2.0*y1*y1)+2.0*p2*x1*y1;
-                //変な折り返しを防止
-                if((pow(x2-x1,2)>1.0)||(pow(y2-y1,2)>1.0)){
-                    //                printf("折り返し防止\r\n");
-                    x2 = x1;
-                    y2 = y1;
-                }
-//                vecPorigonn_uv.push_back(x2*fx*zoom/image_width*2.0);
-//                vecPorigonn_uv.push_back(y2*fy*zoom/image_height*2.0);
-                map_x(j,i) = x2*fx*zoom/image_width*2.0;
-                map_y(j,i) = y2*fy*zoom/image_height*2.0;
+//                double x2 = x1*(1.0+k1*r*r+k2*r*r*r*r)+2.0*p1*x1*y1+p2*(r*r+2.0*x1*x1);
+//                double y2 = y1*(1.0+k1*r*r+k2*r*r*r*r)+p1*(r*r+2.0*y1*y1)+2.0*p2*x1*y1;
+//                //変な折り返しを防止
+//                if((pow(x2-x1,2)>1.0)||(pow(y2-y1,2)>1.0)){
+//                    //                printf("折り返し防止\r\n");
+//                    x2 = x1;
+//                    y2 = y1;
+//                }
+////                vecPorigonn_uv.push_back(x2*fx*zoom/image_width*2.0);
+////                vecPorigonn_uv.push_back(y2*fy*zoom/image_height*2.0);
+//                map_x(j,i) = x2*fx*zoom/image_width*2.0;
+//                map_y(j,i) = y2*fy*zoom/image_height*2.0;
 
-                }
-        }
+//                }
+//        }
 
-        //3.ポリゴン座標をOpenGLの関数に渡すために順番を書き換える
-        vecPorigonn_uv.clear();
-        for(int j=0;j<division_y;++j){//jは終了の判定が"<"であることに注意
-            for(int i=0;i<division_x;++i){
-                //GL_TRIANGLESでGL側へ送信するポリゴンの頂点座標を準備
-                vecPorigonn_uv.push_back(map_x(j,i));//x座標
-                vecPorigonn_uv.push_back(map_y(j,i));//y座標
-                vecPorigonn_uv.push_back(map_x(j,i+1));//x座標
-                vecPorigonn_uv.push_back(map_y(j,i+1));//y座標
-                vecPorigonn_uv.push_back(map_x(j+1,i));//x座標
-                vecPorigonn_uv.push_back(map_y(j+1,i));//y座標
+//        //3.ポリゴン座標をOpenGLの関数に渡すために順番を書き換える
+//        vecPorigonn_uv.clear();
+//        for(int j=0;j<division_y;++j){//jは終了の判定が"<"であることに注意
+//            for(int i=0;i<division_x;++i){
+//                //GL_TRIANGLESでGL側へ送信するポリゴンの頂点座標を準備
+//                vecPorigonn_uv.push_back(map_x(j,i));//x座標
+//                vecPorigonn_uv.push_back(map_y(j,i));//y座標
+//                vecPorigonn_uv.push_back(map_x(j,i+1));//x座標
+//                vecPorigonn_uv.push_back(map_y(j,i+1));//y座標
+//                vecPorigonn_uv.push_back(map_x(j+1,i));//x座標
+//                vecPorigonn_uv.push_back(map_y(j+1,i));//y座標
 
-                vecPorigonn_uv.push_back(map_x(j+1,i));//x座標
-                vecPorigonn_uv.push_back(map_y(j+1,i));//y座標
-                vecPorigonn_uv.push_back(map_x(j,i+1));//x座標
-                vecPorigonn_uv.push_back(map_y(j,i+1));//y座標
-                vecPorigonn_uv.push_back(map_x(j+1,i+1));//x座標
-                vecPorigonn_uv.push_back(map_y(j+1,i+1));//y座標
+//                vecPorigonn_uv.push_back(map_x(j+1,i));//x座標
+//                vecPorigonn_uv.push_back(map_y(j+1,i));//y座標
+//                vecPorigonn_uv.push_back(map_x(j,i+1));//x座標
+//                vecPorigonn_uv.push_back(map_y(j,i+1));//y座標
+//                vecPorigonn_uv.push_back(map_x(j+1,i+1));//x座標
+//                vecPorigonn_uv.push_back(map_y(j+1,i+1));//y座標
 
 
-            }
-        }
+//            }
+//        }
 
-        return retval;
-    }
+//        return retval;
+//    }
 
     template <typename _Tx> bool getDistortUnrollingMapQuaternion(
             int32_t frame,
@@ -757,10 +703,10 @@ private:
         KEY_QUIT = 'q'
     };
 
-    Eigen::MatrixXd raw_angle;//TODO:REMOVE
+//    Eigen::MatrixXd raw_angle;//TODO:REMOVE
     Eigen::MatrixXd raw_quaternion;
     std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond>> raw_quaternion_with_margin;
-    Eigen::MatrixXd filtered_angle;//TODO:REMOVE
+//    Eigen::MatrixXd filtered_angle;//TODO:REMOVE
     Eigen::MatrixXd filtered_quaternion_;
     Eigen::VectorXd filter_coeff;
     bool is_filtered;

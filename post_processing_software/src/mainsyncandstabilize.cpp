@@ -50,7 +50,7 @@ using namespace glm;
 #include <Eigen/Dense>
 #include <unsupported/Eigen/FFT>
 #include "vsp.h"
-#include "frequency_domain_optimization.hpp"
+//#include "frequency_domain_optimization.hpp"
 using namespace std;
 
 struct videoBufferAndWriter{
@@ -379,74 +379,38 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
                Tvideo,
                Tav,
                min_position + subframeOffset,
-               (int32_t)(Capture->get(cv::CAP_PROP_FRAME_COUNT)));
+               (int32_t)(Capture->get(cv::CAP_PROP_FRAME_COUNT)),
+               199);
         v2.setParam(Capture->get(cv::CAP_PROP_FPS),1.0);
         std::vector<string> legends_quaternion = {"x","y","z","w"};
         vgp::plot(v2.toQuaternion(),"Raw Quaternion",legends_quaternion);
-        vgp::plot(v2.filteredQuaternion(100),"Filtered Quaternion",legends_quaternion);
+        vgp::plot(v2.filteredQuaternion(100),"Filtered Quaternion with constant filter cofficient",legends_quaternion);
 
-        std::vector<string> legends = {"x","y","z"};
-        vgp::plot(v2.data(),"Raw DFT",legends);
+//        std::vector<string> legends = {"x","y","z"};
+//        vgp::plot(v2.data(),"Raw DFT",legends);
 
         //平滑化を試す
         //時間波形補正実装済み平滑化
-        Eigen::MatrixXd coeffs = Eigen::MatrixXd::Ones(v2.data().rows()*1.0/Capture->get(cv::CAP_PROP_FPS)+2,v2.data().cols());
+//        Eigen::MatrixXd coeffs = Eigen::MatrixXd::Ones(v2.data().rows()*1.0/Capture->get(cv::CAP_PROP_FPS)+2,v2.data().cols());
 
-        vgp::plot(v2.filteredDataDFTTimeDomainOptimize(Capture->get(cv::CAP_PROP_FPS),1.0,coeffs),"Filtered DFT DO",legends);
-        //通常版平滑化
-        vgp::plot(v2.filteredDataDFT(Capture->get(cv::CAP_PROP_FPS),1.0),"Filterd DFT",legends);
+//        vgp::plot(v2.filteredDataDFTTimeDomainOptimize(Capture->get(cv::CAP_PROP_FPS),1.0,coeffs),"Filtered DFT DO",legends);
+//        //通常版平滑化
+//        vgp::plot(v2.filteredDataDFT(Capture->get(cv::CAP_PROP_FPS),1.0),"Filterd DFT",legends);
 
 
 
         //エラーを計算する。将来的に所望の特性の波形が得られるまで、DFTした複素配列の値をいじることになる？？？どうやって複素配列にアクセスする？
-        Eigen::VectorXd errors = v2.getRollingVectorError();
+//        Eigen::VectorXd errors = v2.getRollingVectorError();
 
         std::vector<string> legends2 = {"x"};
-        vgp::plot(errors,"Errors",legends2);
+//        vgp::plot(errors,"Errors",legends2);
 
-        v2.setMaximumGradient(1.0);
-        vgp::plot(v2.calculateFilterCoefficientsWithoutBlackSpaces(2,499),"has Black Space",legends2);
+        v2.setMaximumGradient(0.5);
+        Eigen::VectorXd filter_coefficients = v2.calculateFilterCoefficientsWithoutBlackSpaces(2,499);
+        vgp::plot(filter_coefficients,"Filter coefficients (Lower is Strong stabilization)",legends2);
+        vgp::plot(v2.filteredQuaternion(filter_coefficients),"Filtered Quaternion",legends_quaternion);
 
-//        //最適化
-//        cout << "let's optimize time domain!" << endl;
-//        //初期値を準備
-//        Eigen::VectorXd wave_form_coefficients = Eigen::VectorXd::Zero((v2.data().rows()*1.0/Capture->get(cv::CAP_PROP_FPS)+2)*3);
-//        TimeDomainOptimizer<double> functor4(wave_form_coefficients.rows(),v2.data().rows(),v2);
 
-//        NumericalDiff<TimeDomainOptimizer<double>> numDiff4(functor4);
-//        LevenbergMarquardt<NumericalDiff<TimeDomainOptimizer<double>>> lm4(numDiff4);
-//        cout << "Before:" << wave_form_coefficients.transpose() << endl;
-//        int info4 = lm4.minimize(wave_form_coefficients);
-//        cout << "After:" << wave_form_coefficients.transpose() << endl;
-//        return 0;
-
-//        //最適化
-//        cout << "let's optimize!" << endl;
-//        //適切な初期値を準備
-//        Eigen::MatrixXcd clerped_freq_vectors;
-
-//        vsp::Angle2CLerpedFrequency(v2.fs,v2.fc,v2.filteredDataDFT(),clerped_freq_vectors);
-//        VectorXd complex_frequency_coefficients = VectorXd::Zero((int32_t)((double)clerped_freq_vectors.rows() * v2.fc / v2.fs * 2.0));
-//        vsp::MatrixXcd2VectorXd(clerped_freq_vectors,complex_frequency_coefficients);
-
-//        FrequencyDomainOptimizer<double> functor3(complex_frequency_coefficients.rows(),v2.data().rows(),v2);
-//        NumericalDiff<FrequencyDomainOptimizer<double>> numDiff3(functor3);
-//        LevenbergMarquardt<NumericalDiff<FrequencyDomainOptimizer<double>>> lm3(numDiff3);
-//        cout << "Before:" << complex_frequency_coefficients.transpose() << endl;
-//        int info3 = lm3.minimize(complex_frequency_coefficients);
-//        cout << "After:" << complex_frequency_coefficients.transpose() << endl;
-//        //結果を代入
-//        //直接は代入できないので、まずcler~に代入
-//        vsp::VectorXd2MatrixXcd(complex_frequency_coefficients,clerped_freq_vectors);
-//        //元に戻す
-//        vsp::Frequency2Angle(clerped_freq_vectors,v2.filteredDataDFT());
-
-//        //末尾の余白を削除
-//        Eigen::MatrixXd buf = v2.filteredDataDFT().block(0,0,v2.data().rows(),v2.data().cols());
-//        v2.filteredDataDFT() = buf;
-//        //プロット
-//        vgp::plot(v2.getRollingVectorError(),"Optimized Errors",legends2);
-//        vgp::plot(v2.filteredDataDFT(),"Optimized Filterd DFT",legends);
         return 0;
     }
 
@@ -467,8 +431,9 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
            (int32_t)(Capture->get(cv::CAP_PROP_FRAME_COUNT)),
            199);
     //平滑化
-    v2.filteredDataDFT(Capture->get(cv::CAP_PROP_FPS),1.0);//TODO:引数修正。もはやあまり意味がない。
-    v2.filteredQuaternion(100);
+//    v2.filteredQuaternion(100);
+    Eigen::VectorXd filter_coefficients = v2.calculateFilterCoefficientsWithoutBlackSpaces(2,499);
+    v2.filteredQuaternion(filter_coefficients);
 
     v2.init_opengl(textureSize);
 
@@ -480,7 +445,7 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
 
     cv::namedWindow("Preview",cv::WINDOW_NORMAL);
     cv::setWindowProperty("Preview",cv::WND_PROP_FULLSCREEN,cv::WINDOW_FULLSCREEN);
-    while(v2.ok()){
+//    while(v2.ok()){
         Capture = new cv::VideoCapture(videoPass);//動画をオープン
         for(int32_t i=0;i<e;++i){
             cv::Mat simg;
@@ -516,7 +481,7 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
             Capture = NULL;
         }
 
-    }
+//    }
 
     if(Capture != NULL){
         delete Capture;
