@@ -384,7 +384,7 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
         v2.setParam(Capture->get(cv::CAP_PROP_FPS),1.0);
         std::vector<string> legends_quaternion = {"x","y","z","w"};
         vgp::plot(v2.toQuaternion(),"Raw Quaternion",legends_quaternion);
-        vgp::plot(v2.filteredQuaternion(100),"Filtered Quaternion with constant filter cofficient",legends_quaternion);
+        vgp::plot(v2.filteredQuaternion(100),"Filtered Quaternion with constant filter coefficient : 100",legends_quaternion);
 
 //        std::vector<string> legends = {"x","y","z"};
 //        vgp::plot(v2.data(),"Raw DFT",legends);
@@ -407,8 +407,8 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
 
         v2.setMaximumGradient(0.5);
         Eigen::VectorXd filter_coefficients = v2.calculateFilterCoefficientsWithoutBlackSpaces(2,499);
-        vgp::plot(filter_coefficients,"Filter coefficients (Lower is Strong stabilization)",legends2);
-        vgp::plot(v2.filteredQuaternion(filter_coefficients),"Filtered Quaternion",legends_quaternion);
+        vgp::plot(filter_coefficients,std::string("Filter coefficients (Lower is Strong stabilization), scale:")+std::to_string(zoomRatio),legends2);
+        vgp::plot(v2.filteredQuaternion(filter_coefficients),std::string("Filtered Quaternion with variable filter coefficient, scale:")+std::to_string(zoomRatio),legends_quaternion);
 
 
         return 0;
