@@ -159,6 +159,10 @@ target_link_libraries(get_optical_flow ${OpenCV_LIBS} ${ALL_LIBS} )
 
 add_executable(rapidjson_test src/rapidjson_test.cpp)
 
+add_executable(video_analyzer src/video_analyzer.cpp
+src/calcShift.cpp)
+target_link_libraries(video_analyzer ${ALL_LIBS})
+
 # デバッグビルド
 IF(CMAKE_BUILD_TYPE MATCHES DEBUG)
 set(CMAKE_C_FLAGS_DEBUG "-O0 -g")
