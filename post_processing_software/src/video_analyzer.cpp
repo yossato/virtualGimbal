@@ -1,59 +1,14 @@
-#include <stdio.h>
-#include <iostream>
-#include <string>
-#include <unistd.h>
-#include <vector>
-#include <opencv2/opencv.hpp>
-#include "calcShift.hpp"
-
-
-#include "rapidjson/document.h"
-#include "rapidjson/writer.h"
-#include "rapidjson/stringbuffer.h"
-#include "rapidjson/filewritestream.h"
+#include "video_analyzer.hpp"
 
 using namespace std;
 using namespace rapidjson;
 #define SYNC_LENGTH 1000
 
-int main(int argc, char** argv){
-    int opt;
+using namespace Eigen;
 
-    char *videoPass = NULL;
-    char *csvPass = NULL;
-    while((opt = getopt(argc, argv, "i:c:")) != -1){
-        switch (opt) {
-        case 'i':       //input video file pass
-            videoPass = optarg;
-            break;
-        case 'c':       //input angular velocity csv file pass
-            csvPass = optarg;
-            break;
-        default :
-            return 1;
-        }
-    }
 
-    //Extract Optical flow
-    vector<cv::Vec3d> opticShift = CalcShiftFromVideo(videoPass,SYNC_LENGTH);//ビデオからオプティカルフローを用いてシフト量を算出
-    
-    for(auto el:opticShift){
-        printf("%f %f %f\n",el[0],el[1],el[2]);
-    }
-
-    Document d(kObjectType);
-
-    Document v(kArrayType);
-    Document::AllocatorType& allocator = v.GetAllocator();
-    for(auto el:opticShift){
-        v.PushBack(el[0],allocator);
-        v.PushBack(el[1],allocator);
-        v.PushBack(el[2],allocator);
-    }
-
-    d.AddMember("optical_flow",v,d.GetAllocator());
-
-    std::string json_file_name = std::string(videoPass);// + std::string(".json");
+std::string videoNameToJsonName(std::string video_name){
+    std::string json_file_name = video_name;
     std::string::size_type pos;
     if((pos = json_file_name.find_last_of(".")) != std::string::npos){
         //拡張子の長さをチェック
@@ -64,14 +19,86 @@ int main(int argc, char** argv){
             json_file_name = json_file_name.substr(0,pos) + std::string(".json");
         }
     }
+    return json_file_name;
+}
+
+bool jsonExists(std::string video_file_name){
+    std::string json_file_name = videoNameToJsonName(video_file_name);
+    struct stat st;
+    return !stat(json_file_name.c_str(),&st);
+}
+
+
+int writeOpticalFrowToJson(Eigen::MatrixXd &optical_flow, std::string video_file_name){
+
+    Document d(kObjectType);
+
+    Document v(kArrayType);
+
+    Document::AllocatorType& allocator = v.GetAllocator();
+
+    for(int i=0,e=optical_flow.rows();i<e;++i){
+        v.PushBack(optical_flow(i,0),allocator);
+        v.PushBack(optical_flow(i,1),allocator);
+        v.PushBack(optical_flow(i,2),allocator);
+    }
+
+    d.AddMember("optical_flow",v,d.GetAllocator());
+
+    std::string json_file_name = videoNameToJsonName(video_file_name);
 
     FILE* fp = fopen(json_file_name.c_str(), "wb"); // non-Windows use "w"
 
-    char writeBuffer[65536];
+    char writeBuffer[262140];
     FileWriteStream os(fp, writeBuffer, sizeof(writeBuffer));
     Writer<FileWriteStream> writer(os);
     d.Accept(writer);
     fclose(fp);
+    return 0;
+}
+
+int readOpticalFlowFromJson(Eigen::MatrixXd &optical_flow,std::string video_file_name){
+
+
+    FILE* fp = fopen(videoNameToJsonName(video_file_name).c_str(), "rb"); // non-Windows use "r"
+    char readBuffer[262140];
+    FileReadStream is(fp, readBuffer, sizeof(readBuffer));
+    Document e;
+    e.ParseStream(is);
+    fclose(fp);
+
+    const Value& optical_flow_array = e["optical_flow"];
+    optical_flow.resize(optical_flow_array.Size()/3,3);
+    for(int r=0;r<optical_flow.rows();++r){
+        for(int c=0;c<3;++c){
+            optical_flow(r,c)=optical_flow_array[r*3+c].GetDouble();
+        }
+    }
 
     return 0;
 }
+
+//int main(int argc, char** argv){
+//    int opt;
+
+//    char *videoPass = NULL;
+//    char *csvPass = NULL;
+//    while((opt = getopt(argc, argv, "i:c:")) != -1){
+//        switch (opt) {
+//        case 'i':       //input video file pass
+//            videoPass = optarg;
+//            break;
+//        case 'c':       //input angular velocity csv file pass
+//            csvPass = optarg;
+//            break;
+//        default :
+//            return 1;
+//        }
+//    }
+
+
+
+//    writeAngularVelocityJson(std::string(videoPass));
+
+//    return 0;
+//}

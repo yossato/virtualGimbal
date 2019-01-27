@@ -50,6 +50,7 @@ using namespace glm;
 #include <Eigen/Dense>
 #include <unsupported/Eigen/FFT>
 #include "vsp.h"
+#include "video_analyzer.hpp"
 //#include "frequency_domain_optimization.hpp"
 using namespace std;
 
@@ -202,10 +203,38 @@ int main(int argc, char** argv){
         }
     }
 
+    std::vector<cv::Vec3d> opticShift;
     //動画からオプティカルフローを計算する
     auto t1 = std::chrono::system_clock::now() ;
-    std::vector<cv::Vec3d> opticShift = CalcShiftFromVideo(videoPass,SYNC_LENGTH);//ビデオからオプティカルフローを用いてシフト量を算出
+    Eigen::MatrixXd optical_flow;
+    if(jsonExists(std::string(videoPass))){
+
+        readOpticalFlowFromJson(optical_flow,std::string(videoPass));
+//        std::cout << optical_flow2 << std::endl;
+        opticShift.resize(optical_flow.rows());
+        for(int row=0;row<optical_flow.rows();++row){
+            for(int col=0;col<3;++col){
+                opticShift[row][col] = optical_flow(row,col);
+            }
+        }
+    }else{
+        opticShift = CalcShiftFromVideo(videoPass,SYNC_LENGTH);//ビデオからオプティカルフローを用いてシフト量を算出
+//        Eigen::MatrixXd optical_flow;
+        optical_flow.resize(opticShift.size(),3);
+//        memcpy(optical_flow.data(),opticShift.data(),sizeof(double)*3*opticShift.size());
+        for(int row=0;row<optical_flow.rows();++row){
+            for(int col=0;col<3;++col){
+                optical_flow(row,col) = opticShift[row][col];
+            }
+        }
+        writeOpticalFrowToJson(optical_flow,std::string(videoPass));
+    }
     auto t2 = std::chrono::system_clock::now() ;
+
+//    std::cout << optical_flow << std::endl;
+
+//    return 0;
+
     // 処理の経過時間
     auto elapsed = t2 - t1 ;
     std::cout << "Elapsed time: " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << " ms\n";

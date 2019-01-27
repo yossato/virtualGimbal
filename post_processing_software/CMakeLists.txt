@@ -114,11 +114,14 @@ add_executable(virtualGimbal src/mainsyncandstabilize.cpp
         src/stabilize.cpp
         src/distortion.cpp
         src/visualizer.cpp
+        src/video_analyzer.cpp
+
         include/settings.h
         include/distortion.h
         include/visualizer.h
         include/vsp.h
 #        include/frequency_domain_optimization.hpp
+
         TransformVertexShader.vertexshader
         TextureFragmentShader.fragmentshader
 )
@@ -156,9 +159,9 @@ target_link_libraries(camera_calibration ${OpenCV_LIBS})
 
 add_executable(rapidjson_test src/rapidjson_test.cpp)
 
-add_executable(video_analyzer src/video_analyzer.cpp
-src/calcShift.cpp)
-target_link_libraries(video_analyzer ${ALL_LIBS})
+#add_executable(video_analyzer src/video_analyzer.cpp
+#src/calcShift.cpp)
+#target_link_libraries(video_analyzer ${ALL_LIBS})
 
 # デバッグビルド
 IF(CMAKE_BUILD_TYPE MATCHES DEBUG)

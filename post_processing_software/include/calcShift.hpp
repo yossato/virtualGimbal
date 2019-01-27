@@ -15,7 +15,7 @@ typedef struct{
 	double TG2B;	//ジャイロセンサとビデオのタイミング[second]、ジャイロの時間にこの値を足すと、ビデオの時間に変換できる
 }strTimingInformation;
 
-std::vector<cv::Vec3d> CalcShiftFromVideo(char *filename, int calcPeriod);
+std::vector<cv::Vec3d> CalcShiftFromVideo(const char *filename, int calcPeriod);
 
 /**
  * @brief 波形を線形補間します。 

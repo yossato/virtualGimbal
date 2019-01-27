@@ -8,7 +8,7 @@
 * @param [in] filename 動画のファイル名
 * @param [in] calcPeriod オプティカルフローを計算するフレーム数[ ]で正の整数。0未満を指定すると全域で相関を計算。
 **/
-std::vector<cv::Vec3d> CalcShiftFromVideo(char *filename, int calcPeriod){
+std::vector<cv::Vec3d> CalcShiftFromVideo(const char *filename, int calcPeriod){
     //動画を開く
     cv::VideoCapture cap(filename);
     assert(cap.isOpened());
