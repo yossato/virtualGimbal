@@ -6,6 +6,53 @@ using namespace rapidjson;
 
 using namespace Eigen;
 
+void writeSynchronizedQuaternion(const Eigen::MatrixXd &raw_quaternion, const std::string video_name){
+    Document d(kObjectType);
+
+    Document v(kArrayType);
+
+    Document::AllocatorType& allocator = v.GetAllocator();
+
+    for(int i=0,e=raw_quaternion.rows();i<e;++i){
+        v.PushBack(raw_quaternion(i,0),allocator);
+        v.PushBack(raw_quaternion(i,1),allocator);
+        v.PushBack(raw_quaternion(i,2),allocator);
+        v.PushBack(raw_quaternion(i,3),allocator);
+    }
+
+    d.AddMember("synchronized_quaternion",v,d.GetAllocator());
+
+    std::string json_file_name = videoNameToJsonName(video_name) + std::string(".sq");
+
+    FILE* fp = fopen(json_file_name.c_str(), "wb"); // non-Windows use "w"
+
+    char writeBuffer[262140];
+    FileWriteStream os(fp, writeBuffer, sizeof(writeBuffer));
+    Writer<FileWriteStream> writer(os);
+    d.Accept(writer);
+    fclose(fp);
+    return ;
+}
+
+int readSynchronizedQuaternion( Eigen::MatrixXd &raw_quaternion, const std::string video_name){
+     FILE* fp = fopen(videoNameToJsonName(video_name).c_str(), "rb"); // non-Windows use "r"
+    char readBuffer[262140];
+    FileReadStream is(fp, readBuffer, sizeof(readBuffer));
+    Document e;
+    e.ParseStream(is);
+    fclose(fp);
+
+    const Value& raw_quaternion_array = e["synchronized_quaternion"];
+    int width = 4;
+    raw_quaternion.resize(raw_quaternion_array.Size()/width,width);
+    for(int r=0;r<raw_quaternion.rows();++r){
+        for(int c=0;c<width;++c){
+            raw_quaternion(r,c)=raw_quaternion_array[r*width+c].GetDouble();
+        }
+    }
+
+    return 0;
+}
 
 std::string videoNameToJsonName(std::string video_name){
     std::string json_file_name = video_name;

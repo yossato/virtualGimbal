@@ -15,6 +15,8 @@
 #include "memory"
 #include <sys/types.h>
 #include <sys/stat.h>
+void writeSynchronizedQuaternion(const Eigen::MatrixXd &raw_quaternion, const std::string video_name);
+int readSynchronizedQuaternion( Eigen::MatrixXd &raw_quaternion, const std::string video_name);
 bool jsonExists(std::string video_file_name);
 int writeOpticalFrowToJson(Eigen::MatrixXd &optical_flow,std::string video_file_name);
 int readOpticalFlowFromJson(Eigen::MatrixXd &optical_flow,std::string video_file_name);

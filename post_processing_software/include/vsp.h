@@ -695,6 +695,7 @@ void setParam(double fs, double fc);
     bool hasBlackSpace(int32_t filter_strength, int32_t frame);
     void gradientLimit(Eigen::VectorXd &input);
     void setMaximumGradient(double value);
+    Eigen::MatrixXd getRawQuaternion();
 private:
     enum KEY {
         KEY_SIDEBYSIDE = '1',

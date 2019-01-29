@@ -597,6 +597,10 @@ Eigen::Vector3d vsp::angularVelocitySync(/*std::vector<Eigen::Vector3d,Eigen::al
     }
 }
 
+Eigen::MatrixXd vsp::getRawQuaternion(){
+    return raw_quaternion;
+}
+
 #define TEST2D
 
 Eigen::Quaternion<double> vsp::toDiffQuaternion2(int32_t filter_strength, uint32_t frame){

@@ -415,24 +415,7 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
         vgp::plot(v2.toQuaternion(),"Raw Quaternion",legends_quaternion);
         vgp::plot(v2.filteredQuaternion(100),"Filtered Quaternion with constant filter coefficient : 100",legends_quaternion);
 
-//        std::vector<string> legends = {"x","y","z"};
-//        vgp::plot(v2.data(),"Raw DFT",legends);
-
-        //平滑化を試す
-        //時間波形補正実装済み平滑化
-//        Eigen::MatrixXd coeffs = Eigen::MatrixXd::Ones(v2.data().rows()*1.0/Capture->get(cv::CAP_PROP_FPS)+2,v2.data().cols());
-
-//        vgp::plot(v2.filteredDataDFTTimeDomainOptimize(Capture->get(cv::CAP_PROP_FPS),1.0,coeffs),"Filtered DFT DO",legends);
-//        //通常版平滑化
-//        vgp::plot(v2.filteredDataDFT(Capture->get(cv::CAP_PROP_FPS),1.0),"Filterd DFT",legends);
-
-
-
-        //エラーを計算する。将来的に所望の特性の波形が得られるまで、DFTした複素配列の値をいじることになる？？？どうやって複素配列にアクセスする？
-//        Eigen::VectorXd errors = v2.getRollingVectorError();
-
         std::vector<string> legends2 = {"x"};
-//        vgp::plot(errors,"Errors",legends2);
 
         v2.setMaximumGradient(0.5);
         Eigen::VectorXd filter_coefficients = v2.calculateFilterCoefficientsWithoutBlackSpaces(2,499);
@@ -459,10 +442,17 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
            min_position + subframeOffset,
            (int32_t)(Capture->get(cv::CAP_PROP_FRAME_COUNT)),
            199);
+
+
+
+
     //平滑化
 //    v2.filteredQuaternion(100);
     Eigen::VectorXd filter_coefficients = v2.calculateFilterCoefficientsWithoutBlackSpaces(2,499);
     v2.filteredQuaternion(filter_coefficients);
+
+    // Write angle quaternion to json
+    writeSynchronizedQuaternion(v2.getRawQuaternion(),std::string(videoPass));
 
     v2.init_opengl(textureSize);
 
