@@ -60,21 +60,37 @@ public:
      * @param [in]	zoom	倍率[]。拡大縮小しないなら1を指定すること。省略可
      * @param [out] error はみ出したノルムの長さ
      **/
-    vsp(/*vector<Eigen::Quaternion<T>> &angle_quaternion,*/
-                           int32_t division_x,
-                           int32_t division_y,
-                           double TRollingShutter,
-                           Eigen::MatrixXd IK,
-                           Eigen::MatrixXd matIntrinsic,
-                           int32_t image_width,
-                           int32_t image_height,
-                           double zoom,
-                           std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> &angular_velocity,
-                           double T_video,
-                           double T_angular_velocity,
-                           double frame_offset,
-                           int32_t video_frames,
-                           int32_t filter_tap_length = 399);
+    vsp(int32_t division_x,
+        int32_t division_y,
+        double TRollingShutter,
+        Eigen::MatrixXd IK,
+        Eigen::MatrixXd matIntrinsic,
+        int32_t image_width,
+        int32_t image_height,
+        double zoom,
+        std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> &angular_velocity,
+        double T_video,
+        double T_angular_velocity,
+        double frame_offset,
+        int32_t video_frames,
+        int32_t filter_tap_length);
+
+    vsp(int32_t division_x,
+        int32_t division_y,
+        double TRollingShutter,
+        Eigen::MatrixXd IK,
+        Eigen::MatrixXd matIntrinsic,
+        int32_t image_width,
+        int32_t image_height,
+        double zoom,
+        std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> &angular_velocity,
+        double T_video,
+        double T_angular_velocity,
+        double frame_offset,
+        int32_t video_frames,
+        int32_t filter_tap_length,
+        Eigen::MatrixXd &raw_angle,
+        Eigen::MatrixXd &filtered_quaternion);
 void setParam(double fs, double fc);
 //    vector<double> getRow(int r);
 
@@ -695,7 +711,8 @@ void setParam(double fs, double fc);
     bool hasBlackSpace(int32_t filter_strength, int32_t frame);
     void gradientLimit(Eigen::VectorXd &input);
     void setMaximumGradient(double value);
-    Eigen::MatrixXd getRawQuaternion();
+    Eigen::MatrixXd &getRawQuaternion();
+    Eigen::MatrixXd &getFilteredQuaternion();
 private:
     enum KEY {
         KEY_SIDEBYSIDE = '1',

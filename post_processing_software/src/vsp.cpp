@@ -62,6 +62,32 @@ vsp::vsp(/*vector<Eigen::Quaternion<T>> &angle_quaternion,*/
 
     is_filtered = false;
 }
+
+vsp::vsp(int32_t division_x,
+    int32_t division_y,
+    double TRollingShutter,
+    Eigen::MatrixXd IK,
+    Eigen::MatrixXd matIntrinsic,
+    int32_t image_width,
+    int32_t image_height,
+    double zoom,
+    std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> &angular_velocity,
+    double T_video,
+    double T_angular_velocity,
+    double frame_offset,
+    int32_t video_frames,
+    int32_t filter_tap_length,
+    Eigen::MatrixXd &raw_quaternion,
+    Eigen::MatrixXd &filtered_quaternion)
+    :is_filtered(false),division_x(division_x),division_y(division_y),TRollingShutter(TRollingShutter),IK(IK),
+      matIntrinsic(matIntrinsic),image_width(image_width),image_height(image_height),zoom(zoom),
+      angular_velocity(angular_velocity),T_video(T_video),T_angular_velocity(T_angular_velocity),
+      frame_offset(frame_offset),video_frames(video_frames),filter_tap_length(filter_tap_length),
+      raw_quaternion(raw_quaternion),filtered_quaternion_(filtered_quaternion)
+{
+
+}
+
 void vsp::setParam(double fs, double fc){
     this->fs = fs;
     this->fc = fc;
@@ -597,8 +623,12 @@ Eigen::Vector3d vsp::angularVelocitySync(/*std::vector<Eigen::Vector3d,Eigen::al
     }
 }
 
-Eigen::MatrixXd vsp::getRawQuaternion(){
+Eigen::MatrixXd &vsp::getRawQuaternion(){
     return raw_quaternion;
+}
+
+Eigen::MatrixXd &vsp::getFilteredQuaternion(){
+    return filtered_quaternion_;
 }
 
 #define TEST2D

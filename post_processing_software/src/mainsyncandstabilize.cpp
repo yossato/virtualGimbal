@@ -51,6 +51,8 @@ using namespace glm;
 #include <unsupported/Eigen/FFT>
 #include "vsp.h"
 #include "video_analyzer.hpp"
+
+#include <memory>
 //#include "frequency_domain_optimization.hpp"
 using namespace std;
 
@@ -208,7 +210,6 @@ int main(int argc, char** argv){
     auto t1 = std::chrono::system_clock::now() ;
     Eigen::MatrixXd optical_flow;
     if(jsonExists(std::string(videoPass))){
-
         readOpticalFlowFromJson(optical_flow,std::string(videoPass));
 //        std::cout << optical_flow2 << std::endl;
         opticShift.resize(optical_flow.rows());
@@ -341,6 +342,8 @@ int main(int argc, char** argv){
     t1 = std::chrono::system_clock::now() ;
 
     int32_t angular_velocity_length_in_video = ceil(angular_velocity_from_csv.size() * Tav / Tvideo);
+
+
     int32_t lengthDiff = angular_velocity_length_in_video - estimatedAngularVelocity.size();
     cout << "lengthDiff:" << lengthDiff << endl;
 
@@ -349,16 +352,17 @@ int main(int argc, char** argv){
     //ここでEigenのMatrixでできるだけ計算するルーチンを追加してみる
     Eigen::MatrixXd angular_velocity_matrix             = Eigen::MatrixXd::Zero(ceil(angular_velocity_from_csv.size()*Tav /Tvideo),3);
     for(int32_t i=0;i<angular_velocity_length_in_video;++i){
-//        angular_velocity_matrix.row(i) = Eigen::Map<Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>((double*)(&angularVelocity(i)[0]),1,3);
         angular_velocity_matrix.row(i) = angularVelocity(i).transpose();
     }
     Eigen::MatrixXd estimated_angular_velocity_matrix   = Eigen::Map<Matrix<double, Eigen::Dynamic, Eigen::Dynamic, RowMajor>>((double*)(estimatedAngularVelocity.data()),estimatedAngularVelocity.size(),3);
     vector<double> correlation_coefficients(lengthDiff);
-    for(int32_t offset=0;offset<lengthDiff;++offset){
-        correlation_coefficients[offset] = (angular_velocity_matrix.block(offset,0,estimated_angular_velocity_matrix.rows(),estimated_angular_velocity_matrix.cols())
-                -estimated_angular_velocity_matrix).array().abs().sum();
+    if((!syncronizedQuarternionExist(videoPass)) || debug_signal_processing){
+        for(int32_t offset=0;offset<lengthDiff;++offset){
+            correlation_coefficients[offset] = (angular_velocity_matrix.block(offset,0,estimated_angular_velocity_matrix.rows(),estimated_angular_velocity_matrix.cols())
+                                                -estimated_angular_velocity_matrix).array().abs().sum();
+        }
     }
-int32_t min_position = std::distance(correlation_coefficients.begin(),min_element(correlation_coefficients.begin(),correlation_coefficients.end()));
+    int32_t min_position = std::distance(correlation_coefficients.begin(),min_element(correlation_coefficients.begin(),correlation_coefficients.end()));
 
 
     auto t3 = std::chrono::system_clock::now() ;
@@ -426,35 +430,58 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
         return 0;
     }
 
+    shared_ptr<vsp> v2;
 
-    vsp v2(/*angleQuaternion_vsp2,*/
-           division_x,
-           division_y,
-           rollingShutterDuration,
-           convCVMat2EigenMat(matInvDistort),
-           convCVMat2EigenMat(matIntrinsic),
-           imageSize.width,
-           imageSize.height,
-           (double)zoomRatio,
-           angular_velocity_from_csv,
-           Tvideo,
-           Tav,
-           min_position + subframeOffset,
-           (int32_t)(Capture->get(cv::CAP_PROP_FRAME_COUNT)),
-           199);
+    if(syncronizedQuarternionExist(videoPass)){
+        Eigen::MatrixXd raw_quaternion,filtered_quaternion;
+        readSynchronizedQuaternion(raw_quaternion,filtered_quaternion,videoPass);
+        v2.reset(new vsp(division_x,
+                         division_y,
+                         rollingShutterDuration,
+                         convCVMat2EigenMat(matInvDistort),
+                         convCVMat2EigenMat(matIntrinsic),
+                         imageSize.width,
+                         imageSize.height,
+                         (double)zoomRatio,
+                         angular_velocity_from_csv,
+                         Tvideo,
+                         Tav,
+                         min_position + subframeOffset,
+                         (int32_t)(Capture->get(cv::CAP_PROP_FRAME_COUNT)),
+                         199,
+                         raw_quaternion,
+                         filtered_quaternion
+                         ));
+    }else{
+        v2.reset(new vsp(division_x,
+                         division_y,
+                         rollingShutterDuration,
+                         convCVMat2EigenMat(matInvDistort),
+                         convCVMat2EigenMat(matIntrinsic),
+                         imageSize.width,
+                         imageSize.height,
+                         (double)zoomRatio,
+                         angular_velocity_from_csv,
+                         Tvideo,
+                         Tav,
+                         min_position + subframeOffset,
+                         (int32_t)(Capture->get(cv::CAP_PROP_FRAME_COUNT)),
+                         199));
+
+        // Stabilize
+        Eigen::VectorXd filter_coefficients = v2->calculateFilterCoefficientsWithoutBlackSpaces(2,499);
+        v2->filteredQuaternion(filter_coefficients);
+
+        // Write angle quaternion to json
+        writeSynchronizedQuaternion(v2->getRawQuaternion(),v2->getFilteredQuaternion(),std::string(videoPass));
+    }
 
 
 
 
-    //平滑化
-//    v2.filteredQuaternion(100);
-    Eigen::VectorXd filter_coefficients = v2.calculateFilterCoefficientsWithoutBlackSpaces(2,499);
-    v2.filteredQuaternion(filter_coefficients);
 
-    // Write angle quaternion to json
-    writeSynchronizedQuaternion(v2.getRawQuaternion(),std::string(videoPass));
 
-    v2.init_opengl(textureSize);
+    v2->init_opengl(textureSize);
 
     //一度動画を閉じて、seek可能版に置き換える
     int32_t e=Capture->get(cv::CAP_PROP_FRAME_COUNT);
@@ -464,11 +491,11 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
 
     cv::namedWindow("Preview",cv::WINDOW_NORMAL);
     cv::setWindowProperty("Preview",cv::WND_PROP_FULLSCREEN,cv::WINDOW_FULLSCREEN);
-//    while(v2.ok()){
+//    while(v2->ok()){
         Capture = new cv::VideoCapture(videoPass);//動画をオープン
         for(int32_t i=0;i<e;++i){
             cv::Mat simg;
-            if(0 != v2.spin_once(i,*Capture,simg)){
+            if(0 != v2->spin_once(i,*Capture,simg)){
                 break;
             }
 
@@ -506,7 +533,7 @@ int32_t min_position = std::distance(correlation_coefficients.begin(),min_elemen
         delete Capture;
         Capture = NULL;
     }
-    v2.stop_opengl();
+    v2->stop_opengl();
 
     //動画書き出しのマルチスレッド処理の終了処理
     //書き込みが終わっているか確認
