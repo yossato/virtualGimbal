@@ -141,12 +141,16 @@ int main(int argc, char** argv){
     //引数の確認
     char *videoPass = NULL;
     char *csvPass = NULL;
+    char *jsonPass = NULL;
     //    char *outputPass = NULL;
     bool outputStabilizedVideo = false;
     int opt;
-    while((opt = getopt(argc, argv, "i:c:o::d::v:h:z:r:f:")) != -1){
+    while((opt = getopt(argc, argv, "j:i:c:o::d::v:h:z:r:f:")) != -1){
         string value1 ;//= optarg;
         switch (opt) {
+        case 'j':       //input json file from virtual gimbal
+            jsonPass = optarg;
+            break;
         case 'i':       //input video file pass
             videoPass = optarg;
             break;
@@ -301,7 +305,19 @@ int main(int argc, char** argv){
     //角速度データを読み込み
 
     std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> angular_velocity_from_csv;
-    vsp::ReadCSV(angular_velocity_from_csv,csvPass);
+    if(csvPass){
+        vsp::ReadCSV(angular_velocity_from_csv,csvPass);
+    }else if(jsonPass){
+        readAngularVelocityJson(angular_velocity_from_csv,jsonPass);
+    }else{
+        std::cout << "csv or json file are required." << std::endl;
+        return 0;
+    }
+
+    for(int i=0;i<10;i++){
+        printf("%f %f %f\n",angular_velocity_from_csv[i][0],angular_velocity_from_csv[i][1],angular_velocity_from_csv[i][2]);
+    }
+    std::cout << std::flush;
 
     //ジャイロのDCオフセット（いわゆる温度ドリフトと等価）を計算。単純にフレームの平均値を計算
     if(SUBTRACT_OFFSET){
