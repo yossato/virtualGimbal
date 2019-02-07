@@ -1,5 +1,5 @@
-#ifndef VIDEO_ANALYZER_HPP
-#define VIDEO_ANALYZER_HPP
+#ifndef JSON_TOOLS_HPP
+#define JSON_TOOLS_HPP
 
 #include <stdio.h>
 #include <iostream>
@@ -16,6 +16,32 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdint.h>
+
+class CameraInformation{
+public:
+    CameraInformation(){
+
+    }
+
+    void open(std::string &camera_name, std::string file_name="camera_descriptions/camera.json");
+
+private:
+    std::string camera_name_;
+    std::string lens_name_;
+    Eigen::Quaterniond sd_card_rotation_;
+    double width_;
+    double height_;
+    double fx_;
+    double fy_;
+    double cx_;
+    double cy_;
+    double k1_;
+    double k2_;
+    double p1_;
+    double p2_;
+    double rolling_shutter_coefficient_;
+};
+
 bool syncronizedQuarternionExist(const std::string &video_name);
 void writeSynchronizedQuaternion(const Eigen::MatrixXd &raw_quaternion, const Eigen::MatrixXd &filtered_quaternion, const std::string video_name);
 int readSynchronizedQuaternion( Eigen::MatrixXd &raw_quaternion, Eigen::MatrixXd &filtered_quaternion, const std::string video_name);
@@ -66,4 +92,4 @@ template <typename _Tp, typename _Alloc = std::allocator<_Tp>> int readAngularVe
     return 0;
 }
 
-#endif // VIDEO_ANALYZER_HPP
+#endif // JSON_TOOLS_HPP

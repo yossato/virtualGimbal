@@ -50,7 +50,7 @@ using namespace glm;
 #include <Eigen/Dense>
 #include <unsupported/Eigen/FFT>
 #include "vsp.h"
-#include "video_analyzer.hpp"
+#include "json_tools.hpp"
 
 #include <memory>
 //#include "frequency_domain_optimization.hpp"
@@ -188,17 +188,8 @@ int main(int argc, char** argv){
             //Larger is strong filter. This parameter must be integer.
             //Default 3.
             value1 = optarg;
-//            lowPassFilterStrength = std::stoi(value1);
             std::cout << "Currently, -f option doesn't work. This function will be implemented in the future." << std::endl;
-//            if(lowPassFilterStrength < 0){
-//                cout << "Low pass filter strength must be greater than or equal to 0.\r\n" <<
-//                        "It is set as 0 automatically." << endl;
-//                lowPassFilterStrength = 0;
-//            }else if(lowPassFilterStrength > 11){
-//                cout << "Low pass filter strength must be less than 12.\r\n" <<
-//                        "It is set as 11 automatically." << endl;
-//                lowPassFilterStrength = 1;
-//            }
+
             break;
         default :
             printf(     "virtualGimbal\r\n"

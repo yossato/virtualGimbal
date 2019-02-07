@@ -114,7 +114,7 @@ add_executable(virtualGimbal src/mainsyncandstabilize.cpp
         src/stabilize.cpp
         src/distortion.cpp
         src/visualizer.cpp
-        src/video_analyzer.cpp
+        src/json_tools.cpp
 
         include/settings.h
         include/distortion.h

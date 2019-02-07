@@ -1,10 +1,31 @@
-#include "video_analyzer.hpp"
+#include "json_tools.hpp"
 
 using namespace std;
 using namespace rapidjson;
 #define SYNC_LENGTH 1000
 
 using namespace Eigen;
+
+void CameraInformation::open(string &camera_name, string file_name){
+    struct stat st;
+    if( stat(file_name.c_str(),&st)){
+        throw "File doesn's exist";
+    }
+    FILE* fp = fopen(file_name.c_str(), "rb"); // non-Windows use "r"
+    std::vector<char> readBuffer((intmax_t)st.st_size+10);
+    rapidjson::FileReadStream is(fp, readBuffer.data(), readBuffer.size());
+    Document e;
+    e.ParseStream(is);
+    fclose(fp);
+
+    if(e.HasMember("synchronized_quaternion") && e.HasMember("synchronized_filtered_quaternion")){
+        throw "Member not found";
+    }
+}
+
+bool readCameraInformation(){
+
+}
 
 bool syncronizedQuarternionExist(const std::string &video_name){
     std::string json_file_name = videoNameToJsonName(video_name) + std::string(".sq");
