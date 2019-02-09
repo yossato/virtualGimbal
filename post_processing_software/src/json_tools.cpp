@@ -6,21 +6,39 @@ using namespace rapidjson;
 
 using namespace Eigen;
 
-void CameraInformation::open(string &camera_name, string file_name){
+CameraInformation::CameraInformation(const char* camera_name, const char* lens_name, const char* image_size, const char* file_name){
     struct stat st;
-    if( stat(file_name.c_str(),&st)){
+    if( stat(file_name,&st)){
         throw "File doesn's exist";
     }
-    FILE* fp = fopen(file_name.c_str(), "rb"); // non-Windows use "r"
+    FILE* fp = fopen(file_name, "rb"); // non-Windows use "r"
     std::vector<char> readBuffer((intmax_t)st.st_size+10);
     rapidjson::FileReadStream is(fp, readBuffer.data(), readBuffer.size());
     Document e;
     e.ParseStream(is);
     fclose(fp);
 
-    if(e.HasMember("synchronized_quaternion") && e.HasMember("synchronized_filtered_quaternion")){
-        throw "Member not found";
+    if(!e.HasMember(camera_name)){
+        throw "Camera not found.";
     }
+
+    const Value& camera = e[camera_name];
+    camera_name_ = camera_name;
+    const Value& parameters = camera["lenses"][lens_name][image_size];
+    lens_name_ = lens_name;
+    fx_ = parameters["fx"].GetDouble();
+    fy_ = parameters["fy"].GetDouble();
+    cx_ = parameters["cx"].GetDouble();
+    cy_ = parameters["cy"].GetDouble();
+    k1_ = parameters["k1"].GetDouble();
+    k2_ = parameters["k2"].GetDouble();
+    p1_ = parameters["p1"].GetDouble();
+    p2_ = parameters["p2"].GetDouble();
+    rolling_shutter_coefficient_ = parameters["rolling_shutter_coefficient"].GetDouble();
+    std::shared_ptr<char> ptr_image_size(new char[std::strlen(image_size)], std::default_delete<char[]>());
+    strcpy(ptr_image_size.get(),image_size);
+    width_ = std::atoi(strtok(ptr_image_size.get(),"x"));
+    height_ = std::atoi(strtok(NULL,"x"));
 }
 
 bool readCameraInformation(){

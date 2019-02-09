@@ -24,7 +24,7 @@ configure_file(distortion.txt distortion.txt)
 configure_file(CheckerBoardSettings.ini CheckerBoardSettings.ini)
 configure_file(TextureFragmentShader.fragmentshader TextureFragmentShader.fragmentshader)
 configure_file(TransformVertexShader.vertexshader TransformVertexShader.vertexshader)
-
+configure_file(camera_descriptions/cameras.json camera_descriptions/cameras.json )
 
 # Compile external dependencies
 add_subdirectory (external)

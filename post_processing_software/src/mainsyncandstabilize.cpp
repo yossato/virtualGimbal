@@ -200,6 +200,15 @@ int main(int argc, char** argv){
         }
     }
 
+    const CameraInformation cameraInfo("ILCE-6500","SEL1670Z","1920x1080");
+    std::cout << "camera_name_" << cameraInfo.camera_name_ << std::endl;
+    std::cout << "lens_name_" << cameraInfo.lens_name_ << std::endl;
+    std::cout << "width_" << cameraInfo.width_ << std::endl;
+    std::cout << "height_" << cameraInfo.height_ << std::endl;
+    std::cout << "fx_" << cameraInfo.fx_ << std::endl;
+    std::cout << "fy_" << cameraInfo.fy_ << std::endl;
+
+
     std::vector<cv::Vec3d> opticShift;
     //動画からオプティカルフローを計算する
     auto t1 = std::chrono::system_clock::now() ;
