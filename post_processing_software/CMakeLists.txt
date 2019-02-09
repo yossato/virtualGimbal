@@ -115,11 +115,12 @@ add_executable(virtualGimbal src/mainsyncandstabilize.cpp
         src/distortion.cpp
         src/visualizer.cpp
         src/json_tools.cpp
-
+        src/camera_information.cpp
         include/settings.h
         include/distortion.h
         include/visualizer.h
         include/vsp.h
+        include/camera_information.h
 #        include/frequency_domain_optimization.hpp
 
         TransformVertexShader.vertexshader
@@ -127,15 +128,7 @@ add_executable(virtualGimbal src/mainsyncandstabilize.cpp
 )
 target_link_libraries(virtualGimbal ${ALL_LIBS} ${PYTHON_LIBRARIES})
 
-add_executable(vectorCorrecter
-    src/vectorCorrecter.cpp
-    src/mINIRead.cpp
-    src/distortion.cpp
 
-        include/matplotlib-cpp/matplotlibcpp.h
-        include/stabilize.h
-)
-target_link_libraries(vectorCorrecter ${ALL_LIBS} ${PYTHON_LIBRARIES})
 
 add_executable(audioEdit src/audioedit.cpp)
 target_link_libraries(audioEdit ${ALL_LIBS})

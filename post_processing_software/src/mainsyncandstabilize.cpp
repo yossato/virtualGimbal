@@ -136,7 +136,7 @@ int main(int argc, char** argv){
     float vAngle = 0.f;
     float hAngle = 0.f;
     float zoomRatio = 1.f;
-    double rollingShutterDuration = 0; //rolling shutter duration [frame]
+//    double rollingShutterDuration = 0; //rolling shutter duration [frame]
 //    int32_t lowPassFilterStrength = 3;
     //引数の確認
     char *videoPass = NULL;
@@ -145,7 +145,7 @@ int main(int argc, char** argv){
     //    char *outputPass = NULL;
     bool outputStabilizedVideo = false;
     int opt;
-    while((opt = getopt(argc, argv, "j:i:c:o::d::v:h:z:r:f:")) != -1){
+    while((opt = getopt(argc, argv, "j:i:c:o::d::v:h:z:f:")) != -1){
         string value1 ;//= optarg;
         switch (opt) {
         case 'j':       //input json file from virtual gimbal
@@ -175,15 +175,15 @@ int main(int argc, char** argv){
             value1 = optarg;
             zoomRatio = std::stof(value1);
             break;
-        case 'r':       //rolling shutter duration [frame]. This should be between -1 and 1.
-            value1 = optarg;
-            rollingShutterDuration = std::stof(value1);
-            if(rollingShutterDuration > 1.0){
-                rollingShutterDuration = 1.0;
-            }else if(rollingShutterDuration < -1.0){
-                rollingShutterDuration = -1.0;
-            }
-            break;
+//        case 'r':       //rolling shutter duration [frame]. This should be between -1 and 1.
+//            value1 = optarg;
+//            rollingShutterDuration = std::stof(value1);
+//            if(rollingShutterDuration > 1.0){
+//                rollingShutterDuration = 1.0;
+//            }else if(rollingShutterDuration < -1.0){
+//                rollingShutterDuration = -1.0;
+//            }
+//            break;
         case 'f':       //Low pass filter strength of a camera shake reduction.
             //Larger is strong filter. This parameter must be integer.
             //Default 3.
@@ -200,13 +200,13 @@ int main(int argc, char** argv){
         }
     }
 
-    const CameraInformation cameraInfo("ILCE-6500","SEL1670Z","1920x1080");
-    std::cout << "camera_name_" << cameraInfo.camera_name_ << std::endl;
-    std::cout << "lens_name_" << cameraInfo.lens_name_ << std::endl;
-    std::cout << "width_" << cameraInfo.width_ << std::endl;
-    std::cout << "height_" << cameraInfo.height_ << std::endl;
-    std::cout << "fx_" << cameraInfo.fx_ << std::endl;
-    std::cout << "fy_" << cameraInfo.fy_ << std::endl;
+    shared_ptr<CameraInformation> cameraInfo(new CameraInformationJsonParser("ILCE-6500","SEL1670Z","1920x1080"));
+    std::cout << "camera_name_" << cameraInfo->camera_name_ << std::endl;
+    std::cout << "lens_name_" << cameraInfo->lens_name_ << std::endl;
+    std::cout << "width_" << cameraInfo->width_ << std::endl;
+    std::cout << "height_" << cameraInfo->height_ << std::endl;
+    std::cout << "fx_" << cameraInfo->fx_ << std::endl;
+    std::cout << "fy_" << cameraInfo->fy_ << std::endl;
 
 
     std::vector<cv::Vec3d> opticShift;
@@ -260,13 +260,13 @@ int main(int argc, char** argv){
     std::cout << "samplingPeriod" << Tvideo << std::endl;
 
     //内部パラメータを読み込み
-    cv::Mat matIntrinsic;
-    ReadIntrinsicsParams("intrinsic.txt",matIntrinsic);
-    std::cout << "Camera matrix:\n" << matIntrinsic << "\n" <<  std::endl;
-    double fx = matIntrinsic.at<double>(0,0);
-    double fy = matIntrinsic.at<double>(1,1);
-    double cx = matIntrinsic.at<double>(0,2);
-    double cy = matIntrinsic.at<double>(1,2);
+//    cv::Mat matIntrinsic;
+//    ReadIntrinsicsParams("intrinsic.txt",matIntrinsic);
+//    std::cout << "Camera matrix:\n" << matIntrinsic << "\n" <<  std::endl;
+//    double cameraInfo.fx_ = matIntrinsic.at<double>(0,0);
+//    double cameraInfo.fy_ = matIntrinsic.at<double>(1,1);
+//    double cx = matIntrinsic.at<double>(0,2);
+//    double cy = matIntrinsic.at<double>(1,2);
 
     //動画書き出しのマルチスレッド処理の準備
     buffer.isWriting = true;
@@ -287,18 +287,18 @@ int main(int argc, char** argv){
 
 
     //歪パラメータの読み込み
-    cv::Mat matDist;
-    ReadDistortionParams("distortion.txt",matDist);
-    std::cout << "Distortion Coeff:\n" << matDist << "\n" << std::endl;
+//    cv::Mat matDist;
+//    ReadDistortionParams("distortion.txt",matDist);
+//    std::cout << "Distortion Coeff:\n" << matDist << "\n" << std::endl;
 
     //逆歪パラメータの計算
     cv::Mat matInvDistort;
-    calcDistortCoeff(matIntrinsic,matDist,imageSize,matInvDistort);
+    calcInverseDistortCoeff(*cameraInfo);
 
     //逆歪パラメータ表示
     if(PRINT_INV_DISTORT_COEFF){
-        cout << "distCoeff:" << matDist << endl;
-        cout << "invert distCoeff:" << matInvDistort << endl;
+        cout << "distCoeff:" << cameraInfo->k1_ << "," <<cameraInfo->k2_ << "," <<cameraInfo->p1_ << "," <<cameraInfo->p2_ << "," << endl;
+        cout << "invert distCoeff:" << cameraInfo->inverse_k1_ << "," <<cameraInfo->inverse_k2_ << "," <<cameraInfo->inverse_p1_ << "," <<cameraInfo->inverse_p2_ << "," << endl;
     }
 
 
@@ -352,7 +352,7 @@ int main(int argc, char** argv){
     //動画のオプティカルフローと内部パラメータと解像度から角速度推定値を計算
     vector<cv::Vec3d> estimatedAngularVelocity;
     for(auto el:opticShift){
-        estimatedAngularVelocity.push_back(cv::Vec3d(-atan(el[1]/fy),atan(el[0]/fx),el[2])/Tvideo*-1);
+        estimatedAngularVelocity.push_back(cv::Vec3d(-atan(el[1]/cameraInfo->fy_),atan(el[0]/cameraInfo->fx_),el[2])/Tvideo*-1);
     }
 
     t1 = std::chrono::system_clock::now() ;
@@ -418,11 +418,12 @@ int main(int argc, char** argv){
         vsp v2(/*angleQuaternion_vsp2,*/
                division_x,
                division_y,
-               rollingShutterDuration,
-               convCVMat2EigenMat(matInvDistort),
-               convCVMat2EigenMat(matIntrinsic),
-               imageSize.width,
-               imageSize.height,
+//               rollingShutterDuration,
+//               convCVMat2EigenMat(matInvDistort),
+//               convCVMat2EigenMat(matIntrinsic),
+//               imageSize.width,
+//               imageSize.height,
+               *cameraInfo,
                (double)zoomRatio,
                angular_velocity_from_csv,
                Tvideo,
@@ -453,11 +454,12 @@ int main(int argc, char** argv){
         readSynchronizedQuaternion(raw_quaternion,filtered_quaternion,videoPass);
         v2.reset(new vsp(division_x,
                          division_y,
-                         rollingShutterDuration,
-                         convCVMat2EigenMat(matInvDistort),
-                         convCVMat2EigenMat(matIntrinsic),
-                         imageSize.width,
-                         imageSize.height,
+//                         rollingShutterDuration,
+//                         convCVMat2EigenMat(matInvDistort),
+//                         convCVMat2EigenMat(matIntrinsic),
+//                         imageSize.width,
+//                         imageSize.height,
+                         *cameraInfo,
                          (double)zoomRatio,
                          angular_velocity_from_csv,
                          Tvideo,
@@ -471,11 +473,12 @@ int main(int argc, char** argv){
     }else{
         v2.reset(new vsp(division_x,
                          division_y,
-                         rollingShutterDuration,
-                         convCVMat2EigenMat(matInvDistort),
-                         convCVMat2EigenMat(matIntrinsic),
-                         imageSize.width,
-                         imageSize.height,
+//                         rollingShutterDuration,
+//                         convCVMat2EigenMat(matInvDistort),
+//                         convCVMat2EigenMat(matIntrinsic),
+//                         imageSize.width,
+//                         imageSize.height,
+                         *cameraInfo,
                          (double)zoomRatio,
                          angular_velocity_from_csv,
                          Tvideo,

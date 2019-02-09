@@ -38,7 +38,7 @@ using namespace glm;
 #include <common/texture.hpp>
 #include <common/controls.hpp>
 #include "seekablevideocapture.h"
-
+#include "camera_information.h"
 
 
 class vsp
@@ -62,11 +62,12 @@ public:
      **/
     vsp(int32_t division_x,
         int32_t division_y,
-        double TRollingShutter,
-        Eigen::MatrixXd IK,
-        Eigen::MatrixXd matIntrinsic,
-        int32_t image_width,
-        int32_t image_height,
+//        double TRollingShutter,
+//        Eigen::MatrixXd IK,
+//        Eigen::MatrixXd matIntrinsic,
+//        int32_t image_width,
+//        int32_t image_height,
+        CameraInformation camera_info,
         double zoom,
         std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> &angular_velocity,
         double T_video,
@@ -77,11 +78,12 @@ public:
 
     vsp(int32_t division_x,
         int32_t division_y,
-        double TRollingShutter,
-        Eigen::MatrixXd IK,
-        Eigen::MatrixXd matIntrinsic,
-        int32_t image_width,
-        int32_t image_height,
+//        double TRollingShutter,
+//        Eigen::MatrixXd IK,
+//        Eigen::MatrixXd matIntrinsic,
+//        int32_t image_width,
+//        int32_t image_height,
+        CameraInformation camera_info,
         double zoom,
         std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> &angular_velocity,
         double T_video,
@@ -246,8 +248,8 @@ void setParam(double fs, double fc);
 //            double TRollingShutter,
 //            Eigen::MatrixXd &IK,
 //            Eigen::MatrixXd &matIntrinsic,
-//            uint32_t image_width,
-//            uint32_t image_height,
+//            uint32_t camera_info_.width_,
+//            uint32_t camera_info_.height_,
             std::vector<_Tx> &vecPorigonn_uv
 //            double zoom
             ){
@@ -260,14 +262,14 @@ void setParam(double fs, double fc);
         //2.1の座標を入力として、各行毎のW(t1,t2)を計算
         //3.補正後の画像上のポリゴン座標(pixel)を計算、歪み補正も含める
 
-        double fx = matIntrinsic(0, 0);
-        double fy = matIntrinsic(1, 1);
-        double cx = matIntrinsic(0, 2);
-        double cy = matIntrinsic(1, 2);
-        double k1 = IK(0,0);
-        double k2 = IK(0,1);
-        double p1 = IK(0,2);
-        double p2 = IK(0,3);
+//        double camera_info_.fx_ = camera_info_.fx_;
+//        double camera_info_.fy_ = matIntrinsic(1, 1);
+//        double camera_info_.cx_ = matIntrinsic(0, 2);
+//        double camera_info_.cy_ = matIntrinsic(1, 2);
+//        double camera_info_.k1_ = IK(0,0);
+//        double camera_info_.k2_ = IK(0,1);
+//        double camera_info_.p1_ = IK(0,2);
+//        double camera_info_.p2_ = IK(0,3);
 
         vecPorigonn_uv.clear();
 
@@ -278,9 +280,9 @@ void setParam(double fs, double fc);
             //W(t1,t2)を計算
             Eigen::MatrixXd R;
             //1
-            double v = (double)j/division_y*image_height;
+            double v = (double)j/division_y*camera_info_.height_;
 
-            double exposureTimingInEachRow = TRollingShutter*v/image_height;	//ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
+            double exposureTimingInEachRow = camera_info_.rolling_shutter_coefficient_*v/camera_info_.height_;	//ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
 
             Eigen::Quaternion<double> slerpedAngleQuaternion;
             if(exposureTimingInEachRow >= 0){
@@ -290,10 +292,10 @@ void setParam(double fs, double fc);
             }
             Quaternion2Matrix(slerpedAngleQuaternion,R);
             for(int i=0;i<=division_x;++i){
-                double u = (double)i/division_x*image_width;
+                double u = (double)i/division_x*camera_info_.width_;
                 //後々の行列演算に備えて、画像上の座標を同次座標で表現しておく。(x座標、y座標,1)T
                 Eigen::Vector3d p;
-                p << (u- cx)/fx, (v - cy)/fy, 1.0;	//1のポリゴン座標に、K^-1を掛けた結果の３x１行列
+                p << (u- camera_info_.cx_)/camera_info_.fx_, (v - camera_info_.cy_)/camera_info_.fy_, 1.0;	//1のポリゴン座標に、K^-1を掛けた結果の３x１行列
                 //2
                 Eigen::MatrixXd XYW = R * p;//inv()なし
 
@@ -306,16 +308,16 @@ void setParam(double fs, double fc);
 
                 double r = sqrt(x1*x1+y1*y1);
 
-                double x2 = x1*(1.0+k1*r*r+k2*r*r*r*r)+2.0*p1*x1*y1+p2*(r*r+2.0*x1*x1);
-                double y2 = y1*(1.0+k1*r*r+k2*r*r*r*r)+p1*(r*r+2.0*y1*y1)+2.0*p2*x1*y1;
+                double x2 = x1*(1.0+camera_info_.k1_*r*r+camera_info_.k2_*r*r*r*r)+2.0*camera_info_.p1_*x1*y1+camera_info_.p2_*(r*r+2.0*x1*x1);
+                double y2 = y1*(1.0+camera_info_.k1_*r*r+camera_info_.k2_*r*r*r*r)+camera_info_.p1_*(r*r+2.0*y1*y1)+2.0*camera_info_.p2_*x1*y1;
                 //変な折り返しを防止
                 if((pow(x2-x1,2)>1.0)||(pow(y2-y1,2)>1.0)){
                     //                printf("折り返し防止\r\n");
                     x2 = x1;
                     y2 = y1;
                 }
-                vecPorigonn_uv.push_back(x2*fx*zoom/image_width*2.0);
-                vecPorigonn_uv.push_back(y2*fy*zoom/image_height*2.0);
+                vecPorigonn_uv.push_back(x2*camera_info_.fx_*zoom/camera_info_.width_*2.0);
+                vecPorigonn_uv.push_back(y2*camera_info_.fy_*zoom/camera_info_.height_*2.0);
             }
         }
 
@@ -324,9 +326,9 @@ void setParam(double fs, double fc);
             //W(t1,t2)を計算
             Eigen::MatrixXd R;
             //1
-            double v = (double)j/division_y*image_height;
+            double v = (double)j/division_y*camera_info_.height_;
 
-            double exposureTimingInEachRow = TRollingShutter*v/image_height;	//ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
+            double exposureTimingInEachRow = camera_info_.rolling_shutter_coefficient_*v/camera_info_.height_;	//ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
 
             Eigen::Quaternion<double> slerpedAngleQuaternion;
             if(exposureTimingInEachRow >= 0){
@@ -336,10 +338,10 @@ void setParam(double fs, double fc);
             }
             Quaternion2Matrix(slerpedAngleQuaternion,R);
             for(int i=0;i<=division_x;i+=division_x){
-                double u = (double)i/division_x*image_width;
+                double u = (double)i/division_x*camera_info_.width_;
                 //後々の行列演算に備えて、画像上の座標を同次座標で表現しておく。(x座標、y座標,1)T
                 Eigen::Vector3d p;
-                p << (u- cx)/fx, (v - cy)/fy, 1.0;	//1のポリゴン座標に、K^-1を掛けた結果の３x１行列
+                p << (u- camera_info_.cx_)/camera_info_.fx_, (v - camera_info_.cy_)/camera_info_.fy_, 1.0;	//1のポリゴン座標に、K^-1を掛けた結果の３x１行列
                 //2
                 Eigen::MatrixXd XYW = R * p;//inv()なし
 
@@ -352,16 +354,16 @@ void setParam(double fs, double fc);
 
                 double r = sqrt(x1*x1+y1*y1);
 
-                double x2 = x1*(1.0+k1*r*r+k2*r*r*r*r)+2.0*p1*x1*y1+p2*(r*r+2.0*x1*x1);
-                double y2 = y1*(1.0+k1*r*r+k2*r*r*r*r)+p1*(r*r+2.0*y1*y1)+2.0*p2*x1*y1;
+                double x2 = x1*(1.0+camera_info_.k1_*r*r+camera_info_.k2_*r*r*r*r)+2.0*camera_info_.p1_*x1*y1+camera_info_.p2_*(r*r+2.0*x1*x1);
+                double y2 = y1*(1.0+camera_info_.k1_*r*r+camera_info_.k2_*r*r*r*r)+camera_info_.p1_*(r*r+2.0*y1*y1)+2.0*camera_info_.p2_*x1*y1;
                 //変な折り返しを防止
                 if((pow(x2-x1,2)>1.0)||(pow(y2-y1,2)>1.0)){
                     //                printf("折り返し防止\r\n");
                     x2 = x1;
                     y2 = y1;
                 }
-                vecPorigonn_uv.push_back(x2*fx*zoom/image_width*2.0);
-                vecPorigonn_uv.push_back(y2*fy*zoom/image_height*2.0);
+                vecPorigonn_uv.push_back(x2*camera_info_.fx_*zoom/camera_info_.width_*2.0);
+                vecPorigonn_uv.push_back(y2*camera_info_.fy_*zoom/camera_info_.height_*2.0);
             }
         }
 
@@ -371,9 +373,9 @@ void setParam(double fs, double fc);
             //W(t1,t2)を計算
             Eigen::MatrixXd R;
             //1
-            double v = (double)j/division_y*image_height;
+            double v = (double)j/division_y*camera_info_.height_;
 
-            double exposureTimingInEachRow = TRollingShutter*v/image_height;	//ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
+            double exposureTimingInEachRow = camera_info_.rolling_shutter_coefficient_*v/camera_info_.height_;	//ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
 
             Eigen::Quaternion<double> slerpedAngleQuaternion;
             if(exposureTimingInEachRow >= 0){
@@ -383,10 +385,10 @@ void setParam(double fs, double fc);
             }
             Quaternion2Matrix(slerpedAngleQuaternion,R);
             for(int i=0;i<=division_x;++i){
-                double u = (double)i/division_x*image_width;
+                double u = (double)i/division_x*camera_info_.width_;
                 //後々の行列演算に備えて、画像上の座標を同次座標で表現しておく。(x座標、y座標,1)T
                 Eigen::Vector3d p;
-                p  << (u- cx)/fx, (v - cy)/fy, 1.0;	//1のポリゴン座標に、K^-1を掛けた結果の３x１行列
+                p  << (u- camera_info_.cx_)/camera_info_.fx_, (v - camera_info_.cy_)/camera_info_.fy_, 1.0;	//1のポリゴン座標に、K^-1を掛けた結果の３x１行列
                 //2
                 Eigen::MatrixXd XYW = R * p;//inv()なし
 
@@ -399,16 +401,16 @@ void setParam(double fs, double fc);
 
                 double r = sqrt(x1*x1+y1*y1);
 
-                double x2 = x1*(1.0+k1*r*r+k2*r*r*r*r)+2.0*p1*x1*y1+p2*(r*r+2.0*x1*x1);
-                double y2 = y1*(1.0+k1*r*r+k2*r*r*r*r)+p1*(r*r+2.0*y1*y1)+2.0*p2*x1*y1;
+                double x2 = x1*(1.0+camera_info_.k1_*r*r+camera_info_.k2_*r*r*r*r)+2.0*camera_info_.p1_*x1*y1+camera_info_.p2_*(r*r+2.0*x1*x1);
+                double y2 = y1*(1.0+camera_info_.k1_*r*r+camera_info_.k2_*r*r*r*r)+camera_info_.p1_*(r*r+2.0*y1*y1)+2.0*camera_info_.p2_*x1*y1;
                 //変な折り返しを防止
                 if((pow(x2-x1,2)>1.0)||(pow(y2-y1,2)>1.0)){
                     //                printf("折り返し防止\r\n");
                     x2 = x1;
                     y2 = y1;
                 }
-                vecPorigonn_uv.push_back(x2*fx*zoom/image_width*2.0);
-                vecPorigonn_uv.push_back(y2*fy*zoom/image_height*2.0);
+                vecPorigonn_uv.push_back(x2*camera_info_.fx_*zoom/camera_info_.width_*2.0);
+                vecPorigonn_uv.push_back(y2*camera_info_.fy_*zoom/camera_info_.height_*2.0);
             }
         }
 
@@ -541,14 +543,14 @@ void setParam(double fs, double fc);
         //2.1の座標を入力として、各行毎のW(t1,t2)を計算
         //3.補正後の画像上のポリゴン座標(pixel)を計算、歪み補正も含める
 
-        double fx = matIntrinsic(0, 0);
-        double fy = matIntrinsic(1, 1);
-        double cx = matIntrinsic(0, 2);
-        double cy = matIntrinsic(1, 2);
-        double k1 = IK(0,0);
-        double k2 = IK(0,1);
-        double p1 = IK(0,2);
-        double p2 = IK(0,3);
+//        double camera_info_.fx_ = matIntrinsic(0, 0);
+//        double camera_info_.fy_ = matIntrinsic(1, 1);
+//        double camera_info_.cx_ = matIntrinsic(0, 2);
+//        double camera_info_.cy_ = matIntrinsic(1, 2);
+//        double camera_info_.k1_ = IK(0,0);
+//        double camera_info_.k2_ = IK(0,1);
+//        double camera_info_.p1_ = IK(0,2);
+//        double camera_info_.p2_ = IK(0,3);
 
         vecPorigonn_uv.clear();
         Eigen::MatrixXd map_x = Eigen::MatrixXd::Zero(division_y+1,division_x+1);
@@ -558,9 +560,9 @@ void setParam(double fs, double fc);
             //W(t1,t2)を計算
             Eigen::MatrixXd R;
             //1
-            double v = (double)j/division_y*image_height;
+            double v = (double)j/division_y*camera_info_.height_;
 
-            double exposureTimingInEachRow = TRollingShutter*v/image_height;	//ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
+            double exposureTimingInEachRow = camera_info_.rolling_shutter_coefficient_*v/camera_info_.height_;	//ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
 
             Eigen::Quaternion<double> slerpedAngleQuaternion;
             if(exposureTimingInEachRow >= 0){
@@ -570,10 +572,10 @@ void setParam(double fs, double fc);
             }
             Quaternion2Matrix(slerpedAngleQuaternion,R);
             for(int i=0;i<=division_x;++i){
-                double u = (double)i/division_x*image_width;
+                double u = (double)i/division_x*camera_info_.width_;
                 //後々の行列演算に備えて、画像上の座標を同次座標で表現しておく。(x座標、y座標,1)T
                 Eigen::Vector3d p;
-                p << (u- cx)/fx, (v - cy)/fy, 1.0;	//1のポリゴン座標に、K^-1を掛けた結果の３x１行列
+                p << (u- camera_info_.cx_)/camera_info_.fx_, (v - camera_info_.cy_)/camera_info_.fy_, 1.0;	//1のポリゴン座標に、K^-1を掛けた結果の３x１行列
                 //2
                 Eigen::MatrixXd XYW = R * p;//inv()なし
 
@@ -586,18 +588,18 @@ void setParam(double fs, double fc);
 
                 double r = sqrt(x1*x1+y1*y1);
 
-                double x2 = x1*(1.0+k1*r*r+k2*r*r*r*r)+2.0*p1*x1*y1+p2*(r*r+2.0*x1*x1);
-                double y2 = y1*(1.0+k1*r*r+k2*r*r*r*r)+p1*(r*r+2.0*y1*y1)+2.0*p2*x1*y1;
+                double x2 = x1*(1.0+camera_info_.k1_*r*r+camera_info_.k2_*r*r*r*r)+2.0*camera_info_.p1_*x1*y1+camera_info_.p2_*(r*r+2.0*x1*x1);
+                double y2 = y1*(1.0+camera_info_.k1_*r*r+camera_info_.k2_*r*r*r*r)+camera_info_.p1_*(r*r+2.0*y1*y1)+2.0*camera_info_.p2_*x1*y1;
                 //変な折り返しを防止
                 if((pow(x2-x1,2)>1.0)||(pow(y2-y1,2)>1.0)){
                     //                printf("折り返し防止\r\n");
                     x2 = x1;
                     y2 = y1;
                 }
-//                vecPorigonn_uv.push_back(x2*fx*zoom/image_width*2.0);
-//                vecPorigonn_uv.push_back(y2*fy*zoom/image_height*2.0);
-                map_x(j,i) = x2*fx*zoom/image_width*2.0;
-                map_y(j,i) = y2*fy*zoom/image_height*2.0;
+//                vecPorigonn_uv.push_back(x2*fx*zoom/camera_info_.width_*2.0);
+//                vecPorigonn_uv.push_back(y2*fy*zoom/camera_info_.height_*2.0);
+                map_x(j,i) = x2*camera_info_.fx_*zoom/camera_info_.width_*2.0;
+                map_y(j,i) = y2*camera_info_.fy_*zoom/camera_info_.height_*2.0;
 
                 }
         }
@@ -731,11 +733,12 @@ private:
     bool quaternion_is_filtered=false;
     int32_t division_x = 9;
     int32_t division_y = 9;
-    double TRollingShutter = 0.0;
-    Eigen::MatrixXd IK = Eigen::MatrixXd::Zero(1,4);
-    Eigen::MatrixXd matIntrinsic = Eigen::MatrixXd::Identity(3,3);
-    int32_t image_width=1920;
-    int32_t image_height=1080;
+//    double camera_info_.rolling_shutter_coefficient_ = 0.0;
+//    Eigen::MatrixXd IK = Eigen::MatrixXd::Zero(1,4);
+//    Eigen::MatrixXd matIntrinsic = Eigen::MatrixXd::Identity(3,3);
+//    int32_t image_width=1920;
+//    int32_t image_height=1080;
+    const CameraInformation camera_info_;
     double zoom=1.0;
 
     std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> angular_velocity;

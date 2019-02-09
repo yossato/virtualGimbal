@@ -6,26 +6,28 @@ GLFWwindow* window;
 vsp::vsp(/*vector<Eigen::Quaternion<T>> &angle_quaternion,*/
          int32_t division_x,
          int32_t division_y,
-         double TRollingShutter,
-         Eigen::MatrixXd IK,
-         Eigen::MatrixXd matIntrinsic,
-         int32_t image_width,
-         int32_t image_height,
+//         double TRollingShutter,
+//         Eigen::MatrixXd IK,
+//         Eigen::MatrixXd matIntrinsic,
+//         int32_t camera_info_.width_,
+//         int32_t camera_info_.height_,
+         CameraInformation camera_info,
          double zoom,
          std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> &angular_velocity,
          double T_video,
          double T_angular_velocity,
          double frame_offset,
          int32_t video_frames,
-         int32_t filter_tap_length){
+         int32_t filter_tap_length):camera_info_(camera_info){
     is_filtered=false;
     this->division_x = division_x;
     this->division_y = division_y;
-    this->TRollingShutter = TRollingShutter;
-    this->IK = IK;
-    this->matIntrinsic = matIntrinsic;
-    this->image_width = image_width;
-    this->image_height = image_height;
+//    this->TRollingShutter = TRollingShutter;
+//    this->IK = IK;
+//    this->matIntrinsic = matIntrinsic;
+//    this->camera_info_.width_ = camera_info_.width_;
+//    this->camera_info_.height_ = camera_info_.height_;
+//    this->camera_info_ = camera_info;
     this->zoom = zoom;
 
     this->angular_velocity = angular_velocity;
@@ -65,11 +67,12 @@ vsp::vsp(/*vector<Eigen::Quaternion<T>> &angle_quaternion,*/
 
 vsp::vsp(int32_t division_x,
     int32_t division_y,
-    double TRollingShutter,
-    Eigen::MatrixXd IK,
-    Eigen::MatrixXd matIntrinsic,
-    int32_t image_width,
-    int32_t image_height,
+//    double TRollingShutter,
+//    Eigen::MatrixXd IK,
+//    Eigen::MatrixXd matIntrinsic,
+//    int32_t camera_info_.width_,
+//    int32_t camera_info_.height_,
+         CameraInformation camera_info,
     double zoom,
     std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> &angular_velocity,
     double T_video,
@@ -79,8 +82,8 @@ vsp::vsp(int32_t division_x,
     int32_t filter_tap_length,
     Eigen::MatrixXd &raw_quaternion,
     Eigen::MatrixXd &filtered_quaternion)
-    :is_filtered(false),division_x(division_x),division_y(division_y),TRollingShutter(TRollingShutter),IK(IK),
-      matIntrinsic(matIntrinsic),image_width(image_width),image_height(image_height),zoom(zoom),
+    :is_filtered(false),division_x(division_x),division_y(division_y),
+      camera_info_(camera_info),zoom(zoom),
       angular_velocity(angular_velocity),T_video(T_video),T_angular_velocity(T_angular_velocity),
       frame_offset(frame_offset),video_frames(video_frames),filter_tap_length(filter_tap_length),
       raw_quaternion(raw_quaternion),filtered_quaternion_(filtered_quaternion)
@@ -543,8 +546,8 @@ Eigen::MatrixXd vsp::CLerp(Eigen::MatrixXd start, Eigen::MatrixXd end, int32_t n
 //                    //                    TRollingShutter,
 //                    //                    IK,
 //                    //                    matIntrinsic,
-//                    //                    image_width,
-//                    //                    image_height,
+//                    //                    camera_info_.width_,
+//                    //                    camera_info_.height_,
 //                    vecPorigonn_uv
 //                    //                    zoom
 //                    );
@@ -857,7 +860,7 @@ int vsp::init_opengl(cv::Size textureSize){
     glBindTexture(GL_TEXTURE_2D, renderedTexture);
 
     // Give an empty image to OpenGL ( the last "0" means "empty" )
-    glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, image_width, image_height, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, camera_info_.width_, camera_info_.height_, 0,GL_RGB, GL_UNSIGNED_BYTE, 0);
 
     // Poor filtering
     //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -887,11 +890,11 @@ int vsp::init_opengl(cv::Size textureSize){
 
     std::vector<GLfloat> vecTexture;
     for(int j=0;j<division_y;++j){							//jは終了の判定が"<"であることに注意
-        double v	= (double)j/division_y*image_height;
-        double v1	= (double)(j+1)/division_y*image_height;
+        double v	= (double)j/division_y*camera_info_.height_;
+        double v1	= (double)(j+1)/division_y*camera_info_.height_;
         for(int i=0;i<division_x;++i){
-            double u	= (double)i/division_x*image_width;
-            double u1	= (double)(i+1)/division_x*image_width;
+            double u	= (double)i/division_x*camera_info_.width_;
+            double u1	= (double)(i+1)/division_x*camera_info_.width_;
             //OpenGL側へ送信するテクスチャの頂点座標を準備
             vecTexture.push_back((GLfloat)u/textureSize.width);//x座標
             vecTexture.push_back((GLfloat)v/textureSize.height);//y座標
@@ -975,7 +978,7 @@ int vsp::spin_once(int frame,cv::VideoCapture &capture, cv::Mat &simg){
 #ifdef TEST2D
     // Render to our framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, FramebufferName);
-    glViewport(0,0,image_width,image_height); // Render on the whole framebuffer, complete from the lower left corner to the upper right
+    glViewport(0,0,camera_info_.width_,camera_info_.height_); // Render on the whole framebuffer, complete from the lower left corner to the upper right
 #endif
 
     // Clear the screen
@@ -1010,12 +1013,12 @@ int vsp::spin_once(int frame,cv::VideoCapture &capture, cv::Mat &simg){
     glUniform1i(TextureID, 0);
 
     //歪補正の準備
-    float nfxy[] = {(float)(matIntrinsic(0,0)/image_width), (float)(matIntrinsic(1,1)/image_height)};
+    float nfxy[] = {(float)(camera_info_.fx_/camera_info_.width_), (float)(camera_info_.fy_/camera_info_.height_)};
     glUniform2fv(nFxyID, 1, nfxy);
-    float ncxy[] = {(float)(matIntrinsic(0,2)/image_width), (float)(matIntrinsic(1,2)/image_height)};
+    float ncxy[] = {(float)(camera_info_.cx_/camera_info_.width_), (float)(camera_info_.cy_/camera_info_.height_)};
     glUniform2fv(nCxyID, 1, ncxy);
     //        float distcoeffFloat[] = {(float)(matDist.at<double>(0,0)),(float)(matDist.at<double>(0,1)),(float)(matDist.at<double>(0,2)),(float)(matDist.at<double>(0,3))};
-    float distcoeffFloat[] = {(float)(IK(0,0)),(float)(IK(0,1)),(float)(IK(0,2)),(float)(IK(0,3))};
+    float distcoeffFloat[] = {(float)(camera_info_.inverse_k1_  ),(float)(camera_info_.inverse_k2_),(float)(camera_info_.inverse_p1_),(float)(camera_info_.inverse_p2_)};
     glUniform4fv(distCoeffID, 1, distcoeffFloat);
 
     // 1rst attribute buffer : vertices
@@ -1047,8 +1050,8 @@ int vsp::spin_once(int frame,cv::VideoCapture &capture, cv::Mat &simg){
 
 #if 1
     ////////////////////
-//    cv::Mat simg(cv::Size(image_width,image_height),CV_8UC3);
-    simg = cv::Mat(cv::Size(image_width,image_height),CV_8UC3);
+//    cv::Mat simg(cv::Size(camera_info_.width_,camera_info_.height_),CV_8UC3);
+    simg = cv::Mat(cv::Size(camera_info_.width_,camera_info_.height_),CV_8UC3);
     //~ glReadBuffer(GL_FRONT);//読み取るOpenGLのバッファを指定 GL_FRONT:フロントバッファ GL_BACK:バックバッファ
 
 
@@ -1057,8 +1060,8 @@ int vsp::spin_once(int frame,cv::VideoCapture &capture, cv::Mat &simg){
     glReadPixels(
                 0,					//読み取る領域の左下隅のx座標
                 0,					//読み取る領域の左下隅のy座標 //0 or getCurrentWidth() - 1
-                image_width,				//読み取る領域の幅
-                image_height,				//読み取る領域の高さ
+                camera_info_.width_,				//読み取る領域の幅
+                camera_info_.height_,				//読み取る領域の高さ
                 GL_BGR,				//it means GL_BGR,           //取得したい色情報の形式
                 GL_UNSIGNED_BYTE,	//読み取ったデータを保存する配列の型
                 simg.data			//ビットマップのピクセルデータ（実際にはバイト配列）へのポインタ
@@ -1071,8 +1074,8 @@ int vsp::spin_once(int frame,cv::VideoCapture &capture, cv::Mat &simg){
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
 
-    cv::Rect roi_dst(0,image_height/4,image_width/2,image_height/2);
-    cv::Rect roi_src(image_width/2,image_height/4,image_width/2,image_height/2);
+    cv::Rect roi_dst(0,camera_info_.height_/4,camera_info_.width_/2,camera_info_.height_/2);
+    cv::Rect roi_src(camera_info_.width_/2,camera_info_.height_/4,camera_info_.width_/2,camera_info_.height_/2);
 
     char pressed_key = cv::waitKey(1);
     if(pressed_key != -1){
@@ -1081,12 +1084,12 @@ int vsp::spin_once(int frame,cv::VideoCapture &capture, cv::Mat &simg){
 
     switch (key) {
     case KEY_ORIGINAL:
-        cv::putText(img, "Original", cv::Point(625,150+image_height*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,cv::LINE_AA);
+        cv::putText(img, "Original", cv::Point(625,150+camera_info_.height_*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,cv::LINE_AA);
         cv::imshow("Preview",img);
         break;
 
     case KEY_STABILIZED:
-        cv::putText(simg, "Stabilized", cv::Point(625,150+image_height*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,cv::LINE_AA);
+        cv::putText(simg, "Stabilized", cv::Point(625,150+camera_info_.height_*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,cv::LINE_AA);
         cv::imshow("Preview",simg);
         break;
     case KEY_QUIT:
@@ -1094,11 +1097,11 @@ int vsp::spin_once(int frame,cv::VideoCapture &capture, cv::Mat &simg){
         break;
     default: //KEY_STABILIZED
 
-        static cv::Mat sidebyside(cv::Size(image_width,image_height),CV_8UC3,cv::Scalar(0));
+        static cv::Mat sidebyside(cv::Size(camera_info_.width_,camera_info_.height_),CV_8UC3,cv::Scalar(0));
         static bool first_time = true;
         if(first_time){
-            cv::putText(sidebyside, "Original", cv::Point(200,150+image_height*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,cv::LINE_AA);
-            cv::putText(sidebyside, "Stabilized", cv::Point(1050,150+image_height*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,cv::LINE_AA);
+            cv::putText(sidebyside, "Original", cv::Point(200,150+camera_info_.height_*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,cv::LINE_AA);
+            cv::putText(sidebyside, "Stabilized", cv::Point(1050,150+camera_info_.height_*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,cv::LINE_AA);
             first_time = false;
         }
 

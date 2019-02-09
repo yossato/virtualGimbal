@@ -6,7 +6,7 @@ using namespace rapidjson;
 
 using namespace Eigen;
 
-CameraInformation::CameraInformation(const char* camera_name, const char* lens_name, const char* image_size, const char* file_name){
+CameraInformationJsonParser::CameraInformationJsonParser(const char *camera_name, const char *lens_name, const char *image_size, const char *file_name){
     struct stat st;
     if( stat(file_name,&st)){
         throw "File doesn's exist";
@@ -23,6 +23,11 @@ CameraInformation::CameraInformation(const char* camera_name, const char* lens_n
     }
 
     const Value& camera = e[camera_name];
+    sd_card_rotation_.w() = camera["quaternion_w"].GetDouble();
+    sd_card_rotation_.x() = camera["quaternion_x"].GetDouble();
+    sd_card_rotation_.y() = camera["quaternion_y"].GetDouble();
+    sd_card_rotation_.z() = camera["quaternion_z"].GetDouble();
+
     camera_name_ = camera_name;
     const Value& parameters = camera["lenses"][lens_name][image_size];
     lens_name_ = lens_name;
@@ -40,6 +45,8 @@ CameraInformation::CameraInformation(const char* camera_name, const char* lens_n
     width_ = std::atoi(strtok(ptr_image_size.get(),"x"));
     height_ = std::atoi(strtok(NULL,"x"));
 }
+
+
 
 bool readCameraInformation(){
 

@@ -17,24 +17,14 @@
 #include <sys/stat.h>
 #include <stdint.h>
 
-class CameraInformation{
-public:
-    CameraInformation(const char* camera_name, const char* lens_name, const char* image_size, const char* file_name="camera_descriptions/cameras.json");
+#include "camera_information.h"
 
-    std::string camera_name_;
-    std::string lens_name_;
-    Eigen::Quaterniond sd_card_rotation_;
-    int32_t width_;
-    int32_t height_;
-    double fx_;
-    double fy_;
-    double cx_;
-    double cy_;
-    double k1_;
-    double k2_;
-    double p1_;
-    double p2_;
-    double rolling_shutter_coefficient_;
+
+
+class CameraInformationJsonParser : public CameraInformation
+{
+public:
+    CameraInformationJsonParser(const char* camera_name, const char* lens_name, const char* image_size, const char* file_name="camera_descriptions/cameras.json");
 };
 
 bool syncronizedQuarternionExist(const std::string &video_name);

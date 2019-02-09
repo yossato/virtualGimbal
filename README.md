@@ -21,10 +21,10 @@ OpenGL 3.3 or later
 Download [Example Video](https://drive.google.com/uc?export=download&id=0B9nCHvB3LdAxZWNKdmdxMTFzam8) and [Angular Velocity data](https://drive.google.com/uc?export=download&id=0B9nCHvB3LdAxTHB1dk0zMkZWbDQ), then put them in ~/vgdataset.
 
 Demo:  
-`./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/angularVelocity.csv -z 1.1 -r 0.5`
+`./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/angularVelocity.csv -z 1.1`
 
 Generating stabilized video:  
-`./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/angularVelocity.csv  -z 1.1 -r 0.5 -o`
+`./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/angularVelocity.csv  -z 1.1 -o`
 
 Here, `i` option is an input video file. `c` is a csv file which contains angular velocity of a camera.
 `z` is zooming ratio.
