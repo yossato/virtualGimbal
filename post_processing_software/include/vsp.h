@@ -308,8 +308,8 @@ void setParam(double fs, double fc);
 
                 double r = sqrt(x1*x1+y1*y1);
 
-                double x2 = x1*(1.0+camera_info_.k1_*r*r+camera_info_.k2_*r*r*r*r)+2.0*camera_info_.p1_*x1*y1+camera_info_.p2_*(r*r+2.0*x1*x1);
-                double y2 = y1*(1.0+camera_info_.k1_*r*r+camera_info_.k2_*r*r*r*r)+camera_info_.p1_*(r*r+2.0*y1*y1)+2.0*camera_info_.p2_*x1*y1;
+                double x2 = x1*(1.0+camera_info_.inverse_k1_*r*r+camera_info_.inverse_k2_*r*r*r*r)+2.0*camera_info_.inverse_p1_*x1*y1+camera_info_.inverse_p2_*(r*r+2.0*x1*x1);
+                double y2 = y1*(1.0+camera_info_.inverse_k1_*r*r+camera_info_.inverse_k2_*r*r*r*r)+camera_info_.inverse_p1_*(r*r+2.0*y1*y1)+2.0*camera_info_.inverse_p2_*x1*y1;
                 //変な折り返しを防止
                 if((pow(x2-x1,2)>1.0)||(pow(y2-y1,2)>1.0)){
                     //                printf("折り返し防止\r\n");
@@ -588,8 +588,8 @@ void setParam(double fs, double fc);
 
                 double r = sqrt(x1*x1+y1*y1);
 
-                double x2 = x1*(1.0+camera_info_.k1_*r*r+camera_info_.k2_*r*r*r*r)+2.0*camera_info_.p1_*x1*y1+camera_info_.p2_*(r*r+2.0*x1*x1);
-                double y2 = y1*(1.0+camera_info_.k1_*r*r+camera_info_.k2_*r*r*r*r)+camera_info_.p1_*(r*r+2.0*y1*y1)+2.0*camera_info_.p2_*x1*y1;
+                double x2 = x1*(1.0+camera_info_.inverse_k1_*r*r+camera_info_.inverse_k2_*r*r*r*r)+2.0*camera_info_.inverse_p1_*x1*y1+camera_info_.inverse_p2_*(r*r+2.0*x1*x1);
+                double y2 = y1*(1.0+camera_info_.inverse_k1_*r*r+camera_info_.inverse_k2_*r*r*r*r)+camera_info_.inverse_p1_*(r*r+2.0*y1*y1)+2.0*camera_info_.inverse_p2_*x1*y1;
                 //変な折り返しを防止
                 if((pow(x2-x1,2)>1.0)||(pow(y2-y1,2)>1.0)){
                     //                printf("折り返し防止\r\n");
