@@ -11,7 +11,7 @@ public:
     CameraInformation(std::string camera_name,std::string lens_name,Eigen::Quaterniond sd_card_rotation,int32_t width,int32_t height,
                       double fx,double fy,double cx,double cy,double k1,double k2,double p1,
                       double p2,double rolling_shutter_coefficient);
-
+virtual ~CameraInformation() = default;
 
     std::string camera_name_;
     std::string lens_name_;

@@ -66,6 +66,7 @@ add_definitions(
         -DTW_NO_DIRECT3D
         -DGLEW_STATIC
         -D_CRT_SECURE_NO_WARNINGS
+        # -DRAPIDJSON_HAS_STDSTRING
 )
 
 
@@ -161,6 +162,7 @@ IF(CMAKE_BUILD_TYPE MATCHES DEBUG)
 set(CMAKE_C_FLAGS_DEBUG "-O0 -g")
 #set(CMAKE_C_FLAGS_DEBUG "-O0 -pg")
 #set(CMAKE_CXX_FLAGS "-pg") #gprof
+# add_definitions(-DRAPIDJSON_HAS_STDSTRING=1)
 ENDIF(CMAKE_BUILD_TYPE MATCHES DEBUG)
 
 # リリースビルド
@@ -168,6 +170,7 @@ IF(CMAKE_BUILD_TYPE MATCHES RELEASE)
     set(CMAKE_BUILD_TYPE Release)
     set(CMAKE_C_FLAGS_RELEASE "-O3 -lm")
     add_definitions(-DEIGEN_NO_DEBUG)
+#     add_definitions(-DRAPIDJSON_HAS_STDSTRING=1)
 ENDIF(CMAKE_BUILD_TYPE MATCHES RELEASE)
 
 #gprof使う場合は以下２行の最後に-pgをつけると良いみたい

@@ -1,4 +1,4 @@
-#ifndef JSON_TOOLS_HPP
+    #ifndef JSON_TOOLS_HPP
 #define JSON_TOOLS_HPP
 
 #include <stdio.h>
@@ -9,6 +9,7 @@
 #include <Eigen/Dense>
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
+#include "rapidjson/prettywriter.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/filewritestream.h"
 #include "rapidjson/filereadstream.h"
@@ -24,7 +25,9 @@
 class CameraInformationJsonParser : public CameraInformation
 {
 public:
+    CameraInformationJsonParser();
     CameraInformationJsonParser(const char* camera_name, const char* lens_name, const char* image_size, const char* file_name="camera_descriptions/cameras.json");
+    void writeCameraInformationJson(const char* file_name="camera_descriptions/cameras.json");
 };
 
 bool syncronizedQuarternionExist(const std::string &video_name);

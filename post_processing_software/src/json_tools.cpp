@@ -6,6 +6,10 @@ using namespace rapidjson;
 
 using namespace Eigen;
 
+CameraInformationJsonParser::CameraInformationJsonParser(){
+
+}
+
 CameraInformationJsonParser::CameraInformationJsonParser(const char *camera_name, const char *lens_name, const char *image_size, const char *file_name){
     struct stat st;
     if( stat(file_name,&st)){
@@ -46,7 +50,60 @@ CameraInformationJsonParser::CameraInformationJsonParser(const char *camera_name
     height_ = std::atoi(strtok(NULL,"x"));
 }
 
+void CameraInformationJsonParser::writeCameraInformationJson(const char* file_name){
+    // TODO: If a json file exist, Open it.
+   Document d(kObjectType);
+   Document camera(kObjectType);
+   Value quaternion_w(sd_card_rotation_.w());
+   Value quaternion_x(sd_card_rotation_.x());
+   Value quaternion_y(sd_card_rotation_.y());
+   Value quaternion_z(sd_card_rotation_.z());
+    Document lenses(kObjectType);
+    Document lens_name(kObjectType);
+    Document image_size(kObjectType);
+    
+    Value fx(fx_);
+    Value fy(fy_);
+    Value cx(cx_);
+    Value cy(cy_);
+    Value k1(k1_);
+    Value k2(k2_);
+    Value p1(p1_);
+    Value p2(p2_);
+    Value rolling_shutter_coefficient(rolling_shutter_coefficient_);
 
+    image_size.AddMember("fx",fx,image_size.GetAllocator());
+    image_size.AddMember("fy",fy,image_size.GetAllocator());
+    image_size.AddMember("cx",cx,image_size.GetAllocator());
+    image_size.AddMember("cy",cy,image_size.GetAllocator());
+    image_size.AddMember("k1",k1,image_size.GetAllocator()); 
+    image_size.AddMember("k2",k2,image_size.GetAllocator());
+    image_size.AddMember("p1",p1,image_size.GetAllocator());
+    image_size.AddMember("p2",p2,image_size.GetAllocator());
+    image_size.AddMember("rolling_shutter_coefficient",rolling_shutter_coefficient,image_size.GetAllocator());
+
+    std::string image_size_string = std::to_string(width_) + std::string("x") + std::to_string(height_);
+    // lens_name.AddMember(d[image_size_string.c_str()],image_size,lens_name.GetAllocator());
+    lens_name.AddMember(Value(image_size_string.c_str(),lens_name.GetAllocator()),image_size,lens_name.GetAllocator());
+    lenses.AddMember(Value(lens_name_.c_str(),lenses.GetAllocator()),lens_name,lenses.GetAllocator());
+    camera.AddMember("quaternion_w",quaternion_w,camera.GetAllocator());  
+    camera.AddMember("quaternion_x",quaternion_x,camera.GetAllocator());  
+    camera.AddMember("quaternion_y",quaternion_y,camera.GetAllocator());  
+    camera.AddMember("quaternion_z",quaternion_z,camera.GetAllocator());
+    camera.AddMember("lenses",lenses,camera.GetAllocator());  
+  
+    d.AddMember(Value(camera_name_.c_str(),d.GetAllocator()),camera,d.GetAllocator());
+
+
+    FILE* fp = fopen(file_name, "wb"); // non-Windows use "w"
+
+    char writeBuffer[262140];
+    FileWriteStream os(fp, writeBuffer, sizeof(writeBuffer));
+    PrettyWriter<FileWriteStream> writer(os);
+    d.Accept(writer);
+    fclose(fp);
+    return ;
+}
 
 bool readCameraInformation(){
 

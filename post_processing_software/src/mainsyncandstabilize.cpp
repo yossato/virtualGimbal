@@ -209,6 +209,8 @@ int main(int argc, char** argv){
     std::cout << "fx_" << cameraInfo->fx_ << std::endl;
     std::cout << "fy_" << cameraInfo->fy_ << std::endl;
 
+    // shared_ptr<CameraInformationJsonParser> jp = std::dynamic_pointer_cast<CameraInformationJsonParser>(cameraInfo);
+    std::dynamic_pointer_cast<CameraInformationJsonParser>(cameraInfo)->writeCameraInformationJson("camera_descriptions/cameras_by_writer.json");
 
     std::vector<cv::Vec3d> opticShift;
     //動画からオプティカルフローを計算する
