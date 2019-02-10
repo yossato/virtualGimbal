@@ -200,7 +200,8 @@ int main(int argc, char** argv){
         }
     }
 
-    shared_ptr<CameraInformation> cameraInfo(new CameraInformationJsonParser("ILCE-6500","SEL1670Z","1920x1080"));
+    // Read camera calibration information from a json file, and generate cameraInfo class instance.
+    shared_ptr<CameraInformation> cameraInfo(new CameraInformationJsonParser("prototype_ILCE-6500","SEL1670Z","1920x1080"));
     std::cout << "camera_name_" << cameraInfo->camera_name_ << std::endl;
     std::cout << "lens_name_" << cameraInfo->lens_name_ << std::endl;
     std::cout << "width_" << cameraInfo->width_ << std::endl;
@@ -313,6 +314,8 @@ int main(int argc, char** argv){
         std::cout << "csv or json file are required." << std::endl;
         return 0;
     }
+
+    vsp::angularVelocityCoordinateTransformer(angular_velocity_from_csv,cameraInfo->sd_card_rotation_);
 
     for(int i=0;i<10;i++){
         printf("%f %f %f\n",angular_velocity_from_csv[i][0],angular_velocity_from_csv[i][1],angular_velocity_from_csv[i][2]);
