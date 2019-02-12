@@ -149,8 +149,8 @@ target_link_libraries(fft_test ${ALL_LIBS}  ${PYTHON_LIBRARIES})
 add_executable(camera_calibration src/camera_calibration.cpp
     src/mINIRead.cpp
     src/json_tools.cpp
-    src/camera_calibration.cpp)
-target_link_libraries(camera_calibration ${OpenCV_LIBS})
+    src/camera_information.cpp)
+target_link_libraries(camera_calibration ${ALL_LIBS} ${OpenCV_LIBS})
 
 
 add_executable(rapidjson_test src/rapidjson_test.cpp)

@@ -1,5 +1,5 @@
 {
-    "prototype_ILCE-6500": {
+    "NEX-6_HDMI_TYPE": {
         "quaternion_w": 1.0,
         "quaternion_x": 0.0,
         "quaternion_y": 0.0,
@@ -20,7 +20,7 @@
             }
         }
     },
-    "ILCE-6500": {
+    "NEX-6": {
         "quaternion_w": 0.707106781,
         "quaternion_x": 0.0,
         "quaternion_y": -0.707106781,
