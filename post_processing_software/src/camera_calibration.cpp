@@ -11,7 +11,7 @@
 #include <semaphore.h>
 #include <sys/time.h>
 #include <functional>
-
+#include "json_tools.hpp"
 int nCount=0;
 volatile int _Quit = 0;//終了するかどうか。0以外で終了
 
@@ -241,6 +241,25 @@ int main(int argc, char** argv){
 			//std::cin >> result;
 			char key = cv::waitKey(1);
 			if ((key == 'Y') || (key == 'y')){	//ファイル保存
+				CameraInformationJsonParser cameraInfo;
+				cameraInfo.fx_ = CameraMatrix.at<double>(0,0);
+				cameraInfo.fy_ = CameraMatrix.at<double>(1,1);
+				cameraInfo.cx_ = CameraMatrix.at<double>(0,2);
+				cameraInfo.cy_ = CameraMatrix.at<double>(1,2);
+				cameraInfo.k1_ = DistCoeffs.at<double)(0,0);
+				cameraInfo.k2_ = DistCoeffs.at<double>(0,1);
+				cameraInfo.p1_ = DistCoeffs.at<double>(0,2);
+				cameraInfo.p2_ = DistCoeffs.at<double>(0,3);
+				cameraInfo.inverse_k1_ = 0.;
+				cameraInfo.inverse_k2_ = 0.;
+				cameraInfo.inverse_p1_ = 0.;
+				cameraInfo.inverse_p2_ = 0.;
+				cameraInfo.rolling_shutter_coefficient_ = 0.; //This calibration does not estimate rolling shutter coefficient.
+				cameraInfo.width_ = Capture.get(cv::CAP_PROP_FRAME_WIDTH);
+				cameraInfo.height_ = Capture.get(cv::CAP_PROP_FRAME_HEIGHT);
+
+
+
 				try{
 					std::cout << "y" << std::endl;
 					std::ofstream ofs;
