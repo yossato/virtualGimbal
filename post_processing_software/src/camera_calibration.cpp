@@ -156,6 +156,17 @@ int main(int argc, char** argv){
         }
     }
 
+    {
+        CameraInformationJsonParser cameraInfo;
+
+        cameraInfo.camera_name_ = cameraName;
+        cameraInfo.lens_name_ = lensName;
+        cameraInfo.sd_card_rotation_ = sd_card_rotation;
+
+        cameraInfo.writeCameraInformationJson("camera_descriptions/cameras_testtest.json");
+        return 0;
+    }
+
     // TODO: Show chess board pattern on a screen.
 
 	//動画読み込み準備
@@ -310,29 +321,9 @@ int main(int argc, char** argv){
         cameraInfo.width_ = Capture.get(cv::CAP_PROP_FRAME_WIDTH);
         cameraInfo.height_ = Capture.get(cv::CAP_PROP_FRAME_HEIGHT);
 
-
-//        std::string str;
-//        if(cameraName == NULL){
-//            std::cout << "Camera name:" << std::endl;
-//            while(str.empty()){
-//                std::getline(std::cin,str);
-//            }
-//            cameraInfo.camera_name_ = str;
-//        }else{
-            cameraInfo.camera_name_ = cameraName;
-//        }
-
-//        str.clear();
-//        if(lensName == NULL){
-//            std::cout << "Lens name:" << std::endl;
-//            while(str.empty()){
-//                std::getline(std::cin,str);
-//            }
-//            cameraInfo.lens_name_ = str;
-//        }else{
-            cameraInfo.lens_name_ = lensName;
-//        }
-            cameraInfo.sd_card_rotation_ = sd_card_rotation;
+        cameraInfo.camera_name_ = cameraName;
+        cameraInfo.lens_name_ = lensName;
+        cameraInfo.sd_card_rotation_ = sd_card_rotation;
 
         cameraInfo.writeCameraInformationJson("camera_descriptions/cameras_testtest.json");
 
@@ -384,7 +375,9 @@ int main(int argc, char** argv){
 //		}
 
 		
-	}
+    }else{
+        std::cout << "Error: Available frame are not found.\nPlease use another video." << std::endl;
+    }
 		
 	return 0;	
 }

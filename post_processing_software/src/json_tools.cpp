@@ -52,7 +52,23 @@ CameraInformationJsonParser::CameraInformationJsonParser(const char *camera_name
 
 void CameraInformationJsonParser::writeCameraInformationJson(const char* file_name){
     // TODO: If a json file exist, Open it.
-   Document d(kObjectType);
+
+    FILE* fp=NULL;
+    Document d;
+    struct stat st;
+    if( stat(file_name,&st)){
+        fp = fopen(file_name, "rb"); // non-Windows use "r"
+            std::vector<char> readBuffer((intmax_t)st.st_size+10);
+            rapidjson::FileReadStream is(fp, readBuffer.data(), readBuffer.size());
+
+            d.ParseStream(is);
+            fclose(fp);
+
+    }else{
+        d = Document(kObjectType);
+    }
+    // Create camera json
+//   Document (kObjectType);
    Document camera(kObjectType);
    Value quaternion_w(sd_card_rotation_.w());
    Value quaternion_x(sd_card_rotation_.x());
@@ -92,11 +108,16 @@ void CameraInformationJsonParser::writeCameraInformationJson(const char* file_na
     camera.AddMember("quaternion_z",quaternion_z,camera.GetAllocator());
     camera.AddMember("lenses",lenses,camera.GetAllocator());  
   
+
+    if(d.HasMember(Value(camera_name_.c_str(),d.GetAllocator()))){
+        d.RemoveMember(Value(camera_name_.c_str(),d.GetAllocator()));
+    }
     d.AddMember(Value(camera_name_.c_str(),d.GetAllocator()),camera,d.GetAllocator());
 
 
-    FILE* fp = fopen(file_name, "wb"); // non-Windows use "w"
-
+    if(fp == NULL){
+        /*FILE* */fp = fopen(file_name, "wb"); // non-Windows use "w"
+    }
     char writeBuffer[262140];
     FileWriteStream os(fp, writeBuffer, sizeof(writeBuffer));
     PrettyWriter<FileWriteStream> writer(os);
