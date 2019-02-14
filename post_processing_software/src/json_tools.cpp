@@ -36,6 +36,11 @@ CameraInformationJsonParser::CameraInformationJsonParser(const char *camera_name
     sd_card_rotation_.z() = camera["quaternion_z"].GetDouble();
 
     camera_name_ = camera_name;
+    if(!camera["lenses"].HasMember(lens_name)){
+        throw "lense not found";
+    }else if(!camera["lenses"][lens_name].HasMember(image_size)){
+        throw "image size not found";
+    }
     const Value &parameters = camera["lenses"][lens_name][image_size];
     lens_name_ = lens_name;
     fx_ = parameters["fx"].GetDouble();
