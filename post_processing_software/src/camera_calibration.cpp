@@ -156,12 +156,14 @@ int main(int argc, char** argv){
         }
     }
 
-    {
+    if(0){
         CameraInformationJsonParser cameraInfo;
 
         cameraInfo.camera_name_ = cameraName;
         cameraInfo.lens_name_ = lensName;
         cameraInfo.sd_card_rotation_ = sd_card_rotation;
+		cameraInfo.width_ = 2;
+		cameraInfo.p1_ = 2.0;
 
         cameraInfo.writeCameraInformationJson("camera_descriptions/cameras_testtest.json");
         return 0;
@@ -325,7 +327,7 @@ int main(int argc, char** argv){
         cameraInfo.lens_name_ = lensName;
         cameraInfo.sd_card_rotation_ = sd_card_rotation;
 
-        cameraInfo.writeCameraInformationJson("camera_descriptions/cameras_testtest.json");
+        cameraInfo.writeCameraInformationJson();
 
         return 0;
 
