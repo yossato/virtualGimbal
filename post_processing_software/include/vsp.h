@@ -708,7 +708,7 @@ class vsp
         std::ifstream ifs(filename); //CSVファイルを開く
         if (!ifs)
         {
-            std::cout << "エラー：CSVファイルが見つかりません\n"
+            std::cout << "CSV File not found\n"
                       << std::endl;
             return;
         }

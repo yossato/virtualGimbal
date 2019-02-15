@@ -133,8 +133,6 @@ int main(int argc, char** argv){
     cv::Size textureSize = cv::Size(2048,2048);
 
     //画面の補正量
-    float vAngle = 0.f;
-    float hAngle = 0.f;
     float zoomRatio = 1.f;
 //    double rollingShutterDuration = 0; //rolling shutter duration [frame]
 //    int32_t lowPassFilterStrength = 3;
@@ -142,10 +140,12 @@ int main(int argc, char** argv){
     char *videoPass = NULL;
     char *csvPass = NULL;
     char *jsonPass = NULL;
+    char *cameraName = NULL;
+    char *lensName = NULL;
     //    char *outputPass = NULL;
     bool outputStabilizedVideo = false;
     int opt;
-    while((opt = getopt(argc, argv, "j:i:c:o::d::v:h:z:f:")) != -1){
+    while((opt = getopt(argc, argv, "j:i:c:l:o::d::v:z:f:")) != -1){
         string value1 ;//= optarg;
         switch (opt) {
         case 'j':       //input json file from virtual gimbal
@@ -154,22 +154,19 @@ int main(int argc, char** argv){
         case 'i':       //input video file pass
             videoPass = optarg;
             break;
-        case 'c':       //input angular velocity csv file pass
-            csvPass = optarg;
+        case 'c':       //camera name
+            cameraName = optarg;
             break;
+        case 'l':
+            lensName = optarg;
         case 'o':       //output
             outputStabilizedVideo = true;
             break;
         case 'd':
             debug_signal_processing = true;
             break;
-        case 'v':       //vertical position adjustment [rad], default 0
-            value1 = optarg;
-            vAngle = std::stof(value1);
-            break;
-        case 'h':       //horizontal position adjustment [rad], default 0
-            value1 = optarg;
-            hAngle = std::stof(value1);
+        case 'v':       //input angular velocity csv file pass 
+            csvPass = optarg;
             break;
         case 'z':       //zoom ratio, dafault 1.0
             value1 = optarg;
@@ -201,7 +198,12 @@ int main(int argc, char** argv){
     }
 
     // Read camera calibration information from a json file, and generate cameraInfo class instance.
-    shared_ptr<CameraInformation> cameraInfo(new CameraInformationJsonParser("prototype_ILCE-6500","SEL1670Z","1920x1080"));
+    cv::VideoCapture *CaptureForSize = new cv::VideoCapture(videoPass);//動画をオープン
+    assert(CaptureForSize->isOpened());
+    std::string videoSize = std::to_string((int)CaptureForSize->get(cv::CAP_PROP_FRAME_WIDTH)) + std::string("x") + std::to_string((int)CaptureForSize->get(cv::CAP_PROP_FRAME_HEIGHT)); 
+    delete CaptureForSize;
+
+    shared_ptr<CameraInformation> cameraInfo(new CameraInformationJsonParser(cameraName,lensName,videoSize.c_str()));
     std::cout << "camera_name_" << cameraInfo->camera_name_ << std::endl;
     std::cout << "lens_name_" << cameraInfo->lens_name_ << std::endl;
     std::cout << "width_" << cameraInfo->width_ << std::endl;
@@ -210,7 +212,7 @@ int main(int argc, char** argv){
     std::cout << "fy_" << cameraInfo->fy_ << std::endl;
 
     // shared_ptr<CameraInformationJsonParser> jp = std::dynamic_pointer_cast<CameraInformationJsonParser>(cameraInfo);
-    std::dynamic_pointer_cast<CameraInformationJsonParser>(cameraInfo)->writeCameraInformationJson("camera_descriptions/cameras_by_writer.json");
+    std::dynamic_pointer_cast<CameraInformationJsonParser>(cameraInfo)->writeCameraInformationJson("camera_descriptions/cameras.json");
 
     std::vector<cv::Vec3d> opticShift;
     //動画からオプティカルフローを計算する
@@ -322,7 +324,8 @@ int main(int argc, char** argv){
     for(int i=0;i<10;i++){
         printf("%f %f %f\n",angular_velocity_from_csv[i][0],angular_velocity_from_csv[i][1],angular_velocity_from_csv[i][2]);
     }
-    std::cout << std::flush;
+    
+    std::cout << "length:" << angular_velocity_from_csv.size() << std::endl << std::flush;
 
     //ジャイロのDCオフセット（いわゆる温度ドリフトと等価）を計算。単純にフレームの平均値を計算
     if(SUBTRACT_OFFSET){
@@ -342,7 +345,7 @@ int main(int argc, char** argv){
         }
     }
 
-    double Tav = 1/60.0;//Sampling period of angular velocity
+    double Tav = 1./60.0;//Sampling period of angular velocity
 
     //動画のサンプリング周期に合わせて、角速度を得られるようにする関数を定義
     //線形補間

@@ -52,9 +52,9 @@ template <typename _Tp, typename _Alloc = std::allocator<_Tp>> int readAngularVe
 
     const rapidjson::Value& ff = e["frequency"];
     assert(ff.IsDouble());
-    const rapidjson::Value& angular_velocity_rad_per_sec_array = e["angular_velocity_rad_per_sec"][0];
+    const rapidjson::Value& angular_velocity_rad_per_sec_array = e["angular_velocity_rad_per_sec"];
     assert(angular_velocity_rad_per_sec_array.IsArray());
-    assert(angular_velocity_rad_per_sec_array[0].IsDouble());
+    assert(angular_velocity_rad_per_sec_array[0][0].IsDouble());
 //    int width = 3;
 //    angular_velocity_rad_per_sec.resize(angular_velocity_rad_per_sec_array.Size()/width,width);
 //    for(int r=0;r<angular_velocity_rad_per_sec.rows();++r){
@@ -64,11 +64,13 @@ template <typename _Tp, typename _Alloc = std::allocator<_Tp>> int readAngularVe
     //    }
     _Tp val;
     int width = 3;
-    for(int i=0;i<angular_velocity_rad_per_sec_array.Size()/width;i+=width){
-        for(int k=0;k<width;++k){
-            val[k]=angular_velocity_rad_per_sec_array[i+k].GetDouble();
+    for(int a =0;a<angular_velocity_rad_per_sec_array.Size();++a){
+        for(int i=0;i<angular_velocity_rad_per_sec_array[a].Size();i+=width){
+            for(int k=0;k<width;++k){
+                val[k]=angular_velocity_rad_per_sec_array[a][i+k].GetDouble();
+            }
+            angular_velocity.push_back(val);
         }
-        angular_velocity.push_back(val);
     }
 //    for(rapidjson::Value::ConstValueIterator itr=angular_velocity_rad_per_sec_array.Begin();itr!=angular_velocity_rad_per_sec_array.End();++itr){
 //        val[0]=(itr++)->GetDouble();
