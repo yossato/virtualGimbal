@@ -706,7 +706,7 @@ Eigen::VectorXd vsp::calculateFilterCoefficientsWithoutBlackSpaces(int32_t minim
             filter_strength[frame] = bisectionMethod(frame,minimum_filter_strength,maximum_filter_strength);
         }
     }
-    std::cout << filter_strength << std::endl;
+//    std::cout << filter_strength << std::endl;
     gradientLimit(filter_strength);
 
     return(filter_strength);

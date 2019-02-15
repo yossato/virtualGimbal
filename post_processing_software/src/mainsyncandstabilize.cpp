@@ -394,10 +394,16 @@ int main(int argc, char** argv){
     Eigen::MatrixXd estimated_angular_velocity_matrix   = Eigen::Map<Matrix<double, Eigen::Dynamic, Eigen::Dynamic, RowMajor>>((double*)(estimatedAngularVelocity.data()),estimatedAngularVelocity.size(),3);
     vector<double> correlation_coefficients(lengthDiff);
 //    if((!syncronizedQuarternionExist(videoPass)) || debug_signal_processing){
+    std::cout << "\nCaluclating correlation cofficient..." << std::endl;
         for(int32_t offset=0;offset<lengthDiff;++offset){
             correlation_coefficients[offset] = (angular_velocity_matrix.block(offset,0,estimated_angular_velocity_matrix.rows(),estimated_angular_velocity_matrix.cols())
                                                 -estimated_angular_velocity_matrix).array().abs().sum();
+            if(offset%100==0){
+                printf("\r%d / %d",offset,lengthDiff);
+                std::cout << std::flush;
+            }
         }
+        printf("\r%d / %d\n",lengthDiff,lengthDiff);
 //    }
     int32_t min_position = std::distance(correlation_coefficients.begin(),min_element(correlation_coefficients.begin(),correlation_coefficients.end()));
 
