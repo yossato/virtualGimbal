@@ -124,6 +124,19 @@ void show_correlation(std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen
     }
 }
 
+std::string getVideoSize(const char *videoName){
+    std::shared_ptr<cv::VideoCapture> Capture = std::make_shared<cv::VideoCapture>(videoName);//動画をオープン
+    assert(Capture->isOpened());
+    std::string videoSize = std::to_string((int)Capture->get(cv::CAP_PROP_FRAME_WIDTH)) + std::string("x") + std::to_string((int)Capture->get(cv::CAP_PROP_FRAME_HEIGHT));
+    return videoSize;
+}
+
+int getVideoLength(const char *videoName){
+    std::shared_ptr<cv::VideoCapture> Capture = std::make_shared<cv::VideoCapture>(videoName);//動画をオープン
+    assert(Capture->isOpened());
+    return (int)Capture->get(cv::CAP_PROP_FRAME_COUNT);
+}
+
 int main(int argc, char** argv){
     bool debug_signal_processing = false;
 
@@ -159,6 +172,7 @@ int main(int argc, char** argv){
             break;
         case 'l':
             lensName = optarg;
+            break;
         case 'o':       //output
             outputStabilizedVideo = true;
             break;
@@ -197,11 +211,9 @@ int main(int argc, char** argv){
         }
     }
 
+    std::string videoSize = getVideoSize(videoPass);
+
     // Read camera calibration information from a json file, and generate cameraInfo class instance.
-    cv::VideoCapture *CaptureForSize = new cv::VideoCapture(videoPass);//動画をオープン
-    assert(CaptureForSize->isOpened());
-    std::string videoSize = std::to_string((int)CaptureForSize->get(cv::CAP_PROP_FRAME_WIDTH)) + std::string("x") + std::to_string((int)CaptureForSize->get(cv::CAP_PROP_FRAME_HEIGHT)); 
-    delete CaptureForSize;
 
     shared_ptr<CameraInformation> cameraInfo(new CameraInformationJsonParser(cameraName,lensName,videoSize.c_str()));
     std::cout << "camera_name_" << cameraInfo->camera_name_ << std::endl;
@@ -216,6 +228,7 @@ int main(int argc, char** argv){
 
     std::vector<cv::Vec3d> opticShift;
     //動画からオプティカルフローを計算する
+    int syncLength = getVideoLength(videoPass) >= SYNC_LENGTH ? SYNC_LENGTH : getVideoLength(videoPass);
     auto t1 = std::chrono::system_clock::now() ;
     Eigen::MatrixXd optical_flow;
     if(jsonExists(std::string(videoPass))){
@@ -228,7 +241,7 @@ int main(int argc, char** argv){
             }
         }
     }else{
-        opticShift = CalcShiftFromVideo(videoPass,SYNC_LENGTH);//ビデオからオプティカルフローを用いてシフト量を算出
+        opticShift = CalcShiftFromVideo(videoPass,syncLength);//ビデオからオプティカルフローを用いてシフト量を算出
 //        Eigen::MatrixXd optical_flow;
         optical_flow.resize(opticShift.size(),3);
 //        memcpy(optical_flow.data(),opticShift.data(),sizeof(double)*3*opticShift.size());
@@ -380,12 +393,12 @@ int main(int argc, char** argv){
     }
     Eigen::MatrixXd estimated_angular_velocity_matrix   = Eigen::Map<Matrix<double, Eigen::Dynamic, Eigen::Dynamic, RowMajor>>((double*)(estimatedAngularVelocity.data()),estimatedAngularVelocity.size(),3);
     vector<double> correlation_coefficients(lengthDiff);
-    if((!syncronizedQuarternionExist(videoPass)) || debug_signal_processing){
+//    if((!syncronizedQuarternionExist(videoPass)) || debug_signal_processing){
         for(int32_t offset=0;offset<lengthDiff;++offset){
             correlation_coefficients[offset] = (angular_velocity_matrix.block(offset,0,estimated_angular_velocity_matrix.rows(),estimated_angular_velocity_matrix.cols())
                                                 -estimated_angular_velocity_matrix).array().abs().sum();
         }
-    }
+//    }
     int32_t min_position = std::distance(correlation_coefficients.begin(),min_element(correlation_coefficients.begin(),correlation_coefficients.end()));
 
 
@@ -410,14 +423,6 @@ int main(int argc, char** argv){
     cout << "subframe minposition :" << min_position+subframeOffset << endl;
 
     if(debug_signal_processing) show_correlation(angular_velocity_from_csv,estimatedAngularVelocity, Tvideo,Tav,min_position+subframeOffset);
-
-    auto convCVMat2EigenMat = [](cv::Mat &src){
-        assert(src.type()==CV_64FC1);
-      Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor> retval;
-      retval.resize(src.rows,src.cols);
-      memcpy(retval.data(),src.data,src.size().area()*sizeof(double));
-      return retval;
-    };
 
 
     //EigenによるDFT LPFのテスト
@@ -457,28 +462,28 @@ int main(int argc, char** argv){
 
     shared_ptr<vsp> v2;
 
-    if(syncronizedQuarternionExist(videoPass)){
-        Eigen::MatrixXd raw_quaternion,filtered_quaternion;
-        readSynchronizedQuaternion(raw_quaternion,filtered_quaternion,videoPass);
-        v2.reset(new vsp(division_x,
-                         division_y,
-//                         rollingShutterDuration,
-//                         convCVMat2EigenMat(matInvDistort),
-//                         convCVMat2EigenMat(matIntrinsic),
-//                         imageSize.width,
-//                         imageSize.height,
-                         *cameraInfo,
-                         (double)zoomRatio,
-                         angular_velocity_from_csv,
-                         Tvideo,
-                         Tav,
-                         min_position + subframeOffset,
-                         (int32_t)(Capture->get(cv::CAP_PROP_FRAME_COUNT)),
-                         199,
-                         raw_quaternion,
-                         filtered_quaternion
-                         ));
-    }else{
+//    if(syncronizedQuarternionExist(videoPass)){
+//        Eigen::MatrixXd raw_quaternion,filtered_quaternion;
+//        readSynchronizedQuaternion(raw_quaternion,filtered_quaternion,videoPass);
+//        v2.reset(new vsp(division_x,
+//                         division_y,
+////                         rollingShutterDuration,
+////                         convCVMat2EigenMat(matInvDistort),
+////                         convCVMat2EigenMat(matIntrinsic),
+////                         imageSize.width,
+////                         imageSize.height,
+//                         *cameraInfo,
+//                         (double)zoomRatio,
+//                         angular_velocity_from_csv,
+//                         Tvideo,
+//                         Tav,
+//                         min_position + subframeOffset,
+//                         (int32_t)(Capture->get(cv::CAP_PROP_FRAME_COUNT)),
+//                         199,
+//                         raw_quaternion,
+//                         filtered_quaternion
+//                         ));
+//    }else{
         v2.reset(new vsp(division_x,
                          division_y,
 //                         rollingShutterDuration,
@@ -500,8 +505,8 @@ int main(int argc, char** argv){
         v2->filteredQuaternion(filter_coefficients);
 
         // Write angle quaternion to json
-        writeSynchronizedQuaternion(v2->getRawQuaternion(),v2->getFilteredQuaternion(),std::string(videoPass));
-    }
+//        writeSynchronizedQuaternion(v2->getRawQuaternion(),v2->getFilteredQuaternion(),std::string(videoPass));
+//    }
 
 
 
