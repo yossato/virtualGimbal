@@ -3,7 +3,8 @@ import serial
 
 def readAngularVelocityFromVirtualGimbal():
     ser = serial.Serial('/dev/ttyVIG0', timeout=1)
-    print(ser.name)
+    print('Device:' + ser.name)
+    print('Loading angular velocity ...')
     ln = b''
     while 1:
         line = ser.readline()

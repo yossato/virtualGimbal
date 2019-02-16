@@ -193,7 +193,7 @@ int main(int argc, char** argv){
     char path[512];
     getcwd(path,sizeof(path));
     std::string path_string(path);
-    path_string = path_string + "/CheckerBoardSettings.ini";
+    path_string = path_string + "/chess_board_settings.ini";
     if (ReadINIs(path_string.c_str(), INICheckerBoardParamNum, INICheckerBoardValueNames, Dcbp) != 0){
 	//	system("pause");	//ユーザのキーボード入力を待機
 		return 1;

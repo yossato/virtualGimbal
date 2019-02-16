@@ -3,6 +3,7 @@ import json
 from collections import OrderedDict
 import pprint
 import os.path
+import datetime
 from read_angular_velocity_from_virtualGimbal import readAngularVelocityFromVirtualGimbal
 def rawToAngularVelocityJson(angular_velocity_json):
     input_dict = json.loads(angular_velocity_json, object_pairs_hook=OrderedDict)
@@ -24,14 +25,18 @@ def rawToAngularVelocityJson(angular_velocity_json):
     return output_dict
 
 def saveJson(dict):
-    with open(os.path.expanduser('~') + '/python_test/test2.json','w') as f:
+    filename = 'records/' + '{0:%Y-%m-%d_%H.%M.%S}'.format(datetime.datetime.now()) + '.json'
+    with open( filename,'w') as f:
         json.dump(dict, f, indent=4)
+    return filename
 
 if __name__ == '__main__':
     s = rawToAngularVelocityJson(readAngularVelocityFromVirtualGimbal())
-    saveJson(s)
+    filename = saveJson(s)
 
-    pprint.pprint(s, width=40)
+    #pprint.pprint(s, width=40)
+    print('Finished: '+ filename)
+    
 
 
 

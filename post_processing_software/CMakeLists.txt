@@ -21,11 +21,14 @@ endif()
 # Copy setting files
 configure_file(intrinsic.txt intrinsic.txt)
 configure_file(distortion.txt distortion.txt)
-configure_file(CheckerBoardSettings.ini CheckerBoardSettings.ini)
+configure_file(chess_board_settings.ini chess_board_settings.ini)
 configure_file(TextureFragmentShader.fragmentshader TextureFragmentShader.fragmentshader)
 configure_file(TransformVertexShader.vertexshader TransformVertexShader.vertexshader)
-configure_file(camera_descriptions/cameras.json camera_descriptions/cameras.json )
-
+configure_file(camera_descriptions/cameras_example.json camera_descriptions/cameras_example.json )
+configure_file(scripts/read_angular_velocity_from_virtualGimbal.py scripts/read_angular_velocity_from_virtualGimbal.py)
+configure_file(scripts/generate_angular_velocity_json.py scripts/generate_angular_velocity_json.py)
+configure_file(scripts/setup_udev_rules.sh scripts/setup_udev_rules.sh)
+configure_file(records/sample.json records/sample.json)
 # Compile external dependencies
 add_subdirectory (external)
 
