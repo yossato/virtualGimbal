@@ -3,7 +3,8 @@
 
 #include <stdio.h>
 #include "levenbergMarquardt.hpp"
+#include "camera_information.h"
 
-void calcDistortCoeff(const cv::Mat &matIntrinsic, const cv::Mat &matDistort, const cv::Size &imageSize, cv::Mat &matInvDistort);
+void calcInverseDistortCoeff(CameraInformation &camera_info);
 
 #endif // DISTORTION_H

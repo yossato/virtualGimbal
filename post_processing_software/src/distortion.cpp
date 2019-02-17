@@ -1,22 +1,24 @@
 #include <stdio.h>
 #include "levenbergMarquardt.hpp"
+#include "camera_information.h"
 
-void calcDistortCoeff(const cv::Mat &matIntrinsic, const cv::Mat &matDistort, const cv::Size &imageSize, cv::Mat &matInvDistort){
+//void calcDistortCoeff(const cv::Mat &matIntrinsic, const cv::Mat &matDistort, const cv::Size &imageSize, cv::Mat &matInvDistort){
+void calcInverseDistortCoeff(CameraInformation &camera_info){
     //逆歪パラメータを求める
     std::vector<double> refPointsX;
     std::vector<double> refPointsY;
     Matrix3d intrinsic;
-    intrinsic << 	matIntrinsic.at<double>(0,0),matIntrinsic.at<double>(0,1),matIntrinsic.at<double>(0,2),
-            matIntrinsic.at<double>(1,0),matIntrinsic.at<double>(1,1),matIntrinsic.at<double>(1,2),
-            matIntrinsic.at<double>(2,0),matIntrinsic.at<double>(2,1),matIntrinsic.at<double>(2,2);
+    intrinsic << 	camera_info.fx_, 0., camera_info.cx_,
+            0., camera_info.fy_, camera_info.cy_,
+            0., 0., 1.;
 
-    std::cout << intrinsic << std::endl;
+//    std::cout << intrinsic << std::endl;
     VectorXd distortionCoeff(4);
-    distortionCoeff << matDistort.at<double>(0,0),matDistort.at<double>(0,1),matDistort.at<double>(0,2),matDistort.at<double>(0,3);
-    std::cout << distortionCoeff << std::endl;
+    distortionCoeff << camera_info.k1_,camera_info.k2_,camera_info.p1_,camera_info.p2_;
+//    std::cout << distortionCoeff << std::endl;
     int step = 20;
-    for(int v=0;v<=imageSize.height;v+=step){
-        for(int u=0;u<=imageSize.width;u+=step){
+    for(int v=0;v<=camera_info.height_;v+=step){
+        for(int u=0;u<=camera_info.width_;u+=step){
             refPointsX.push_back((double)u);
             refPointsY.push_back((double)v);
         }
@@ -24,14 +26,14 @@ void calcDistortCoeff(const cv::Mat &matIntrinsic, const cv::Mat &matDistort, co
     //歪補正
     std::vector<double> undistortedPointsX;
     std::vector<double> undistortedPointsY;
-    double fx = intrinsic(0, 0);
-    double fy = intrinsic(1, 1);
-    double cx = intrinsic(0, 2);
-    double cy = intrinsic(1, 2);
-    double k1 = distortionCoeff(0);
-    double k2 = distortionCoeff(1);
-    double p1 = distortionCoeff(2);
-    double p2 = distortionCoeff(3);
+    double fx = camera_info.fx_;
+    double fy = camera_info.fy_;
+    double cx = camera_info.cx_;
+    double cy = camera_info.cy_;
+    double k1 = camera_info.k1_;
+    double k2 = camera_info.k2_;
+    double p1 = camera_info.p1_;
+    double p2 = camera_info.p2_;
     for(int i=0,e=refPointsX.size();i<e;i++){
         double u = refPointsX[i];
         double v = refPointsY[i];
@@ -49,7 +51,7 @@ void calcDistortCoeff(const cv::Mat &matIntrinsic, const cv::Mat &matDistort, co
         undistortedPointsY.push_back(mapy);
     }
     //最適化
-    printf("Before:\t%f,%f,%f,%f\r\n",distortionCoeff[0],distortionCoeff[1],distortionCoeff[2],distortionCoeff[3]);
+    printf("Before:\t%f,%f,%f,%f\r\n",k1,k2,p1,p2);
     calc_invert_distortion_coeff functor2(distortionCoeff.size(),refPointsX.size(), undistortedPointsX, undistortedPointsY,
                                           refPointsX, refPointsY, intrinsic);
 
@@ -58,5 +60,9 @@ void calcDistortCoeff(const cv::Mat &matIntrinsic, const cv::Mat &matDistort, co
     int info = lm2.minimize(distortionCoeff);
     printf("After:\t%f,%f,%f,%f\r\n",distortionCoeff[0],distortionCoeff[1],distortionCoeff[2],distortionCoeff[3]);
 
-    matInvDistort = (cv::Mat_<double>(1, 4) << distortionCoeff[0],distortionCoeff[1],distortionCoeff[2],distortionCoeff[3]);
+//    matInvDistort = (cv::Mat_<double>(1, 4) << distortionCoeff[0],distortionCoeff[1],distortionCoeff[2],distortionCoeff[3]);
+    camera_info.inverse_k1_ = distortionCoeff[0];
+    camera_info.inverse_k2_ = distortionCoeff[1];
+    camera_info.inverse_p1_ = distortionCoeff[2];
+    camera_info.inverse_p2_ = distortionCoeff[3];
 }

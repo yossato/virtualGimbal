@@ -11,7 +11,8 @@
 #include <semaphore.h>
 #include <sys/time.h>
 #include <functional>
-
+#include "camera_information.h"
+#include "json_tools.hpp"
 int nCount=0;
 volatile int _Quit = 0;//終了するかどうか。0以外で終了
 
@@ -100,16 +101,86 @@ static int Captured = 0;
  * 
  **/
 int main(int argc, char** argv){
+    //引数の確認
+    char *videoPass = NULL;
+    char *cameraName = NULL;
+    char *lensName = NULL;
+    int rotation_type;
+    int opt;
+//    Eigen::Quaterniond camera_rotation;
+
+    constexpr double S = pow(2,-0.5);
+    constexpr double F = 0.5;
+    std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond>> vector_sd_card_rotation = {
+        Eigen::Quaterniond( F, F,-F, F),//0
+        Eigen::Quaterniond( F,-F, F, F),
+        Eigen::Quaterniond( S, 0, 0, S),
+        Eigen::Quaterniond( 0,-S, S, 0),
+        Eigen::Quaterniond( S, 0,-S, 0),
+        Eigen::Quaterniond( S, 0, S, 0),//5
+        Eigen::Quaterniond( 1, 0, 0, 0),
+        Eigen::Quaterniond( 0, 0, 1, 0),
+        Eigen::Quaterniond( F, F, F,-F),
+        Eigen::Quaterniond( F,-F,-F,-F),
+        Eigen::Quaterniond( 0, S, S, 0),//10
+        Eigen::Quaterniond( S, 0, 0,-S),
+        Eigen::Quaterniond( 0, 0,-S, S),
+        Eigen::Quaterniond( S,-S, 0, 0),
+        Eigen::Quaterniond( F,-F,-F, F),
+        Eigen::Quaterniond( F,-F, F,-F) //15
+    };
+
+    Eigen::Quaterniond sd_card_rotation;
+
+    while((opt = getopt(argc, argv, "i:c:l:r:")) != -1){
+        switch (opt) {
+        case 'i':       //input video file pass
+            videoPass = optarg;
+            break;
+        case 'c':
+            cameraName = optarg;
+            break;
+        case 'l':
+            lensName = optarg;
+            break;
+        case 'r':
+            rotation_type = std::atoi(optarg);
+            sd_card_rotation = vector_sd_card_rotation[rotation_type];
+            break;
+        default :
+//            printf(     "virtualGimbal\r\n"
+//                        "Hyper fast video stabilizer\r\n\r\n"
+//                        "usage: virtualGimbal [-i video] [-f angularVelocity] [[output option] -o] [options]\r\n"
+//                        );
+            return 1;
+        }
+    }
+
+    if(0){
+        CameraInformationJsonParser cameraInfo;
+
+        cameraInfo.camera_name_ = cameraName;
+        cameraInfo.lens_name_ = lensName;
+        cameraInfo.sd_card_rotation_ = sd_card_rotation;
+		cameraInfo.width_ = 2;
+		cameraInfo.p1_ = 2.0;
+
+        cameraInfo.writeCameraInformationJson("camera_descriptions/cameras_testtest.json");
+        return 0;
+    }
+
+    // TODO: Show chess board pattern on a screen.
+
 	//動画読み込み準備
-	char *filename;
-	char defaultName[] = "";
-	if(argc==1){
-		printf("引数としてチェスボードを撮影した動画を指定してください。\nプログラムを終了します。\n");
-		return 0;
-	}
-	filename = new char[strlen(argv[1])];
-	strcpy(filename, (const char *)argv[1]);//ファイル名をコピー
-	cv::VideoCapture Capture(filename);//動画をオープン
+//	char *filename;
+//	char defaultName[] = "";
+//	if(argc==1){
+//		printf("引数としてチェスボードを撮影した動画を指定してください。\nプログラムを終了します。\n");
+//		return 0;
+//	}
+//	filename = new char[strlen(argv[1])];
+//	strcpy(filename, (const char *)argv[1]);//ファイル名をコピー
+    cv::VideoCapture Capture(videoPass);//動画をオープン
 	if(!Capture.isOpened()){//VideoCaptureは初期化に成功しているはず。
 		printf("動画ファイルを開くことができませんでした。\nプログラムを終了します。\n");
 		abort();
@@ -122,7 +193,7 @@ int main(int argc, char** argv){
     char path[512];
     getcwd(path,sizeof(path));
     std::string path_string(path);
-    path_string = path_string + "/CheckerBoardSettings.ini";
+    path_string = path_string + "/chess_board_settings.ini";
     if (ReadINIs(path_string.c_str(), INICheckerBoardParamNum, INICheckerBoardValueNames, Dcbp) != 0){
 	//	system("pause");	//ユーザのキーボード入力を待機
 		return 1;
@@ -158,9 +229,10 @@ int main(int argc, char** argv){
 
 		Capture >> colorImg;
 		
-	// 画像データ取得に失敗したらループを抜ける たぶん動画の終わり
+        // Quit a loop if a capture failed. This is end of a input video frame.
 	    if (colorImg.empty()){	    
 		    std::cout << "Video finished. Now Calicurating parameters... please wait...\r\n" << std::endl;
+            cv::destroyWindow(WindowName[0]);
 		    break;
 		}
 		
@@ -190,7 +262,7 @@ int main(int argc, char** argv){
 #else      //シングルスレッド
         auto result = findChessboardCornersInMultithread(grayImg, PatternSize, Finish, cv::CALIB_CB_FAST_CHECK);
 #endif
-		if (result.size()==PatternSize.area()) {//結果が入っていれば
+        if (result.size()==PatternSize.area()) {// If a result found
 			static int CapturedTimes = 0;
 			static cv::Mat colorImg = cv::Mat::zeros(height,width,CV_8UC3);	//画面表示用のカラー画像の準備
             cv::cvtColor(grayImg,colorImg,cv::COLOR_GRAY2RGB);
@@ -215,7 +287,7 @@ int main(int argc, char** argv){
 	imagePoints = shrinkImagePoints;//入れ替え
 	
 	//ここからカメラパラメータを求める
-	cv::Mat R, T, E, F;
+//	cv::Mat R, T, E, F;
 	cv::Mat CameraMatrix;
 	cv::Mat DistCoeffs;
 	std::vector<cv::Mat> RotationVector;
@@ -234,48 +306,80 @@ int main(int argc, char** argv){
 		std::cout << "*************************************************************************" << std::endl;
 
 	
-		std::cout << "キャリブレーションが完了しました。\r\n結果をファイルに保存しますか？ Yで結果を保存 Nで破棄\nColorウィンドウにキーボードで入力してください。" << std::endl;
-		while (1){
-			
-			//char result[256];
-			//std::cin >> result;
-			char key = cv::waitKey(1);
-			if ((key == 'Y') || (key == 'y')){	//ファイル保存
-				try{
-					std::cout << "y" << std::endl;
-					std::ofstream ofs;
-					//カラーカメラの固有パラメータ
-					ofs.open("intrinsic.txt");
-					for (int i = 0; i < 3; i++){
-						ofs << CameraMatrix.at<double>(i, 0) << " " << CameraMatrix.at<double>(i, 1) << " " << CameraMatrix.at<double>(i, 2) << std::endl;
-					}
-					ofs.close();
+        CameraInformationJsonParser cameraInfo;
+        cameraInfo.fx_ = CameraMatrix.at<double>(0,0);
+        cameraInfo.fy_ = CameraMatrix.at<double>(1,1);
+        cameraInfo.cx_ = CameraMatrix.at<double>(0,2);
+        cameraInfo.cy_ = CameraMatrix.at<double>(1,2);
+        cameraInfo.k1_ = DistCoeffs.at<double>(0,0);
+        cameraInfo.k2_ = DistCoeffs.at<double>(0,1);
+        cameraInfo.p1_ = DistCoeffs.at<double>(0,2);
+        cameraInfo.p2_ = DistCoeffs.at<double>(0,3);
+        cameraInfo.inverse_k1_ = 0.;
+        cameraInfo.inverse_k2_ = 0.;
+        cameraInfo.inverse_p1_ = 0.;
+        cameraInfo.inverse_p2_ = 0.;
+        cameraInfo.rolling_shutter_coefficient_ = 0.; //This calibration does not estimate rolling shutter coefficient.
+        cameraInfo.width_ = Capture.get(cv::CAP_PROP_FRAME_WIDTH);
+        cameraInfo.height_ = Capture.get(cv::CAP_PROP_FRAME_HEIGHT);
 
-					//カメラのレンズひずみパラメータ
-					ofs.open("distortion.txt");
-					ofs << DistCoeffs.at<double>(0, 0) << " " << DistCoeffs.at<double>(0, 1) << " " << DistCoeffs.at<double>(0, 2) << " " << DistCoeffs.at<double>(0, 3) << std::endl;
-					ofs.close();
-				}
-				catch (...){
-					std::cout << "キャリブレーション結果の保存に失敗しました。iniファイルが読み取り専用になっていないか、違うソフトがiniファイルを使用中でないか確認してください。" << std::endl;
-				}
-				std::cout << "カラーカメラの固有パラメータをファイルに保存しました。" << std::endl;
-				char filenamestxt[] = "保存したファイル名は以下の通りです。\r\n"
-					"intrinsic.txt\r\n"
-					"distortion.txt\r\n"
-					"プログラムを終了します...";
-					printf("%s", filenamestxt);
-				break;
-			}
-			else if ((key == 'N') || (key == 'n')){	//破棄
-				std::cout << "n" << std::endl;
-				std::cout << "結果を破棄しました。" << std::endl;
-				break;
-			}
-		}
+        cameraInfo.camera_name_ = cameraName;
+        cameraInfo.lens_name_ = lensName;
+        cameraInfo.sd_card_rotation_ = sd_card_rotation;
+
+        cameraInfo.writeCameraInformationJson();
+
+        return 0;
+
+
+//		std::cout << "キャリブレーションが完了しました。\r\n結果をファイルに保存しますか？ Yで結果を保存 Nで破棄\nColorウィンドウにキーボードで入力してください。" << std::endl;
+
+
+
+//		while (1){
+			
+//			//char result[256];
+//			//std::cin >> result;
+//			char key = cv::waitKey(1);
+//			if ((key == 'Y') || (key == 'y')){	//ファイル保存
+
+//				try{
+//					std::cout << "y" << std::endl;
+//					std::ofstream ofs;
+//					//カラーカメラの固有パラメータ
+//					ofs.open("intrinsic.txt");
+//					for (int i = 0; i < 3; i++){
+//						ofs << CameraMatrix.at<double>(i, 0) << " " << CameraMatrix.at<double>(i, 1) << " " << CameraMatrix.at<double>(i, 2) << std::endl;
+//					}
+//					ofs.close();
+
+//					//カメラのレンズひずみパラメータ
+//					ofs.open("distortion.txt");
+//					ofs << DistCoeffs.at<double>(0, 0) << " " << DistCoeffs.at<double>(0, 1) << " " << DistCoeffs.at<double>(0, 2) << " " << DistCoeffs.at<double>(0, 3) << std::endl;
+//					ofs.close();
+//				}
+//				catch (...){
+//					std::cout << "キャリブレーション結果の保存に失敗しました。iniファイルが読み取り専用になっていないか、違うソフトがiniファイルを使用中でないか確認してください。" << std::endl;
+//				}
+//				std::cout << "カラーカメラの固有パラメータをファイルに保存しました。" << std::endl;
+//				char filenamestxt[] = "保存したファイル名は以下の通りです。\r\n"
+//					"intrinsic.txt\r\n"
+//					"distortion.txt\r\n"
+//					"プログラムを終了します...";
+//					printf("%s", filenamestxt);
+//				break;
+//			}
+//			else if ((key == 'N') || (key == 'n')){	//破棄
+//				std::cout << "n" << std::endl;
+//				std::cout << "結果を破棄しました。" << std::endl;
+//				break;
+//			}
+//		}
 
 		
-	}
+    }else{
+        std::cout << "Error: Available frame are not found.\nPlease use another video." << std::endl;
+    }
 		
 	return 0;	
 }

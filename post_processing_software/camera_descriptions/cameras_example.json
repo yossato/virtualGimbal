@@ -1,0 +1,44 @@
+{
+    "NEX-6_HDMI_TYPE": {
+        "quaternion_w": 1.0,
+        "quaternion_x": 0.0,
+        "quaternion_y": 0.0,
+        "quaternion_z": 0.0,
+        "lenses": {
+            "SEL1670Z": {
+                "1920x1080": {
+                    "fx": 1387.6,
+                    "fy": 1385.76,
+                    "cx": 961.861,
+                    "cy": 575.598,
+                    "k1": -0.140626,
+                    "k2": 0.0958966,
+                    "p1": -0.00505715,
+                    "p2": -0.00805462,
+                    "rolling_shutter_coefficient": 0.5
+                }
+            }
+        }
+    },
+    "NEX-6": {
+        "quaternion_w": 0.707106781,
+        "quaternion_x": 0.0,
+        "quaternion_y": -0.707106781,
+        "quaternion_z": 0.0,
+        "lenses": {
+            "SEL1670Z": {
+                "1920x1080": {
+                    "fx": 1387.6,
+                    "fy": 1385.76,
+                    "cx": 961.861,
+                    "cy": 575.598,
+                    "k1": -0.140626,
+                    "k2": 0.0958966,
+                    "p1": -0.00505715,
+                    "p2": -0.00805462,
+                    "rolling_shutter_coefficient": 0.5
+                }
+            }
+        }
+    }
+}

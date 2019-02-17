@@ -1,5 +1,3 @@
-View this project on [CADLAB.io](https://cadlab.io/project/1464). 
-
 # virtualGimbal
 virtualGimbal is an electronic stabilize device for videos that were taken by hand held camera. (I.e. DSLR)  
 For more information, see [PetaPixel]( https://petapixel.com/2016/08/11/sd-card-built-gyro-sensor-stabilize-shots/ "PetaPixel").  
@@ -23,10 +21,10 @@ OpenGL 3.3 or later
 Download [Example Video](https://drive.google.com/uc?export=download&id=0B9nCHvB3LdAxZWNKdmdxMTFzam8) and [Angular Velocity data](https://drive.google.com/uc?export=download&id=0B9nCHvB3LdAxTHB1dk0zMkZWbDQ), then put them in ~/vgdataset.
 
 Demo:  
-`./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/angularVelocity.csv -z 1.1 -r 0.5`
+`./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/angularVelocity.csv -z 1.1`
 
 Generating stabilized video:  
-`./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/angularVelocity.csv  -z 1.1 -r 0.5 -o`
+`./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/angularVelocity.csv  -z 1.1 -o`
 
 Here, `i` option is an input video file. `c` is a csv file which contains angular velocity of a camera.
 `z` is zooming ratio.
@@ -117,7 +115,7 @@ cp *.txt *.fragmentshader *.vertexshader build/
 
 ## Contribution
 
-
+## Todo/Issues/Wishlist
 
 ## Author
 Yoshiaki Sato

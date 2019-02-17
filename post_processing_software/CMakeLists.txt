@@ -21,11 +21,14 @@ endif()
 # Copy setting files
 configure_file(intrinsic.txt intrinsic.txt)
 configure_file(distortion.txt distortion.txt)
-configure_file(CheckerBoardSettings.ini CheckerBoardSettings.ini)
+configure_file(chess_board_settings.ini chess_board_settings.ini)
 configure_file(TextureFragmentShader.fragmentshader TextureFragmentShader.fragmentshader)
 configure_file(TransformVertexShader.vertexshader TransformVertexShader.vertexshader)
-
-
+configure_file(camera_descriptions/cameras_example.json camera_descriptions/cameras_example.json )
+configure_file(scripts/read_angular_velocity_from_virtualGimbal.py scripts/read_angular_velocity_from_virtualGimbal.py)
+configure_file(scripts/generate_angular_velocity_json.py scripts/generate_angular_velocity_json.py)
+configure_file(scripts/setup_udev_rules.sh scripts/setup_udev_rules.sh)
+configure_file(records/sample.json records/sample.json)
 # Compile external dependencies
 add_subdirectory (external)
 
@@ -66,6 +69,7 @@ add_definitions(
         -DTW_NO_DIRECT3D
         -DGLEW_STATIC
         -D_CRT_SECURE_NO_WARNINGS
+        # -DRAPIDJSON_HAS_STDSTRING
 )
 
 
@@ -114,25 +118,21 @@ add_executable(virtualGimbal src/mainsyncandstabilize.cpp
         src/stabilize.cpp
         src/distortion.cpp
         src/visualizer.cpp
+        src/json_tools.cpp
+        src/camera_information.cpp
         include/settings.h
         include/distortion.h
         include/visualizer.h
         include/vsp.h
-        include/frequency_domain_optimization.hpp
+        include/camera_information.h
+#        include/frequency_domain_optimization.hpp
+
         TransformVertexShader.vertexshader
         TextureFragmentShader.fragmentshader
 )
 target_link_libraries(virtualGimbal ${ALL_LIBS} ${PYTHON_LIBRARIES})
 
-add_executable(vectorCorrecter
-    src/vectorCorrecter.cpp
-    src/mINIRead.cpp
-    src/distortion.cpp
 
-        include/matplotlib-cpp/matplotlibcpp.h
-        include/stabilize.h
-)
-target_link_libraries(vectorCorrecter ${ALL_LIBS} ${PYTHON_LIBRARIES})
 
 add_executable(audioEdit src/audioedit.cpp)
 target_link_libraries(audioEdit ${ALL_LIBS})
@@ -150,16 +150,24 @@ add_executable(fft_test src/fft_test.cpp
 target_link_libraries(fft_test ${ALL_LIBS}  ${PYTHON_LIBRARIES})
 
 add_executable(camera_calibration src/camera_calibration.cpp
-    src/mINIRead.cpp)
-target_link_libraries(camera_calibration ${OpenCV_LIBS})
+    src/mINIRead.cpp
+    src/json_tools.cpp
+    src/camera_information.cpp)
+target_link_libraries(camera_calibration ${ALL_LIBS} ${OpenCV_LIBS})
+
 
 add_executable(rapidjson_test src/rapidjson_test.cpp)
+
+#add_executable(video_analyzer src/video_analyzer.cpp
+#src/calcShift.cpp)
+#target_link_libraries(video_analyzer ${ALL_LIBS})
 
 # デバッグビルド
 IF(CMAKE_BUILD_TYPE MATCHES DEBUG)
 set(CMAKE_C_FLAGS_DEBUG "-O0 -g")
 #set(CMAKE_C_FLAGS_DEBUG "-O0 -pg")
 #set(CMAKE_CXX_FLAGS "-pg") #gprof
+# add_definitions(-DRAPIDJSON_HAS_STDSTRING=1)
 ENDIF(CMAKE_BUILD_TYPE MATCHES DEBUG)
 
 # リリースビルド
@@ -167,8 +175,9 @@ IF(CMAKE_BUILD_TYPE MATCHES RELEASE)
     set(CMAKE_BUILD_TYPE Release)
     set(CMAKE_C_FLAGS_RELEASE "-O3 -lm")
     add_definitions(-DEIGEN_NO_DEBUG)
+#     add_definitions(-DRAPIDJSON_HAS_STDSTRING=1)
 ENDIF(CMAKE_BUILD_TYPE MATCHES RELEASE)
 
 #gprof使う場合は以下２行の最後に-pgをつけると良いみたい
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -lm -L/usr/lib -lpthread -pthread -march=native -pthread")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lm -L/usr/lib -lpthread -pthread -march=native -std=c++0x -pthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lm -L/usr/lib -lpthread -pthread -march=native -std=c++11 -pthread")
