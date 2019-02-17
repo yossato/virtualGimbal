@@ -50,7 +50,7 @@ A post-processing software stabilizes your video.
 
 ## Extract angular velocity information from virtualGimbal
 I will explain how to retrieve camera motion information recorded in virtualGimbal. The information to be extracted is the angular velocity of the camera. You can obtain angular velocity data of JSON format from virtualGimbal via USB.
-Remove the microSD card from virtualGimbal and connect it to the USB port of the PC via the adapter as shown below. Do not insert virtualGimbal into the SD card slot of PC at same time.
+Remove the microSD card from virtualGimbal and connect it to the USB port of the PC via the adapter as shown below. Do not insert virtualGimbal into the SD card slot of PC at same time.  
 ![Connection via USB](https://github.com/yossato/macadamia/raw/master/post_processing_software/doc/connect_via_usb.jpg "Connection via USB")  
 ![Connector](https://github.com/yossato/macadamia/raw/master/post_processing_software/doc/connector.jpg "Connector")  
 The angular velocity data of JSON format can be acquired with the following command.  
@@ -149,9 +149,9 @@ virtualGimbalからmicroSDカードを取り出し以下の図のとおりにア
 安定化された動画は`~/vgdataset/myfirstvideo.MP4_deblured.avi`として保存されます。
 
 ### オプションの説明
--i は入力動画のファイル名を指定します。
--j は角速度を記録したJSONファイルを指定します。
--z はズーム倍率を指定します。この値は1.1から1.5程度が良いでしょう。数値を大きくすると安定化能力が向上しますが画面の端の情報が失われます。
--c はカメラ名を指定します
--l はレンズ名を指定します
--o は安定化結果を動画として保存する場合に指定します。
+-i は入力動画のファイル名を指定します。  
+-j は角速度を記録したJSONファイルを指定します。  
+-z はズーム倍率を指定します。この値は1.1から1.5程度が良いでしょう。数値を大きくすると安定化能力が向上しますが画面の端の情報が失われます。  
+-c はカメラ名を指定します  
+-l はレンズ名を指定します  
+-o は安定化結果を動画として保存する場合に指定します。  
