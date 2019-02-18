@@ -117,8 +117,8 @@ sudo make install
 ## Build
 ```
 cd
-git clone http://github.com/yossato/virtualGimbal  
-cd virtualGimbal  
+git clone https://github.com/yossato/macadamia.git  
+cd macadamia  
 mkdir build  
 cd build  
 cmake ../post_processing_software/  
@@ -127,7 +127,7 @@ make -j4
 
 ## Copy setting files
 ```
-cd ~/virtualGimbal
+cd ~/macadamia
 cp *.txt *.fragmentshader *.vertexshader build/
 ```
 
