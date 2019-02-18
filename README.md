@@ -6,7 +6,7 @@ virtualGimbal consists of an SD card and a Post processing software. This reposi
 ## Demo
 <https://youtu.be/E9JKbxqoJcY>
 
-## Features 
+## Features
 1.Post processing video stabilization software on PC.  
 2.Real-time up to 1920 x 1080 at 30 fps.  
 3.Stabilization based on angular velocity data.  
@@ -34,7 +34,25 @@ This parameter must be integer, default value is 3. It should be between 0 and 1
 
 ## Install dependencies
 ### Install system dependencies:  
-`sudo apt-get install cmake make g++ libx11-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxrandr-dev libxext-dev xorg-dev`  
+`sudo apt-get install cmake make g++ libx11-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxrandr-dev libxext-dev xorg-dev`
+```
+
+### Install Git:
+sudo apt install git-all
+```
+
+### Install Python Dev:
+sudo apt-get install python3-dev python3-pip python3-tk python3-lxml python3-six
+```
+
+### Install Numpy & Scipy:
+sudo apt-get install python3-numpy python3-scipy
+```
+
+### Install Matplot Library:
+sudo apt-get install python3-matplotlib
+```
+
 ### Install lame:  
 ```
 cd  
@@ -60,22 +78,22 @@ sudo ldconfig
 `sudo apt-get install qt5-default`  
 ### Install cmake:
 `sudo apt-get install cmake`
-  
+
 ### Install OpenCV  
-```
+
 cd  
 sudo apt-get install build-essential module-assistant  
 sudo m-a prepare  
 git clone --depth 1 https://github.com/Itseez/opencv.git  
 cd opencv/  
-  
+
 mkdir build  
 cd build  
 cmake .. -DWITH_TBB=ON -DWITH_QT=ON -DWITH_OPENGL=ON -DWITH_VTK=ON  
 make -j4  
 sudo make install  
- 
-    sudo sh -c "echo /usr/local/lib >> /etc/ld.so.conf.d/opencv.conf"  
+
+sudo sh -c "echo /usr/local/lib >> /etc/ld.so.conf.d/opencv.conf"  
 sudo sh -c "echo PKG_CONFIG_PATH=\\\$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig >> /etc/bash.bashrc"  
 sudo sh -c "echo export PKG_CONFIG_PATH >> /etc/bash.bashrc"  
 ```
@@ -114,8 +132,8 @@ cp *.txt *.fragmentshader *.vertexshader build/
 ```
 
 ## Contribution
-
-## Todo/Issues/Wishlist
+Yoshiaki Sato & Emmett Reiner
 
 ## Author
 Yoshiaki Sato
+Emmett Reiner
