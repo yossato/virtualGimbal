@@ -33,23 +33,28 @@ This parameter must be integer, default value is 3. It should be between 0 and 1
 `h` is horizontal video position adjustment [rad], default value is 0.00. `o` option generates output video.
 
 ## Install dependencies
-### Install system dependencies:  
-`sudo apt-get install cmake make g++ libx11-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxrandr-dev libxext-dev xorg-dev`
+### Install system dependencies:
+```
+sudo apt-get install cmake make g++ libx11-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxrandr-dev libxext-dev xorg-dev
 ```
 
 ### Install Git:
+```
 sudo apt install git-all
 ```
 
 ### Install Python Dev:
+```
 sudo apt-get install python3-dev python3-pip python3-tk python3-lxml python3-six
 ```
 
 ### Install Numpy & Scipy:
+```
 sudo apt-get install python3-numpy python3-scipy
 ```
 
 ### Install Matplot Library:
+```
 sudo apt-get install python3-matplotlib
 ```
 
@@ -64,6 +69,7 @@ make -j4
 sudo make install  
 sudo ldconfig
 ```
+
 ### Install ffmpeg:  
 ```
 cd  
@@ -74,13 +80,19 @@ make all -j4
 sudo make install  
 sudo ldconfig  
 ```
+
 ### Install QT:  
-`sudo apt-get install qt5-default`  
+```
+sudo apt-get install qt5-default
+```
+
 ### Install cmake:
-`sudo apt-get install cmake`
+```
+sudo apt-get install cmake
+```
 
 ### Install OpenCV  
-
+```
 cd  
 sudo apt-get install build-essential module-assistant  
 sudo m-a prepare  
@@ -112,8 +124,9 @@ sudo make install
 ```
 
 ### Install Boost
-`sudo apt-get install libboost-dev`
-
+```
+sudo apt-get install libboost-dev
+```
 ## Build
 ```
 cd
@@ -135,5 +148,4 @@ cp *.txt *.fragmentshader *.vertexshader build/
 Yoshiaki Sato & Emmett Reiner
 
 ## Author
-Yoshiaki Sato
-Emmett Reiner
+Yoshiaki Sato & Emmett Reiner
