@@ -3,12 +3,9 @@ Calibration is necessary before executing movie stabilization. By executing the 
 
 ## Taking a video of a chess board pattern for calibration
 Before activating the calibration tool, we will explain the shooting procedure of the movie data necessary for the calibration.
-Open the [PDF](https://github.com/yossato/macadamia/raw/master/post_processing_software/doc/chessboardpattern.pdf) of the chess board with PC or tablet and display it in full screen.  
-Turn off camera shake compensation on the camera, then shoot movies on the screen with the camera.  
-A sample chess board video can be found at [https://drive.google.com/open?id=18N9hlZ-U4sec1Opt3HHLgL9xHEMN3SoX](https://drive.google.com/open?id=18N9hlZ-U4sec1Opt3HHLgL9xHEMN3SoX).  
-Move the camera so that the chess board appears at various distances and angles during shooting.  
-After shooting, copy the movie to the appropriate directory on the PC.
-The following explanation assumes that the movie is saved in the following directory.  
+Open the [PDF](https://github.com/yossato/macadamia/raw/master/post_processing_software/doc/chessboardpattern.pdf) of the chessboard with PC or tablet and display it in full screen.  Turn off camera shake compensation on the camera, then shoot movies on the screen with the camera.  
+A sample chess board video can be found at [https://drive.google.com/open?id=18N9hlZ-U4sec1Opt3HHLgL9xHEMN3SoX](https://drive.google.com/open?id=18N9hlZ-U4sec1Opt3HHLgL9xHEMN3SoX). Move the camera so that the chess board appears at various distances and angles during shooting.  
+After shooting, copy the movie to the appropriate directory on the PC. The following explanation assumes that the movie is saved in the following directory:
 `~/vgdataset/calibration_ILCE-6500_SEL1670Z_4K.MP4  `  
 Turn ON camera shake correction.
 
@@ -21,26 +18,19 @@ Launch camera_calibration with the following command. It may take up to 5 minute
 `$ cd ~/virtualGimbal/build`   
 `$ ./camera_calibration -i ~/vgdataset/calibration_ILCE-6500_SEL1670Z_4K.MP4 -c ILCE-6500 -l SEL1670Z -r 4`
 ### Explanation of options
--i option is the movie file name of the chess board pattern.  
--c option is the name of the camera. Here, we showed an example using ILCE-6500 of SONY's DLSR.  
--l option is the name of the lens. Here we showed an example using the SONY zoom lens, SEL 1670Z.  
--r option inputs the direction of the SD card slot selected from the above image with a number. In this case, I chose the direction No.4 that inserts the SD card to the Camera from the bottom of it while the notch is the back. Since the direction of this insertion is different for each camera, please choose a number for each camera.
+-'i' option is the movie file name of the chessboard pattern.  
+-'c' option is the name of the camera. Here, we showed an example using ILCE-6500 of SONY's DLSR.  
+-'l' option is the name of the lens. Here we showed an example using the SONY zoom lens, SEL 1670Z.  
+-'r' option inputs the direction of the SD card slot selected from the above image with a number. In this case, I chose the direction No.4 that inserts the SD card to the Camera from the bottom of it while the notch is in the back. Since the direction of this insertion is different for each camera, please choose a number for each camera. All options are mandatory.
 
-All options are mandatory.
-
-When you start the camera_calbration tool, it executes chess board detection and estimates internal parameters. The results will be recorded in camera_descriptions/cameras.json.  
-cameras.json is a file that records camera information in JSON format.
+When you start the camera_calbration tool, it executes chess board detection and estimates internal parameters. The results will be recorded in camera_descriptions/cameras.json. cameras.json is a file that records camera information in JSON format.
 
 ## Initial setting
 Execute the following command __only once__ to complete the initial setting of your PC. In this procedure, you can fix virtualGimbal's device file name to /dev/ttyVIG0.  
 `$ sudo ./scripts/setup_udev_rules.sh`
 
 # Shooting movies with virtualGimbal
-I will explain the procedure to insert a virtualGimbal into the camera and shoot a movie.  
-Please set the microSD card in virtualGimbal first. Next, please set the virtual Gimbal to the SD card slot of the camera in the same way as for the normal SD card. In order to prevent interference with virtual Gimbal's software stabilization correction, please turn off the camera's built-in camera shake correction function before shooting.  
-For cameras that can set the shutter speed of the camera, please shorten the shutter speed as quickly as possible. The blur of the image decreases and the image becomes clearer. Approximately 1/300 second is a standard.
-After performing the above procedure, turn on the camera and take your movie.
-If virtualGimbal is not recognized by the camera properly, please try inserting / removing the microSD card and virtualGimbal.
+Set the microSD card in virtualGimbal first. Next, please put the virtual Gimbal into the SD card slot of the camera the same way as for a standard SD card. In order to prevent interference with virtual Gimbal's software stabilization correction, please turn off the camera's built-in camera shake correction function before shooting. For cameras that can set the shutter speed of the camera, please shorten the shutter speed as quickly as possible. The blur of the image decreases and the image becomes more evident when the shutter speed is quicker. Approximately 1/300 second is a standard. After performing the above procedure, turn on the camera and take the movie. If virtualGimbal is not recognized by the camera properly, please try inserting/removing the microSD card and virtualGimbal.
 
 I will assume that you have saved the captured video as `~/vgdataset/myfirstvideo.MP4`.  
 After movie shooting is completed, it is good to turn the camera shake correction function back on so that you do not have to worry about shooting pictures and videos later.
@@ -97,7 +87,7 @@ PCやタブレットでチェスボードのPDF(doc/chessboardpattern.pdf)を開
 内部パラメータはcamera_calibrationツールで取得できます。  
 SDカードスロットの向きは以下の画像から数字を選んでキャリブレーション時に指定してください。  
 ![SD Card slot direction](https://github.com/yossato/macadamia/raw/master/post_processing_software/doc/sd_card_rotation.png "SD Card slod direction")　　
-  
+
 次のコマンドでcamera_calibrationを起動します。完了まで5分程度かかる可能性があります。   
 `$ cd ~/virtualGimbal/build`   
 `$ ./camera_calibration -i ~/vgdataset/calibration_ILCE-6500_SEL1670Z_4K.MP4 -c ILCE-6500 -l SEL1670Z -r 4`
@@ -144,8 +134,8 @@ virtualGimbalからmicroSDカードを取り出し以下の図のとおりにア
 ## 事後処理安定化ツール virtualGimbalによる動画安定化
 以下のコマンドを実行して動画を安定化させます。処理している間、オリジナル動画と安定化後の動画の比較が表示されます。  
 `$ ./virtualGimbal -i ~/vgdataset/myfirstvideo.MP4 -j records/2019-02-16_18.35.24.json -z 1.3  -c ILCE-6500 -l SEL1670Z`
-  
-  
+
+
 安定化された動画は`~/vgdataset/myfirstvideo.MP4_deblured.avi`として保存されます。
 
 ### オプションの説明

@@ -417,7 +417,7 @@ void main (void)
 					for(page = 0;page<64;++page){
 						//Skip ECC spare, parameters and OTP regions.
 						if(0 == block){
-							if(0x0c > page){
+							if(BEGIN_PAGE_OF_WRITABLE_REGION > page){
 								continue;
 							}
 						}
