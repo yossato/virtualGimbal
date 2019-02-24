@@ -713,7 +713,7 @@ ReturnType FlashPageProgram(uAddrType udAddr, NMX_uint8 *pArray, NMX_uint32 udNr
     NMX_uint8 status_reg;
 
     // Step 1: Validate address input
-	if(ADDRESS_2_COL(udAddr) >= PAGE_SIZE)
+	if(ADDRESS_2_COL(udAddr) >= PAGE_DATA_SIZE)
 		return Flash_AddressInvalid;
 
     // Step 2: Check whether any previous Write, Program or Erase cycle is on going

@@ -11,6 +11,10 @@
 #include <SI_C8051F380_Register_Enums.h>                // SFR declarations
 #include "SPI-NAND.h"
 
+uAddrType getAddress(NMX_uint32 page);
+bool pageIsFilledWith0xFF(NMX_uint32 page, NMX_uint8 *pArray);
+bool isEndOfRecordedPages(NMX_uint32 page);
+bool isFullPages(NMX_uint32 page);
 void NAND_write(NMX_uint8 xdata *buf, NMX_uint16 size);
 void NAND_read(NMX_uint8 xdata *buf, NMX_uint16 size);
 
@@ -28,24 +32,6 @@ uint32_t findNext(uint32_t begin, uint32_t end);
 #define MAX_FRAMES 2048UL*1024*1024/8/sizeof(FrameData)-1	//2048[Mb]/8[bit/byte]/sizeof(Frame)[byte/Frame]
 
 
-/*#define FIND_NEXT(na,nb,next)\
-		na = 0;\
-		nb = MAX_FRAMES-1;\
-		while(1){\
-			next=(na+nb)/2;\
-			if(isFull(next)){\
-				na=next;\
-				if((nb-na)<=1){\
-					next = nb;\
-					break;\
-				}\
-			}else{\
-				if((nb-na)<=1){\
-					break;\
-				}\
-				nb=next;\
-			}\
-		}*/
 
 typedef enum
 {
@@ -87,10 +73,6 @@ SPI_STATUS Serialize_SPI(const CharStream* char_stream_send,
 void four_byte_addr_ctl(int enable);
 void ConfigureSpi(SpiConfigOptions opt);
 void ResetNAND(void);
-ReturnType nandWriteData32(NMX_uint32 n, NMX_uint32 data2write);
-NMX_uint32 nandReadData32(NMX_uint32 n);
-ReturnType nandWriteData16(NMX_uint32 n, NMX_uint16 data2write);
-NMX_uint16 nandReadData16(NMX_uint32 n);
 ReturnType nandWriteFrame(uint32_t frame, FrameData *angularVelocity);
 ReturnType nandReadFrame(uint32_t frame, FrameData *angularVelocity);
 
