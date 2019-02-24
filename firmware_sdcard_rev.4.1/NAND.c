@@ -32,7 +32,7 @@ bool pageIsFilledWith0xFF(NMX_uint32 page, NMX_uint8 *pArray){
 	return true;
 }
 
-bool isFullPages(NMX_uint32 page, NMX_uint8 *pArray){
+bool isEmptyPages(NMX_uint32 page, NMX_uint8 *pArray){
 	// Page is bigger than begin + 1
 	if(page >= BEGIN_PAGE_OF_WRITABLE_REGION+1){
 		if (!pageIsFilledWith0xFF(page-1,pArray)){
@@ -50,7 +50,7 @@ uint32_t findBeginOfWritablePages(uint32_t begin_page, uint32_t end_page, NMX_ui
 
 	while(1){
 		nm=(begin_page+end_page)/2;//仮の解
-		if(isFullPages(nm,pArray)){
+		if(!isEmptyPages(nm,pArray)){
 			begin_page=nm;
 			if((end_page-begin_page)<=1){//終了条件
 				return end_page;
@@ -64,21 +64,21 @@ uint32_t findBeginOfWritablePages(uint32_t begin_page, uint32_t end_page, NMX_ui
 	}
 }
 
-ReturnType nandWriteFramePage(uint32_t *frame, uint32_t *page, FrameData *angularVelocity, NMX_uint8 *pArray){
+ReturnType nandWriteFramePage(uint32_t *col, uint32_t *page, FrameData *angularVelocity, NMX_uint8 *pArray){
 	code uint32_t FRAMES_IN_PAGE = PAGE_DATA_SIZE/sizeof(FrameData);
-	uint32_t col = *frame*sizeof(FrameData);
-	memcpy(pArray+col,angularVelocity,sizeof(FrameData));
-	(*frame)++;
-	if(*frame>=FRAMES_IN_PAGE){
-		*frame = 0;
-		(*page)++;
-		return FlashPageProgram(getAddress(*page),pArray,FRAMES_IN_PAGE*sizeof(FrameData));
+//	uint32_t col = *frame*sizeof(FrameData);
+	memcpy(pArray+(*col),angularVelocity,sizeof(FrameData));
+	(*col)+=sizeof(FrameData);
+	if((*col) >= (FRAMES_IN_PAGE*sizeof(FrameData))){
+		(*col) = 0;
+		return FlashPageProgram(getAddress((*page)++),pArray,(FRAMES_IN_PAGE*sizeof(FrameData)));
 	}
+
 	return Flash_Success;
 }
 
-ReturnType nandReadFramePage(uint32_t *page, NMX_uint8 *pArray){
-	return FlashRead(getAddress(*page),pArray,PAGE_DATA_SIZE);
+ReturnType nandReadFramePage(uint32_t page, NMX_uint8 *pArray){
+	return FlashRead(getAddress(page),pArray,PAGE_DATA_SIZE);
 }
 
 ReturnType nandWriteFrame(uint32_t frame, FrameData *angularVelocity){

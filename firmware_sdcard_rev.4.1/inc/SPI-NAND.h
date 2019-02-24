@@ -77,8 +77,10 @@ typedef NMX_uint32 uAddrType;
 	#define NUM_PAGE_BLOCK			64				/* Number of pages for block*/
 
 
+	#define END_PAGE_OF_WRITABLE_REGION 131072
 	#define BEGIN_PAGE_OF_WRITABLE_REGION 0x0C
-	#define END_PAGE_OF_WRITABLE_REGION NUM_BLOCKS*NUM_PAGE_BLOCK
+	#define MAX_FRAMES 2048UL*1024*1024/8/sizeof(FrameData)-1	//2048[Mb]/8[bit/byte]/sizeof(Frame)[byte/Frame]
+
 	/* utility macros */
 	#define ADDRESS_2_BLOCK(Address)	((NMX_uint16) (Address >> 18))
 	#define ADDRESS_2_PAGE(Address)		((NMX_uint8)  ((Address >> 12) & 0x3F))
