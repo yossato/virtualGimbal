@@ -19,7 +19,7 @@ uAddrType getAddress(NMX_uint32 page){
 	return page << 12;
 }
 
-bool pageIsFilledWith0xFF(NMX_uint32 page, NMX_uint8 *pArray){
+bool isEmpty(NMX_uint32 page, NMX_uint8 *pArray){
 	int16_t col;
 
 	FlashPageRead(getAddress(page),pArray);
@@ -32,14 +32,20 @@ bool pageIsFilledWith0xFF(NMX_uint32 page, NMX_uint8 *pArray){
 	return true;
 }
 
-bool isEmptyPages(NMX_uint32 page, NMX_uint8 *pArray){
-	// Page is bigger than begin + 1
-	if(page >= BEGIN_PAGE_OF_WRITABLE_REGION+1){
-		if (!pageIsFilledWith0xFF(page-1,pArray)){
+bool isInEmptyRegions(NMX_uint32 page, NMX_uint8 *pArray){
+	// Page is bigger than begin + 2
+	if(page >= BEGIN_PAGE_OF_WRITABLE_REGION+2){
+		if (!isEmpty(page-2,pArray)){
 			return false;
 		}
 	}
-	if (!pageIsFilledWith0xFF(page,pArray)){
+	// Page is bigger than begin + 1
+	if(page >= BEGIN_PAGE_OF_WRITABLE_REGION+1){
+		if (!isEmpty(page-1,pArray)){
+			return false;
+		}
+	}
+	if (!isEmpty(page,pArray)){
 		return false;
 	}
 	return true;
@@ -50,7 +56,7 @@ uint32_t findBeginOfWritablePages(uint32_t begin_page, uint32_t end_page, NMX_ui
 
 	while(1){
 		nm=(begin_page+end_page)/2;//仮の解
-		if(!isEmptyPages(nm,pArray)){
+		if(!isInEmptyRegions(nm,pArray)){
 			begin_page=nm;
 			if((end_page-begin_page)<=1){//終了条件
 				return end_page;
@@ -78,7 +84,7 @@ ReturnType nandWriteFramePage(uint32_t *col, uint32_t *page, FrameData *angularV
 }
 
 ReturnType nandReadFramePage(uint32_t *page, NMX_uint8 *pArray){
-	ReturnType ret = FlashRead(getAddress(*page),pArray,PAGE_DATA_SIZE);
+	ReturnType ret = FlashRead(getAddress((*page)++),pArray,PAGE_DATA_SIZE);
 
 	return ret;
 }

@@ -483,10 +483,12 @@ void main (void)
 #endif
 					while(!read_page_is_empty){
 						IE_EA = 0;
-						read_page_is_empty = isEmptyPages(d.read_page,pArray);
+						read_page_is_empty = isEmpty(d.read_page,pArray);
+						IE_EA = 1;
 						if(true == read_page_is_empty){
 							break;
 						}
+						IE_EA = 0;
 						nandReadFramePage(&(d.read_page),pArray);
 						IE_EA = 1;
 
@@ -506,68 +508,33 @@ void main (void)
 					}
 
 					// Find next record
+					IE_EA = 0;
 					if (!(d.read_page >= END_PAGE_OF_WRITABLE_REGION-1)){
-						if(isEmptyPages(d.read_page+1,pArray)){ // separator is one page only
+						if(!isEmpty(d.read_page+1,pArray)){ // separator is one page only
 							++record;
 							d.read_page += 1;
+							read_page_is_empty = false;
+							IE_EA = 1;
 							continue;
 						}
 					}
 					if (!(d.read_page >= END_PAGE_OF_WRITABLE_REGION-2)){
-						if(isEmptyPages(d.read_page+2,pArray)){ // separator is two pages
+						if(!isEmpty(d.read_page+2,pArray)){ // separator is two pages
 							++record;
 							d.read_page += 2;
+							read_page_is_empty = false;
+							IE_EA = 1;
 							continue;
 						}
 					}
 
 					{	// Reached the end of records
 						page_continue = false;
+						IE_EA = 1;
 						break;
 					}
 
-//					while(1){//フレームのループ
-//						//フラッシュメモリからデータを読み取る
-//						IE_EA = 0;
-//						nandReadFrame(d.read_page,&frame_data);
-//						IE_EA = 1;
-//						if(frame_data.x!=0xffff || frame_data.y!=0xffff || frame_data.z!=0xffff){
-//							//エスケープシーケンスでなければ出力
-//							//								vcpPrintf("%d,%d,%d\n",frame_data.x,frame_data.y,frame_data.z);
-//							vcpPrintf("%f,%f,%f\n",(float)frame_data.y/16.4*M_PI/180.0,(float)frame_data.x/16.4*M_PI/180.0,-(float)frame_data.z/16.4*M_PI/180.0);
-//							++d.read_page;
-//							continue;
-//						}
-//						//エスケープシーケンスがあったら次のフレームをチェック
-//						IE_EA = 0;
-//						nandReadFrame(d.read_page+1,&frame_data);
-//						IE_EA = 1;
-//						if(frame_data.x==0xfffe && frame_data.y==0xfffe && frame_data.z==0xfffe){
-//							vcpPrintf("%f,%f,%f\n",(float)((uint16_t)0xffff)/16.4*M_PI/180.0,(float)((uint16_t)0xffff)/16.4*M_PI/180.0,-(float)((uint16_t)0xffff)/16.4*M_PI/180.0);
-//							d.read_page += 2;//エスケープシーケンス分の2フレームを加算
-//							continue;
-//						}else if(frame_data.x==0x0000 && frame_data.y==0x0000 && frame_data.z==0x0000){
-//							//データの途切れ
-//#ifdef FRAME_POSITIONS
-//							vcpPrintf("Frame position:%lu\n",d.read_page);//これエスケープシーケンス分が含まれてしまっている
-//#endif
-//							//エスケープシーケンス分の2フレームを加算し移動
-//							d.read_page += 2;
-//							++record;
-//							break;
-//						}else if(frame_data.x==0xffff && frame_data.y==0xffff && frame_data.z==0xffff){
-//#ifdef FRAME_POSITIONS
-//							//データなし
-//							vcpPrintf("Frame position:%lu\n",d.read_page);//これエスケープシーケンス分が含まれてしまっている
-//							vcpPrintf("No data.\n");
-//#endif
-//							validFrame = 0;
-//							record = 0;
-//							break;
-//						}else{
-//							vcpPrintf("### Corrupted data. Flash memory may be end of lifetime, of software bug.\n");
-//						}
-//					}
+
 
 
 				}
@@ -833,15 +800,15 @@ INTERRUPT(Timer3_ISR, TIMER3_IRQn) {
 				}
 			}//end if
 
-			//書き込み開始時の立ち上がりエッジを監視
-			if((!(oldStatus & recordingAngularVelocityInInterrupt))&&(d.write_page!=BEGIN_PAGE_OF_WRITABLE_REGION)){//d.write_col==0の時は、前回の記録がないのでスキップ
-				turnOnBlueLED();
-
-				d.write_page += 2;	// Leaves two pages to empty. These empty pages indicates a separator between recording data.
-				d.write_col = 0;
-
-				turnOffBlueLED();
-			}
+			// Detect Rising Edge
+//			if((!(oldStatus & recordingAngularVelocityInInterrupt))&&(d.write_page!=BEGIN_PAGE_OF_WRITABLE_REGION)){//d.write_col==0の時は、前回の記録がないのでスキップ
+//				turnOnBlueLED();
+//
+//				d.write_page += 2;	// Leaves two pages to empty. These empty pages indicates a separator between recording data.
+//				d.write_col = 0;
+//
+//				turnOffBlueLED();
+//			}
 
 
 			turnOnBlueLED();
@@ -858,6 +825,24 @@ INTERRUPT(Timer3_ISR, TIMER3_IRQn) {
 
 			d.time_ms += 17;//17ms追加
 
+		}
+
+		// Fill in large data to remaining area when the falling edge is detected.
+		if((oldStatus & recordingAngularVelocityInInterrupt) && (!(d.status & recordingAngularVelocityInInterrupt))){
+			turnOnBlueLED();
+			//
+			d.angular_velocity.x = 32767;
+			d.angular_velocity.y = 32767;
+			d.angular_velocity.z = 32767;
+			while(d.write_col != 0){
+				//Write angular velocity to the flash memory
+				return_value = nandWriteFramePage(&(d.write_col),&(d.write_page),&(d.angular_velocity),pArray);
+				if(Flash_Success != return_value){
+					turnOnGreenLED();
+				}
+			}
+			d.write_page += 2;	// Leaves two pages to empty. These empty pages indicates a separator between recording data.
+			turnOnBlueLED();
 		}
 
 		//状態の保存

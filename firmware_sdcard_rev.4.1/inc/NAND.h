@@ -19,9 +19,9 @@ typedef struct _structFrame
 } FrameData;
 
 uAddrType getAddress(NMX_uint32 page);
-bool pageIsFilledWith0xFF(NMX_uint32 page, NMX_uint8 *pArray);
+bool isEmpty(NMX_uint32 page, NMX_uint8 *pArray);
 bool isEndOfRecordedPages(NMX_uint32 page);
-bool isEmptyPages(NMX_uint32 page, NMX_uint8 *pArray);
+bool isInEmptyRegions(NMX_uint32 page, NMX_uint8 *pArray);
 void NAND_write(NMX_uint8 xdata *buf, NMX_uint16 size);
 void NAND_read(NMX_uint8 xdata *buf, NMX_uint16 size);
 ReturnType nandWriteFramePage(uint32_t *col, uint32_t *page, FrameData *angularVelocity, NMX_uint8 *pArray);
