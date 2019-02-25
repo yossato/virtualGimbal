@@ -90,17 +90,17 @@ uint32_t next;
 typedef struct _VG_STATUS{
 	volatile uint16_t status;	//!<状態。enum Statusの中から選ぶ
 	volatile uint32_t write_col;		//!<書き込みポインタ。次回の書き込み位置を示す
-	volatile uint32_t read_col;		//!<読み取りポインタ。次回の読み取り位置を示す
+	volatile uint32_t read_page;		//!<読み取りポインタ。次回の読み取り位置を示す
 	volatile uint32_t write_page;
 	volatile uint32_t time_ms;	//!<時間[ms],フレームレート毎に更新されるので精度が低いことに注意
 	volatile FrameData acceleration;//!<加速度
 	volatile FrameData angular_velocity;//!<角速度[rad/s]
-	volatile uint32_t WRp_init_value;
+	volatile uint32_t initial_read_page;
 }VG_STATUS;
 
 VG_STATUS xdata d;
 FrameData frame_data;
-FrameData *p_frame_data;
+//FrameData *p_frame_data;
 // Function Prototypes
 //-----------------------------------------------------------------------------
 void Delay (void);
@@ -254,7 +254,7 @@ void main (void)
 
 		vcpPrintf(help);
 		while(1){
-			uint8_t validFrame;
+			bool page_continue;
 			uint16_t record = 0;
 			uAddrType byte_addr;
 			uAddrType row_addr;
@@ -268,6 +268,7 @@ void main (void)
 			int16_t i;
 			int srand_value;
 			bool skip_vcpPrint = false;
+			volatile bool read_page_is_empty = true;
 			uint8_t value;
 
 			key = getchar();//Keyboard input
@@ -334,7 +335,8 @@ void main (void)
 			case 'R':
 				IE_EA = 0;
 //				Build_Address(0,BEGIN_PAGE_OF_WRITABLE_REGION,0,&addr);
-				return_value = nandReadFramePage(BEGIN_PAGE_OF_WRITABLE_REGION,pArray);
+				d.read_page = BEGIN_PAGE_OF_WRITABLE_REGION;
+				return_value = nandReadFramePage(&(d.read_page),pArray);
 				IE_EA = 1;
 				if(Flash_Success != return_value){
 					printReturnType(return_value);
@@ -342,7 +344,7 @@ void main (void)
 				}
 				else{
 					for(i=0;i<PAGE_DATA_SIZE/sizeof(FrameData);++i){
-						p_frame_data = (FrameData*)pArray;
+						FrameData *p_frame_data = (FrameData*)pArray;
 						vcpPrintf("%d:%d,%d,%d\n",i,p_frame_data[i].x,p_frame_data[i].y,p_frame_data[i].z);
 					}
 				}
@@ -471,56 +473,101 @@ void main (void)
 
 			case 't'://TODO:データを順番に出力
 				resetRpToBeginAddress(&d);
-				validFrame = 1;
+				read_page_is_empty = false;
+				page_continue = true;
 				EIE1 &= ~0x80;
-				while(validFrame){//レコードのループ
+				while(page_continue){//レコードのループ
 #ifdef FRAME_POSITIONS
 					vcpPrintf("Record %u",record);
 					vcpPrintf("\n");
 #endif
-					while(1){//フレームのループ
-						FrameData angularVelocity;
-						//フラッシュメモリからデータを読み取る
+					while(!read_page_is_empty){
 						IE_EA = 0;
-						nandReadFrame(d.read_col,&angularVelocity);
-						IE_EA = 1;
-						if(angularVelocity.x!=0xffff || angularVelocity.y!=0xffff || angularVelocity.z!=0xffff){
-							//エスケープシーケンスでなければ出力
-							//								vcpPrintf("%d,%d,%d\n",angularVelocity.x,angularVelocity.y,angularVelocity.z);
-							vcpPrintf("%f,%f,%f\n",(float)angularVelocity.y/16.4*M_PI/180.0,(float)angularVelocity.x/16.4*M_PI/180.0,-(float)angularVelocity.z/16.4*M_PI/180.0);
-							++d.read_col;
-							continue;
+						read_page_is_empty = isEmptyPages(d.read_page,pArray);
+						if(true == read_page_is_empty){
+							break;
 						}
-						//エスケープシーケンスがあったら次のフレームをチェック
-						IE_EA = 0;
-						nandReadFrame(d.read_col+1,&angularVelocity);
+						nandReadFramePage(&(d.read_page),pArray);
 						IE_EA = 1;
-						if(angularVelocity.x==0xfffe && angularVelocity.y==0xfffe && angularVelocity.z==0xfffe){
-							vcpPrintf("%f,%f,%f\n",(float)((uint16_t)0xffff)/16.4*M_PI/180.0,(float)((uint16_t)0xffff)/16.4*M_PI/180.0,-(float)((uint16_t)0xffff)/16.4*M_PI/180.0);
-							d.read_col += 2;//エスケープシーケンス分の2フレームを加算
-							continue;
-						}else if(angularVelocity.x==0x0000 && angularVelocity.y==0x0000 && angularVelocity.z==0x0000){
-							//データの途切れ
-#ifdef FRAME_POSITIONS
-							vcpPrintf("Frame position:%lu\n",d.read_col);//これエスケープシーケンス分が含まれてしまっている
-#endif
-							//エスケープシーケンス分の2フレームを加算し移動
-							d.read_col += 2;
-							++record;
+
+						for(i=0;i<PAGE_DATA_SIZE/sizeof(FrameData);++i){
+							FrameData *p_frame_data = (FrameData*)pArray;
+							vcpPrintf("%d:%d,%d,%d\n",i,p_frame_data[i].x,p_frame_data[i].y,p_frame_data[i].z);
+						}
+
+						if (d.read_page >= END_PAGE_OF_WRITABLE_REGION){
+							page_continue = false;
 							break;
-						}else if(angularVelocity.x==0xffff && angularVelocity.y==0xffff && angularVelocity.z==0xffff){
-#ifdef FRAME_POSITIONS
-							//データなし
-							vcpPrintf("Frame position:%lu\n",d.read_col);//これエスケープシーケンス分が含まれてしまっている
-							vcpPrintf("No data.\n");
-#endif
-							validFrame = 0;
-							record = 0;
-							break;
-						}else{
-							vcpPrintf("### Corrupted data. Flash memory may be end of lifetime, of software bug.\n");
 						}
 					}
+
+					if(false == page_continue){
+						break;
+					}
+
+					// Find next record
+					if (!(d.read_page >= END_PAGE_OF_WRITABLE_REGION-1)){
+						if(isEmptyPages(d.read_page+1,pArray)){ // separator is one page only
+							++record;
+							d.read_page += 1;
+							continue;
+						}
+					}
+					if (!(d.read_page >= END_PAGE_OF_WRITABLE_REGION-2)){
+						if(isEmptyPages(d.read_page+2,pArray)){ // separator is two pages
+							++record;
+							d.read_page += 2;
+							continue;
+						}
+					}
+
+					{	// Reached the end of records
+						page_continue = false;
+						break;
+					}
+
+//					while(1){//フレームのループ
+//						//フラッシュメモリからデータを読み取る
+//						IE_EA = 0;
+//						nandReadFrame(d.read_page,&frame_data);
+//						IE_EA = 1;
+//						if(frame_data.x!=0xffff || frame_data.y!=0xffff || frame_data.z!=0xffff){
+//							//エスケープシーケンスでなければ出力
+//							//								vcpPrintf("%d,%d,%d\n",frame_data.x,frame_data.y,frame_data.z);
+//							vcpPrintf("%f,%f,%f\n",(float)frame_data.y/16.4*M_PI/180.0,(float)frame_data.x/16.4*M_PI/180.0,-(float)frame_data.z/16.4*M_PI/180.0);
+//							++d.read_page;
+//							continue;
+//						}
+//						//エスケープシーケンスがあったら次のフレームをチェック
+//						IE_EA = 0;
+//						nandReadFrame(d.read_page+1,&frame_data);
+//						IE_EA = 1;
+//						if(frame_data.x==0xfffe && frame_data.y==0xfffe && frame_data.z==0xfffe){
+//							vcpPrintf("%f,%f,%f\n",(float)((uint16_t)0xffff)/16.4*M_PI/180.0,(float)((uint16_t)0xffff)/16.4*M_PI/180.0,-(float)((uint16_t)0xffff)/16.4*M_PI/180.0);
+//							d.read_page += 2;//エスケープシーケンス分の2フレームを加算
+//							continue;
+//						}else if(frame_data.x==0x0000 && frame_data.y==0x0000 && frame_data.z==0x0000){
+//							//データの途切れ
+//#ifdef FRAME_POSITIONS
+//							vcpPrintf("Frame position:%lu\n",d.read_page);//これエスケープシーケンス分が含まれてしまっている
+//#endif
+//							//エスケープシーケンス分の2フレームを加算し移動
+//							d.read_page += 2;
+//							++record;
+//							break;
+//						}else if(frame_data.x==0xffff && frame_data.y==0xffff && frame_data.z==0xffff){
+//#ifdef FRAME_POSITIONS
+//							//データなし
+//							vcpPrintf("Frame position:%lu\n",d.read_page);//これエスケープシーケンス分が含まれてしまっている
+//							vcpPrintf("No data.\n");
+//#endif
+//							validFrame = 0;
+//							record = 0;
+//							break;
+//						}else{
+//							vcpPrintf("### Corrupted data. Flash memory may be end of lifetime, of software bug.\n");
+//						}
+//					}
 
 
 				}
@@ -530,56 +577,56 @@ void main (void)
 				break;
 			case 'j':	//Output angular velocity as JSON format.
 				resetRpToBeginAddress(&d);
-				validFrame = 1;
+				page_continue = 1;
 				EIE1 &= ~0x80;
 				vcpPrintf("{\n");
 				vcpPrintf("    \"coefficient_adc_raw_value_to_rad_per_sec\":%0.10f,\n",1.f/16.4f*M_PI/180.0f);
 				vcpPrintf("    \"frequency\":%f,\n",60.f);
 				vcpPrintf("    \"angular_velocity\":[\n");
-				while(validFrame){//レコードのループ
-					FrameData angularVelocity;
+				while(page_continue){//レコードのループ
+//					FrameDatframe_dataty;
 					vcpPrintf("        [");
 
 					//Read one frame
 					IE_EA = 0;
-					nandReadFrame(d.read_col,&angularVelocity);
+					nandReadFrame(d.read_page,&frame_data);
 					IE_EA = 1;
-					if(angularVelocity.x!=0xffff || angularVelocity.y!=0xffff || angularVelocity.z!=0xffff){
+					if(frame_data.x!=0xffff || frame_data.y!=0xffff || frame_data.z!=0xffff){
 						//エスケープシーケンスでなければ出力
-						vcpPrintf("%d,%d,%d",angularVelocity.x,angularVelocity.y,angularVelocity.z);
-						++d.read_col;
+						vcpPrintf("%d,%d,%d",frame_data.x,frame_data.y,frame_data.z);
+						++d.read_page;
 					}
 
 					while(1){//フレームのループ
 						//Read next frame
 						IE_EA = 0;
-						nandReadFrame(d.read_col,&angularVelocity);
+						nandReadFrame(d.read_page,&frame_data);
 						IE_EA = 1;
-						if(angularVelocity.x!=0xffff || angularVelocity.y!=0xffff || angularVelocity.z!=0xffff){
+						if(frame_data.x!=0xffff || frame_data.y!=0xffff || frame_data.z!=0xffff){
 							//エスケープシーケンスでなければ出力
-							vcpPrintf(",%d,%d,%d",angularVelocity.x,angularVelocity.y,angularVelocity.z);
-							++d.read_col;
+							vcpPrintf(",%d,%d,%d",frame_data.x,frame_data.y,frame_data.z);
+							++d.read_page;
 							continue;
 						}
 						//エスケープシーケンスがあったら次のフレームをチェック
 						IE_EA = 0;
-						nandReadFrame(d.read_col+1,&angularVelocity);
+						nandReadFrame(d.read_page+1,&frame_data);
 						IE_EA = 1;
-						if(angularVelocity.x==0xfffe && angularVelocity.y==0xfffe && angularVelocity.z==0xfffe){
+						if(frame_data.x==0xfffe && frame_data.y==0xfffe && frame_data.z==0xfffe){
 							vcpPrintf(",%d,%d,%d",0xffff,0xffff,0xffff);
-							d.read_col += 2;//エスケープシーケンス分の2フレームを加算
+							d.read_page += 2;//エスケープシーケンス分の2フレームを加算
 							continue;
-						}else if(angularVelocity.x==0x0000 && angularVelocity.y==0x0000 && angularVelocity.z==0x0000){
+						}else if(frame_data.x==0x0000 && frame_data.y==0x0000 && frame_data.z==0x0000){
 							//Go to next frame
 							vcpPrintf("],\n");
 							//エスケープシーケンス分の2フレームを加算し移動
-							d.read_col += 2;
+							d.read_page += 2;
 							++record;
 							break;
-						}else if(angularVelocity.x==0xffff && angularVelocity.y==0xffff && angularVelocity.z==0xffff){
+						}else if(frame_data.x==0xffff && frame_data.y==0xffff && frame_data.z==0xffff){
 							// No data
 							vcpPrintf("]\n");
-							validFrame = 0;
+							page_continue = 0;
 							record = 0;
 							break;
 						}else{
@@ -651,56 +698,17 @@ void spinAsSdCard(uint32_t spin_time_ms){
 
 	//Turned on as SD Card.
 	//Record anguler velocity to Flash memory.
-//	IE_EA = 1;       // Enable global interrupts
-//	turnOnGreenLED();
 
 	d.status |= recordingAngularVelocityInInterrupt;//録画開始
 	endTime = d.time_ms + spin_time_ms;
 	while(1){
-
-				//フィルタの計算に用いるベクトル
-	//			const float vecFront[3] = {-16384,0,0};//撮影中、カメラが正面を向いている状況
-	//			const float vecDown[3] = {0,0,16384};//下向き。撮影中断中。
-	//			static float accelLow[3]={0,0,16384};
-	//			static float accelHigh[3]={0,0,16384};
-	//			const float thF = 30.f/180.f*3.1415;//前向きの閾値
-	//			const float thD = 30.f/180.f*3.1415;//下向きの閾値
-	//			float tLowFront,tHighFront,tLowDown,tHighDown;
-				//Sync 60 Hz
-				startTime = d.time_ms;
-				while(startTime==d.time_ms);
-
-
-				if((0 != endTime) && (d.time_ms >= endTime)){
-					break;
-				}
-
-				//時定数の異なるLPFをかける。
-
-	//			accelLow[0] = 0.005 * (float)d.acceleration.x + 0.995 * accelLow[0];
-	//			accelLow[1] = 0.005 * (float)d.acceleration.y + 0.995 * accelLow[1];
-	//			accelLow[2] = 0.005 * (float)d.acceleration.z + 0.995 * accelLow[2];
-	//
-	//			accelHigh[0] = 0.1 * (float)d.acceleration.x + 0.9 * accelHigh[0];
-	//			accelHigh[1] = 0.1 * (float)d.acceleration.y + 0.9 * accelHigh[1];
-	//			accelHigh[2] = 0.1 * (float)d.acceleration.z + 0.9 * accelHigh[2];
-	//
-	//			tLowFront = acos(dot(accelLow,vecFront)/(norm(accelLow)*norm(vecFront)));
-	//			tHighFront = acos(dot(accelHigh,vecFront)/(norm(accelHigh)*norm(vecFront)));
-	//			tLowDown = acos(dot(accelLow,vecDown)/(norm(accelLow)*norm(vecDown)));
-	//			tHighDown = acos(dot(accelHigh,vecDown)/(norm(accelHigh)*norm(vecDown)));
-
-	//			vcpPrintf("LF:%4.3f ",tLowFront/3.1415*180.0);
-	//			vcpPrintf("HF:%4.3f ",tHighFront/3.1415*180.0);
-	//			vcpPrintf("LD:%4.3f ",tLowDown/3.1415*180.0);
-	//			vcpPrintf("HD:%4.3f\n",tHighDown/3.1415*180.0);
-
-	//			if((tLowFront<thF)||(tHighFront<thF)){//カメラが前向きになったとき
-	//				d.status |= recordingAngularVelocityInInterrupt;//録画開始
-	//			}else if((tLowDown<thD)&&(tHighDown<thD)){//カメラが下向きになったとき
-	//				d.status &= ~recordingAngularVelocityInInterrupt;//停止
-	//			}
-			}
+		//Sync 60 Hz
+		startTime = d.time_ms;
+		while(startTime==d.time_ms);
+		if((0 != endTime) && (d.time_ms >= endTime)){
+			break;
+		}
+	}
 	d.status &= ~recordingAngularVelocityInInterrupt;
 }
 
@@ -804,19 +812,18 @@ static void Port_Init (void)
 INTERRUPT(Timer3_ISR, TIMER3_IRQn) {
 	static uint8_t Times=0;
 	static uint16_t oldStatus = 0;
-//	static FrameData angularVelocity;
 	ReturnType return_value;
 	if((++Times) & 0x01){	//2回に1回実行、60Hz
-//		//角速度の計測
-//		mpu9250_polling2(&d.angular_velocity);
-//		//加速度の計測
-//		mpu9250_pollingAcceleration(&d.acceleration);
-
-
 		//フラッシュメモリへの波形書き込み
 		if(d.status & recordingAngularVelocityInInterrupt){
-			//Flashメモリの末尾に達したら書き込みを停止
-			if(MAX_FRAMES-2 <= d.write_col){//If データの末尾がFlashメモリの末尾-1(すなわちMAX_FRAMES-2)ならデータの区切りが必要なのでここで無限ループ then
+
+			turnOnBlueLED();
+			mpu9250_polling2(&d.angular_velocity);
+			mpu9250_pollingAcceleration(&d.acceleration);
+			turnOFFBlueLED();
+
+			// If writing position reaches the end page on flash, stop writing.
+			if(END_PAGE_OF_WRITABLE_REGION <= d.write_page){//If データの末尾がFlashメモリの末尾-1(すなわちMAX_FRAMES-2)ならデータの区切りが必要なのでここで無限ループ then
 				while(1){//LED点滅の無限ループ
 //					LED1 = 1;
 					turnOnBlueLED();
@@ -827,46 +834,23 @@ INTERRUPT(Timer3_ISR, TIMER3_IRQn) {
 			}//end if
 
 			//書き込み開始時の立ち上がりエッジを監視
-			if((!(oldStatus & recordingAngularVelocityInInterrupt))&&(d.write_col!=d.WRp_init_value)){//d.write_col==0の時は、前回の記録がないのでスキップ
+			if((!(oldStatus & recordingAngularVelocityInInterrupt))&&(d.write_page!=BEGIN_PAGE_OF_WRITABLE_REGION)){//d.write_col==0の時は、前回の記録がないのでスキップ
 				turnOnBlueLED();
-				//前回の記録の末端に、記録終了の合図を書き込む
-				d.angular_velocity.x = 0xffff;//初期値が0xffffなのだから書き込む意味ない気がする。
-				d.angular_velocity.y = 0xffff;
-				d.angular_velocity.z = 0xffff;
-				nandWriteFrame(d.write_col,&d.angular_velocity);
-				d.write_col += 1;
 
-				d.angular_velocity.x = 0;
-				d.angular_velocity.y = 0;
-				d.angular_velocity.z = 0;
-				nandWriteFrame(d.write_col,&d.angular_velocity);
-				d.write_col += 1;
+				d.write_page += 2;	// Leaves two pages to empty. These empty pages indicates a separator between recording data.
+				d.write_col = 0;
 
 				turnOffBlueLED();
 			}
 
 
 			turnOnBlueLED();
-			mpu9250_polling2(&d.angular_velocity);
-			mpu9250_pollingAcceleration(&d.acceleration);
+
 
 			//Write angular velocity to the flash memory
-			return_value = nandWriteFrame(d.write_col,&d.angular_velocity);
+			return_value = nandWriteFramePage(&(d.write_col),&(d.write_page),&(d.angular_velocity),pArray);
 			if(Flash_Success != return_value){
 				turnOnGreenLED();
-			}
-			d.write_col += 1;		//書き込みポインタを進める
-
-			//書き込んだデータが万が一エスケープシーケンス(0xffff,0xffff,0xffff)なら、続けて1フレーム付加する
-			if(d.angular_velocity.x==0xffff && d.angular_velocity.y==0xffff && d.angular_velocity.z==0xffff){
-				d.angular_velocity.x = 0xfffe;
-				d.angular_velocity.y = 0xfffe;
-				d.angular_velocity.z = 0xfffe;
-				return_value = nandWriteFrame(d.write_col,&d.angular_velocity);
-				if(Flash_Success != return_value){
-					turnOnGreenLED();
-				}
-				d.write_col += 1;		//書き込みポインタを進める
 			}
 
 			//LEDを消灯
@@ -992,14 +976,14 @@ int vcpPrintf(const char* format, ...){
 void resetSystemStatus(VG_STATUS *st){
 	uint32_t addr;
 	Build_Address(0,BEGIN_PAGE_OF_WRITABLE_REGION,0,&addr);
-	st->WRp_init_value = 0;
+	st->initial_read_page = BEGIN_PAGE_OF_WRITABLE_REGION;
 	st->write_col = 0;
-	st->read_col = 0;
+	st->read_page = 0;
 	st->write_page = BEGIN_PAGE_OF_WRITABLE_REGION;
 	st->status = 0;
 	st->time_ms = 0;
 }
 
 void resetRpToBeginAddress(VG_STATUS *st){
-	st->read_col = st->WRp_init_value;
+	st->read_page = st->initial_read_page;
 }

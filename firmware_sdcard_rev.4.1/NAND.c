@@ -77,8 +77,10 @@ ReturnType nandWriteFramePage(uint32_t *col, uint32_t *page, FrameData *angularV
 	return Flash_Success;
 }
 
-ReturnType nandReadFramePage(uint32_t page, NMX_uint8 *pArray){
-	return FlashRead(getAddress(page),pArray,PAGE_DATA_SIZE);
+ReturnType nandReadFramePage(uint32_t *page, NMX_uint8 *pArray){
+	ReturnType ret = FlashRead(getAddress(*page),pArray,PAGE_DATA_SIZE);
+
+	return ret;
 }
 
 ReturnType nandWriteFrame(uint32_t frame, FrameData *angularVelocity){
