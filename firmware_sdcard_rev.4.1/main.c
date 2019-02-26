@@ -527,16 +527,10 @@ void main (void)
 							continue;
 						}
 					}
-
-					{	// Reached the end of records
-						page_continue = false;
-						IE_EA = 1;
-						break;
-					}
-
-
-
-
+					// Reached the end of records
+					page_continue = false;
+					IE_EA = 1;
+					break;
 				}
 				EIE1 |= 0x80;
 				//TODO:Flashメモリが満タンの時の処理
@@ -544,71 +538,124 @@ void main (void)
 				break;
 			case 'j':	//Output angular velocity as JSON format.
 				resetRpToBeginAddress(&d);
-				page_continue = 1;
+				read_page_is_empty = false;
+				page_continue = true;
+
 				EIE1 &= ~0x80;
 				vcpPrintf("{\n");
 				vcpPrintf("    \"coefficient_adc_raw_value_to_rad_per_sec\":%0.10f,\n",1.f/16.4f*M_PI/180.0f);
 				vcpPrintf("    \"frequency\":%f,\n",60.f);
 				vcpPrintf("    \"angular_velocity\":[\n");
+//				while(page_continue){//レコードのループ
+//					vcpPrintf("        [");
+//					//Read one frame
+//					IE_EA = 0;
+//					nandReadFrame(d.read_page,&frame_data);
+//					IE_EA = 1;
+//					if(frame_data.x!=0xffff || frame_data.y!=0xffff || frame_data.z!=0xffff){
+//						//エスケープシーケンスでなければ出力
+//						vcpPrintf("%d,%d,%d",frame_data.x,frame_data.y,frame_data.z);
+//						++d.read_page;
+//					}
+//					while(1){//フレームのループ
+//						//Read next frame
+//						IE_EA = 0;
+//						nandReadFrame(d.read_page,&frame_data);
+//						IE_EA = 1;
+//						if(frame_data.x!=0xffff || frame_data.y!=0xffff || frame_data.z!=0xffff){
+//							//エスケープシーケンスでなければ出力
+//							vcpPrintf(",%d,%d,%d",frame_data.x,frame_data.y,frame_data.z);
+//							++d.read_page;
+//							continue;
+//						}
+//						//エスケープシーケンスがあったら次のフレームをチェック
+//						IE_EA = 0;
+//						nandReadFrame(d.read_page+1,&frame_data);
+//						IE_EA = 1;
+//						if(frame_data.x==0xfffe && frame_data.y==0xfffe && frame_data.z==0xfffe){
+//							vcpPrintf(",%d,%d,%d",0xffff,0xffff,0xffff);
+//							d.read_page += 2;//エスケープシーケンス分の2フレームを加算
+//							continue;
+//						}else if(frame_data.x==0x0000 && frame_data.y==0x0000 && frame_data.z==0x0000){
+//							//Go to next frame
+//							vcpPrintf("],\n");
+//							//エスケープシーケンス分の2フレームを加算し移動
+//							d.read_page += 2;
+//							++record;
+//							break;
+//						}else if(frame_data.x==0xffff && frame_data.y==0xffff && frame_data.z==0xffff){
+//							// No data
+//							vcpPrintf("]\n");
+//							page_continue = 0;
+//							record = 0;
+//							break;
+//						}else{
+//							vcpPrintf("### Corrupted data. Flash memory may be end of lifetime, or software bug.\n");
+//						}
+//					}
+//				}
+
 				while(page_continue){//レコードのループ
-//					FrameDatframe_dataty;
 					vcpPrintf("        [");
+					while(!read_page_is_empty){
+						FrameData *p_frame_data = (FrameData*)pArray;
+						IE_EA = 0;
+						read_page_is_empty = isEmpty(d.read_page,pArray);
+						IE_EA = 1;
+						if(true == read_page_is_empty){
+							break;
+						}
+						IE_EA = 0;
+						nandReadFramePage(&(d.read_page),pArray);
+						IE_EA = 1;
 
-					//Read one frame
+						vcpPrintf("%d,%d,%d",p_frame_data[0].x,p_frame_data[0].y,p_frame_data[0].z); //TODO; Support escape sequence.
+						for(i=1;i<PAGE_DATA_SIZE/sizeof(FrameData);++i){
+							vcpPrintf(",%d,%d,%d",p_frame_data[i].x,p_frame_data[i].y,p_frame_data[i].z);
+						}
+
+						if (d.read_page >= END_PAGE_OF_WRITABLE_REGION){
+							page_continue = false;
+							break;
+						}
+					}
+
+					if(false == page_continue){
+						break;
+					}
+
+					// Find next record
 					IE_EA = 0;
-					nandReadFrame(d.read_page,&frame_data);
-					IE_EA = 1;
-					if(frame_data.x!=0xffff || frame_data.y!=0xffff || frame_data.z!=0xffff){
-						//エスケープシーケンスでなければ出力
-						vcpPrintf("%d,%d,%d",frame_data.x,frame_data.y,frame_data.z);
-						++d.read_page;
-					}
-
-					while(1){//フレームのループ
-						//Read next frame
-						IE_EA = 0;
-						nandReadFrame(d.read_page,&frame_data);
-						IE_EA = 1;
-						if(frame_data.x!=0xffff || frame_data.y!=0xffff || frame_data.z!=0xffff){
-							//エスケープシーケンスでなければ出力
-							vcpPrintf(",%d,%d,%d",frame_data.x,frame_data.y,frame_data.z);
-							++d.read_page;
-							continue;
-						}
-						//エスケープシーケンスがあったら次のフレームをチェック
-						IE_EA = 0;
-						nandReadFrame(d.read_page+1,&frame_data);
-						IE_EA = 1;
-						if(frame_data.x==0xfffe && frame_data.y==0xfffe && frame_data.z==0xfffe){
-							vcpPrintf(",%d,%d,%d",0xffff,0xffff,0xffff);
-							d.read_page += 2;//エスケープシーケンス分の2フレームを加算
-							continue;
-						}else if(frame_data.x==0x0000 && frame_data.y==0x0000 && frame_data.z==0x0000){
-							//Go to next frame
-							vcpPrintf("],\n");
-							//エスケープシーケンス分の2フレームを加算し移動
-							d.read_page += 2;
+					if (!(d.read_page >= END_PAGE_OF_WRITABLE_REGION-1)){
+						if(!isEmpty(d.read_page+1,pArray)){ // separator is one page only
 							++record;
-							break;
-						}else if(frame_data.x==0xffff && frame_data.y==0xffff && frame_data.z==0xffff){
-							// No data
-							vcpPrintf("]\n");
-							page_continue = 0;
-							record = 0;
-							break;
-						}else{
-							vcpPrintf("### Corrupted data. Flash memory may be end of lifetime, or software bug.\n");
+							d.read_page += 1;
+							read_page_is_empty = false;
+							IE_EA = 1;
+							vcpPrintf("],\n");
+							continue;
 						}
 					}
-
-
+					if (!(d.read_page >= END_PAGE_OF_WRITABLE_REGION-2)){
+						if(!isEmpty(d.read_page+2,pArray)){ // separator is two pages
+							++record;
+							d.read_page += 2;
+							read_page_is_empty = false;
+							IE_EA = 1;
+							vcpPrintf("],\n");
+							continue;
+						}
+					}
+					// Reached the end of records
+					page_continue = false;
+					IE_EA = 1;
+					vcpPrintf("]\n");
+					break;
 				}
+
 				vcpPrintf("    ]\n");
 				vcpPrintf("}\n");
 				EIE1 |= 0x80;
-				//TODO:Flashメモリが満タンの時の処理
-
-				break;
 				break;
 			case 'g':
 				//Show gravity
@@ -799,20 +846,7 @@ INTERRUPT(Timer3_ISR, TIMER3_IRQn) {
 					wait_ms(100);
 				}
 			}//end if
-
-			// Detect Rising Edge
-//			if((!(oldStatus & recordingAngularVelocityInInterrupt))&&(d.write_page!=BEGIN_PAGE_OF_WRITABLE_REGION)){//d.write_col==0の時は、前回の記録がないのでスキップ
-//				turnOnBlueLED();
-//
-//				d.write_page += 2;	// Leaves two pages to empty. These empty pages indicates a separator between recording data.
-//				d.write_col = 0;
-//
-//				turnOffBlueLED();
-//			}
-
-
 			turnOnBlueLED();
-
 
 			//Write angular velocity to the flash memory
 			return_value = nandWriteFramePage(&(d.write_col),&(d.write_page),&(d.angular_velocity),pArray);
@@ -827,7 +861,7 @@ INTERRUPT(Timer3_ISR, TIMER3_IRQn) {
 
 		}
 
-		// Fill in large data to remaining area when the falling edge is detected.
+		// Fill in remaining area with large data when the falling edge is detected.
 		if((oldStatus & recordingAngularVelocityInInterrupt) && (!(d.status & recordingAngularVelocityInInterrupt))){
 			turnOnBlueLED();
 			//
