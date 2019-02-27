@@ -477,6 +477,7 @@ void main (void)
 				page_continue = true;
 				EIE1 &= ~0x80;
 				while(page_continue){//レコードのループ
+					uint32_t num=0;
 #ifdef FRAME_POSITIONS
 					vcpPrintf("Record %u",record);
 					vcpPrintf("\n");
@@ -494,7 +495,7 @@ void main (void)
 
 						for(i=0;i<PAGE_DATA_SIZE/sizeof(FrameData);++i){
 							FrameData *p_frame_data = (FrameData*)pArray;
-							vcpPrintf("%d:%d,%d,%d\n",i,p_frame_data[i].x,p_frame_data[i].y,p_frame_data[i].z);
+							vcpPrintf("%lu:%d,%d,%d\n",num++,p_frame_data[i].x,p_frame_data[i].y,p_frame_data[i].z);
 						}
 
 						if (d.read_page >= END_PAGE_OF_WRITABLE_REGION){
@@ -546,55 +547,6 @@ void main (void)
 				vcpPrintf("    \"coefficient_adc_raw_value_to_rad_per_sec\":%0.10f,\n",1.f/16.4f*M_PI/180.0f);
 				vcpPrintf("    \"frequency\":%f,\n",60.f);
 				vcpPrintf("    \"angular_velocity\":[\n");
-//				while(page_continue){//レコードのループ
-//					vcpPrintf("        [");
-//					//Read one frame
-//					IE_EA = 0;
-//					nandReadFrame(d.read_page,&frame_data);
-//					IE_EA = 1;
-//					if(frame_data.x!=0xffff || frame_data.y!=0xffff || frame_data.z!=0xffff){
-//						//エスケープシーケンスでなければ出力
-//						vcpPrintf("%d,%d,%d",frame_data.x,frame_data.y,frame_data.z);
-//						++d.read_page;
-//					}
-//					while(1){//フレームのループ
-//						//Read next frame
-//						IE_EA = 0;
-//						nandReadFrame(d.read_page,&frame_data);
-//						IE_EA = 1;
-//						if(frame_data.x!=0xffff || frame_data.y!=0xffff || frame_data.z!=0xffff){
-//							//エスケープシーケンスでなければ出力
-//							vcpPrintf(",%d,%d,%d",frame_data.x,frame_data.y,frame_data.z);
-//							++d.read_page;
-//							continue;
-//						}
-//						//エスケープシーケンスがあったら次のフレームをチェック
-//						IE_EA = 0;
-//						nandReadFrame(d.read_page+1,&frame_data);
-//						IE_EA = 1;
-//						if(frame_data.x==0xfffe && frame_data.y==0xfffe && frame_data.z==0xfffe){
-//							vcpPrintf(",%d,%d,%d",0xffff,0xffff,0xffff);
-//							d.read_page += 2;//エスケープシーケンス分の2フレームを加算
-//							continue;
-//						}else if(frame_data.x==0x0000 && frame_data.y==0x0000 && frame_data.z==0x0000){
-//							//Go to next frame
-//							vcpPrintf("],\n");
-//							//エスケープシーケンス分の2フレームを加算し移動
-//							d.read_page += 2;
-//							++record;
-//							break;
-//						}else if(frame_data.x==0xffff && frame_data.y==0xffff && frame_data.z==0xffff){
-//							// No data
-//							vcpPrintf("]\n");
-//							page_continue = 0;
-//							record = 0;
-//							break;
-//						}else{
-//							vcpPrintf("### Corrupted data. Flash memory may be end of lifetime, or software bug.\n");
-//						}
-//					}
-//				}
-
 				while(page_continue){//レコードのループ
 					vcpPrintf("        [");
 					while(!read_page_is_empty){
