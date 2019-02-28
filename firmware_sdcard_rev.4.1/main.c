@@ -23,7 +23,7 @@
 #include "inc/util.h"
 #include "SPI-NAND.h"
 #include <stdbool.h>
-
+#include "inc/LED.h"
 //-----------------------------------------------------------------------------
 // Global Constants
 //-----------------------------------------------------------------------------
@@ -113,10 +113,7 @@ void spin();
 int vcpPrintf(const char* format, ...);
 void resetSystemStatus(VG_STATUS *st);
 ReturnType Build_Address(NMX_uint16 block, NMX_uint8 page, NMX_uint16 col, NMX_uint32* addr);
-void turnOnBlueLED();
-void turnOffBlueLED();
-void turnOnGreenLED();
-void turnOffGreenLED();
+
 
 bool printReturnType(ReturnType return_value){
 	switch (return_value) {
@@ -464,7 +461,7 @@ void main (void)
 
 				vcpPrintf("Spin as a SD Card...\n");
 				EIE1 &= ~EIE1_EUSB0__BMASK;
-				spinAsSdCard(1000UL);
+				spinAsSdCard(6000UL);
 				EIE1 |= EIE1_EUSB0__BMASK;
 				vcpPrintf("Spin ends.\n\n");
 				break;
@@ -796,13 +793,7 @@ INTERRUPT(Timer3_ISR, TIMER3_IRQn) {
 			assert(END_PAGE_OF_WRITABLE_REGION > d.write_page);//If データの末尾がFlashメモリの末尾-1(すなわちMAX_FRAMES-2)ならデータの区切りが必要なのでここで無限ループ then
 
 			//Write angular velocity to the flash memory
-			if(((PAGE_DATA_SIZE/sizeof(FrameData))*sizeof(FrameData)) <= d.write_col ){
-				turnOnGreenLED();
-			}
 			return_value = nandWriteFramePage(&(d.write_col),&(d.write_page),&(d.angular_velocity),pArray);
-			if(0 == d.write_col){
-				turnOffGreenLED();
-			}
 			assert(Flash_Success == return_value);
 
 

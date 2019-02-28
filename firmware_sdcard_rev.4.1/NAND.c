@@ -12,6 +12,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
+#include "inc/LED.h"
 #define NULL_PTR 0
 
 
@@ -72,12 +73,16 @@ uint32_t findBeginOfWritablePages(uint32_t begin_page, uint32_t end_page, NMX_ui
 
 ReturnType nandWriteFramePage(uint32_t *col, uint32_t *page, FrameData *angularVelocity, NMX_uint8 *pArray){
 	code uint32_t FRAMES_IN_PAGE = PAGE_DATA_SIZE/sizeof(FrameData);
+	ReturnType retval;
 //	uint32_t col = *frame*sizeof(FrameData);
 	memcpy(pArray+(*col),angularVelocity,sizeof(FrameData));
 	(*col)+=sizeof(FrameData);
 	if((*col) >= (FRAMES_IN_PAGE*sizeof(FrameData))){
 		(*col) = 0;
-		return FlashPageProgram(getAddress((*page)++),pArray,(FRAMES_IN_PAGE*sizeof(FrameData)));
+		turnOnGreenLED();
+		retval = FlashPageProgram(getAddress((*page)++),pArray,(FRAMES_IN_PAGE*sizeof(FrameData)));
+		turnOffGreenLED();
+		return retval;
 	}
 
 	return Flash_Success;
