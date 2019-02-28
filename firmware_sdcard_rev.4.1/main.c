@@ -112,8 +112,6 @@ void myAPICallback(void);
 void spin();
 int vcpPrintf(const char* format, ...);
 void resetSystemStatus(VG_STATUS *st);
-float norm(float a[]);
-float dot(float a[],float b[]);
 ReturnType Build_Address(NMX_uint16 block, NMX_uint8 page, NMX_uint16 col, NMX_uint32* addr);
 void turnOnBlueLED();
 void turnOffBlueLED();
@@ -650,13 +648,6 @@ void turnOffGreenLED(){
 	LED_green = 0;
 }
 
-float norm(float a[]){
-	return sqrt(a[0]*a[0]+a[1]*a[1]+a[2]*a[2]);
-}
-float dot(float a[],float b[]){
-	return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
-}
-
 void spinAsSdCard(uint32_t spin_time_ms){
 	static uint32_t endTime = 0;
 	static uint32_t startTime;
@@ -768,6 +759,19 @@ static void Port_Init (void)
 
 }
 
+void assert(bool condition){
+	if(true == condition){
+		return;
+	}
+	while(1){//LED点滅の無限ループ
+		//					LED1 = 1;
+		turnOnBlueLED();
+		wait_ms(1000);
+		turnOffBlueLED();
+		wait_ms(1000);
+	}
+}
+
 //-----------------------------------------------------------------------------
 // Initialization Subroutines
 //-----------------------------------------------------------------------------
@@ -779,35 +783,28 @@ INTERRUPT(Timer3_ISR, TIMER3_IRQn) {
 	static uint8_t Times=0;
 	static uint16_t oldStatus = 0;
 	ReturnType return_value;
+	turnOnBlueLED();
+
 	if((++Times) & 0x01){	//2回に1回実行、60Hz
 		//フラッシュメモリへの波形書き込み
 		if(d.status & recordingAngularVelocityInInterrupt){
 
-			turnOnBlueLED();
 			mpu9250_polling2(&d.angular_velocity);
 			mpu9250_pollingAcceleration(&d.acceleration);
-			turnOFFBlueLED();
 
 			// If writing position reaches the end page on flash, stop writing.
-			if(END_PAGE_OF_WRITABLE_REGION <= d.write_page){//If データの末尾がFlashメモリの末尾-1(すなわちMAX_FRAMES-2)ならデータの区切りが必要なのでここで無限ループ then
-				while(1){//LED点滅の無限ループ
-//					LED1 = 1;
-					turnOnBlueLED();
-					wait_ms(100);
-					turnOffBlueLED();
-					wait_ms(100);
-				}
-			}//end if
-			turnOnBlueLED();
+			assert(END_PAGE_OF_WRITABLE_REGION > d.write_page);//If データの末尾がFlashメモリの末尾-1(すなわちMAX_FRAMES-2)ならデータの区切りが必要なのでここで無限ループ then
 
 			//Write angular velocity to the flash memory
-			return_value = nandWriteFramePage(&(d.write_col),&(d.write_page),&(d.angular_velocity),pArray);
-			if(Flash_Success != return_value){
+			if(((PAGE_DATA_SIZE/sizeof(FrameData))*sizeof(FrameData)) <= d.write_col ){
 				turnOnGreenLED();
 			}
+			return_value = nandWriteFramePage(&(d.write_col),&(d.write_page),&(d.angular_velocity),pArray);
+			if(0 == d.write_col){
+				turnOffGreenLED();
+			}
+			assert(Flash_Success == return_value);
 
-			//LEDを消灯
-			turnOffBlueLED();
 
 			d.time_ms += 17;//17ms追加
 
@@ -815,7 +812,6 @@ INTERRUPT(Timer3_ISR, TIMER3_IRQn) {
 
 		// Fill in remaining area with large data when the falling edge is detected.
 		if((oldStatus & recordingAngularVelocityInInterrupt) && (!(d.status & recordingAngularVelocityInInterrupt))){
-			turnOnBlueLED();
 			//
 			d.angular_velocity.x = 32767;
 			d.angular_velocity.y = 32767;
@@ -823,18 +819,17 @@ INTERRUPT(Timer3_ISR, TIMER3_IRQn) {
 			while(d.write_col != 0){
 				//Write angular velocity to the flash memory
 				return_value = nandWriteFramePage(&(d.write_col),&(d.write_page),&(d.angular_velocity),pArray);
-				if(Flash_Success != return_value){
-					turnOnGreenLED();
-				}
+				assert(Flash_Success == return_value);
 			}
 			d.write_page += 2;	// Leaves two pages to empty. These empty pages indicates a separator between recording data.
-			turnOnBlueLED();
 		}
 
 		//状態の保存
 		oldStatus = d.status;
 
 	}
+	turnOFFBlueLED();
+
 	TMR3CN &= ~0x80; // Clear interrupt
 }
 
