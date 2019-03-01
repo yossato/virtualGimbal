@@ -4,7 +4,7 @@ import serial
 def eraseFlashMemoryOnVirtualGimbal():
     ser = serial.Serial('/dev/ttyVIG0', timeout=1)
     print('Device:' + ser.name)
-    print('Eracing angular velocity data on a flash memory...')
+    print('Erasing angular velocity data on a flash memory...')
     ln = b''
     while 1:
         line = ser.readline()
@@ -27,5 +27,13 @@ def eraseFlashMemoryOnVirtualGimbal():
     return ln.decode()
 
 if __name__ == '__main__':
-    print(eraseFlashMemoryOnVirtualGimbal())
-    print('Done.')
+    print('This script erase all data in flash memory of VirtualGimbal.')
+    print('Do you continue? [y/N]')
+    a = input()
+    if a == 'y' or a == 'Y':
+        print(eraseFlashMemoryOnVirtualGimbal())
+        print('Done.')
+    else:
+        print('Canceled.')   
+            
+    
