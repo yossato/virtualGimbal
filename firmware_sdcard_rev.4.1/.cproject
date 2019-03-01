@@ -114,7 +114,8 @@
 								<option id="com.silabs.ide.si8051.keil.compiler.category.optimization.emphasis.2141918926" name="Emphasis" superClass="com.silabs.ide.si8051.keil.compiler.category.optimization.emphasis" value="com.silabs.ide.si8051.keil.compiler.category.optimization.emphasis.speed" valueType="enumerated"/>
 								<option id="com.silabs.ide.si8051.keil.compiler.category.includes.paths.1744790481" name="Include paths (INCDIR(...))" superClass="com.silabs.ide.si8051.keil.compiler.category.includes.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/examples/C8051F380DK/USB/VCPXpress/C8051F380_VCPXpress_Echo/src&quot;"/>
-									<listOptionValue builtIn="false" value="J:/Dropbox/_SymbolicLinkSources/SimplicityStudio/v4_workspace/C8051F380_VCPXpress_Echo_2/inc"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/Device/C8051F380/VCPXpress&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/Device/C8051F380/VCPXpress&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/Device/shared/si8051base&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${StudioSdkPath}/Device/C8051F380/inc&quot;"/>

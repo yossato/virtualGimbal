@@ -654,6 +654,68 @@ ReturnType FlashReadDeviceIdentification(NMX_uint16 *uwpDeviceIdentification)
     return Flash_Success;
 }
 
+ReturnType BeginFlashPageProgram(uAddrType udAddr){
+	CharStream char_stream_send;
+	NMX_uint8 chars[4];
+
+	// Step 1: Validate address input
+	if(ADDRESS_2_COL(udAddr) >= PAGE_DATA_SIZE)
+		return Flash_AddressInvalid;
+
+	// Step 2: Check whether any previous Write, Program or Erase cycle is on going
+	if(IsFlashBusy()) return Flash_OperationOngoing;
+
+	// Step 3: Disable Write protection
+	FlashWriteEnable();
+
+	// Step 4: Initialize the data (Instruction & address only) packet to be sent serially
+	Build_Column_Stream(udAddr, SPI_NAND_PROGRAM_LOAD_INS, chars);
+	char_stream_send.length   = 3;
+	char_stream_send.pChar    = chars;
+
+	// Step 5: Send the packet serially, and fill the buffer with the data being returned
+	Serialize_SPI(&char_stream_send, NULL_PTR, OpsWakeUp, OpsInitTransfer);
+
+	ConfigureSpi(OpsWakeUp);
+
+	return Flash_Success;
+}
+
+void FlashPageProgramSixBytesAtATime(NMX_uint8 *pArray, NMX_uint32 udNrOfElementsInArray){
+	CharStream char_stream_send;
+	// Step 6: Initialize the data (data to be programmed) packet to be sent serially
+	char_stream_send.length   = udNrOfElementsInArray;
+	char_stream_send.pChar    = pArray;
+
+	// Step 7: Send the packet (data to be programmed) serially
+	Serialize_SPI(&char_stream_send, NULL_PTR, OpsNull, OpsNull);
+}
+
+ReturnType EndFlashPageProgram(uAddrType udAddr){
+    CharStream char_stream_send;
+    NMX_uint8 chars[4];
+    NMX_uint8 status_reg;
+
+    ConfigureSpi(OpsEndTransfer);
+
+	// Step 8: Initialize the data (i.e. Instruction) packet to be sent serially
+	Build_Row_Stream(udAddr, SPI_NAND_PROGRAM_EXEC_INS, chars);
+	char_stream_send.length   = 4;
+	char_stream_send.pChar    = chars;
+
+	// Step 9: Send the packet (data to be programmed) serially
+	Serialize_SPI(&char_stream_send, NULL_PTR, OpsWakeUp, OpsEndTransfer);
+
+	// Step 10: Wait until the operation completes or a timeout occurs.
+	WAIT_EXECUTION_COMPLETE(SE_TIMEOUT);
+
+	// Step 11: Check if the program fails
+	FlashReadStatusRegister(&status_reg);
+	if (status_reg & SPI_NAND_PF)
+		return Flash_ProgramFailed;
+
+	return Flash_Success;
+}
 
 /******************************************************************************
  *

@@ -297,6 +297,11 @@ ReturnType FlashPageRead(uAddrType udAddr, NMX_uint8 *pArray);
 ReturnType FlashPageReadDual(uAddrType udAddr, NMX_uint8 *pArray);
 ReturnType FlashPageReadQuad(uAddrType udAddr, NMX_uint8 *pArray, PageReadMode Mode);
 ReturnType FlashReadDeviceIdentification(NMX_uint16 *uwpDeviceIdentification);
+
+ReturnType BeginFlashPageProgram(uAddrType udAddr);
+void FlashPageProgramSixBytesAtATime(NMX_uint8 *pArray, NMX_uint32 udNrOfElementsInArray);
+ReturnType EndFlashPageProgram(uAddrType udAddr);
+
 ReturnType FlashPageProgram(uAddrType udAddr, NMX_uint8 *pArray, NMX_uint32 udNrOfElementsInArray);
 ReturnType FlashRandomProgram(uAddrType rowAddr, chunk* cks, NMX_uint8 num_of_chunk);
 ReturnType FlashInternalDataMove(uAddrType udSourceAddr, uAddrType udDestAddr);
