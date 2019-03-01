@@ -228,7 +228,7 @@ int main(int argc, char** argv){
 
     std::vector<cv::Vec3d> opticShift;
     //動画からオプティカルフローを計算する
-    int syncLength = getVideoLength(videoPass) >= SYNC_LENGTH ? SYNC_LENGTH : getVideoLength(videoPass);
+    int syncLength = getVideoLength(videoPass) < SYNC_LENGTH ? getVideoLength(videoPass) : SYNC_LENGTH;
     auto t1 = std::chrono::system_clock::now() ;
     Eigen::MatrixXd optical_flow;
     if(jsonExists(std::string(videoPass))){
