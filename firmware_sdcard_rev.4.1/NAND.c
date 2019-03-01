@@ -75,12 +75,19 @@ ReturnType nandWriteFramePage(uint32_t *col, uint32_t *page, FrameData *angularV
 	code uint32_t FRAMES_IN_PAGE = PAGE_DATA_SIZE/sizeof(FrameData);
 	ReturnType retval;
 //	uint32_t col = *frame*sizeof(FrameData);
+	if(0 == (*col)){
+		BeginFlashPageProgram(getAddress(*page));
+	}
 	memcpy(pArray+(*col),angularVelocity,sizeof(FrameData));
+	FlashPageProgramSixBytesAtATime(pArray+(*col),sizeof(FrameData));
 	(*col)+=sizeof(FrameData);
 	if((*col) >= (FRAMES_IN_PAGE*sizeof(FrameData))){
-		(*col) = 0;
 		turnOnGreenLED();
-		retval = FlashPageProgram(getAddress((*page)++),pArray,(FRAMES_IN_PAGE*sizeof(FrameData)));
+		retval = EndFlashPageProgram(getAddress((*page)++));
+		(*col) = 0;
+
+
+//		retval = FlashPageProgram(getAddress((*page)++),pArray,(FRAMES_IN_PAGE*sizeof(FrameData)));
 		turnOffGreenLED();
 		return retval;
 	}

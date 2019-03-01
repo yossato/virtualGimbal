@@ -540,7 +540,7 @@ void main (void)
 				EIE1 &= ~0x80;
 				vcpPrintf("{\n");
 				vcpPrintf("    \"coefficient_adc_raw_value_to_rad_per_sec\":%0.10f,\n",1.f/16.4f*M_PI/180.0f);
-				vcpPrintf("    \"frequency\":%f,\n",60.f);
+				vcpPrintf("    \"frequency\":%f,\n",240.f);
 				vcpPrintf("    \"angular_velocity\":[\n");
 				while(page_continue){//レコードのループ
 					vcpPrintf("        [");
@@ -782,7 +782,7 @@ INTERRUPT(Timer3_ISR, TIMER3_IRQn) {
 	ReturnType return_value;
 	turnOnBlueLED();
 
-	if((++Times) & 0x01){	//2回に1回実行、60Hz
+//	if((++Times) & 0x01){	//2回に1回実行、60Hz
 		//フラッシュメモリへの波形書き込み
 		if(d.status & recordingAngularVelocityInInterrupt){
 
@@ -797,7 +797,7 @@ INTERRUPT(Timer3_ISR, TIMER3_IRQn) {
 			assert(Flash_Success == return_value);
 
 
-			d.time_ms += 17;//17ms追加
+			d.time_ms += 4;//17ms追加
 
 		}
 
@@ -818,7 +818,7 @@ INTERRUPT(Timer3_ISR, TIMER3_IRQn) {
 		//状態の保存
 		oldStatus = d.status;
 
-	}
+//	}
 	turnOFFBlueLED();
 
 	TMR3CN &= ~0x80; // Clear interrupt
@@ -827,7 +827,7 @@ INTERRUPT(Timer3_ISR, TIMER3_IRQn) {
 void timer_init(){
 	TMR3CN = 0x00;    // Stop Timer3; Clear TF3;
 	CKCON &= ~0xC0;   // Timer3 clocked based on T3XCLK;
-	TMR3RL = (0x10000 - (SYSCLK/12/120));  // Re-initialize reload value (120Hz, 8.3ms)
+	TMR3RL = (0x10000 - (SYSCLK/12/240));  // Re-initialize reload value (240Hz, 4.2ms)
 	TMR3 = 0xFFFF;    // Set to reload immediately
 	EIE1 |= 0x80;     // Enable Timer3 interrupts(ET3)
 	TMR3CN |= 0x04;   // Start Timer3(TR3)
