@@ -28,6 +28,7 @@ configure_file(camera_descriptions/cameras_example.json camera_descriptions/came
 configure_file(scripts/read_angular_velocity_from_virtualGimbal.py scripts/read_angular_velocity_from_virtualGimbal.py)
 configure_file(scripts/generate_angular_velocity_json.py scripts/generate_angular_velocity_json.py)
 configure_file(scripts/setup_udev_rules.sh scripts/setup_udev_rules.sh)
+configure_file(scripts/erase_flash_memory.py scripts/erase_flash_memory.py)
 configure_file(records/sample.json records/sample.json)
 # Compile external dependencies
 add_subdirectory (external)

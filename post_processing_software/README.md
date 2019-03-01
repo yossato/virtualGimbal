@@ -26,21 +26,27 @@ Launch camera_calibration with the following command. It may take up to 5 minute
 When you start the camera_calbration tool, it executes chess board detection and estimates internal parameters. The results will be recorded in camera_descriptions/cameras.json. cameras.json is a file that records camera information in JSON format.
 
 ## Initial setting
-Execute the following command __only once__ to complete the initial setting of your PC. In this procedure, you can fix virtualGimbal's device file name to /dev/ttyVIG0.  
+Execute the following command __only once__ to complete the initial setting of your PC. By this procedure, you can fix VirtualGimbal's device file name to /dev/ttyVIG0.  
 `$ sudo ./scripts/setup_udev_rules.sh`
 
-# Shooting movies with virtualGimbal
-Set the microSD card in virtualGimbal first. Next, please put the virtual Gimbal into the SD card slot of the camera the same way as for a standard SD card. In order to prevent interference with virtual Gimbal's software stabilization correction, please turn off the camera's built-in camera shake correction function before shooting. For cameras that can set the shutter speed of the camera, please shorten the shutter speed as quickly as possible. The blur of the image decreases and the image becomes more evident when the shutter speed is quicker. Approximately 1/300 second is a standard. After performing the above procedure, turn on the camera and take the movie. If virtualGimbal is not recognized by the camera properly, please try inserting/removing the microSD card and virtualGimbal.
+# Erase built-in flash memory
+VirtualGimbal has built-in flash memory for recording camera motion separately from microSD card. It is necessary to erase this flash memory before shooting a movie. Please note that the camera motion data will be erased.
+You can erase the Flash Memory of the VirtualGimbal by the following command.  
+`$ ./scripts/erase_flash_memory.py`
 
-I will assume that you have saved the captured video as `~/vgdataset/myfirstvideo.MP4`.  
+# Shooting movies with VirtualGimbal
+Set the microSD card in VirtualGimbal first. Next, please put the virtual Gimbal into the SD card slot of the camera the same way as for a standard SD card. In order to prevent interference with virtual Gimbal's software stabilization correction, please turn off the camera's built-in camera shake correction function before shooting. For cameras that can set the shutter speed of the camera, please shorten the shutter speed as quickly as possible. The blur of the image decreases and the image becomes more evident when the shutter speed is quicker. Approximately 1/300 second is a standard. After performing the above procedure, turn on the camera and take the movie. If VirtualGimbal is not recognized by the camera properly, please try inserting/removing the microSD card and VirtualGimbal.
+
+I will assume that you have saved the captured video as  
+ `~/vgdataset/myfirstvideo.MP4`.  
 After movie shooting is completed, it is good to turn the camera shake correction function back on so that you do not have to worry about shooting pictures and videos later.
 
-# Stabilizing videos with virtualGimbal
+# Stabilizing videos with VirtualGimbal
 A post-processing software stabilizes your video.
 
-## Extract angular velocity information from virtualGimbal
-I will explain how to retrieve camera motion information recorded in virtualGimbal. The information to be extracted is the angular velocity of the camera. You can obtain angular velocity data of JSON format from virtualGimbal via USB.
-Remove the microSD card from virtualGimbal and connect it to the USB port of the PC via the adapter as shown below. Do not insert virtualGimbal into the SD card slot of PC at same time.  
+## Extract angular velocity information from VirtualGimbal
+I will explain how to retrieve camera motion information recorded in VirtualGimbal. The information to be extracted is the angular velocity of the camera. You can obtain angular velocity data of JSON format from VirtualGimbal via USB.
+Remove the microSD card from VirtualGimbal and connect it to the USB port of the PC via the adapter as shown below. Do not insert VirtualGimbal into the SD card slot of PC at same time.  
 ![Connection via USB](https://github.com/yossato/macadamia/raw/master/post_processing_software/doc/connect_via_usb.jpg "Connection via USB")  
 ![Connector](https://github.com/yossato/macadamia/raw/master/post_processing_software/doc/connector.jpg "Connector")  
 The angular velocity data of JSON format can be acquired with the following command.  
@@ -50,7 +56,7 @@ Please use the JSON filename of the angular velocity displayed on the screen at 
 In the following explanation, it is assumed that the JSON file name is as follows.  
 `records/2019-02-16_18.35.24.json`
 
-## Movie stabilization by post-processing stabilization tool virtualGimbal
+## Movie stabilization by post-processing stabilization tool VirtualGimbal
 Execute the following command to stabilize the movie. While processing, a comparison between the original video and the stabilized video is displayed.  
 `$ ./virtualGimbal -i ~/vgdataset/myfirstvideo.MP4 -j records/2019-02-16_18.35.24.json -z 1.3  -c ILCE-6500 -l SEL1670Z`
 
@@ -105,22 +111,27 @@ camera_calbrationツールを起動するとチェスボードの検出を実行
 一度だけ以下のコマンドを実行しVirtual COM Portの初期設定を完了させてください。この手順でデバイスファイル名を/dev/ttyVIG0に固定することができます。
 `$ sudo ./scripts/setup_udev_rules.sh`
 
-# virtualGimbal を使った動画の撮影
-virtualGimbalをカメラに挿入して動画を撮影する手順を説明します。
-まずvirtualGimbalにmicroSDカードへセットしてください。次に通常のSDカードを同様に、virtualGimbalをカメラのSDカードスロットへセットしてください。virtualGimbalのソフトウェア安定化補正と干渉するのを防ぐために、撮影前にカメラの内蔵の手ブレ補正機能はOFFにしてください。
+# VirtualGimbal 内蔵 Flash memory の消去
+VirtualGimbalはmicroSDカードとは別にカメラの動きを記録するためのFlash memoryを内蔵しています。動画を撮影する前にこのFlash memoryを消去する必要があります。初期化により以前に記録されたカメラの動きのの情報は消去されることに注意してください。
+以下の手順によりVirtualGimbal内臓のFlash Memoryを消去できます。  
+`$ ./scripts/erase_flash_memory.py`
+
+# VirtualGimbal を使った動画の撮影
+VirtualGimbalをカメラに挿入して動画を撮影する手順を説明します。
+まずVirtualGimbalにmicroSDカードへセットしてください。次に通常のSDカードを同様に、VirtualGimbalをカメラのSDカードスロットへセットしてください。VirtualGimbalのソフトウェア安定化補正と干渉するのを防ぐために、撮影前にカメラの内蔵の手ブレ補正機能はOFFにしてください。
 カメラのシャッタースピードを設定できるカメラでは、なるべくシャッタースピードを早く、短くしてください。画像のブラーが減少して画像が鮮明になります。1/300 second 程度が目安です。
 以上の手順を実行後、カメラの電源をいれてあなたの動画を撮影してください。
-virtualGimbalが正常にカメラに認識されない場合は、microSDカードおよびvirtualGimbalの抜き差しを試してください。
+VirtualGimbalが正常にカメラに認識されない場合は、microSDカードおよびVirtualGimbalの抜き差しを試してください。
 
 以降、撮影した動画を`~/vgdataset/myfirstvideo.MP4`として保存したと仮定して説明します。
 動画撮影が完了した後は、あなたが後で写真や動画を撮影するときに困らないように、カメラの手ブレ補正機能をONに戻しておくと良いです。
 
-# virtualGimbal を使った動画の安定化
+# VirtualGimbal を使った動画の安定化
 動画をPCの後処理で安定化させます。
 
-## virtualGimbal から角速度情報を抜き出す
-virtualGimbalに記録されたカメラの動きの情報を取り出す方法を説明します。取り出す情報はカメラの角速度です。USB経由でvirtualGimbalからJSON形式の角速度データを取得できます。
-virtualGimbalからmicroSDカードを取り出し以下の図のとおりにアダプタを介してPCのUSBポートへ接続してください。この時、virtualGimbalをPCのSDカードスロットへ同時に挿入しないでください。  
+## VirtualGimbal から角速度情報を抜き出す
+VirtualGimbalに記録されたカメラの動きの情報を取り出す方法を説明します。取り出す情報はカメラの角速度です。USB経由でVirtualGimbalからJSON形式の角速度データを取得できます。
+VirtualGimbalからmicroSDカードを取り出し以下の図のとおりにアダプタを介してPCのUSBポートへ接続してください。この時、VirtualGimbalをPCのSDカードスロットへ同時に挿入しないでください。  
 ![Connection via USB](https://github.com/yossato/macadamia/raw/master/post_processing_software/doc/connect_via_usb.jpg "Connection via USB")
 ![Connector](https://github.com/yossato/macadamia/raw/master/post_processing_software/doc/connector.jpg "Connector")  
 
@@ -131,7 +142,7 @@ virtualGimbalからmicroSDカードを取り出し以下の図のとおりにア
 以降の説明ではJSONファイル名が以下の場合だったとして説明します。
 `records/2019-02-16_18.35.24.json`
 
-## 事後処理安定化ツール virtualGimbalによる動画安定化
+## 事後処理安定化ツール VirtualGimbalによる動画安定化
 以下のコマンドを実行して動画を安定化させます。処理している間、オリジナル動画と安定化後の動画の比較が表示されます。  
 `$ ./virtualGimbal -i ~/vgdataset/myfirstvideo.MP4 -j records/2019-02-16_18.35.24.json -z 1.3  -c ILCE-6500 -l SEL1670Z`
 
