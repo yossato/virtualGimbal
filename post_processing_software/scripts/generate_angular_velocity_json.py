@@ -9,14 +9,14 @@ def rawToAngularVelocityJson(angular_velocity_json):
     input_dict = json.loads(angular_velocity_json, object_pairs_hook=OrderedDict)
 
     output_dict = OrderedDict()
-    output_dict["camera_model_name"] = "ILCE-6500"
-    output_dict["sd_card_quaternion"] = {
-            "w" :   1.0,
-            "x" :   0.0,
-            "y" :   0.0,
-            "z" :   0.0
-        }
-    output_dict["frequency"] = 60.0
+#    output_dict["camera_model_name"] = "ILCE-6500"
+#    output_dict["sd_card_quaternion"] = {
+#            "w" :   1.0,
+#            "x" :   0.0,
+#            "y" :   0.0,
+#            "z" :   0.0
+#        }
+    output_dict["frequency"] = input_dict['frequency']
     output_dict["angular_velocity_rad_per_sec"] = []
     
     coeff = input_dict['coefficient_adc_raw_value_to_rad_per_sec']

@@ -358,7 +358,7 @@ int main(int argc, char** argv){
         }
     }
 
-    double Tav = 1./60.0;//Sampling period of angular velocity
+    double Tav = 1./240.0;//Sampling period of angular velocity
 
     //動画のサンプリング周期に合わせて、角速度を得られるようにする関数を定義
     //線形補間
