@@ -565,6 +565,13 @@ void main (void)
 							page_continue = false;
 							break;
 						}
+
+						IE_EA = 0;
+						read_page_is_empty = isEmpty(d.read_page,pArray);
+						IE_EA = 1;
+						if(false == read_page_is_empty){
+							vcpPrintf(",");
+						}
 					}
 
 					if(false == page_continue){
