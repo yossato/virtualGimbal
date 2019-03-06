@@ -720,10 +720,8 @@ VCPXpress_API_CALLBACK(myAPICallback)
  *****************************************************************************/
 void Sysclk_Init (void)
 {
-	   OSCICN  = OSCICN_IOSCEN__ENABLED;          // Enable intosc (48Mhz)
-	   FLSCL  |= FLSCL_FLRT__SYSCLK_BELOW_48_MHZ; // Set flash scale
-	   PFE0CN |= PFE0CN_PFEN__ENABLED;            // Enable prefetch
-	   CLKSEL = CLKSEL_CLKSL__HFOSC;              // select full speed sysclk
+	OSCICN |= 0x03;                     // Configure internal oscillator for
+	CLKSEL  = 0x01;                     // External Oscillator
 }
 
 
