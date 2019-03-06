@@ -570,14 +570,14 @@ for(int row=0;row<estimated_angular_velocity_matrix.rows();++row){
     //#define OUTPUTVIDEO
     //#ifdef OUTPUTVIDEO
     if(outputStabilizedVideo){
-        std::cout << "音声を分離" << std::endl;
-        std::string command = "ffmpeg -i " + sInputVideoPass +  " -vn -acodec copy output-audio.aac";
+        std::cout << "Separate audio" << std::endl;
+        std::string command = "ffmpeg -i " + sInputVideoPass +  " -vn -acodec pcm_s16le output-audio.wav";
         system(command.c_str());
-        std::cout << "音声を結合" << std::endl;
-        command = "ffmpeg -i " + sInputVideoPass + "_deblured.avi -i output-audio.aac -codec copy " + sInputVideoPass + "_deblured_audio.avi";
+        std::cout << "Combine audio" << std::endl;
+        command = "ffmpeg -i " + sInputVideoPass + "_deblured.avi -i output-audio.wav -codec copy " + sInputVideoPass + "_deblured_audio.avi";
         system(command.c_str());
 
-        system("rm output-audio.aac");
+        system("rm output-audio.wav");
         command = "rm " + sInputVideoPass + "_deblured.avi";
         system(command.c_str());
     }
