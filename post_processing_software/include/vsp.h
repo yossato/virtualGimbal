@@ -681,23 +681,7 @@ class vsp
     /**
       * @brief 同期が取れている角速度を出力
       **/
-    Eigen::Vector3d angularVelocitySync(                /*std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> &angularVelocityIn60Hz,
-                                        double T_video,
-                                        double T_av,
-                                        double frame_offset,*/
-                                        int32_t frame); /*{
-        double dframe = (frame + frame_offset) * T_video / T_angular_velocity;
-        int i = floor(dframe);
-        double decimalPart = dframe - (double)i;
-        //領域外にはみ出した時は、末端の値で埋める
-        if(i<0){
-            return angular_velocity[0];
-        }else if(angular_velocity.size()<=(i+1)){
-            return angular_velocity.back();
-        }else{
-            return angular_velocity[i]*(1.0-decimalPart)+angular_velocity[i+1]*decimalPart;
-        }
-    }*/
+    Eigen::Vector3d angularVelocitySync(int32_t frame);
 
     /**
      * @brief CSVファイルを読み込んで配列を返す関数
