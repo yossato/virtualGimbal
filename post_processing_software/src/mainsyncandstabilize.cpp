@@ -223,8 +223,7 @@ int main(int argc, char** argv){
     std::cout << "fx_" << cameraInfo->fx_ << std::endl;
     std::cout << "fy_" << cameraInfo->fy_ << std::endl;
 
-    // shared_ptr<CameraInformationJsonParser> jp = std::dynamic_pointer_cast<CameraInformationJsonParser>(cameraInfo);
-    std::dynamic_pointer_cast<CameraInformationJsonParser>(cameraInfo)->writeCameraInformationJson("camera_descriptions/cameras.json");
+    // std::dynamic_pointer_cast<CameraInformationJsonParser>(cameraInfo)->writeCameraInformationJson("camera_descriptions/cameras.json");
 
     std::vector<cv::Vec3d> opticShift;
     //動画からオプティカルフローを計算する
@@ -437,11 +436,6 @@ int main(int argc, char** argv){
         vsp v2(/*angleQuaternion_vsp2,*/
                division_x,
                division_y,
-//               rollingShutterDuration,
-//               convCVMat2EigenMat(matInvDistort),
-//               convCVMat2EigenMat(matIntrinsic),
-//               imageSize.width,
-//               imageSize.height,
                *cameraInfo,
                (double)zoomRatio,
                angular_velocity_from_csv,
@@ -468,35 +462,8 @@ int main(int argc, char** argv){
 
     shared_ptr<vsp> v2;
 
-//    if(syncronizedQuarternionExist(videoPass)){
-//        Eigen::MatrixXd raw_quaternion,filtered_quaternion;
-//        readSynchronizedQuaternion(raw_quaternion,filtered_quaternion,videoPass);
-//        v2.reset(new vsp(division_x,
-//                         division_y,
-////                         rollingShutterDuration,
-////                         convCVMat2EigenMat(matInvDistort),
-////                         convCVMat2EigenMat(matIntrinsic),
-////                         imageSize.width,
-////                         imageSize.height,
-//                         *cameraInfo,
-//                         (double)zoomRatio,
-//                         angular_velocity_from_csv,
-//                         Tvideo,
-//                         Tav,
-//                         min_position + subframeOffset,
-//                         (int32_t)(Capture->get(cv::CAP_PROP_FRAME_COUNT)),
-//                         199,
-//                         raw_quaternion,
-//                         filtered_quaternion
-//                         ));
-//    }else{
         v2.reset(new vsp(division_x,
                          division_y,
-//                         rollingShutterDuration,
-//                         convCVMat2EigenMat(matInvDistort),
-//                         convCVMat2EigenMat(matIntrinsic),
-//                         imageSize.width,
-//                         imageSize.height,
                          *cameraInfo,
                          (double)zoomRatio,
                          angular_velocity_from_csv,
@@ -507,13 +474,15 @@ int main(int argc, char** argv){
                          199));
 
         // Stabilize
-        Eigen::VectorXd filter_coefficients = v2->calculateFilterCoefficientsWithoutBlackSpaces(2,499);
-        v2->filteredQuaternion(filter_coefficients);
+    Eigen::VectorXd filter_coefficients = v2->calculateFilterCoefficientsWithoutBlackSpaces(2,499);
+    v2->filteredQuaternion(filter_coefficients);
 
-        // Write angle quaternion to json
-//        writeSynchronizedQuaternion(v2->getRawQuaternion(),v2->getFilteredQuaternion(),std::string(videoPass));
-//    }
-
+printf("index,ex,ey,ez,x,y,z\n");
+for(int row=0;row<estimated_angular_velocity_matrix.rows();++row){
+    // std::cout << row << "," << estimated_angular_velocity_matrix.row(row) << "," << v2->angularVelocitySync(row).transpose() <<std::endl;
+    printf("%d,%f,%f,%f,%f,%f,%f\n",row,estimated_angular_velocity_matrix(row,0),estimated_angular_velocity_matrix(row,1),estimated_angular_velocity_matrix(row,2),
+    v2->angularVelocitySync(row)[0],v2->angularVelocitySync(row)[1],v2->angularVelocitySync(row)[2]);
+}
 
 
 

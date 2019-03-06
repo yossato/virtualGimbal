@@ -6,11 +6,6 @@ GLFWwindow* window;
 vsp::vsp(/*vector<Eigen::Quaternion<T>> &angle_quaternion,*/
          int32_t division_x,
          int32_t division_y,
-//         double TRollingShutter,
-//         Eigen::MatrixXd IK,
-//         Eigen::MatrixXd matIntrinsic,
-//         int32_t camera_info_.width_,
-//         int32_t camera_info_.height_,
          CameraInformation camera_info,
          double zoom,
          std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> &angular_velocity,
@@ -22,12 +17,6 @@ vsp::vsp(/*vector<Eigen::Quaternion<T>> &angle_quaternion,*/
     is_filtered=false;
     this->division_x = division_x;
     this->division_y = division_y;
-//    this->TRollingShutter = TRollingShutter;
-//    this->IK = IK;
-//    this->matIntrinsic = matIntrinsic;
-//    this->camera_info_.width_ = camera_info_.width_;
-//    this->camera_info_.height_ = camera_info_.height_;
-//    this->camera_info_ = camera_info;
     this->zoom = zoom;
 
     this->angular_velocity = angular_velocity;
@@ -42,21 +31,10 @@ vsp::vsp(/*vector<Eigen::Quaternion<T>> &angle_quaternion,*/
     raw_quaternion_with_margin.push_back(Eigen::Quaterniond(1,0,0,0));
     for(int frame= -floor(filter_tap_length/2)-1 ,e=video_frames+floor(filter_tap_length/2)+1;frame<e;++frame){//球面線形補間を考慮し前後各1フレーム追加
         Eigen::Vector3d v_sync = angularVelocitySync(frame);
-        //        cout << "frame:" << frame << " v_sync:" << v_sync.transpose() << endl;
         raw_quaternion_with_margin.push_back((raw_quaternion_with_margin.back()*vsp::RotationQuaternion(v_sync*this->T_video)).normalized());
     }
 
-
-//    raw_angle.resize(video_frames+2,3);//+2はローリングシャッター歪み補正のため
     int32_t half_tap_length = filter_tap_length/2;
-//    Eigen::Vector3d el = Quaternion2Vector(raw_quaternion_with_margin[0].conjugate());
-//    for(int i=0,e=raw_angle.rows();i<e;++i){
-//        el = Quaternion2Vector(raw_quaternion_with_margin[i+half_tap_length].conjugate());//require Quaternion2Matrix<3,1>()
-//        raw_angle(i,0) = el[0];
-//        raw_angle(i,1) = el[1];
-//        raw_angle(i,2) = el[2];
-//    }
-
     raw_quaternion.resize(video_frames+2,4);
     for(int i=0,e=raw_quaternion.rows();i<e;++i){
         raw_quaternion.row(i)=raw_quaternion_with_margin[i+half_tap_length].coeffs().transpose();
@@ -66,13 +44,8 @@ vsp::vsp(/*vector<Eigen::Quaternion<T>> &angle_quaternion,*/
 }
 
 vsp::vsp(int32_t division_x,
-    int32_t division_y,
-//    double TRollingShutter,
-//    Eigen::MatrixXd IK,
-//    Eigen::MatrixXd matIntrinsic,
-//    int32_t camera_info_.width_,
-//    int32_t camera_info_.height_,
-         CameraInformation camera_info,
+        int32_t division_y,
+        CameraInformation camera_info,
     double zoom,
     std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> &angular_velocity,
     double T_video,
@@ -105,92 +78,17 @@ Eigen::Quaternion<double> vsp::RotationQuaternion(double theta, Eigen::Vector3d 
 /**
  * @brief 微小回転を表す回転ベクトルから四元数を作る関数
  **/
-
 Eigen::Quaternion<double> vsp::RotationQuaternion(Eigen::Vector3d w){
     double theta = w.norm();//!<回転角
     if(theta == 0.0){
         return Eigen::Quaternion<double>(1,0,0,0);
     }
-    //    auto n = w*(1.0/theta);								//!<回転軸を表す単位ベクトル
     return RotationQuaternion(theta, w.normalized());
 }
-
-//vector<double> vsp::getRow(int r){
-//    vector<double> retval;
-//    for(int i=0,e=raw_angle.rows();i<e;++i){
-//        retval.push_back(raw_angle(i,r));
-//    }
-//    return retval;
-//}
-
-//const Eigen::MatrixXd &vsp::data(){
-//    return raw_angle;
-//}
 
 const Eigen::MatrixXd &vsp::toQuaternion(){
     return raw_quaternion;
 }
-
-//const std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond>> &vsp::toQuaternion_vec(){
-//    //クォータニオンをクラスの内部で計算する
-//    raw_quaternion_with_margin.clear();
-//    raw_quaternion_with_margin.push_back(Eigen::Quaterniond(1,0,0,0));
-//    for(int frame= -floor(filter_tap_length/2)-1 ,e=video_frames+floor(filter_tap_length/2)+1;frame<e;++frame){//球面線形補間を考慮し前後各1フレーム追加
-//        auto v_sync = angularVelocitySync(frame);
-//        cout << "frame:" << frame << " v_sync:" << v_sync.transpose() << endl;
-//        raw_quaternion_with_margin.push_back((raw_quaternion_with_margin.back()*vsp::RotationQuaternion(v_sync*this->T_video)).normalized());
-//    }
-//    return raw_quaternion_with_margin;
-//}
-
-//const Eigen::MatrixXd &vsp::filteredData(){
-//    if(is_filtered){
-//        return filtered_angle;
-//    }else{
-//        int full_tap_length = filter_coeff.rows();
-//        filtered_angle.resize(raw_angle.rows()-(full_tap_length-1),3);
-
-//        for(int i=0,e=filtered_angle.cols();i<e;++i){
-//            filtered_angle.block(i,0,1,3) = filter_coeff.transpose() * raw_angle.block(i,0,full_tap_length,3);
-//        }
-
-//        is_filtered = true;
-//        return filtered_angle;
-//    }
-//}
-
-
-
-//Eigen::Quaternion<double> vsp::toRawQuaternion(uint32_t frame){
-//    //    int half_tap_length = filter_coeff.rows()/2;
-//    Eigen::VectorXd w = raw_angle.block(frame,0,1,3).transpose();
-//    double theta = w.norm();//回転角度を計算、normと等しい
-//    //0割を回避するためにマクローリン展開
-//    //Order: w, x, y, z.
-//    if(theta > EPS){
-//        Eigen::VectorXd n = w.normalized();//w * (1.0/theta);//単位ベクトルに変換
-//        Eigen::VectorXd n_sin_theta_2 = n * sin(theta*0.5);
-//        return Eigen::Quaternion<double>(cos(theta*0.5),n_sin_theta_2[0],n_sin_theta_2[1],n_sin_theta_2[2]);
-//    }else{
-//        return Eigen::Quaternion<double>(1.0,0.5*w[0],0.5*w[1],0.5*w[2]);
-//    }
-//}
-
-//Eigen::Quaternion<double> vsp::toFilteredQuaternion(uint32_t frame){
-//    //    int half_tap_length = filter_coeff.rows()/2;
-//    Eigen::VectorXd w = filtered_angle.block(frame,0,1,3).transpose();
-//    double theta = w.norm();//回転角度を計算
-//    //0割を回避するためにマクローリン展開
-//    //Order: w, x, y, z.
-//    if(theta > EPS){
-//        Eigen::VectorXd n = w.normalized();//w * (1.0/theta);//単位ベクトルに変換
-//        Eigen::VectorXd n_sin_theta_2 = n * sin(theta*0.5);
-//        return Eigen::Quaternion<double>(cos(theta*0.5),n_sin_theta_2[0],n_sin_theta_2[1],n_sin_theta_2[2]);
-//    }else{
-//        return Eigen::Quaternion<double>(1.0,0.5*w[0],0.5*w[1],0.5*w[2]);
-//    }
-//}
-
 Eigen::Quaternion<double> vsp::toDiffQuaternion2(uint32_t frame){
     Eigen::MatrixXd buf = raw_quaternion.row(frame);
     Eigen::Quaterniond raw = Eigen::QuaternionMapAlignedd(buf.data());
@@ -199,10 +97,6 @@ Eigen::Quaternion<double> vsp::toDiffQuaternion2(uint32_t frame){
     //    std::cout << filtered.coeffs().transpose() << std::endl;
     return filtered.conjugate()*raw;
 }
-
-//Eigen::Quaternion<double> vsp::toDiffQuaternion(uint32_t frame){
-//    return this->toFilteredQuaternion(frame).conjugate()*this->toRawQuaternion(frame);
-//}
 
 Eigen::VectorXd vsp::getKaiserWindow(uint32_t tap_length, uint32_t alpha, bool swap){
     Eigen::VectorXd window = Eigen::VectorXd::Zero(tap_length);
@@ -270,36 +164,6 @@ Eigen::VectorXcd vsp::getKaiserWindowWithZerosFrequencyCoeff(int32_t data_length
     Eigen::FFT<double> fft;
     return fft.fwd(getKaiserWindowWithZeros(data_length,alpha,window_length));
 }
-
-//void vsp::Angle2CLerpedFrequency(double fs, double fc, const Eigen::MatrixXd &raw_angle, Eigen::MatrixXcd &freq_vectors){
-//    static Eigen::FFT<double> fft;
-//    int32_t clerp_length = fs / fc * 20.0;
-
-//    //先頭と末尾は繰り返しで不連続になってしまうので、DFT LPFを適用する前に、CLerpでなめらかに繋いでおく
-//    Eigen::MatrixXd raw_angle_2(raw_angle.rows()+clerp_length,raw_angle.cols());
-//    raw_angle_2.block(0,0,raw_angle.rows(),raw_angle.cols()) = raw_angle;
-//    raw_angle_2.block(raw_angle.rows(),0,clerp_length,raw_angle.cols()) = CLerp(raw_angle.block(raw_angle.rows()-1,0,1,raw_angle.cols()),raw_angle.block(0,0,1,raw_angle.cols()),clerp_length);
-
-//    freq_vectors.resize(raw_angle_2.rows(),raw_angle_2.cols());
-
-//    //Apply LPF to each x, y and z axis.
-//    for(int i=0,e=raw_angle_2.cols();i<e;++i){
-//        freq_vectors.col(i) = fft.fwd(raw_angle_2.col(i));
-//    }
-//}
-
-//void vsp::Frequency2Angle(Eigen::MatrixXcd &frequency_vector_, Eigen::MatrixXd &angle_){
-//    static Eigen::FFT<double> fft;
-//    angle_.resize(frequency_vector_.rows(),frequency_vector_.cols());
-//    for(int i=0,e=frequency_vector_.cols();i<e;++i){
-//        angle_.col(i).noalias() = fft.inv(frequency_vector_.col(i));
-//    }
-//}
-
-//Eigen::MatrixXd &vsp::filteredDataDFT(){
-//    assert(is_filtered == true);
-//    return filtered_angle;
-//}
 
 //TODO:なんかframe位置ずれてそう。大丈夫か？
 Eigen::Quaterniond vsp::filteredQuaternion(int32_t alpha,int32_t frame){
@@ -394,9 +258,6 @@ Eigen::MatrixXd &vsp::filteredQuaternion(Eigen::VectorXd &filter_coefficients){
     std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond>> &q = raw_quaternion_with_margin;
     filtered_quaternion_.resize(video_frames+2,4);
     Eigen::Quaterniond qo,q_center;
-//    Eigen::VectorXd kaiser_window = getKaiserWindow(filter_tap_length,alpha,false );
-//    //総和が1になるように調整
-//    kaiser_window.array() /= kaiser_window.sum();
     Eigen::MatrixXd exponential_map;
     exponential_map.resize(filter_tap_length,3);
     for(int i=0,e=filtered_quaternion_.rows();i<e;++i){
@@ -434,78 +295,6 @@ Eigen::MatrixXd &vsp::filteredQuaternion(Eigen::VectorXd &filter_coefficients){
     return filtered_quaternion_;
 }
 
-//const Eigen::MatrixXd &vsp::filteredDataDFT(double fs, double fc){
-//    //TODO 最初に条件分岐を追加し、is_filterd == trueなら計算を回避させる
-//    if(is_filtered && (this->fs == fs) && (this->fc == fc)){
-//        return filtered_angle;
-//    }else{
-//        this->fs = fs;
-//        this->fc = fc;
-
-//        Eigen::MatrixXcd clerped_freq_vectors;
-//        Angle2CLerpedFrequency(fs,fc,raw_angle,clerped_freq_vectors);
-//        Eigen::VectorXcd filter_coeff_vector = getKaiserWindowWithZerosFrequencyCoeff(clerped_freq_vectors.rows(),100.0,200);
-//        //Apply LPF to each x, y and z axis.
-//        for(int i=0,e=clerped_freq_vectors.cols();i<e;++i){
-//            clerped_freq_vectors.col(i) = filter_coeff_vector.array() * clerped_freq_vectors.col(i).array();
-//        }
-
-//        Frequency2Angle(clerped_freq_vectors,filtered_angle);
-
-//        //ここで末尾の余白を削除
-//        Eigen::MatrixXd buf = filtered_angle.block(0,0,raw_angle.rows(),raw_angle.cols());
-//        is_filtered = true;
-//        filtered_angle = buf;
-//        return filtered_angle;
-//    }
-//}
-
-//const Eigen::MatrixXd &vsp::filteredDataDFTTimeDomainOptimize(double fs, double fc, const Eigen::MatrixXd &coeff){
-//    this->fs = fs;
-//    this->fc = fc;
-
-//    Eigen::MatrixXcd clerped_freq_vectors;
-//    Eigen::MatrixXd corrected_angle = raw_angle;
-
-//    int32_t period = fs/fc;
-//    assert(coeff.cols() == raw_angle.cols());
-//    //    assert(coeff.rows() == raw_angle.rows()/period);
-
-//    Eigen::MatrixXd linear_interporate_coeff = Eigen::MatrixXd::Zero(period,2);
-
-//    linear_interporate_coeff.col(0) = Eigen::VectorXd::LinSpaced(linear_interporate_coeff.rows()+1,0.0,1.0).block(0,0,linear_interporate_coeff.rows(),1);
-//    linear_interporate_coeff.col(1) = Eigen::VectorXd::LinSpaced(linear_interporate_coeff.rows()+1,1.0,0.0).block(0,0,linear_interporate_coeff.rows(),1);
-
-//    //線形補間で加算する
-//    for(int i=0,e=raw_angle.rows()/period;i<e;++i){
-//        corrected_angle.block(i*period,0,period,3) += linear_interporate_coeff * coeff.block(i,0,2,3);
-//    }
-//    //時間波形の長さが、periodの整数倍でない時、別途対応。殆どのケースはこれになる。
-//    {
-//        int32_t rest = raw_angle.rows()%period;
-//        int32_t i = raw_angle.rows()/period;
-//        if(0 != rest){
-//            corrected_angle.block(i*period,0,rest,3) += linear_interporate_coeff.block(0,0,rest,2) * coeff.block(i,0,2,3);
-//        }
-//    }
-
-//    Angle2CLerpedFrequency(fs,fc,corrected_angle,clerped_freq_vectors);
-//    //Eigen::VectorXcd filter_coeff_vector = getLPFFrequencyCoeff(clerped_freq_vectors.rows(),8,fs,fc).array();
-//    Eigen::VectorXcd filter_coeff_vector = getKaiserWindowWithZerosFrequencyCoeff(clerped_freq_vectors.rows(),100.0,200);
-
-//    //Apply LPF to each x, y and z axis.
-//    for(int i=0,e=clerped_freq_vectors.cols();i<e;++i){
-//        clerped_freq_vectors.col(i) = filter_coeff_vector.array() * clerped_freq_vectors.col(i).array();
-//    }
-
-//    Frequency2Angle(clerped_freq_vectors,filtered_angle);
-
-//    //ここで末尾の余白を削除
-//    Eigen::MatrixXd buf = filtered_angle.block(0,0,raw_angle.rows(),raw_angle.cols());
-//    is_filtered = true;
-//    filtered_angle = buf;
-//    return filtered_angle;
-//}
 
 Eigen::MatrixXd vsp::CLerp(Eigen::MatrixXd start, Eigen::MatrixXd end, int32_t num){
     assert(start.cols() == end.cols());
@@ -515,77 +304,6 @@ Eigen::MatrixXd vsp::CLerp(Eigen::MatrixXd start, Eigen::MatrixXd end, int32_t n
     return cos_phase * (-(end - start)*0.5) + Eigen::VectorXd::Ones(phase.rows()) * (start + end) * 0.5;
 }
 
-//Eigen::VectorXd vsp::getRollingVectorError(){
-//    double eps = 1.0e-5;
-
-//    std::vector<float> vecPorigonn_uv;
-
-//    auto func = [&](int32_t frame, double ratio){
-//        Eigen::Quaternion<double> prevQ;
-//        Eigen::Quaternion<double> currQ;
-//        Eigen::Quaternion<double> nextQ;
-//        if(0 == frame){
-//            currQ = Vector2Quaternion<double>(ratio*Quaternion2Vector(Vector2Quaternion<double>(filtered_angle.row(frame  ).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame  ).transpose())));
-//            prevQ = currQ;
-//            nextQ = Vector2Quaternion<double>(ratio*Quaternion2Vector(Vector2Quaternion<double>(filtered_angle.row(frame+1).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame+1).transpose())));
-//        }else if((raw_angle.rows()-1) == frame){
-//            prevQ = Vector2Quaternion<double>(ratio*Quaternion2Vector(Vector2Quaternion<double>(filtered_angle.row(frame-1).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame-1).transpose())));
-//            currQ = Vector2Quaternion<double>(ratio*Quaternion2Vector(Vector2Quaternion<double>(filtered_angle.row(frame  ).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame  ).transpose())));
-//            nextQ = currQ;
-//        }else{
-//            prevQ = Vector2Quaternion<double>(ratio*Quaternion2Vector(Vector2Quaternion<double>(filtered_angle.row(frame-1).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame-1).transpose())));
-//            currQ = Vector2Quaternion<double>(ratio*Quaternion2Vector(Vector2Quaternion<double>(filtered_angle.row(frame  ).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame  ).transpose())));
-//            nextQ = Vector2Quaternion<double>(ratio*Quaternion2Vector(Vector2Quaternion<double>(filtered_angle.row(frame+1).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame+1).transpose())));
-//        }
-//        getDistortUnrollingContour(
-//                    prevQ,
-//                    currQ,
-//                    nextQ,
-//                    //                    division_x,
-//                    //                    division_y,
-//                    //                    TRollingShutter,
-//                    //                    IK,
-//                    //                    matIntrinsic,
-//                    //                    camera_info_.width_,
-//                    //                    camera_info_.height_,
-//                    vecPorigonn_uv
-//                    //                    zoom
-//                    );
-//        return isPerfectWarp(vecPorigonn_uv);
-//    };
-
-//    Eigen::VectorXd retval = Eigen::VectorXd::Zero(raw_angle.rows());
-
-//    double error = 0.0;
-//    for(int32_t frame=0,e=retval.rows();frame<e;++frame){
-//        int count=0;
-//        double a=0.0;
-//        double b=1.0;
-//        if(func(frame,1.0)==true){
-//            retval[frame] = 0.0;
-//            continue;
-//        }
-//        double m;
-//        do{
-//            count++;
-//            m=(a+b)/2.0;
-//            if(func(frame,m)^func(frame,a)){
-//                b=m;
-//            }else{
-//                a=m;
-//            }
-//            if(count == 1000){
-//                //                cout << "frame:" << frame << " 収束失敗" << endl;
-//                break;
-//            }
-//        }while(!(abs(a-b)<eps));
-//        //        cout <<  "frame:" << frame << " " << count << "回で収束" << endl;
-
-//        error = (Quaternion2Vector(Vector2Quaternion<double>(filtered_angle.row(frame  ).transpose()).conjugate() * Vector2Quaternion<double>(raw_angle.row(frame  ).transpose())).norm())*(1-m);
-//        retval[frame] = error;
-//    }
-//    return retval;
-//}
 
 void vsp::MatrixXcd2VectorXd(const Eigen::MatrixXcd &src, Eigen::VectorXd &dst){
     assert(!src.IsRowMajor);//メモリ配置はcol majorでなければならない
@@ -608,11 +326,7 @@ void vsp::VectorXd2MatrixXcd(const Eigen::VectorXd &src, Eigen::MatrixXcd &dst){
 
 }
 
-Eigen::Vector3d vsp::angularVelocitySync(/*std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> &angularVelocityIn60Hz,
-                                                                             double T_video,
-                                                                             double T_av,
-                                                                             double frame_offset,*/
-                                         int32_t frame){
+Eigen::Vector3d vsp::angularVelocitySync(int32_t frame){
     double dframe = (frame + frame_offset) * T_video / T_angular_velocity;
     int i = floor(dframe);
     double decimalPart = dframe - (double)i;

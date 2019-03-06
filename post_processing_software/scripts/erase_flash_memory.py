@@ -27,7 +27,7 @@ def eraseFlashMemoryOnVirtualGimbal():
     return ln.decode()
 
 if __name__ == '__main__':
-    print('This script erase all data in flash memory of VirtualGimbal.')
+    print('This script erases all data in flash memory of VirtualGimbal.')
     print('Do you continue? [y/N]')
     a = input()
     if a == 'y' or a == 'Y':
