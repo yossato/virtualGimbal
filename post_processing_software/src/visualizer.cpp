@@ -116,7 +116,7 @@ void plot(vector<double> x,vector<double>  y,vector<double> z, string title, str
 
 void plot(const Eigen::MatrixXd mat, std::string title, std::vector<std::string> &legends){
     vector<double> index(mat.rows());
-    vector<string> format = {"r","g","b","k"};
+    vector<string> format = {"r","g","b","m","y","c"};
     for(int i=0;i<index.size();i++){
         index[i] = static_cast<double>(i);
     }

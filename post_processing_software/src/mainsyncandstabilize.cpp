@@ -139,7 +139,7 @@ int getVideoLength(const char *videoName){
 
 int main(int argc, char** argv){
     bool debug_signal_processing = false;
-
+    bool enable_quality_check_tool = false;
     //テクスチャ座標の準備
     int32_t division_x = 9; //画面の横の分割数
     int32_t division_y = 9; //画面の縦の分割数
@@ -151,14 +151,13 @@ int main(int argc, char** argv){
 //    int32_t lowPassFilterStrength = 3;
     //引数の確認
     char *videoPass = NULL;
-    char *csvPass = NULL;
     char *jsonPass = NULL;
     char *cameraName = NULL;
     char *lensName = NULL;
     //    char *outputPass = NULL;
     bool outputStabilizedVideo = false;
     int opt;
-    while((opt = getopt(argc, argv, "j:i:c:l:o::d::v:z:f:")) != -1){
+    while((opt = getopt(argc, argv, "j:i:c:l:o::d::z:f:q::")) != -1){
         string value1 ;//= optarg;
         switch (opt) {
         case 'j':       //input json file from virtual gimbal
@@ -179,33 +178,17 @@ int main(int argc, char** argv){
         case 'd':
             debug_signal_processing = true;
             break;
-        case 'v':       //input angular velocity csv file pass 
-            csvPass = optarg;
-            break;
         case 'z':       //zoom ratio, dafault 1.0
             value1 = optarg;
             zoomRatio = std::stof(value1);
             break;
-//        case 'r':       //rolling shutter duration [frame]. This should be between -1 and 1.
-//            value1 = optarg;
-//            rollingShutterDuration = std::stof(value1);
-//            if(rollingShutterDuration > 1.0){
-//                rollingShutterDuration = 1.0;
-//            }else if(rollingShutterDuration < -1.0){
-//                rollingShutterDuration = -1.0;
-//            }
-//            break;
-        case 'f':       //Low pass filter strength of a camera shake reduction.
-            //Larger is strong filter. This parameter must be integer.
-            //Default 3.
-            value1 = optarg;
-            std::cout << "Currently, -f option doesn't work. This function will be implemented in the future." << std::endl;
-
+        case 'q':
+            enable_quality_check_tool = true;
             break;
         default :
             printf(     "virtualGimbal\r\n"
-                        "Hyper fast video stabilizer\r\n\r\n"
-                        "usage: virtualGimbal [-i video] [-f angularVelocity] [[output option] -o] [options]\r\n"
+                        "Post processing video stabilizer\r\n\r\n"
+                        "usage: virtualGimbal [-j Angular velocity json file name] [-i video filename] [-c camera name] [-l lens name] [-d debug] [-z zoom ratio] [-q run quality check tool] [[output option] -o] [options]\r\n"
                         );
             return 1;
         }
@@ -276,14 +259,7 @@ int main(int argc, char** argv){
     std::cout << "resolution" << imageSize << std::endl;
     std::cout << "samplingPeriod" << Tvideo << std::endl;
 
-    //内部パラメータを読み込み
-//    cv::Mat matIntrinsic;
-//    ReadIntrinsicsParams("intrinsic.txt",matIntrinsic);
-//    std::cout << "Camera matrix:\n" << matIntrinsic << "\n" <<  std::endl;
-//    double cameraInfo.fx_ = matIntrinsic.at<double>(0,0);
-//    double cameraInfo.fy_ = matIntrinsic.at<double>(1,1);
-//    double cx = matIntrinsic.at<double>(0,2);
-//    double cy = matIntrinsic.at<double>(1,2);
+
 
     //動画書き出しのマルチスレッド処理の準備
     buffer.isWriting = true;
@@ -300,14 +276,6 @@ int main(int argc, char** argv){
     if(outputStabilizedVideo){
         th1 = std::thread(videoWriterProcess);//スレッド起動
     }
-
-
-
-    //歪パラメータの読み込み
-//    cv::Mat matDist;
-//    ReadDistortionParams("distortion.txt",matDist);
-//    std::cout << "Distortion Coeff:\n" << matDist << "\n" << std::endl;
-
     //逆歪パラメータの計算
     cv::Mat matInvDistort;
     calcInverseDistortCoeff(*cameraInfo);
@@ -322,10 +290,8 @@ int main(int argc, char** argv){
     //角速度データを読み込み
 
     std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> angular_velocity_from_csv;
-    if(csvPass){
-        vsp::ReadCSV(angular_velocity_from_csv,csvPass);
-    }else if(jsonPass){
-        readAngularVelocityJson(angular_velocity_from_csv,jsonPass);
+    if(jsonPass){
+        readAngularVelocityFromJson(angular_velocity_from_csv,jsonPass);
     }else{
         std::cout << "csv or json file are required." << std::endl;
         return 0;
@@ -357,7 +323,7 @@ int main(int argc, char** argv){
         }
     }
 
-    double Tav = 1./240.0;//Sampling period of angular velocity
+    double Tav = 1./readSamplingRateFromJson(jsonPass);//Sampling period of angular velocity
 
     //動画のサンプリング周期に合わせて、角速度を得られるようにする関数を定義
     //線形補間
@@ -477,16 +443,27 @@ int main(int argc, char** argv){
     Eigen::VectorXd filter_coefficients = v2->calculateFilterCoefficientsWithoutBlackSpaces(2,499);
     v2->filteredQuaternion(filter_coefficients);
 
-printf("index,ex,ey,ez,x,y,z\n");
-for(int row=0;row<estimated_angular_velocity_matrix.rows();++row){
-    // std::cout << row << "," << estimated_angular_velocity_matrix.row(row) << "," << v2->angularVelocitySync(row).transpose() <<std::endl;
-    printf("%d,%f,%f,%f,%f,%f,%f\n",row,estimated_angular_velocity_matrix(row,0),estimated_angular_velocity_matrix(row,1),estimated_angular_velocity_matrix(row,2),
-    v2->angularVelocitySync(row)[0],v2->angularVelocitySync(row)[1],v2->angularVelocitySync(row)[2]);
-}
+    if(enable_quality_check_tool){
+        printf("index,ex,ey,ez,x,y,z\n");
+        for(int row=0;row<estimated_angular_velocity_matrix.rows();++row){
+            // std::cout << row << "," << estimated_angular_velocity_matrix.row(row) << "," << v2->angularVelocitySync(row).transpose() <<std::endl;
+            printf("%d,%f,%f,%f,%f,%f,%f\n",row,estimated_angular_velocity_matrix(row,0),estimated_angular_velocity_matrix(row,1),estimated_angular_velocity_matrix(row,2),
+            v2->angularVelocitySync(row)[0],v2->angularVelocitySync(row)[1],v2->angularVelocitySync(row)[2]);
+        }
 
+        Eigen::MatrixXd angular_velocity(estimated_angular_velocity_matrix.rows(),6);
+        for(int row=0;row<estimated_angular_velocity_matrix.rows();++row){
+            angular_velocity(row,0) = estimated_angular_velocity_matrix(row,0);
+            angular_velocity(row,1) = estimated_angular_velocity_matrix(row,1);
+            angular_velocity(row,2) = estimated_angular_velocity_matrix(row,2);
+            angular_velocity(row,3) = v2->angularVelocitySync(row)[0];
+            angular_velocity(row,4) = v2->angularVelocitySync(row)[1];
+            angular_velocity(row,5) = v2->angularVelocitySync(row)[2];
+        }
 
-
-
+        std::vector<string> legends_angular_velocity = {"ex","ey","ez","x","y","z"};
+        vgp::plot(angular_velocity,"Estimate vs gyro",legends_angular_velocity);
+    }
 
     v2->init_opengl(textureSize);
 

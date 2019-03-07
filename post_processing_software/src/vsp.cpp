@@ -815,7 +815,7 @@ int vsp::spin_once(int frame,cv::VideoCapture &capture, cv::Mat &simg){
         static bool first_time = true;
         if(first_time){
             cv::putText(sidebyside, "Original", cv::Point(200,150+camera_info_.height_*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,cv::LINE_AA);
-            cv::putText(sidebyside, "Stabilized", cv::Point(1050,150+camera_info_.height_*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,cv::LINE_AA);
+            cv::putText(sidebyside, "Stabilized", cv::Point(camera_info_.width_/2+200,150+camera_info_.height_*0.75),cv::FONT_HERSHEY_SIMPLEX,5, cv::Scalar(0,255,255),12,cv::LINE_AA);
             first_time = false;
         }
 

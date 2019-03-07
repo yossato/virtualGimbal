@@ -287,6 +287,22 @@ std::string videoNameToJsonName(std::string video_name)
     return json_file_name;
 }
 
+double readSamplingRateFromJson(const char* filename){
+    struct stat st;
+    if(stat(filename,&st)){
+        return -1;
+    }
+    FILE* fp = fopen(filename, "rb"); // non-Windows use "r"
+    std::vector<char> readBuffer((intmax_t)st.st_size+10);
+    rapidjson::FileReadStream is(fp, readBuffer.data(), readBuffer.size());
+    rapidjson::Document e;
+    e.ParseStream(is);
+    fclose(fp);
+
+    return e["frequency"].GetDouble();
+    
+}
+
 bool jsonExists(std::string video_file_name)
 {
     std::string json_file_name = videoNameToJsonName(video_file_name);

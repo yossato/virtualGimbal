@@ -683,47 +683,6 @@ class vsp
       **/
     Eigen::Vector3d angularVelocitySync(int32_t frame);
 
-    /**
-     * @brief CSVファイルを読み込んで配列を返す関数
-     **/
-    template <typename _Tp, typename _Alloc = std::allocator<_Tp>>
-    static void ReadCSV(std::vector<_Tp, _Alloc> &w, const char *filename)
-    {
-        std::ifstream ifs(filename); //CSVファイルを開く
-        if (!ifs)
-        {
-            std::cout << "CSV File not found\n"
-                      << std::endl;
-            return;
-        }
-
-        std::string str;
-        w.clear();
-        _Tp numl;
-        while (getline(ifs, str))
-        { //1行ずつ読み込む
-            std::string token;
-            std::istringstream stream(str);
-            try
-            {
-                int i = 0;
-                while (getline(stream, token, ','))
-                {
-                    double temp = stof(token);
-                    numl[i++] = (double)temp; //値を保存
-                }
-            }
-            catch (...)
-            {
-                //読み込みに失敗したら次の行へすすむ
-                continue;
-            }
-            w.push_back(numl);
-        }
-
-        printf("size of w is %ld\n", w.size());
-        return;
-    }
 
     template <typename _Tp, typename _Alloc = std::allocator<_Tp>>
     static void angularVelocityCoordinateTransformer(std::vector<_Tp, _Alloc> &angular_velocity, const Eigen::Quaterniond &rotation)

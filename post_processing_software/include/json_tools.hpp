@@ -37,13 +37,18 @@ bool jsonExists(std::string video_file_name);
 int writeOpticalFrowToJson(Eigen::MatrixXd &optical_flow,std::string video_file_name);
 int readOpticalFlowFromJson(Eigen::MatrixXd &optical_flow,std::string video_file_name);
 std::string videoNameToJsonName(std::string video_name);
-template <typename _Tp, typename _Alloc = std::allocator<_Tp>> int readAngularVelocityJson(std::vector<_Tp,_Alloc> &angular_velocity, const char* filename){
+
+
+
+double readSamplingRateFromJson(const char* filename);
+
+
+template <typename _Tp, typename _Alloc = std::allocator<_Tp>> int readAngularVelocityFromJson(std::vector<_Tp,_Alloc> &angular_velocity, const char* filename){
     struct stat st;
     if(stat(filename,&st)){
         return -1;
     }
     FILE* fp = fopen(filename, "rb"); // non-Windows use "r"
-//    char readBuffer[262140];
     std::vector<char> readBuffer((intmax_t)st.st_size+10);
     rapidjson::FileReadStream is(fp, readBuffer.data(), readBuffer.size());
     rapidjson::Document e;
@@ -55,13 +60,6 @@ template <typename _Tp, typename _Alloc = std::allocator<_Tp>> int readAngularVe
     const rapidjson::Value& angular_velocity_rad_per_sec_array = e["angular_velocity_rad_per_sec"];
     assert(angular_velocity_rad_per_sec_array.IsArray());
     assert(angular_velocity_rad_per_sec_array[0][0].IsDouble());
-//    int width = 3;
-//    angular_velocity_rad_per_sec.resize(angular_velocity_rad_per_sec_array.Size()/width,width);
-//    for(int r=0;r<angular_velocity_rad_per_sec.rows();++r){
-//        for(int c=0;c<width;++c){
-//            angular_velocity_rad_per_sec(r,c)=angular_velocity_rad_per_sec_array[r*width+c].GetDouble();
-//        }
-    //    }
     _Tp val;
     int width = 3;
     for(int a =0;a<angular_velocity_rad_per_sec_array.Size();++a){
@@ -72,13 +70,6 @@ template <typename _Tp, typename _Alloc = std::allocator<_Tp>> int readAngularVe
             angular_velocity.push_back(val);
         }
     }
-//    for(rapidjson::Value::ConstValueIterator itr=angular_velocity_rad_per_sec_array.Begin();itr!=angular_velocity_rad_per_sec_array.End();++itr){
-//        val[0]=(itr++)->GetDouble();
-//        val[1]=(itr++)->GetDouble();
-//        val[2]=(itr++)->GetDouble();
-//        angular_velocity.push_back((_Tp)(itr->GetDouble()));
-//    }
-
     return 0;
 }
 
