@@ -19,8 +19,6 @@ if( CMAKE_BINARY_DIR MATCHES " " )
 endif()
 
 # Copy setting files
-configure_file(intrinsic.txt intrinsic.txt)
-configure_file(distortion.txt distortion.txt)
 configure_file(chess_board_settings.ini chess_board_settings.ini)
 configure_file(TextureFragmentShader.fragmentshader TextureFragmentShader.fragmentshader)
 configure_file(TransformVertexShader.vertexshader TransformVertexShader.vertexshader)
@@ -30,6 +28,7 @@ configure_file(scripts/generate_angular_velocity_json.py scripts/generate_angula
 configure_file(scripts/setup_udev_rules.sh scripts/setup_udev_rules.sh)
 configure_file(scripts/erase_flash_memory.py scripts/erase_flash_memory.py)
 configure_file(records/sample.json records/sample.json)
+
 # Compile external dependencies
 add_subdirectory (external)
 
@@ -73,36 +72,6 @@ add_definitions(
         # -DRAPIDJSON_HAS_STDSTRING
 )
 
-
-add_executable(biCubic src/undistortGL.cpp
-        common/shader.cpp
-        common/shader.hpp
-        common/controls.cpp
-        common/controls.hpp
-        common/texture.cpp
-        common/texture.hpp
-        src/mINIRead.cpp
-        TransformVertexShader.vertexshader
-        TextureFragmentShader.fragmentshader
-)
-target_link_libraries(biCubic ${ALL_LIBS})
-
-add_executable(sync src/mainsync.cpp
-                    src/calcShift.cpp
-                    src/mINIRead.cpp
-#        common/shader.cpp
-#        common/shader.hpp
-#        common/controls.cpp
-#        common/controls.hpp
-#        common/texture.cpp
-#        common/texture.hpp
-
-
-#        TransformVertexShader.vertexshader
-#        TextureFragmentShader.fragmentshader
-)
-target_link_libraries(sync ${ALL_LIBS})
-
 add_executable(virtualGimbal src/mainsyncandstabilize.cpp
         common/shader.cpp
         common/shader.hpp
@@ -126,29 +95,11 @@ add_executable(virtualGimbal src/mainsyncandstabilize.cpp
         include/visualizer.h
         include/vsp.h
         include/camera_information.h
-#        include/frequency_domain_optimization.hpp
 
         TransformVertexShader.vertexshader
         TextureFragmentShader.fragmentshader
 )
 target_link_libraries(virtualGimbal ${ALL_LIBS} ${PYTHON_LIBRARIES})
-
-
-
-add_executable(audioEdit src/audioedit.cpp)
-target_link_libraries(audioEdit ${ALL_LIBS})
-
-add_executable(fft_test src/fft_test.cpp
-    src/vsp.cpp
-    common/shader.cpp
-    common/shader.hpp
-    common/controls.cpp
-    common/controls.hpp
-    common/texture.cpp
-    common/texture.hpp
-    src/seekablevideocapture.cpp
-    )
-target_link_libraries(fft_test ${ALL_LIBS}  ${PYTHON_LIBRARIES})
 
 add_executable(camera_calibration src/camera_calibration.cpp
     src/mINIRead.cpp
@@ -156,19 +107,9 @@ add_executable(camera_calibration src/camera_calibration.cpp
     src/camera_information.cpp)
 target_link_libraries(camera_calibration ${ALL_LIBS} ${OpenCV_LIBS})
 
-
-add_executable(rapidjson_test src/rapidjson_test.cpp)
-
-#add_executable(video_analyzer src/video_analyzer.cpp
-#src/calcShift.cpp)
-#target_link_libraries(video_analyzer ${ALL_LIBS})
-
 # デバッグビルド
 IF(CMAKE_BUILD_TYPE MATCHES DEBUG)
 set(CMAKE_C_FLAGS_DEBUG "-O0 -g")
-#set(CMAKE_C_FLAGS_DEBUG "-O0 -pg")
-#set(CMAKE_CXX_FLAGS "-pg") #gprof
-# add_definitions(-DRAPIDJSON_HAS_STDSTRING=1)
 ENDIF(CMAKE_BUILD_TYPE MATCHES DEBUG)
 
 # リリースビルド
@@ -176,7 +117,6 @@ IF(CMAKE_BUILD_TYPE MATCHES RELEASE)
     set(CMAKE_BUILD_TYPE Release)
     set(CMAKE_C_FLAGS_RELEASE "-O3 -lm")
     add_definitions(-DEIGEN_NO_DEBUG)
-#     add_definitions(-DRAPIDJSON_HAS_STDSTRING=1)
 ENDIF(CMAKE_BUILD_TYPE MATCHES RELEASE)
 
 #gprof使う場合は以下２行の最後に-pgをつけると良いみたい

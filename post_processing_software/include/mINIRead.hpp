@@ -20,8 +20,6 @@ typedef struct {						//!<チェッカーボードの交差数設定構造体
 }strNumberOfInnerCorners;
 
 typedef struct {//!< チェスボード設定構造体。要素は必ずdouble
-	//~ double ImageWidth;						//!<カメラの画像幅[px]。キャリブレーション時の解像度と同じに設定する必要がある。
-	//~ double ImageHeight;						//!<カメラの画像高さ[px]。キャリブレーション時の解像度と同じに設定する必要がある。
 	double NumberOfCaptureImage;			//!<キャリブレーション時に取得する画像枚数。大きな枚数を設定するとキャリブレーション精度が向上するが、キャリブレーションに時間がかかる。20枚程度が良い。
 	double SizeOfQuadsX_mm;					//!<チェッカーボードをなす四角形のX方向の寸法[mm]
 	double SizeOfQuadsY_mm;					//!<チェッカーボードをなす四角形のY方向の寸法[mm]
@@ -32,18 +30,10 @@ typedef struct {//!< チェスボード設定構造体。要素は必ずdouble
 
 extern strCheckerBoardParams Dcbp;
 
-//extern strRGBIRParams			Drgbir;
+
 extern const int  INICheckerBoardParamNum;
 extern const char *INICheckerBoardValueNames[];
 
-//extern const int INIRGB_IRNum;
-//extern const char *INIRGB_IRValueNames[];
-//int ReadINI(char fileName[], strParams &values);
-int ReadStereoExtrinsicParams(const char FileName[], cv::Mat &Values);
-int ReadIntrinsicsParams(const char *FileName, cv::Mat &Values);
-int ReadDistortionParams(const char FileName[], cv::Mat &Values);
-int ReadCoeff(std::vector<double> &coeff, const char* filename);
-void ReadCSV(std::vector<cv::Vec3d> &w, const char* filename);
 
 #ifdef __cplusplus
 }
