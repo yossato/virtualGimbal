@@ -107,6 +107,11 @@ add_executable(camera_calibration src/camera_calibration.cpp
     src/camera_information.cpp)
 target_link_libraries(camera_calibration ${ALL_LIBS} ${OpenCV_LIBS})
 
+add_executable(rolling_shutter_parameter_estimator src/rolling_shutter_parameter_estimator.cpp
+        src/mINIRead.cpp)
+target_link_libraries(rolling_shutter_parameter_estimator ${ALL_LIBS} ${OpenCV_LIBS})
+
+
 # デバッグビルド
 IF(CMAKE_BUILD_TYPE MATCHES DEBUG)
 set(CMAKE_C_FLAGS_DEBUG "-O0 -g")

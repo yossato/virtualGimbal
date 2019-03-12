@@ -156,30 +156,6 @@ int main(int argc, char** argv){
         }
     }
 
-    if(0){
-        CameraInformationJsonParser cameraInfo;
-
-        cameraInfo.camera_name_ = cameraName;
-        cameraInfo.lens_name_ = lensName;
-        cameraInfo.sd_card_rotation_ = sd_card_rotation;
-		cameraInfo.width_ = 2;
-		cameraInfo.p1_ = 2.0;
-
-        cameraInfo.writeCameraInformationJson("camera_descriptions/cameras_testtest.json");
-        return 0;
-    }
-
-    // TODO: Show chess board pattern on a screen.
-
-	//動画読み込み準備
-//	char *filename;
-//	char defaultName[] = "";
-//	if(argc==1){
-//		printf("引数としてチェスボードを撮影した動画を指定してください。\nプログラムを終了します。\n");
-//		return 0;
-//	}
-//	filename = new char[strlen(argv[1])];
-//	strcpy(filename, (const char *)argv[1]);//ファイル名をコピー
     cv::VideoCapture Capture(videoPass);//動画をオープン
 	if(!Capture.isOpened()){//VideoCaptureは初期化に成功しているはず。
 		printf("動画ファイルを開くことができませんでした。\nプログラムを終了します。\n");
