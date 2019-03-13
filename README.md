@@ -14,7 +14,7 @@ Ubuntu 16.04 or later
 OpenGL 3.3 or later compatible graphics card
 
 ## Usage  
-See postprocessing_software/README.md  
+See post_processing_software/README.md  
 ~~Download~~ [Example Video](https://drive.google.com/uc?export=download&id=0B9nCHvB3LdAxZWNKdmdxMTFzam8) and [Angular Velocity data](https://drive.google.com/uc?export=download&id=0B9nCHvB3LdAxTHB1dk0zMkZWbDQ), then put them in ~/vgdataset.
 
 ~~Demo:  
