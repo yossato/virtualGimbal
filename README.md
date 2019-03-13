@@ -14,15 +14,15 @@ Ubuntu 16.04 or later
 OpenGL 3.3 or later compatible graphics card
 
 ## Usage
-Download [Example Video](https://drive.google.com/uc?export=download&id=0B9nCHvB3LdAxZWNKdmdxMTFzam8) and [Angular Velocity data](https://drive.google.com/uc?export=download&id=0B9nCHvB3LdAxTHB1dk0zMkZWbDQ), then put them in ~/vgdataset.
+~~Download [Example Video]~~(https://drive.google.com/uc?export=download&id=0B9nCHvB3LdAxZWNKdmdxMTFzam8) and [Angular Velocity data](https://drive.google.com/uc?export=download&id=0B9nCHvB3LdAxTHB1dk0zMkZWbDQ), then put them in ~/vgdataset.
 
-Demo:  
-`./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/angularVelocity.csv -z 1.1`
+~~Demo:  
+`./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/angularVelocity.csv -z 1.1`~~
 
-Generating stabilized video:  
-`./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/angularVelocity.csv  -z 1.1 -o`
+~~Generating stabilized video:  
+`./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/angularVelocity.csv  -z 1.1 -o`~~
 
-Here, `i` option is an input video file. `c` is a CSV file which contains angular velocity of a camera. `z` is the zooming ratio. This parameter must be an integer; the default value is 3. It should be between 0 and 11. `v` is the vertical video position adjustment [rad], the default value is 0.00. `h` is horizontal video position adjustment [rad], default value is 0.00. `o` option generates output video.
+~~Here, `i` option is an input video file. `c` is a CSV file which contains angular velocity of a camera. `z` is the zooming ratio. This parameter must be an integer; the default value is 3. It should be between 0 and 11. `v` is the vertical video position adjustment [rad], the default value is 0.00. `h` is horizontal video position adjustment [rad], default value is 0.00. `o` option generates output video.~~
 
 ## Install dependencies
 ### Install system dependencies:
