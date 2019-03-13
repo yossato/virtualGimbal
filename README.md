@@ -13,8 +13,9 @@ The virtualGimbal is an electronic stabilize device for videos that were taken b
 Ubuntu 16.04 or later
 OpenGL 3.3 or later compatible graphics card
 
-## Usage
-~~Download [Example Video]~~(https://drive.google.com/uc?export=download&id=0B9nCHvB3LdAxZWNKdmdxMTFzam8) and [Angular Velocity data](https://drive.google.com/uc?export=download&id=0B9nCHvB3LdAxTHB1dk0zMkZWbDQ), then put them in ~/vgdataset.
+## Usage  
+See postprocessing_software/README.md  
+~~Download~~ [Example Video](https://drive.google.com/uc?export=download&id=0B9nCHvB3LdAxZWNKdmdxMTFzam8) and [Angular Velocity data](https://drive.google.com/uc?export=download&id=0B9nCHvB3LdAxTHB1dk0zMkZWbDQ), then put them in ~/vgdataset.
 
 ~~Demo:  
 `./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/angularVelocity.csv -z 1.1`~~
