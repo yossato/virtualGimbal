@@ -130,12 +130,6 @@ cmake ../post_processing_software/
 make -j4  
 ```
 
-## Copy setting files
-```
-cd ~/macadamia
-cp *.txt *.fragmentshader *.vertexshader build/
-```
-
 ## Contribution
 Yoshiaki Sato & Emmett Reiner
 
