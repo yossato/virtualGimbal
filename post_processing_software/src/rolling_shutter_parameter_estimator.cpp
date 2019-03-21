@@ -5,7 +5,8 @@
 #include "mINIRead.hpp"
 #include "vsp.h"
 #include "json_tools.hpp"
-
+#include "rotation_param.h"
+#include "virtual_gimbal_manager.h"
 std::string getVideoSize(const char *videoName){
     std::shared_ptr<cv::VideoCapture> Capture = std::make_shared<cv::VideoCapture>(videoName);//動画をオープン
     assert(Capture->isOpened());
@@ -143,12 +144,14 @@ int main(int argc, char **argv)
     shared_ptr<CameraInformation> cameraInfo(new CameraInformationJsonParser(cameraName,lensName,videoSize.c_str()));
     double Tav = 1./readSamplingRateFromJson(jsonPass);//Sampling period of angular velocity
     double Tvideo = 1.0/capture->get(cv::CAP_PROP_FPS);
-    vsp v2(9,9,*cameraInfo,1.0,angular_velocity_from_csv,
-               Tvideo,
-               Tav,
-               min_position + subframeOffset,
-               (int32_t)(capture->get(cv::CAP_PROP_FRAME_COUNT)),
-               199);
+    VirtualGimbalManager vgm;
+    vgm.setVideoParam(videoPass);
+//    vsp v2(9,9,*cameraInfo,1.0,angular_velocity_from_csv,
+//               Tvideo,
+//               Tav,
+//               min_position + subframeOffset,
+//               (int32_t)(capture->get(cv::CAP_PROP_FRAME_COUNT)),
+//               199);
 
     int c;
     cv::namedWindow("image", cv::WINDOW_AUTOSIZE);

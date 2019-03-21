@@ -108,7 +108,12 @@ add_executable(camera_calibration src/camera_calibration.cpp
 target_link_libraries(camera_calibration ${ALL_LIBS} ${OpenCV_LIBS})
 
 add_executable(rolling_shutter_parameter_estimator src/rolling_shutter_parameter_estimator.cpp
-        src/mINIRead.cpp)
+        src/mINIRead.cpp
+        src/json_tools.cpp
+        src/camera_information.cpp
+        src/virtual_gimbal_manager.cpp
+        src/rotation_param.cpp
+        )
 target_link_libraries(rolling_shutter_parameter_estimator ${ALL_LIBS} ${OpenCV_LIBS})
 
 

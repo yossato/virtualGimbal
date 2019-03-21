@@ -25,7 +25,7 @@ template <typename T_num> cv::Vec3d Quaternion2Vector(quaternion<T_num> q){
 template <typename T_num> quaternion<T_num> Vector2Quaternion(cv::Vec3d w){
     double theta = sqrt(w[0]*w[0]+w[1]*w[1]+w[2]*w[2]);//回転角度を計算、normと等しい
     //0割を回避するためにマクローリン展開
-    if(theta > EPS){
+    if(theta > EPS_Q){
         auto n = w * (1.0/theta);//単位ベクトルに変換
         double sin_theta_2 = sin(theta*0.5);
         return quaternion<double>(cos(theta*0.5),n[0]*sin_theta_2,n[1]*sin_theta_2,n[2]*sin_theta_2);

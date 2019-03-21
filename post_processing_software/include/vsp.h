@@ -158,7 +158,7 @@ class vsp
     static Eigen::Vector3d Quaternion2Vector(Eigen::Quaternion<T_num> q)
     {
         double denom = sqrt(1 - q.w() * q.w());
-        if (abs(denom) < EPS)
+        if (abs(denom) < EPS_Q)
         {                                    //まったく回転しない時は０割になるので、場合分けする//TODO:
             return Eigen::Vector3d(0, 0, 0); //return zero vector
         }
@@ -173,7 +173,7 @@ class vsp
     {
         double theta = w.norm(); //sqrt(w[0]*w[0]+w[1]*w[1]+w[2]*w[2]);//回転角度を計算、normと等しい
         //0割を回避するためにマクローリン展開
-        if (theta > EPS)
+        if (theta > EPS_Q)
         {
             Eigen::Vector3d n = w.normalized(); //w * (1.0/theta);//単位ベクトルに変換
             //            double sin_theta_2 = sin(theta*0.5);

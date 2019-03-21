@@ -8,6 +8,6 @@
 //#define zoomRatio  1.1
 #define PREFETCH_LENGTH 200
 #define MIP_ANGLE_THRES 0.05
-#define EPS 1E-4
+#define EPS_Q 1E-4
 #endif // SETTINGS_H
 
