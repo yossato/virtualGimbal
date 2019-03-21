@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <Eigen/Dense>
 #include <opencv2/opencv.hpp>
+#include <memory>
 #include "mINIRead.hpp"
 int main(int argc, char **argv)
 {
