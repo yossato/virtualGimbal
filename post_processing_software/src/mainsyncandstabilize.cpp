@@ -147,8 +147,8 @@ int main(int argc, char** argv){
 
     //画面の補正量
     float zoomRatio = 1.f;
-//    double rollingShutterDuration = 0; //rolling shutter duration [frame]
-//    int32_t lowPassFilterStrength = 3;
+    //    double rollingShutterDuration = 0; //rolling shutter duration [frame]
+    //    int32_t lowPassFilterStrength = 3;
     //引数の確認
     char *videoPass = NULL;
     char *jsonPass = NULL;
@@ -215,7 +215,7 @@ int main(int argc, char** argv){
     Eigen::MatrixXd optical_flow;
     if(jsonExists(std::string(videoPass))){
         readOpticalFlowFromJson(optical_flow,std::string(videoPass));
-//        std::cout << optical_flow2 << std::endl;
+        //        std::cout << optical_flow2 << std::endl;
         opticShift.resize(optical_flow.rows());
         for(int row=0;row<optical_flow.rows();++row){
             for(int col=0;col<3;++col){
@@ -224,9 +224,9 @@ int main(int argc, char** argv){
         }
     }else{
         opticShift = CalcShiftFromVideo(videoPass,syncLength);//ビデオからオプティカルフローを用いてシフト量を算出
-//        Eigen::MatrixXd optical_flow;
+        //        Eigen::MatrixXd optical_flow;
         optical_flow.resize(opticShift.size(),3);
-//        memcpy(optical_flow.data(),opticShift.data(),sizeof(double)*3*opticShift.size());
+        //        memcpy(optical_flow.data(),opticShift.data(),sizeof(double)*3*opticShift.size());
         for(int row=0;row<optical_flow.rows();++row){
             for(int col=0;col<3;++col){
                 optical_flow(row,col) = opticShift[row][col];
@@ -236,9 +236,9 @@ int main(int argc, char** argv){
     }
     auto t2 = std::chrono::system_clock::now() ;
 
-//    std::cout << optical_flow << std::endl;
+    //    std::cout << optical_flow << std::endl;
 
-//    return 0;
+    //    return 0;
 
     // 処理の経過時間
     auto elapsed = t2 - t1 ;
@@ -358,18 +358,18 @@ int main(int argc, char** argv){
     }
     Eigen::MatrixXd estimated_angular_velocity_matrix   = Eigen::Map<Matrix<double, Eigen::Dynamic, Eigen::Dynamic, RowMajor>>((double*)(estimatedAngularVelocity.data()),estimatedAngularVelocity.size(),3);
     vector<double> correlation_coefficients(lengthDiff);
-//    if((!syncronizedQuarternionExist(videoPass)) || debug_signal_processing){
+    //    if((!syncronizedQuarternionExist(videoPass)) || debug_signal_processing){
     std::cout << "\nCaluclating correlation cofficient..." << std::endl;
-        for(int32_t offset=0;offset<lengthDiff;++offset){
-            correlation_coefficients[offset] = (angular_velocity_matrix.block(offset,0,estimated_angular_velocity_matrix.rows(),estimated_angular_velocity_matrix.cols())
-                                                -estimated_angular_velocity_matrix).array().abs().sum();
-            if(offset%100==0){
-                printf("\r%d / %d",offset,lengthDiff);
-                std::cout << std::flush;
-            }
+    for(int32_t offset=0;offset<lengthDiff;++offset){
+        correlation_coefficients[offset] = (angular_velocity_matrix.block(offset,0,estimated_angular_velocity_matrix.rows(),estimated_angular_velocity_matrix.cols())
+                                            -estimated_angular_velocity_matrix).array().abs().sum();
+        if(offset%100==0){
+            printf("\r%d / %d",offset,lengthDiff);
+            std::cout << std::flush;
         }
-        printf("\r%d / %d\n",lengthDiff,lengthDiff);
-//    }
+    }
+    printf("\r%d / %d\n",lengthDiff,lengthDiff);
+    //    }
     int32_t min_position = std::distance(correlation_coefficients.begin(),min_element(correlation_coefficients.begin(),correlation_coefficients.end()));
 
 
@@ -390,7 +390,7 @@ int main(int argc, char** argv){
         subframeOffset = -(correlation_coefficients[min_position+1]-correlation_coefficients[min_position-1])/(2*correlation_coefficients[min_position-1]-4*correlation_coefficients[min_position]+2*correlation_coefficients[min_position+1]);
     }
     cout << "min_position" << min_position << endl;
-//    cout << "minPosition" << minPosition << endl;
+    //    cout << "minPosition" << minPosition << endl;
     cout << "subframe minposition :" << min_position+subframeOffset << endl;
 
     if(debug_signal_processing) show_correlation(angular_velocity_from_csv,estimatedAngularVelocity, Tvideo,Tav,min_position+subframeOffset);
@@ -427,18 +427,18 @@ int main(int argc, char** argv){
 
     shared_ptr<vsp> v2;
 
-        v2.reset(new vsp(division_x,
-                         division_y,
-                         *cameraInfo,
-                         (double)zoomRatio,
-                         angular_velocity_from_csv,
-                         Tvideo,
-                         Tav,
-                         min_position + subframeOffset,
-                         (int32_t)(Capture->get(cv::CAP_PROP_FRAME_COUNT)),
-                         199));
+    v2.reset(new vsp(division_x,
+                     division_y,
+                     *cameraInfo,
+                     (double)zoomRatio,
+                     angular_velocity_from_csv,
+                     Tvideo,
+                     Tav,
+                     min_position + subframeOffset,
+                     (int32_t)(Capture->get(cv::CAP_PROP_FRAME_COUNT)),
+                     199));
 
-        // Stabilize
+    // Stabilize
     Eigen::VectorXd filter_coefficients = v2->calculateFilterCoefficientsWithoutBlackSpaces(2,499);
     v2->filteredQuaternion(filter_coefficients);
 
@@ -447,7 +447,7 @@ int main(int argc, char** argv){
         for(int row=0;row<estimated_angular_velocity_matrix.rows();++row){
             // std::cout << row << "," << estimated_angular_velocity_matrix.row(row) << "," << v2->angularVelocitySync(row).transpose() <<std::endl;
             printf("%d,%f,%f,%f,%f,%f,%f\n",row,estimated_angular_velocity_matrix(row,0),estimated_angular_velocity_matrix(row,1),estimated_angular_velocity_matrix(row,2),
-            v2->angularVelocitySync(row)[0],v2->angularVelocitySync(row)[1],v2->angularVelocitySync(row)[2]);
+                   v2->angularVelocitySync(row)[0],v2->angularVelocitySync(row)[1],v2->angularVelocitySync(row)[2]);
         }
 
         Eigen::MatrixXd angular_velocity(estimated_angular_velocity_matrix.rows(),6);
@@ -469,48 +469,48 @@ int main(int argc, char** argv){
     //一度動画を閉じて、seek可能版に置き換える
     int32_t e=Capture->get(cv::CAP_PROP_FRAME_COUNT);
     delete Capture;
-//    seekableVideoCapture sCapture(videoPass,PREFETCH_LENGTH);
+    //    seekableVideoCapture sCapture(videoPass,PREFETCH_LENGTH);
 
 
     cv::namedWindow("Preview",cv::WINDOW_NORMAL);
     cv::setWindowProperty("Preview",cv::WND_PROP_FULLSCREEN,cv::WINDOW_FULLSCREEN);
-//    while(v2->ok()){
-        Capture = new cv::VideoCapture(videoPass);//動画をオープン
-        for(int32_t i=0;i<e;++i){
-            cv::Mat simg;
-            if(0 != v2->spin_once(i,*Capture,simg)){
-                break;
-            }
-
-            if(outputStabilizedVideo){
-                std::lock_guard<std::mutex> lock(buffer.mtx);
-                buffer.images.push_back(cv::Mat());
-                buffer.images.back() = simg.clone();
-            }
-
-
-            //Show fps
-            auto t4 = std::chrono::system_clock::now();
-            static auto t3 = t4;
-            // 処理の経過時間
-            double elapsedmicroseconds = std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count() ;
-            static double fps = 0.0;
-            if(elapsedmicroseconds != 0.0){
-                fps = 0.03*(1e6/elapsedmicroseconds) +  0.97*fps;
-            }
-            t3 = t4;
-            printf("fps:%4.2f\r",fps);
-            fflush(stdout);
-
-
+    //    while(v2->ok()){
+    Capture = new cv::VideoCapture(videoPass);//動画をオープン
+    for(int32_t i=0;i<e;++i){
+        cv::Mat simg;
+        if(0 != v2->spin_once(i,*Capture,simg)){
+            break;
         }
 
-        if(Capture != NULL){
-            delete Capture;
-            Capture = NULL;
+        if(outputStabilizedVideo){
+            std::lock_guard<std::mutex> lock(buffer.mtx);
+            buffer.images.push_back(cv::Mat());
+            buffer.images.back() = simg.clone();
         }
 
-//    }
+
+        //Show fps
+        auto t4 = std::chrono::system_clock::now();
+        static auto t3 = t4;
+        // 処理の経過時間
+        double elapsedmicroseconds = std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count() ;
+        static double fps = 0.0;
+        if(elapsedmicroseconds != 0.0){
+            fps = 0.03*(1e6/elapsedmicroseconds) +  0.97*fps;
+        }
+        t3 = t4;
+        printf("fps:%4.2f\r",fps);
+        fflush(stdout);
+
+
+    }
+
+    if(Capture != NULL){
+        delete Capture;
+        Capture = NULL;
+    }
+
+    //    }
 
     if(Capture != NULL){
         delete Capture;
