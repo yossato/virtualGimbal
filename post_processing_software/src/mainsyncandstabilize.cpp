@@ -399,8 +399,7 @@ int main(int argc, char** argv){
     //EigenによるDFT LPFのテスト
     if(debug_signal_processing){
 
-        vsp v2(/*angleQuaternion_vsp2,*/
-               division_x,
+        vsp v2(division_x,
                division_y,
                *cameraInfo,
                (double)zoomRatio,

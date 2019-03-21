@@ -2,12 +2,23 @@
 #include <Eigen/Dense>
 #include <opencv2/opencv.hpp>
 #include "mINIRead.hpp"
+#include "vsp.h"
+#include "json_tools.hpp"
+
+std::string getVideoSize(const char *videoName){
+    std::shared_ptr<cv::VideoCapture> Capture = std::make_shared<cv::VideoCapture>(videoName);//動画をオープン
+    assert(Capture->isOpened());
+    std::string videoSize = std::to_string((int)Capture->get(cv::CAP_PROP_FRAME_WIDTH)) + std::string("x") + std::to_string((int)Capture->get(cv::CAP_PROP_FRAME_HEIGHT));
+    return videoSize;
+}
+
 int main(int argc, char **argv)
 {
     //引数の確認
     char *videoPass = NULL;
     char *cameraName = NULL;
     char *lensName = NULL;
+    char *jsonPass = NULL;
     int rotation_type;
     int opt;
     //    Eigen::Quaterniond camera_rotation;
@@ -35,10 +46,13 @@ int main(int argc, char **argv)
 
     Eigen::Quaterniond sd_card_rotation;
 
-    while ((opt = getopt(argc, argv, "i:c:l:r:")) != -1)
+    while ((opt = getopt(argc, argv, "j:i:c:l:r:")) != -1)
     {
         switch (opt)
         {
+        case 'j':       //input json file from virtual gimbal
+            jsonPass = optarg;
+            break;
         case 'i': //input video file pass
             videoPass = optarg;
             break;
@@ -123,6 +137,17 @@ int main(int argc, char **argv)
     {
         std::cout << el.first << std::endl;
     }
+
+    std::string videoSize = getVideoSize(videoPass);
+    shared_ptr<CameraInformation> cameraInfo(new CameraInformationJsonParser(cameraName,lensName,videoSize.c_str()));
+    double Tav = 1./readSamplingRateFromJson(jsonPass);//Sampling period of angular velocity
+    double Tvideo = 1.0/capture->get(cv::CAP_PROP_FPS);
+    vsp v2(9,9,*cameraInfo,1.0,angular_velocity_from_csv,
+               Tvideo,
+               Tav,
+               min_position + subframeOffset,
+               (int32_t)(capture->get(cv::CAP_PROP_FRAME_COUNT)),
+               199);
 
     int c;
     cv::namedWindow("image", cv::WINDOW_AUTOSIZE);
