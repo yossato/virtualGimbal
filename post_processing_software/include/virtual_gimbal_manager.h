@@ -24,19 +24,39 @@
 #include <memory>
 #include "rotation_param.h"
 #include <opencv2/opencv.hpp>
+#include "json_tools.hpp"
+#include "camera_information.h"
 class VirtualGimbalManager
 {
 public:
+EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     VirtualGimbalManager();
     void setVideoParam(const char* file_name);
-    void setGyroParam(const char* file_name);
-    void setRotation(const char* file_name);
+    void setMeasuredAngularVelocity(const char* file_name);
+    void setRotation(const char *file_name, CameraInformation& cameraInfo);
 
 protected:
     RotationPtr rotation;
-    BaseParamPtr gyro_param;
+    AngularVelocityPtr measured_angular_velocity;
     VideoPtr video_param;
     FilterPtr filter;
+
+    template <typename _Tp, typename _Alloc = std::allocator<_Tp>>
+    void angularVelocityCoordinateTransformer(std::vector<_Tp, _Alloc> &angular_velocity, const Eigen::Quaterniond &rotation)
+    {
+        Eigen::Quaterniond avq;
+        avq.w() = 0.0;
+        for (auto &el : angular_velocity)
+        {
+            avq.x() = el[0];
+            avq.y() = el[1];
+            avq.z() = el[2];
+            avq = rotation * avq * rotation.conjugate(); //Rotate angular velocity vector
+            el[0] = avq.x();
+            el[1] = avq.y();
+            el[2] = avq.z();
+        }
+    }
 };
 
 #endif // __VIRTUAL_GIMBAL_MANAGER_H__

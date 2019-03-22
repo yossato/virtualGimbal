@@ -1,4 +1,4 @@
-    #ifndef JSON_TOOLS_HPP
+#ifndef JSON_TOOLS_HPP
 #define JSON_TOOLS_HPP
 
 #include <stdio.h>
@@ -72,5 +72,7 @@ template <typename _Tp, typename _Alloc = std::allocator<_Tp>> int readAngularVe
     }
     return 0;
 }
+
+Eigen::MatrixXd readAngularVelocityFromJson(const char* filename);
 
 #endif // JSON_TOOLS_HPP

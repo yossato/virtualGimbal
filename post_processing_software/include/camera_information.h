@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <string>
+#include <memory>
 #include <Eigen/Dense>
 class CameraInformation{
 public:
@@ -32,5 +33,7 @@ virtual ~CameraInformation() = default;
     double inverse_p2_;
     double rolling_shutter_coefficient_;
 };
+
+using CameraInformationPtr = std::shared_ptr<CameraInformation>;
 
 #endif // CAMERAINFORMATION_H

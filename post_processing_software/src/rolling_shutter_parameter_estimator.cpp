@@ -25,7 +25,7 @@ int main(int argc, char **argv)
     int opt;
     //    Eigen::Quaterniond camera_rotation;
 
-    constexpr double S = pow(2, -0.5);
+    const double S = pow(2, -0.5);
     constexpr double F = 0.5;
     std::vector<Eigen::Quaterniond, Eigen::aligned_allocator<Eigen::Quaterniond>> vector_sd_card_rotation = {
         Eigen::Quaterniond(F, F, -F, F), //0
@@ -76,6 +76,14 @@ int main(int argc, char **argv)
             return 1;
         }
     }
+
+    VirtualGimbalManager manager;
+    manager.setVideoParam(videoPass);
+    manager.setMeasuredAngularVelocity(jsonPass);
+    std::string videoSize = getVideoSize(videoPass);
+    
+    shared_ptr<CameraInformation> camera_info(new CameraInformationJsonParser(cameraName,lensName,videoSize.c_str()));
+    manager.setRotation(jsonPass,*camera_info);
 
     std::shared_ptr<cv::VideoCapture> capture = std::make_shared<cv::VideoCapture>(videoPass);
     if (!capture->isOpened())
@@ -140,13 +148,10 @@ int main(int argc, char **argv)
         std::cout << el.first << std::endl;
     }
 
-    std::string videoSize = getVideoSize(videoPass);
-    shared_ptr<CameraInformation> cameraInfo(new CameraInformationJsonParser(cameraName,lensName,videoSize.c_str()));
     double Tav = 1./readSamplingRateFromJson(jsonPass);//Sampling period of angular velocity
     double Tvideo = 1.0/capture->get(cv::CAP_PROP_FPS);
-    VirtualGimbalManager vgm;
-    vgm.setVideoParam(videoPass);
-//    vsp v2(9,9,*cameraInfo,1.0,angular_velocity_from_csv,
+
+//    vsp v2(9,9,*camera_info,1.0,angular_velocity_from_csv,
 //               Tvideo,
 //               Tav,
 //               min_position + subframeOffset,

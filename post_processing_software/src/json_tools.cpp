@@ -363,6 +363,40 @@ int readOpticalFlowFromJson(Eigen::MatrixXd &optical_flow, std::string video_fil
     return 0;
 }
 
+
+Eigen::MatrixXd readAngularVelocityFromJson(const char* filename){
+    struct stat st;
+    Eigen::MatrixXd retval;
+    if(stat(filename,&st)){
+        throw "Json file is not exists.";
+    }
+    FILE* fp = fopen(filename, "rb"); // non-Windows use "r"
+    std::vector<char> readBuffer((intmax_t)st.st_size+10);
+    rapidjson::FileReadStream is(fp, readBuffer.data(), readBuffer.size());
+    rapidjson::Document e;
+    e.ParseStream(is);
+    fclose(fp);
+
+    const rapidjson::Value& angular_velocity_rad_per_sec_array = e["angular_velocity_rad_per_sec"];
+    assert(angular_velocity_rad_per_sec_array.IsArray());
+    assert(angular_velocity_rad_per_sec_array[0][0].IsDouble());
+    int32_t total_number_of_data=0;
+    for(int num=0;num<angular_velocity_rad_per_sec_array.Size();++num){
+        total_number_of_data += angular_velocity_rad_per_sec_array[num].Size();
+    }
+
+    retval.resize(total_number_of_data,3);
+
+    int width = 3;
+    for(int a =0;a<angular_velocity_rad_per_sec_array.Size();++a){
+        for(int i=0;i<angular_velocity_rad_per_sec_array[a].Size();i+=width){
+            for(int k=0;k<width;++k){
+                retval(i,k)=angular_velocity_rad_per_sec_array[a][i+k].GetDouble();
+            }
+        }
+    }
+    return retval;
+}
 //int main(int argc, char** argv){
 //    int opt;
 

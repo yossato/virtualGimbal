@@ -34,11 +34,10 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     double getFrequency();
     double getInterval();
-
+    const Eigen::VectorXd &operator()(int32_t index);
+    Eigen::MatrixXd data;
 protected:
     double frequency_;
-    std::string file_name_;
-
 };
 
 
@@ -46,14 +45,22 @@ class Video : public BaseParam
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    Video(double frequency, const char* file_name);
+    Video(double frequency);
     int32_t video_frames;           //! Number of frames in a video
     double rolling_shutter_time;    //! Time to read all rows of CMOS sensor
+};
+
+class AngularVelocity : public BaseParam
+{
+  public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    AngularVelocity(double frequency);
 };
 
 /**
  * @brief The RotationData class
  * @detains クォータニオンデータを保持。必要に応じて差分のクォータニオンを差し出す。
+ * これはGyro rateの角速度を格納しておく。継承クラスのVideoRateRotationにて、サンプリング周波数を変更
  */
 class Rotation
 {
@@ -62,6 +69,7 @@ public:
     virtual Eigen::Quaterniond getDiffQuaternion(double index);
     QuaternionData quaternion;
     QuaternionData filtered_quaternion;
+    virtual ~Rotation();
 private:
     template <typename T_> void filter(QuaternionData &raw, QuaternionData &filtered, T_ &filter_coeff);
 
@@ -89,7 +97,7 @@ public:
 
 using VideoPtr = std::shared_ptr<Video>;
 
-class VideoRateRotation
+class VideoRateRotation : Rotation
 {
     virtual Eigen::Quaterniond getDiffQuaternion(double index);
 private:
@@ -99,6 +107,7 @@ private:
 
 
 using BaseParamPtr = std::shared_ptr<BaseParam>;
+using AngularVelocityPtr = std::shared_ptr<AngularVelocity>;
 using RotationPtr = std::shared_ptr<Rotation>;
 
 using VideoRateRotationPtr = std::shared_ptr<VideoRateRotation>;

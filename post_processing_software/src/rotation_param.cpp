@@ -19,8 +19,31 @@
 
 #include "rotation_param.h"
 
-Video::Video(double frequency, const char* file_name)
+double BaseParam::getFrequency(){
+    return frequency_;
+}
+
+double BaseParam::getInterval(){
+    return 1./frequency_;
+}
+
+const Eigen::VectorXd& BaseParam:: operator()(int32_t index){
+    return data.row(index).transpose();
+}
+
+Video::Video(double frequency)
 {
     frequency_ = frequency;
-    file_name_ = std::string(file_name);
+}
+
+AngularVelocity::AngularVelocity(double frequency){
+    frequency_ = frequency;
+}
+
+Rotation::~Rotation(){
+
+}
+
+Eigen::Quaterniond Rotation::getDiffQuaternion(double index){
+    return Eigen::Quaterniond();
 }
