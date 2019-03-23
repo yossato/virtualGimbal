@@ -19,11 +19,11 @@
 
 #include "rotation_param.h"
 
-double BaseParam::getFrequency(){
+const double BaseParam::getFrequency(){
     return frequency_;
 }
 
-double BaseParam::getInterval(){
+const double BaseParam::getInterval(){
     return 1./frequency_;
 }
 

@@ -7,6 +7,7 @@
 #include <cassert>
 #include <cmath>
 #include <numeric>
+#include <memory>
 //#include "mFibonacci.hpp"
 
 typedef struct{
@@ -16,7 +17,7 @@ typedef struct{
 }strTimingInformation;
 
 std::vector<cv::Vec3d> CalcShiftFromVideo(const char *filename, int calcPeriod);
-
+void calcShiftFromVideo(std::shared_ptr<cv::VideoCapture> capture, int calc_length, Eigen::MatrixXd &dst);
 /**
  * @brief 波形を線形補間します。 
  * @param [in] waveform	波形

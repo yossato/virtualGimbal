@@ -79,11 +79,13 @@ int main(int argc, char **argv)
 
     VirtualGimbalManager manager;
     manager.setMeasuredAngularVelocity(jsonPass);
-    // std::string videoSize = getVideoSize(videoPass);
     shared_ptr<CameraInformation> camera_info(new CameraInformationJsonParser(cameraName,lensName,getVideoSize(videoPass).c_str()));
     manager.setVideoParam(videoPass,camera_info);
     manager.setRotation(jsonPass,*camera_info);
-
+    manager.setEstimatedAngularVelocity(videoPass,camera_info);
+//角速度を読み込み
+    //角速度を同期
+    //角度を保存
     std::shared_ptr<cv::VideoCapture> capture = std::make_shared<cv::VideoCapture>(videoPass);
     if (!capture->isOpened())
     {

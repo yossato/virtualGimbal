@@ -113,6 +113,7 @@ add_executable(rolling_shutter_parameter_estimator src/rolling_shutter_parameter
         src/camera_information.cpp
         src/virtual_gimbal_manager.cpp
         src/rotation_param.cpp
+        src/calcShift.cpp
         )
 target_link_libraries(rolling_shutter_parameter_estimator ${ALL_LIBS} ${OpenCV_LIBS})
 

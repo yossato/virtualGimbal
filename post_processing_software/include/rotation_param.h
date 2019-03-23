@@ -33,8 +33,9 @@ class BaseParam
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    double getFrequency();
-    double getInterval();
+//    double getFrequency();
+    const double getFrequency();
+    const double getInterval();
     Eigen::VectorXd operator()(int32_t index);
     Eigen::MatrixXd data;
 protected:
