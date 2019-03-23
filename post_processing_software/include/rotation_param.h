@@ -36,14 +36,14 @@ public:
 //    double getFrequency();
     const double getFrequency();
     const double getInterval();
-    virtual Eigen::VectorXd operator()(int32_t index, double resampling_frequency);
+    Eigen::VectorXd operator()(int32_t index, double resampling_frequency); //クォータニオンと時はどうする？？？テンプレートクラスにする？
     Eigen::VectorXd operator()(int32_t index);
     Eigen::MatrixXd data;
-Eigen::MatrixXd &getResampledData(double resampling_frequency);
+    Eigen::MatrixXd &getResampledData(double resampling_frequency);
 protected:
     double frequency_;
     std::map<double,Eigen::MatrixXd> resampled_data;
-    Eigen::MatrixXd generateResampledData(double resampling_frequency);
+    virtual Eigen::MatrixXd generateResampledData(double resampling_frequency);  // TODO: In quaternion, please implement spherical linear interpolation.
 };
 
 
