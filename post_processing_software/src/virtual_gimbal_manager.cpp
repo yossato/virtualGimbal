@@ -22,7 +22,7 @@ VirtualGimbalManager::VirtualGimbalManager()
 {
 }
 
-void VirtualGimbalManager::setVideoParam(const char *file_name)
+void VirtualGimbalManager::setVideoParam(const char *file_name,CameraInformationPtr info)
 {
     cv::VideoCapture *Capture = new cv::VideoCapture(file_name); //動画をオープン
     if (!Capture->isOpened())
@@ -32,6 +32,7 @@ void VirtualGimbalManager::setVideoParam(const char *file_name)
     video_param.reset(new Video(Capture->get(cv::CAP_PROP_FPS)));
     video_param->video_frames = Capture->get(cv::CAP_PROP_FRAME_COUNT);
     video_param->rolling_shutter_time = 0.0;
+    video_param->camera_info = info;
 }
 
 void VirtualGimbalManager::setMeasuredAngularVelocity(const char *file_name)

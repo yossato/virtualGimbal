@@ -24,6 +24,7 @@
 #include <Eigen/Dense>
 #include <memory>
 #include <map>
+#include "camera_information.h"
 
 using QuaternionData = std::vector<Eigen::Quaterniond, Eigen::aligned_allocator<Eigen::Quaterniond>>;
 using QuaternionDataPtr = std::shared_ptr<std::vector<Eigen::Quaterniond, Eigen::aligned_allocator<Eigen::Quaterniond>>>;
@@ -34,7 +35,7 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     double getFrequency();
     double getInterval();
-    const Eigen::VectorXd &operator()(int32_t index);
+    Eigen::VectorXd operator()(int32_t index);
     Eigen::MatrixXd data;
 protected:
     double frequency_;
@@ -48,6 +49,7 @@ public:
     Video(double frequency);
     int32_t video_frames;           //! Number of frames in a video
     double rolling_shutter_time;    //! Time to read all rows of CMOS sensor
+    CameraInformationPtr camera_info;
 };
 
 class AngularVelocity : public BaseParam

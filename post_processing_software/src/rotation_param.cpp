@@ -27,7 +27,7 @@ double BaseParam::getInterval(){
     return 1./frequency_;
 }
 
-const Eigen::VectorXd& BaseParam:: operator()(int32_t index){
+Eigen::VectorXd BaseParam:: operator()(int32_t index){
     return data.row(index).transpose();
 }
 

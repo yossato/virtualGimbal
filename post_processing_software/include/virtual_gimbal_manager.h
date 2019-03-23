@@ -31,10 +31,9 @@ class VirtualGimbalManager
 public:
 EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     VirtualGimbalManager();
-    void setVideoParam(const char* file_name);
+    void setVideoParam(const char* file_name,  CameraInformationPtr info);
     void setMeasuredAngularVelocity(const char* file_name);
     void setRotation(const char *file_name, CameraInformation& cameraInfo);
-
 protected:
     RotationPtr rotation;
     AngularVelocityPtr measured_angular_velocity;
