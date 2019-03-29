@@ -26,6 +26,8 @@
 #include <opencv2/opencv.hpp>
 #include "json_tools.hpp"
 #include "camera_information.h"
+#include "calcShift.hpp"
+
 class VirtualGimbalManager
 {
 public:
@@ -33,10 +35,12 @@ EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     VirtualGimbalManager();
     void setVideoParam(const char* file_name,  CameraInformationPtr info);
     void setMeasuredAngularVelocity(const char* file_name);
+    void setEstimatedAngularVelocity(const char* file_name, CameraInformationPtr info, int32_t maximum_synchronize_frames=1000);
     void setRotation(const char *file_name, CameraInformation& cameraInfo);
 protected:
     RotationPtr rotation;
     AngularVelocityPtr measured_angular_velocity;
+    AngularVelocityPtr estimated_angular_velocity;
     VideoPtr video_param;
     FilterPtr filter;
 

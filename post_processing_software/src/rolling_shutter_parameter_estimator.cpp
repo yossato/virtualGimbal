@@ -79,11 +79,15 @@ int main(int argc, char **argv)
 
     VirtualGimbalManager manager;
     manager.setMeasuredAngularVelocity(jsonPass);
-    // std::string videoSize = getVideoSize(videoPass);
     shared_ptr<CameraInformation> camera_info(new CameraInformationJsonParser(cameraName,lensName,getVideoSize(videoPass).c_str()));
     manager.setVideoParam(videoPass,camera_info);
     manager.setRotation(jsonPass,*camera_info);
 
+//    manager.setEstimatedAngularVelocity(videoPass,camera_info);
+
+//角速度を読み込み
+    //角速度を同期
+    //角度を保存
     std::shared_ptr<cv::VideoCapture> capture = std::make_shared<cv::VideoCapture>(videoPass);
     if (!capture->isOpened())
     {
@@ -107,17 +111,7 @@ int main(int argc, char **argv)
     //キャリブレーションの準備
     cv::Size PatternSize = cv::Size((int)Dcbp.NumberOfInnerCorners.X, (int)Dcbp.NumberOfInnerCorners.Y);
     std::vector<std::vector<cv::Point2f>> imagePoints;                                 // チェッカー交点座標を格納するベクトルのベクトル インデックスの並びは[撮影画像番号][点のIndex]
-    std::vector<std::vector<cv::Point3f>> worldPoints((int)Dcbp.NumberOfCaptureImage); // チェッカー交点座標と対応する世界座標の値を格納する行列
-    // 世界座標を決める
-    for (int i = 0; i < Dcbp.NumberOfCaptureImage; i++)
-    {
-        for (int j = 0; j < PatternSize.area(); j++)
-        { //チェッカーボードの交点座標を記録　
-            worldPoints[i].push_back(cv::Point3f(static_cast<float>(j % PatternSize.width * Dcbp.SizeOfQuadsX_mm),
-                                                 static_cast<float>(j / PatternSize.width * Dcbp.SizeOfQuadsY_mm),
-                                                 0.0));
-        }
-    }
+
 
     //キャリブレーションの準備ここまで
     std::map<int, std::vector<cv::Point2f>> corner_dict;
@@ -139,13 +133,40 @@ int main(int argc, char **argv)
             }
             printf("%d/%d\r", i, e);
             std::cout << std::flush;
+
+//            if ( i == 10) break;
         }
     }
 
-    for (auto &el : corner_dict)
-    {
-        std::cout << el.first << std::endl;
+    cv::Mat CameraMatrix = (cv::Mat_<float>(3,3) << camera_info->fx_, 0, camera_info->cx_, 0, camera_info->fy_, camera_info->cy_, 0, 0, 1);
+    cv::Mat DistCoeffs = (cv::Mat_<float>(1,4) << camera_info->k1_,camera_info->k2_,camera_info->p1_,camera_info->p2_);
+    std::map<int,cv::Mat> RotationVector;
+    std::map<int,cv::Mat> TranslationVector;
+
+    std::vector<cv::Point3f> world_points; // チェッカー交点座標と対応する世界座標の値を格納する行列
+    // 世界座標を決める
+    for (int j = 0; j < PatternSize.area(); j++)
+    { //チェッカーボードの交点座標を記録
+        world_points.push_back(cv::Point3f(static_cast<float>(j % PatternSize.width * Dcbp.SizeOfQuadsX_mm),
+                                           static_cast<float>(j / PatternSize.width * Dcbp.SizeOfQuadsY_mm),
+                                           0.0));
     }
+
+    for(const auto &el:corner_dict){
+        cv::solvePnP(world_points,el.second,CameraMatrix,DistCoeffs,RotationVector[el.first],TranslationVector[el.first]);
+        printf("%d,%f,%f,%f ",el.first,RotationVector[el.first].at<float>(0,0),RotationVector[el.first].at<float>(1,0),RotationVector[el.first].at<float>(2,0));
+        if(0!=RotationVector.count(el.first-1)){
+            cv::Mat diff = RotationVector[el.first]-RotationVector[el.first-1];
+            printf("%f %f %f\n",diff.at<float>(0,0),diff.at<float>(1,0),diff.at<float>(2,0));
+        }else{
+            printf("0,0,0\n");
+        }
+    }
+    std::cout << std::flush;
+
+//    std::cout << RotationVector.size() << std::endl;
+
+    return 0;
 
     double Tav = 1./readSamplingRateFromJson(jsonPass);//Sampling period of angular velocity
     double Tvideo = 1.0/capture->get(cv::CAP_PROP_FPS);
