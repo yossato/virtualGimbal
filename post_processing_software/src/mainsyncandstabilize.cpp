@@ -439,6 +439,7 @@ int main(int argc, char** argv){
                      199));
 
     // Stabilize
+    v2->setMaximumGradient(0.5);
     Eigen::VectorXd filter_coefficients = v2->calculateFilterCoefficientsWithoutBlackSpaces(2,499);
     v2->filteredQuaternion(filter_coefficients);
 
