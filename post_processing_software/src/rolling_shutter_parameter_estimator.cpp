@@ -7,8 +7,9 @@
 #include "json_tools.hpp"
 #include "rotation_param.h"
 #include "virtual_gimbal_manager.h"
-std::string getVideoSize(const char *videoName){
-    std::shared_ptr<cv::VideoCapture> Capture = std::make_shared<cv::VideoCapture>(videoName);//動画をオープン
+std::string getVideoSize(const char *videoName)
+{
+    std::shared_ptr<cv::VideoCapture> Capture = std::make_shared<cv::VideoCapture>(videoName); //動画をオープン
     assert(Capture->isOpened());
     std::string videoSize = std::to_string((int)Capture->get(cv::CAP_PROP_FRAME_WIDTH)) + std::string("x") + std::to_string((int)Capture->get(cv::CAP_PROP_FRAME_HEIGHT));
     return videoSize;
@@ -52,7 +53,7 @@ int main(int argc, char **argv)
     {
         switch (opt)
         {
-        case 'j':       //input json file from virtual gimbal
+        case 'j': //input json file from virtual gimbal
             jsonPass = optarg;
             break;
         case 'i': //input video file pass
@@ -79,13 +80,13 @@ int main(int argc, char **argv)
 
     VirtualGimbalManager manager;
     manager.setMeasuredAngularVelocity(jsonPass);
-    shared_ptr<CameraInformation> camera_info(new CameraInformationJsonParser(cameraName,lensName,getVideoSize(videoPass).c_str()));
-    manager.setVideoParam(videoPass,camera_info);
-    manager.setRotation(jsonPass,*camera_info);
+    shared_ptr<CameraInformation> camera_info(new CameraInformationJsonParser(cameraName, lensName, getVideoSize(videoPass).c_str()));
+    manager.setVideoParam(videoPass, camera_info);
+    manager.setRotation(jsonPass, *camera_info);
 
-//    manager.setEstimatedAngularVelocity(videoPass,camera_info);
+    //    manager.setEstimatedAngularVelocity(videoPass,camera_info);
 
-//角速度を読み込み
+    //角速度を読み込み
     //角速度を同期
     //角度を保存
     std::shared_ptr<cv::VideoCapture> capture = std::make_shared<cv::VideoCapture>(videoPass);
@@ -110,8 +111,7 @@ int main(int argc, char **argv)
 
     //キャリブレーションの準備
     cv::Size PatternSize = cv::Size((int)Dcbp.NumberOfInnerCorners.X, (int)Dcbp.NumberOfInnerCorners.Y);
-    std::vector<std::vector<cv::Point2f>> imagePoints;                                 // チェッカー交点座標を格納するベクトルのベクトル インデックスの並びは[撮影画像番号][点のIndex]
-
+    std::vector<std::vector<cv::Point2f>> imagePoints; // チェッカー交点座標を格納するベクトルのベクトル インデックスの並びは[撮影画像番号][点のIndex]
 
     //キャリブレーションの準備ここまで
     std::map<int, std::vector<cv::Point2f>> corner_dict;
@@ -134,14 +134,16 @@ int main(int argc, char **argv)
             printf("%d/%d\r", i, e);
             std::cout << std::flush;
 
-//            if ( i == 10) break;
+            // Speed up for debug
+            if (i == 10)
+                break;
         }
     }
 
-    cv::Mat CameraMatrix = (cv::Mat_<float>(3,3) << camera_info->fx_, 0, camera_info->cx_, 0, camera_info->fy_, camera_info->cy_, 0, 0, 1);
-    cv::Mat DistCoeffs = (cv::Mat_<float>(1,4) << camera_info->k1_,camera_info->k2_,camera_info->p1_,camera_info->p2_);
-    std::map<int,cv::Mat> RotationVector;
-    std::map<int,cv::Mat> TranslationVector;
+    cv::Mat CameraMatrix = (cv::Mat_<float>(3, 3) << camera_info->fx_, 0, camera_info->cx_, 0, camera_info->fy_, camera_info->cy_, 0, 0, 1);
+    cv::Mat DistCoeffs = (cv::Mat_<float>(1, 4) << camera_info->k1_, camera_info->k2_, camera_info->p1_, camera_info->p2_);
+    std::map<int, cv::Mat> RotationVector;
+    std::map<int, cv::Mat> TranslationVector;
 
     std::vector<cv::Point3f> world_points; // チェッカー交点座標と対応する世界座標の値を格納する行列
     // 世界座標を決める
@@ -152,31 +154,53 @@ int main(int argc, char **argv)
                                            0.0));
     }
 
-    for(const auto &el:corner_dict){
-        cv::solvePnP(world_points,el.second,CameraMatrix,DistCoeffs,RotationVector[el.first],TranslationVector[el.first]);
-        printf("%d,%f,%f,%f ",el.first,RotationVector[el.first].at<float>(0,0),RotationVector[el.first].at<float>(1,0),RotationVector[el.first].at<float>(2,0));
-        if(0!=RotationVector.count(el.first-1)){
-            cv::Mat diff = RotationVector[el.first]-RotationVector[el.first-1];
-            printf("%f %f %f\n",diff.at<float>(0,0),diff.at<float>(1,0),diff.at<float>(2,0));
-        }else{
+    Eigen::VectorXd confidence = Eigen::VectorXd::Zero(capture->get(cv::CAP_PROP_FRAME_COUNT));
+    Eigen::MatrixXd estimated_angular_velocity = Eigen::MatrixXd::Zero(capture->get(cv::CAP_PROP_FRAME_COUNT), 3);
+
+    for (const auto &el : corner_dict)
+    {
+        cv::solvePnP(world_points, el.second, CameraMatrix, DistCoeffs, RotationVector[el.first], TranslationVector[el.first]);
+        // printf("%d,%f,%f,%f ",el.first,RotationVector[el.first].at<float>(0,0),RotationVector[el.first].at<float>(1,0),RotationVector[el.first].at<float>(2,0));
+        Eigen::Quaterniond rotation_quaternion = vsp::Vector2Quaternion<double>(Eigen::Vector3d(RotationVector[el.first].at<float>(0, 0), RotationVector[el.first].at<float>(1, 0), RotationVector[el.first].at<float>(2, 0)));
+        printf("%d,%f,%f,%f,%f,", el.first, rotation_quaternion.x(), rotation_quaternion.y(), rotation_quaternion.z(), rotation_quaternion.w());
+        if (0 != RotationVector.count(el.first - 1))
+        {
+            Eigen::Quaterniond rotation_quaternion_previous = vsp::Vector2Quaternion<double>(Eigen::Vector3d(RotationVector[el.first - 1].at<float>(0, 0), RotationVector[el.first - 1].at<float>(1, 0), RotationVector[el.first - 1].at<float>(2, 0)));
+            // cv::Mat diff = RotationVector[el.first]-RotationVector[el.first-1];
+            Eigen::Quaterniond diff = rotation_quaternion.conjugate() * rotation_quaternion_previous;
+            // printf("%f,%f,%f\n",diff.at<float>(0,0),diff.at<float>(1,0),diff.at<float>(2,0));
+            printf("%f,%f,%f,%f\n", diff.x(), diff.y(), diff.z(), diff.w());
+            estimated_angular_velocity.row(el.first) = vsp::Quaternion2Vector(diff).transpose();
+            confidence(el.first) = 1.0;
+        }
+        else
+        {
             printf("0,0,0\n");
         }
     }
     std::cout << std::flush;
 
-//    std::cout << RotationVector.size() << std::endl;
+    estimated_angular_velocity = estimated_angular_velocity * capture->get(cv::CAP_PROP_FPS);
+    manager.setEstimatedAngularVelocity(estimated_angular_velocity, confidence, capture->get(cv::CAP_PROP_FPS));
+
+    std::cout << "estimated_angular_velocity:" << std::endl;
+    std::cout << estimated_angular_velocity.block(0,0,10,3) << std::endl;
+    std::cout << "confidence" << std::endl;
+    std::cout << confidence.block(0,0,10,1) << std::endl;
+
+    //    std::cout << RotationVector.size() << std::endl;
 
     return 0;
 
-    double Tav = 1./readSamplingRateFromJson(jsonPass);//Sampling period of angular velocity
-    double Tvideo = 1.0/capture->get(cv::CAP_PROP_FPS);
+    double Tav = 1. / readSamplingRateFromJson(jsonPass); //Sampling period of angular velocity
+    double Tvideo = 1.0 / capture->get(cv::CAP_PROP_FPS);
 
-//    vsp v2(9,9,*camera_info,1.0,angular_velocity_from_csv,
-//               Tvideo,
-//               Tav,
-//               min_position + subframeOffset,
-//               (int32_t)(capture->get(cv::CAP_PROP_FRAME_COUNT)),
-//               199);
+    //    vsp v2(9,9,*camera_info,1.0,angular_velocity_from_csv,
+    //               Tvideo,
+    //               Tav,
+    //               min_position + subframeOffset,
+    //               (int32_t)(capture->get(cv::CAP_PROP_FRAME_COUNT)),
+    //               199);
 
     int c;
     cv::namedWindow("image", cv::WINDOW_AUTOSIZE);

@@ -31,29 +31,29 @@ using QuaternionDataPtr = std::shared_ptr<std::vector<Eigen::Quaterniond, Eigen:
 
 class BaseParam
 {
-public:
+  public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-//    double getFrequency();
+    //    double getFrequency();
     const double getFrequency();
     const double getInterval();
     Eigen::VectorXd operator()(int32_t index, double resampling_frequency); //クォータニオンと時はどうする？？？テンプレートクラスにする？
     Eigen::VectorXd operator()(int32_t index);
     Eigen::MatrixXd data;
     Eigen::MatrixXd &getResampledData(double resampling_frequency);
-protected:
-    double frequency_;
-    std::map<double,Eigen::MatrixXd> resampled_data;
-    virtual Eigen::MatrixXd generateResampledData(double resampling_frequency);  // TODO: In quaternion, please implement spherical linear interpolation.
-};
 
+  protected:
+    double frequency_;
+    std::map<double, Eigen::MatrixXd> resampled_data;
+    virtual Eigen::MatrixXd generateResampledData(double resampling_frequency); // TODO: In quaternion, please implement spherical linear interpolation.
+};
 
 class Video : public BaseParam
 {
-public:
+  public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     Video(double frequency);
-    int32_t video_frames;           //! Number of frames in a video
-    double rolling_shutter_time;    //! Time to read all rows of CMOS sensor
+    int32_t video_frames;        //! Number of frames in a video
+    double rolling_shutter_time; //! Time to read all rows of CMOS sensor
     CameraInformationPtr camera_info;
 };
 
@@ -62,6 +62,7 @@ class AngularVelocity : public BaseParam
   public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     AngularVelocity(double frequency);
+    Eigen::VectorXd confidence;
 };
 
 /**
@@ -71,32 +72,34 @@ class AngularVelocity : public BaseParam
  */
 class Rotation
 {
-public:
+  public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     virtual Eigen::Quaterniond getDiffQuaternion(double index);
     QuaternionData quaternion;
     QuaternionData filtered_quaternion;
     virtual ~Rotation();
-private:
-    template <typename T_> void filter(QuaternionData &raw, QuaternionData &filtered, T_ &filter_coeff);
 
+  private:
+    template <typename T_>
+    void filter(QuaternionData &raw, QuaternionData &filtered, T_ &filter_coeff);
 
     // Diffはここで出せるようにする
 };
 
 class Filter
 {
-public:
+  public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     Filter(uint32_t filter_lenght);
-protected:
+
+  protected:
     int32_t filter_length_;
-    std::map<int32_t,Eigen::VectorXd> filter_coefficients_;
+    std::map<int32_t, Eigen::VectorXd> filter_coefficients_;
 };
 
 class KaiserWindowFilter : public Filter
 {
-public:
+  public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     KaiserWindowFilter(uint32_t filter_length, uint32_t alpha);
     void SetFilterCoefficient(int32_t alpha);
@@ -107,11 +110,11 @@ using VideoPtr = std::shared_ptr<Video>;
 class VideoRateRotation : Rotation
 {
     virtual Eigen::Quaterniond getDiffQuaternion(double index);
-private:
+
+  private:
     double offset;
     VideoPtr video_param;
 };
-
 
 using BaseParamPtr = std::shared_ptr<BaseParam>;
 using AngularVelocityPtr = std::shared_ptr<AngularVelocity>;

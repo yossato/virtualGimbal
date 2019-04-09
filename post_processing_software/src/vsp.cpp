@@ -427,8 +427,9 @@ Eigen::VectorXd vsp::calculateFilterCoefficientsWithoutBlackSpaces(int32_t minim
 }
 
 void vsp::gradientLimit(Eigen::VectorXd &input){
+    if(input.rows()<2) return;
     double limited_value = input.head(1)[0];
-    for(int i=0,e=input.rows();i<e;++i){
+    for(int i=1,e=input.rows();i<e;++i){
         if(input(i) > limited_value - maximum_gradient_){
             limited_value = input(i);
         }else{
@@ -437,7 +438,7 @@ void vsp::gradientLimit(Eigen::VectorXd &input){
         }
     }
     limited_value = input.tail(1)[0];
-    for(int i=input.rows()-1;i>=0;--i){
+    for(int i=input.rows()-2;i>=0;--i){
         if(input(i) > limited_value - maximum_gradient_){
             limited_value = input(i);
         }else{

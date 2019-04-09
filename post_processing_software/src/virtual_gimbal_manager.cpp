@@ -22,7 +22,7 @@ VirtualGimbalManager::VirtualGimbalManager()
 {
 }
 
-void VirtualGimbalManager::setVideoParam(const char *file_name,CameraInformationPtr info)
+void VirtualGimbalManager::setVideoParam(const char *file_name, CameraInformationPtr info)
 {
     std::shared_ptr<cv::VideoCapture> capture = std::make_shared<cv::VideoCapture>(file_name); //動画をオープン
     if (!capture->isOpened())
@@ -41,24 +41,33 @@ void VirtualGimbalManager::setMeasuredAngularVelocity(const char *file_name)
     measured_angular_velocity->data = readAngularVelocityFromJson(file_name);
 }
 
-void VirtualGimbalManager::setEstimatedAngularVelocity(const char* file_name, CameraInformationPtr info, int32_t maximum_synchronize_frames){
+void VirtualGimbalManager::setEstimatedAngularVelocity(const char *file_name, CameraInformationPtr info, int32_t maximum_synchronize_frames)
+{
     std::shared_ptr<cv::VideoCapture> capture = std::make_shared<cv::VideoCapture>(file_name); //動画をオープン
 
     Eigen::MatrixXd optical_flow;
 
-    calcShiftFromVideo(capture,maximum_synchronize_frames,optical_flow);
+    calcShiftFromVideo(capture, maximum_synchronize_frames, optical_flow);
 
     estimated_angular_velocity.reset(new AngularVelocity(capture->get(cv::CAP_PROP_FPS)));
-    estimated_angular_velocity->data.resize(optical_flow.rows(),optical_flow.cols());
+    estimated_angular_velocity->data.resize(optical_flow.rows(), optical_flow.cols());
 
     estimated_angular_velocity->data.col(0) =
-            optical_flow.col(1).unaryExpr([&](double a){ return estimated_angular_velocity->getFrequency() * atan(a/(-info->fy_));});
+        optical_flow.col(1).unaryExpr([&](double a) { return estimated_angular_velocity->getFrequency() * atan(a / (-info->fy_)); });
     estimated_angular_velocity->data.col(1) =
-            optical_flow.col(0).unaryExpr([&](double a){ return estimated_angular_velocity->getFrequency() * -atan(a/(info->fx_));});
+        optical_flow.col(0).unaryExpr([&](double a) { return estimated_angular_velocity->getFrequency() * -atan(a / (info->fx_)); });
     estimated_angular_velocity->data.col(2) = -estimated_angular_velocity->getFrequency() * optical_flow.col(2);
 }
 
-void VirtualGimbalManager::setRotation(const char *file_name, CameraInformation& cameraInfo){
+void VirtualGimbalManager::setEstimatedAngularVelocity(Eigen::MatrixXd &angular_velocity, Eigen::VectorXd &confidence, double frequency)
+{
+    estimated_angular_velocity = std::make_shared<AngularVelocity>(frequency);
+    estimated_angular_velocity->confidence = confidence;
+    estimated_angular_velocity->data = angular_velocity;
+}
+
+void VirtualGimbalManager::setRotation(const char *file_name, CameraInformation &cameraInfo)
+{
     rotation.reset(new Rotation());
     // std::vector<Eigen::Vector3d,Eigen::aligned_allocator<Eigen::Vector3d>> angular_velocity;
     // if(file_name){
