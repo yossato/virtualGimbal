@@ -78,3 +78,7 @@ void VirtualGimbalManager::setRotation(const char *file_name, CameraInformation 
 
     // angularVelocityCoordinateTransformer(angular_velocity,cameraInfo.sd_card_rotation_);
 }
+
+void VirtualGimbalManager::estimate(){
+    Eigen::MatrixXd measured_angular_velocity_resampled =  measured_angular_velocity->getResampledData(video_param->getFrequency());
+}

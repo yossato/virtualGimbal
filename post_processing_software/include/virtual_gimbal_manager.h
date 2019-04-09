@@ -38,6 +38,7 @@ EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     void setEstimatedAngularVelocity(const char* file_name, CameraInformationPtr info, int32_t maximum_synchronize_frames=1000);
     void setEstimatedAngularVelocity(Eigen::MatrixXd &angular_velocity, Eigen::VectorXd &confidence, double frequency);
     void setRotation(const char *file_name, CameraInformation& cameraInfo);
+    void estimate();
 protected:
     RotationPtr rotation;
     AngularVelocityPtr measured_angular_velocity;
