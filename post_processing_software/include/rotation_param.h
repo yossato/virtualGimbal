@@ -44,7 +44,7 @@ class BaseParam
   protected:
     double frequency_;
     std::map<double, Eigen::MatrixXd> resampled_data;
-    virtual Eigen::MatrixXd generateResampledData(double resampling_frequency); // TODO: In quaternion, please implement spherical linear interpolation.
+    virtual void generateResampledData(double resampling_frequency); // TODO: In quaternion, please implement spherical linear interpolation.
 };
 
 class Video : public BaseParam

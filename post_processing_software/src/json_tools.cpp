@@ -385,14 +385,12 @@ Eigen::MatrixXd readAngularVelocityFromJson(const char* filename){
         total_number_of_data += angular_velocity_rad_per_sec_array[num].Size();
     }
 
-    retval.resize(total_number_of_data,3);
-
     int width = 3;
+    retval.resize(total_number_of_data/width,3);
+
     for(int a =0;a<angular_velocity_rad_per_sec_array.Size();++a){
-        for(int i=0;i<angular_velocity_rad_per_sec_array[a].Size();i+=width){
-            for(int k=0;k<width;++k){
-                retval(i,k)=angular_velocity_rad_per_sec_array[a][i+k].GetDouble();
-            }
+        for(int i=0;i<angular_velocity_rad_per_sec_array[a].Size();++i){
+                retval(i/3,i%3)=angular_velocity_rad_per_sec_array[a][i].GetDouble();
         }
     }
     return retval;

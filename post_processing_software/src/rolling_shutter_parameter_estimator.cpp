@@ -135,8 +135,8 @@ int main(int argc, char **argv)
             std::cout << std::flush;
 
             // Speed up for debug
-            // if (i == 100)
-                // break;
+            if (i == 100)
+            break;
         }
     }
 
@@ -183,11 +183,12 @@ int main(int argc, char **argv)
     estimated_angular_velocity = estimated_angular_velocity * capture->get(cv::CAP_PROP_FPS);
     manager.setEstimatedAngularVelocity(estimated_angular_velocity, confidence, capture->get(cv::CAP_PROP_FPS));
 
-    std::cout << "estimated_angular_velocity:" << std::endl;
-    std::cout << estimated_angular_velocity << std::endl;
+    // std::cout << "estimated_angular_velocity:" << std::endl;
+    // std::cout << estimated_angular_velocity << std::endl;
     // std::cout << "confidence" << std::endl;
     // std::cout << confidence.block(0,0,100,1) << std::endl;
 
+    manager.estimate();
 
     return 0;
 

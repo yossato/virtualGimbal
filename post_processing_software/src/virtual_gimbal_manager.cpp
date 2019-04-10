@@ -81,4 +81,8 @@ void VirtualGimbalManager::setRotation(const char *file_name, CameraInformation 
 
 void VirtualGimbalManager::estimate(){
     Eigen::MatrixXd measured_angular_velocity_resampled =  measured_angular_velocity->getResampledData(video_param->getFrequency());
+    std::cout << measured_angular_velocity->data.block(0,0,100,3) << std::endl;
+    std::cout << measured_angular_velocity_resampled.block(0,0,100,3) << std::endl;
+    int32_t diff = measured_angular_velocity_resampled.rows() - estimated_angular_velocity->data.rows();
+    std::cout << diff << std::endl;
 }
