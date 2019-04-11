@@ -60,7 +60,7 @@ CameraInformationJsonParser::CameraInformationJsonParser(const char *camera_name
 
 void CameraInformationJsonParser::writeCameraInformationJson(const char *file_name)
 {
-    // If a json file exist, Open it.
+    // If record json file exist, Open it.
     Document d;
     struct stat st;
     if (!stat(file_name, &st))
@@ -387,10 +387,11 @@ Eigen::MatrixXd readAngularVelocityFromJson(const char* filename){
 
     int width = 3;
     retval.resize(total_number_of_data/width,3);
-
-    for(int a =0;a<angular_velocity_rad_per_sec_array.Size();++a){
-        for(int i=0;i<angular_velocity_rad_per_sec_array[a].Size();++i){
-                retval(i/3,i%3)=angular_velocity_rad_per_sec_array[a][i].GetDouble();
+    int num=0;
+    for(int record =0;record<angular_velocity_rad_per_sec_array.Size();++record){
+        for(int i=0;i<angular_velocity_rad_per_sec_array[record].Size();++i){
+            retval(num/3,num%3)=angular_velocity_rad_per_sec_array[record][i].GetDouble();
+            ++num;
         }
     }
     return retval;

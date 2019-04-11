@@ -4,6 +4,7 @@
 #include <memory>
 #include "mINIRead.hpp"
 #include "vsp.h"
+#include "visualizer.h"
 #include "json_tools.hpp"
 #include "rotation_param.h"
 #include "virtual_gimbal_manager.h"
@@ -188,7 +189,9 @@ int main(int argc, char **argv)
     // std::cout << "confidence" << std::endl;
     // std::cout << confidence.block(0,0,100,1) << std::endl;
 
-    manager.estimate();
+    Eigen::MatrixXd correlation = manager.estimate();
+    std::vector<string> legends_angular_velocity = {"c"};
+    vgp::plot(correlation, "correlation",legends_angular_velocity);
 
     return 0;
 

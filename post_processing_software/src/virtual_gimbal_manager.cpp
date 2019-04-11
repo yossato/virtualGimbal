@@ -79,10 +79,54 @@ void VirtualGimbalManager::setRotation(const char *file_name, CameraInformation 
     // angularVelocityCoordinateTransformer(angular_velocity,cameraInfo.sd_card_rotation_);
 }
 
-void VirtualGimbalManager::estimate(){
-    Eigen::MatrixXd measured_angular_velocity_resampled =  measured_angular_velocity->getResampledData(video_param->getFrequency());
-    std::cout << measured_angular_velocity->data.block(0,0,100,3) << std::endl;
-    std::cout << measured_angular_velocity_resampled.block(0,0,100,3) << std::endl;
+Eigen::MatrixXd VirtualGimbalManager::estimate()
+{
+    Eigen::MatrixXd measured_angular_velocity_resampled = measured_angular_velocity->getResampledData(video_param->getFrequency());
+    std::cout << measured_angular_velocity->data.block(measured_angular_velocity->data.rows()-100, 0, 100, 3) << std::endl;
+    std::cout << measured_angular_velocity_resampled.block(measured_angular_velocity_resampled.rows()-100, 0, 100, 3) << std::endl;
     int32_t diff = measured_angular_velocity_resampled.rows() - estimated_angular_velocity->data.rows();
     std::cout << diff << std::endl;
+    std::vector<double> correlation_coefficients(diff + 1);
+    for (int32_t frame = 0, end = correlation_coefficients.size(); frame < end; ++frame)
+    {
+        int32_t number_of_data = estimated_angular_velocity->confidence.cast<int>().array().sum();
+        if (0 == number_of_data)
+        {
+            correlation_coefficients[frame] = std::numeric_limits<double>::max();
+        }
+        else
+        {
+            correlation_coefficients[frame] = ((measured_angular_velocity_resampled.block(frame, 0, estimated_angular_velocity->data.rows(), estimated_angular_velocity->data.cols()) - estimated_angular_velocity->data).array().colwise() * estimated_angular_velocity->confidence.array()).abs().sum() / (double)number_of_data;
+        }
+
+        if (frame % 100 == 0)
+        {
+            printf("\r%d / %d", frame, diff);
+            std::cout << std::flush;
+        }
+    }
+    // std::cout << correlation_coefficients.block(0,0,100,1) << std::endl;
+    int32_t minimum_correlation_frame = std::distance(correlation_coefficients.begin(), min_element(correlation_coefficients.begin(), correlation_coefficients.end()));
+    //最小値サブピクセル推定
+    double minimum_correlation_subframe = 0.0;
+    if (minimum_correlation_frame == 0)
+    { //位置が最初のフレームで一致している場合
+        minimum_correlation_subframe = 0.0;
+    }
+    else if (minimum_correlation_frame == (diff - 1))
+    { //末尾
+        minimum_correlation_subframe = (double)(diff - 1);
+    }
+    else
+    { //その他
+        minimum_correlation_subframe = -(correlation_coefficients[minimum_correlation_frame + 1] - correlation_coefficients[minimum_correlation_frame - 1]) / (2 * correlation_coefficients[minimum_correlation_frame - 1] - 4 * correlation_coefficients[minimum_correlation_frame] + 2 * correlation_coefficients[minimum_correlation_frame + 1]);
+    }
+    minimum_correlation_subframe += (double)minimum_correlation_frame;
+    std::cout << std::endl << minimum_correlation_subframe << std::endl;
+
+    Eigen::MatrixXd retval(correlation_coefficients.size(),1);
+    for(int i=0,e=correlation_coefficients.size();i<e;++i){
+        retval(i,0) = correlation_coefficients[i];
+    }
+    return retval;
 }

@@ -114,8 +114,9 @@ add_executable(rolling_shutter_parameter_estimator src/rolling_shutter_parameter
         src/virtual_gimbal_manager.cpp
         src/rotation_param.cpp
         src/calcShift.cpp
+        src/visualizer.cpp
         )
-target_link_libraries(rolling_shutter_parameter_estimator ${ALL_LIBS} ${OpenCV_LIBS})
+target_link_libraries(rolling_shutter_parameter_estimator ${ALL_LIBS} ${OpenCV_LIBS} ${PYTHON_LIBRARIES})
 
 
 # デバッグビルド
