@@ -81,8 +81,8 @@ int main(int argc, char** argv){
     int rotation_type;
     int opt;
 
-    constexpr double S = pow(2,-0.5);
-    constexpr double F = 0.5;
+    double S = pow(2,-0.5);
+    double F = 0.5;
     std::vector<Eigen::Quaterniond,Eigen::aligned_allocator<Eigen::Quaterniond>> vector_sd_card_rotation = {
         Eigen::Quaterniond( F, F,-F, F),//0
         Eigen::Quaterniond( F,-F, F, F),

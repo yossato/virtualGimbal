@@ -82,8 +82,9 @@ void VirtualGimbalManager::setRotation(const char *file_name, CameraInformation 
 Eigen::MatrixXd VirtualGimbalManager::estimate()
 {
     Eigen::MatrixXd measured_angular_velocity_resampled = measured_angular_velocity->getResampledData(video_param->getFrequency());
-    std::cout << measured_angular_velocity->data.block(measured_angular_velocity->data.rows()-100, 0, 100, 3) << std::endl;
-    std::cout << measured_angular_velocity_resampled.block(measured_angular_velocity_resampled.rows()-100, 0, 100, 3) << std::endl;
+    
+    std::cout << "measured_angular_velocity->data" << std::endl <<  measured_angular_velocity->data.block(measured_angular_velocity->data.rows()-100, 0, 100, 3) << std::endl;
+    std::cout << "measured_angular_velocity_resampled" << std::endl << measured_angular_velocity_resampled.block(measured_angular_velocity_resampled.rows()-100, 0, 100, 3) << std::endl;
     int32_t diff = measured_angular_velocity_resampled.rows() - estimated_angular_velocity->data.rows();
     std::cout << diff << std::endl;
     std::vector<double> correlation_coefficients(diff + 1);
@@ -130,3 +131,14 @@ Eigen::MatrixXd VirtualGimbalManager::estimate()
     }
     return retval;
 }
+
+Eigen::MatrixXd VirtualGimbalManager::getSynchronizedMeasuredAngularVelocity(){
+    
+}
+
+// void VirtualGimbalManager::getEstimatedAndMeasuredAngularVelocity(Eigen::MatrixXd &data){
+//     data.resize(estimated_angular_velocity->data.rows(),estimated_angular_velocity->data.cols()+measured_angular_velocity->data.cols());
+//     data.block(0,0,estimated_angular_velocity->data.rows(),estimated_angular_velocity->data.cols()) = estimated_angular_velocity->data;
+//     resampler_parameter rp =
+//     // data.block(0,estimated_angular_velocity->data.cols(),measured_angular_velocity) = 
+// }

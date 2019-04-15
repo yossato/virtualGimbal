@@ -34,22 +34,40 @@ Eigen::VectorXd BaseParam::operator()(int32_t index)
     return data.row(index).transpose();
 }
 
-void BaseParam::generateResampledData(double resampling_frequency)
+Eigen::MatrixXd BaseParam::generateResampledData(double resampling_frequency, const resampler_parameter rparam)
 {
+    Eigen::MatrixXd resampled_data;
     if (resampling_frequency < std::numeric_limits<double>::epsilon())
     {
         throw "resampling_frequency is too small.";
     }
-    resampled_data[resampling_frequency] = Eigen::MatrixXd::Zero(round(data.rows() * resampling_frequency / frequency_), data.cols());// = Eigen::MatrixXd::Zero(round(data.rows() * resampling_frequency / frequency_), data.cols());
-    Eigen::MatrixXd &ref = resampled_data[resampling_frequency];
-    for (int32_t frame = 0, end = ref.rows(); frame < end; ++frame)
+    if (rparam.start_time_second <= -std::numeric_limits<double>::epsilon())
     {
-        double resampled_frame = frame * frequency_ / resampling_frequency;
-        int integer_part_frame = floor(resampled_frame);
-        double ratio = resampled_frame - (double)integer_part_frame;
-        ref.row(frame) = data.row(integer_part_frame) * (1.0 - ratio) + data.row(integer_part_frame + 1) * ratio;
+        throw "start time should be positive value.";
     }
-    // std::cout << "end!" << std::endl;
+    // Zero length means there is no specific value of resampled data length, so sets it maximum.
+    if (rparam.length <= 0)
+    {
+        resampled_data = Eigen::MatrixXd::Zero(round(data.rows() * resampling_frequency / frequency_), data.cols()); // = Eigen::MatrixXd::Zero(round(data.rows() * resampling_frequency / frequency_), data.cols());
+    }
+    else
+    {
+        // Check length
+        if (round((rparam.length / resampling_frequency + rparam.start_time_second) * frequency_) >= data.rows())
+        {
+            throw "Length is too large.";
+        }
+        resampled_data = Eigen::MatrixXd::Zero(rparam.length, data.cols());
+    }
+    for (int32_t frame_resampled = 0,e=resampled_data.rows(); frame_resampled < e; ++frame_resampled)
+    {
+        double frame_original = (frame_resampled / resampling_frequency + rparam.start_time_second) * frequency_; //ここ
+        int integer_part_frame = floor(frame_original);
+        double ratio = frame_original - (double)integer_part_frame;
+        resampled_data.row(frame_resampled) = data.row(integer_part_frame) * (1.0 - ratio) + data.row(integer_part_frame + 1) * ratio;
+    }
+
+    return resampled_data;
 }
 
 /**
@@ -58,22 +76,31 @@ void BaseParam::generateResampledData(double resampling_frequency)
  * @param resampling_frequency
  * @return
  */
-Eigen::VectorXd BaseParam::operator()(int32_t index, double resampling_frequency)
-{
-    if (0 == resampled_data.count(resampling_frequency))
-    {
-        generateResampledData(resampling_frequency);
-    }
-    return resampled_data[resampling_frequency].row(index).transpose();
-}
+// Eigen::VectorXd BaseParam::operator()(int32_t index, double resampling_frequency)
+// {
+// if (0 == resampled_data.count(resampling_frequency))
+// {
+// generateResampledData(resampling_frequency);
+// }
+// return generateResampledData(resampling_frequency, resampler_parameter()).row(index).transpose();
+// }
 
-Eigen::MatrixXd &BaseParam::getResampledData(double resampling_frequency)
+// Eigen::MatrixXd BaseParam::getResampledData(double resampling_frequency)
+// {
+//     // if (0 == resampled_data.count(resampling_frequency))
+//     // {
+//     //     generateResampledData(resampling_frequency);
+//     // }
+//     return generateResampledData(resampling_frequency, resampler_parameter());
+// }
+
+Eigen::MatrixXd BaseParam::getResampledData(double resampling_frequency, const resampler_parameter param)
 {
-    if (0 == resampled_data.count(resampling_frequency))
-    {
-        generateResampledData(resampling_frequency);
-    }
-    return resampled_data[resampling_frequency];
+    // if (0 == resampled_data.count(resampling_frequency))
+    // {
+    // generateResampledData(resampling_frequency);
+    // }
+    return generateResampledData(resampling_frequency, param);
 }
 
 Video::Video(double frequency)

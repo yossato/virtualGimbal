@@ -29,6 +29,12 @@
 using QuaternionData = std::vector<Eigen::Quaterniond, Eigen::aligned_allocator<Eigen::Quaterniond>>;
 using QuaternionDataPtr = std::shared_ptr<std::vector<Eigen::Quaterniond, Eigen::aligned_allocator<Eigen::Quaterniond>>>;
 
+struct resampler_parameter{
+  resampler_parameter() : start_time_second(0.0), length(0) {}
+    double start_time_second;
+    int32_t length;
+};
+
 class BaseParam
 {
   public:
@@ -36,15 +42,16 @@ class BaseParam
     //    double getFrequency();
     const double getFrequency();
     const double getInterval();
-    Eigen::VectorXd operator()(int32_t index, double resampling_frequency); //クォータニオンと時はどうする？？？テンプレートクラスにする？
+    // Eigen::VectorXd operator()(int32_t index, double resampling_frequency); //クォータニオンと時はどうする？？？テンプレートクラスにする？
     Eigen::VectorXd operator()(int32_t index);
     Eigen::MatrixXd data;
-    Eigen::MatrixXd &getResampledData(double resampling_frequency);
+    // Eigen::MatrixXd getResampledData(double resampling_frequency);
+    Eigen::MatrixXd getResampledData(double resampling_frequency, const resampler_parameter param=resampler_parameter());
 
   protected:
     double frequency_;
-    std::map<double, Eigen::MatrixXd> resampled_data;
-    virtual void generateResampledData(double resampling_frequency); // TODO: In quaternion, please implement spherical linear interpolation.
+    // std::map<double, Eigen::MatrixXd> resampled_data;
+    virtual Eigen::MatrixXd generateResampledData(double resampling_frequency, const resampler_parameter param); // TODO: In quaternion, please implement spherical linear interpolation.
 };
 
 class Video : public BaseParam
