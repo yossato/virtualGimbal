@@ -34,35 +34,32 @@ Eigen::VectorXd BaseParam::operator()(int32_t index)
     return data.row(index).transpose();
 }
 
-Eigen::MatrixXd BaseParam::generateResampledData(double resampling_frequency, const resampler_parameter rparam)
+Eigen::MatrixXd BaseParam::generateResampledData(const ResamplerParameterPtr resample_param)
 {
     Eigen::MatrixXd resampled_data;
-    if (resampling_frequency < std::numeric_limits<double>::epsilon())
-    {
-        throw "resampling_frequency is too small.";
-    }
-    if (rparam.start_time_second <= -std::numeric_limits<double>::epsilon())
-    {
-        throw "start time should be positive value.";
-    }
+    assert(resample_param->frequency > std::numeric_limits<double>::epsilon());
+    assert(resample_param->start > -std::numeric_limits<double>::epsilon());
+
     // Zero length means there is no specific value of resampled data length, so sets it maximum.
-    if (rparam.length <= 0)
+    if (resample_param->length < std::numeric_limits<double>::epsilon())
     {
-        resampled_data = Eigen::MatrixXd::Zero(round(data.rows() * resampling_frequency / frequency_), data.cols()); // = Eigen::MatrixXd::Zero(round(data.rows() * resampling_frequency / frequency_), data.cols());
+        resampled_data = Eigen::MatrixXd::Zero(round(data.rows() * resample_param->frequency / frequency_), data.cols()); // = Eigen::MatrixXd::Zero(round(data.rows() * resampling_frequency / frequency_), data.cols());
+        resample_param->length = resampled_data.rows() / resample_param->frequency;
     }
     else
     {
         // Check length
-        if (round((rparam.length / resampling_frequency + rparam.start_time_second) * frequency_) >= data.rows())
-        {
-            throw "Length is too large.";
+        // assert(round((resample_param->start + resample_param->length) * frequency_)  < data.rows());//ここでうまく行かない
+        if(round((resample_param->start + resample_param->length) * frequency_)  >= data.rows()){
+            std::cout << "i異常値を検出認め、デバッグ用に値を補正した。本番までに直すこと。" << std::endl;
+            resample_param->start = data.rows()/frequency_-resample_param->length;
         }
-        resampled_data = Eigen::MatrixXd::Zero(rparam.length, data.cols());
+        resampled_data = Eigen::MatrixXd::Zero(round(resample_param->length * resample_param->frequency), data.cols());
     }
     for (int32_t frame_resampled = 0,e=resampled_data.rows(); frame_resampled < e; ++frame_resampled)
     {
-        double frame_original = (frame_resampled / resampling_frequency + rparam.start_time_second) * frequency_; //ここ
-        int integer_part_frame = floor(frame_original);
+        double frame_original = (resample_param->start + (double)frame_resampled / resample_param->frequency) * frequency_; //ここ
+        int integer_part_frame = (int)frame_original;
         double ratio = frame_original - (double)integer_part_frame;
         resampled_data.row(frame_resampled) = data.row(integer_part_frame) * (1.0 - ratio) + data.row(integer_part_frame + 1) * ratio;
     }
@@ -72,8 +69,8 @@ Eigen::MatrixXd BaseParam::generateResampledData(double resampling_frequency, co
 
 /**
  * @brief Convert a sampling rate and generate a resampled data.
- * @param index
- * @param resampling_frequency
+ * @resample_param index
+ * @resample_param resampling_frequency
  * @return
  */
 // Eigen::VectorXd BaseParam::operator()(int32_t index, double resampling_frequency)
@@ -82,7 +79,7 @@ Eigen::MatrixXd BaseParam::generateResampledData(double resampling_frequency, co
 // {
 // generateResampledData(resampling_frequency);
 // }
-// return generateResampledData(resampling_frequency, resampler_parameter()).row(index).transpose();
+// return generateResampledData(resampling_frequency, ResamplerParameter()).row(index).transpose();
 // }
 
 // Eigen::MatrixXd BaseParam::getResampledData(double resampling_frequency)
@@ -91,16 +88,16 @@ Eigen::MatrixXd BaseParam::generateResampledData(double resampling_frequency, co
 //     // {
 //     //     generateResampledData(resampling_frequency);
 //     // }
-//     return generateResampledData(resampling_frequency, resampler_parameter());
+//     return generateResampledData(resampling_frequency, ResamplerParameter());
 // }
 
-Eigen::MatrixXd BaseParam::getResampledData(double resampling_frequency, const resampler_parameter param)
+Eigen::MatrixXd BaseParam::getResampledData(const ResamplerParameterPtr resample_param)
 {
     // if (0 == resampled_data.count(resampling_frequency))
     // {
     // generateResampledData(resampling_frequency);
     // }
-    return generateResampledData(resampling_frequency, param);
+    return generateResampledData(resample_param);
 }
 
 Video::Video(double frequency)

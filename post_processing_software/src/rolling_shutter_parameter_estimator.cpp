@@ -23,34 +23,11 @@ int main(int argc, char **argv)
     char *cameraName = NULL;
     char *lensName = NULL;
     char *jsonPass = NULL;
-    int rotation_type;
+    bool debug_speedup = false;
     int opt;
     //    Eigen::Quaterniond camera_rotation;
 
-    const double S = pow(2, -0.5);
-    constexpr double F = 0.5;
-    std::vector<Eigen::Quaterniond, Eigen::aligned_allocator<Eigen::Quaterniond>> vector_sd_card_rotation = {
-        Eigen::Quaterniond(F, F, -F, F), //0
-        Eigen::Quaterniond(F, -F, F, F),
-        Eigen::Quaterniond(S, 0, 0, S),
-        Eigen::Quaterniond(0, -S, S, 0),
-        Eigen::Quaterniond(S, 0, -S, 0),
-        Eigen::Quaterniond(S, 0, S, 0), //5
-        Eigen::Quaterniond(1, 0, 0, 0),
-        Eigen::Quaterniond(0, 0, 1, 0),
-        Eigen::Quaterniond(F, F, F, -F),
-        Eigen::Quaterniond(F, -F, -F, -F),
-        Eigen::Quaterniond(0, S, S, 0), //10
-        Eigen::Quaterniond(S, 0, 0, -S),
-        Eigen::Quaterniond(0, 0, -S, S),
-        Eigen::Quaterniond(S, -S, 0, 0),
-        Eigen::Quaterniond(F, -F, -F, F),
-        Eigen::Quaterniond(F, -F, F, -F) //15
-    };
-
-    Eigen::Quaterniond sd_card_rotation;
-
-    while ((opt = getopt(argc, argv, "j:i:c:l:r:")) != -1)
+    while ((opt = getopt(argc, argv, "j:i:c:l:d::")) != -1)
     {
         switch (opt)
         {
@@ -66,10 +43,10 @@ int main(int argc, char **argv)
         case 'l':
             lensName = optarg;
             break;
-        case 'r':
-            rotation_type = std::atoi(optarg);
-            sd_card_rotation = vector_sd_card_rotation[rotation_type];
+        case 'd':
+            debug_speedup = true;
             break;
+
         default:
             //            printf(     "virtualGimbal\r\n"
             //                        "Hyper fast video stabilizer\r\n\r\n"
@@ -80,10 +57,10 @@ int main(int argc, char **argv)
     }
 
     VirtualGimbalManager manager;
-    manager.setMeasuredAngularVelocity(jsonPass);
     shared_ptr<CameraInformation> camera_info(new CameraInformationJsonParser(cameraName, lensName, getVideoSize(videoPass).c_str()));
+    manager.setMeasuredAngularVelocity(jsonPass, camera_info);
     manager.setVideoParam(videoPass, camera_info);
-    manager.setRotation(jsonPass, *camera_info);
+    manager.setRotation(jsonPass, *camera_info); //なんか変だぞ？
 
     //    manager.setEstimatedAngularVelocity(videoPass,camera_info);
 
@@ -136,8 +113,11 @@ int main(int argc, char **argv)
             std::cout << std::flush;
 
             // Speed up for debug
-            if (i == 100)
-            break;
+            if (debug_speedup)
+            {
+                if (i == 100)
+                    break;
+            }
         }
     }
 
@@ -191,12 +171,17 @@ int main(int argc, char **argv)
 
     Eigen::MatrixXd correlation = manager.estimate();
     std::vector<string> legends_angular_velocity = {"c"};
-    vgp::plot(correlation, "correlation",legends_angular_velocity);
+    vgp::plot(correlation, "correlation", legends_angular_velocity);
+
+Eigen::MatrixXd mat = manager.getSynchronizedMeasuredAngularVelocity();
+    vgp::plot(mat, "Compare angular velocity", legends_angular_velocity);
+    vgp::plot(mat.block(0,0,mat.rows(),3), "Estimated", legends_angular_velocity);
+    vgp::plot(mat.block(0,3,mat.rows(),3), "Measured", legends_angular_velocity);
 
     return 0;
 
-    double Tav = 1. / readSamplingRateFromJson(jsonPass); //Sampling period of angular velocity
-    double Tvideo = 1.0 / capture->get(cv::CAP_PROP_FPS);
+    // double Tav = 1. / readSamplingRateFromJson(jsonPass); //Sampling period of angular velocity
+    // double Tvideo = 1.0 / capture->get(cv::CAP_PROP_FPS);
 
     //    vsp v2(9,9,*camera_info,1.0,angular_velocity_from_csv,
     //               Tvideo,
@@ -205,13 +190,13 @@ int main(int argc, char **argv)
     //               (int32_t)(capture->get(cv::CAP_PROP_FRAME_COUNT)),
     //               199);
 
-    int c;
+    // int c;
     cv::namedWindow("image", cv::WINDOW_AUTOSIZE);
 
     while ('q' != (char)cv::waitKey(1))
     { //信号が来るまで
         //ここからキャリブレーションの本体
-        static int init = 0;
+        // static int init = 0;
 
         (*capture) >> color_image;
         cv::imshow("image", color_image);

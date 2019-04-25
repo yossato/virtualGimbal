@@ -29,11 +29,15 @@
 using QuaternionData = std::vector<Eigen::Quaterniond, Eigen::aligned_allocator<Eigen::Quaterniond>>;
 using QuaternionDataPtr = std::shared_ptr<std::vector<Eigen::Quaterniond, Eigen::aligned_allocator<Eigen::Quaterniond>>>;
 
-struct resampler_parameter{
-  resampler_parameter() : start_time_second(0.0), length(0) {}
-    double start_time_second;
-    int32_t length;
+struct ResamplerParameter{
+  // ResamplerParameter(double frequency) : frequency(frequency), start(0.0), length(0) {}
+  ResamplerParameter(double frequency, double start_time_second ,double length) : frequency(frequency), start(start_time_second), length(length) {}
+    double frequency;
+    double start;       // Syncronized position in second.
+    double length;      // Length in second
 };
+
+using ResamplerParameterPtr = std::shared_ptr<ResamplerParameter>;
 
 class BaseParam
 {
@@ -46,12 +50,12 @@ class BaseParam
     Eigen::VectorXd operator()(int32_t index);
     Eigen::MatrixXd data;
     // Eigen::MatrixXd getResampledData(double resampling_frequency);
-    Eigen::MatrixXd getResampledData(double resampling_frequency, const resampler_parameter param=resampler_parameter());
+    Eigen::MatrixXd getResampledData(const ResamplerParameterPtr param);
 
   protected:
     double frequency_;
     // std::map<double, Eigen::MatrixXd> resampled_data;
-    virtual Eigen::MatrixXd generateResampledData(double resampling_frequency, const resampler_parameter param); // TODO: In quaternion, please implement spherical linear interpolation.
+    virtual Eigen::MatrixXd generateResampledData(const ResamplerParameterPtr resample_param); // TODO: In quaternion, please implement spherical linear interpolation.
 };
 
 class Video : public BaseParam
@@ -77,7 +81,7 @@ class AngularVelocity : public BaseParam
  * @detains クォータニオンデータを保持。必要に応じて差分のクォータニオンを差し出す。
  * これはGyro rateの角速度を格納しておく。継承クラスのVideoRateRotationにて、サンプリング周波数を変更
  */
-class Rotation
+class Rotation //なんか変だぞ？
 {
   public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW

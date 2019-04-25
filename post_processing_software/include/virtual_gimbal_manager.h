@@ -34,7 +34,7 @@ public:
 EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     VirtualGimbalManager();
     void setVideoParam(const char* file_name,  CameraInformationPtr info);
-    void setMeasuredAngularVelocity(const char* file_name);
+    void setMeasuredAngularVelocity(const char* file_name, CameraInformationPtr info=nullptr);
     void setEstimatedAngularVelocity(const char* file_name, CameraInformationPtr info, int32_t maximum_synchronize_frames=1000);
     void setEstimatedAngularVelocity(Eigen::MatrixXd &angular_velocity, Eigen::VectorXd &confidence, double frequency);
     void setRotation(const char *file_name, CameraInformation& cameraInfo);
@@ -48,25 +48,26 @@ protected:
 
     //Synchronize
     AngularVelocityPtr resampled_synchronized_angular_velocity;
-    std::shared_ptr<resampler_parameter> resampler_parameter_;
+    ResamplerParameterPtr resampler_parameter_;
 
     VideoPtr video_param;
     FilterPtr filter;
 
-    template <typename _Tp, typename _Alloc = std::allocator<_Tp>>
-    void angularVelocityCoordinateTransformer(std::vector<_Tp, _Alloc> &angular_velocity, const Eigen::Quaterniond &rotation)
+    
+
+    void rotateAngularVelocity(Eigen::MatrixXd &angular_velocity, const Eigen::Quaterniond &rotation)
     {
         Eigen::Quaterniond avq;
         avq.w() = 0.0;
-        for (auto &el : angular_velocity)
+        for (int32_t row = 0,e=angular_velocity.rows();row<e;++row)
         {
-            avq.x() = el[0];
-            avq.y() = el[1];
-            avq.z() = el[2];
+            avq.x() = angular_velocity(row,0);
+            avq.y() = angular_velocity(row,1);
+            avq.z() = angular_velocity(row,2);
             avq = rotation * avq * rotation.conjugate(); //Rotate angular velocity vector
-            el[0] = avq.x();
-            el[1] = avq.y();
-            el[2] = avq.z();
+            angular_velocity(row,0) = avq.x();
+            angular_velocity(row,1) = avq.y();
+            angular_velocity(row,2) = avq.z();
         }
     }
 };
