@@ -142,13 +142,16 @@ int main(int argc, char **argv)
     {
         cv::solvePnP(world_points, el.second, CameraMatrix, DistCoeffs, RotationVector[el.first], TranslationVector[el.first]);
         // printf("%d,%f,%f,%f ",el.first,RotationVector[el.first].at<float>(0,0),RotationVector[el.first].at<float>(1,0),RotationVector[el.first].at<float>(2,0));
-        Eigen::Quaterniond rotation_quaternion = vsp::Vector2Quaternion<double>(Eigen::Vector3d(RotationVector[el.first].at<float>(0, 0), RotationVector[el.first].at<float>(1, 0), RotationVector[el.first].at<float>(2, 0)));
+        // std::cout << "tvec:\r\n" << TranslationVector[el.first] << std::endl << std::flush;
+        // std::cout << "rvec:\r\n" << RotationVector[el.first] << std::endl << std::flush;
+
+        Eigen::Quaterniond rotation_quaternion = vsp::Vector2Quaternion<double>(Eigen::Vector3d(RotationVector[el.first].at<float>(0, 0), RotationVector[el.first].at<float>(1, 0), RotationVector[el.first].at<float>(2, 0))).conjugate();
         printf("%d,%f,%f,%f,%f,", el.first, rotation_quaternion.x(), rotation_quaternion.y(), rotation_quaternion.z(), rotation_quaternion.w());
         if (0 != RotationVector.count(el.first - 1))
         {
-            Eigen::Quaterniond rotation_quaternion_previous = vsp::Vector2Quaternion<double>(Eigen::Vector3d(RotationVector[el.first - 1].at<float>(0, 0), RotationVector[el.first - 1].at<float>(1, 0), RotationVector[el.first - 1].at<float>(2, 0)));
+            Eigen::Quaterniond rotation_quaternion_previous = vsp::Vector2Quaternion<double>(Eigen::Vector3d(RotationVector[el.first - 1].at<float>(0, 0), RotationVector[el.first - 1].at<float>(1, 0), RotationVector[el.first - 1].at<float>(2, 0))).conjugate();
             // cv::Mat diff = RotationVector[el.first]-RotationVector[el.first-1];
-            Eigen::Quaterniond diff = rotation_quaternion.conjugate() * rotation_quaternion_previous;
+            Eigen::Quaterniond diff = rotation_quaternion * rotation_quaternion_previous.conjugate();
             // printf("%f,%f,%f\n",diff.at<float>(0,0),diff.at<float>(1,0),diff.at<float>(2,0));
             printf("%f,%f,%f,%f\n", diff.x(), diff.y(), diff.z(), diff.w());
             estimated_angular_velocity.row(el.first) = vsp::Quaternion2Vector(diff).transpose();
@@ -173,10 +176,13 @@ int main(int argc, char **argv)
     std::vector<string> legends_angular_velocity = {"c"};
     vgp::plot(correlation, "correlation", legends_angular_velocity);
 
-Eigen::MatrixXd mat = manager.getSynchronizedMeasuredAngularVelocity();
+    Eigen::MatrixXd mat = manager.getSynchronizedMeasuredAngularVelocity();
+    // for(int i=0;i<mat.cols();++i){
+    //     mat.col(i) = Eigen::VectorXd::Ones(mat.rows())*i;
+    // }
     vgp::plot(mat, "Compare angular velocity", legends_angular_velocity);
-    vgp::plot(mat.block(0,0,mat.rows(),3), "Estimated", legends_angular_velocity);
-    vgp::plot(mat.block(0,3,mat.rows(),3), "Measured", legends_angular_velocity);
+    vgp::plot(mat.block(0, 0, mat.rows(), 3), "Estimated", legends_angular_velocity);
+    vgp::plot(mat.block(0, 3, mat.rows(), 3), "Measured", legends_angular_velocity);
 
     return 0;
 

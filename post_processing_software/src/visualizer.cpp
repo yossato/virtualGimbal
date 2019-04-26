@@ -126,12 +126,12 @@ void plot(const Eigen::MatrixXd mat, std::string title, std::vector<std::string>
         Eigen::MatrixXd part = mat.block(0,i,mat.rows(),1);
         memcpy(value.data(),part.data(),mat.rows()*sizeof(double));
 
-        if(i < legends.size()){
+        // if(i < legends.size()){
 //            plt::named_plot(legends[i],index,value);
             plt::plot(index,value,format[format.size()>i?i:format.size()-1]);
-        }else{
-            plt::plot(index,value);
-        }
+        // }else{
+            // plt::plot(index,value);
+        // }
 
     }
 
