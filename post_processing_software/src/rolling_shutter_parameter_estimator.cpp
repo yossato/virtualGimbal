@@ -154,7 +154,10 @@ int main(int argc, char **argv)
             Eigen::Quaterniond diff = rotation_quaternion * rotation_quaternion_previous.conjugate();
             // printf("%f,%f,%f\n",diff.at<float>(0,0),diff.at<float>(1,0),diff.at<float>(2,0));
             printf("%f,%f,%f,%f\n", diff.x(), diff.y(), diff.z(), diff.w());
-            estimated_angular_velocity.row(el.first) = vsp::Quaternion2Vector(diff).transpose();
+            Eigen::Vector3d diff_vector = vsp::Quaternion2Vector(diff);
+            Eigen::Quaterniond estimated_angular_velocity_in_board_coordinate(0.0,diff_vector[0],diff_vector[1],diff_vector[2]);
+            Eigen::Quaterniond estimated_angular_velocity_in_camera_coordinate = (rotation_quaternion.conjugate()*estimated_angular_velocity_in_board_coordinate*rotation_quaternion);
+            estimated_angular_velocity.row(el.first) << estimated_angular_velocity_in_camera_coordinate.x() , estimated_angular_velocity_in_camera_coordinate.y(), estimated_angular_velocity_in_camera_coordinate.z() ;
             confidence(el.first) = 1.0;
         }
         else
