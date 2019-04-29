@@ -27,7 +27,8 @@
 #include "json_tools.hpp"
 #include "camera_information.h"
 #include "calcShift.hpp"
-
+#include "Eigen/Dense"
+#include "rotation_math.h"
 class VirtualGimbalManager
 {
 public:
@@ -41,6 +42,8 @@ EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     // void getEstimatedAndMeasuredAngularVelocity(Eigen::MatrixXd &data);
     Eigen::MatrixXd estimate();
     Eigen::MatrixXd getSynchronizedMeasuredAngularVelocity();
+    std::map<int, std::vector<cv::Point2f>> getCornerDictionary(cv::Size &pattern_size, bool debug_speedup=false, bool Verbose=false);
+    Eigen::MatrixXd estimateAngularVelocity(const std::map<int, std::vector<cv::Point2f>> &corner_dict, const std::vector<cv::Point3f> &world_points, Eigen::VectorXd &confidence);
 protected:
     RotationPtr rotation;
     AngularVelocityPtr measured_angular_velocity;

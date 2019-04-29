@@ -8,6 +8,7 @@
 #include "json_tools.hpp"
 #include "rotation_param.h"
 #include "virtual_gimbal_manager.h"
+
 std::string getVideoSize(const char *videoName)
 {
     std::shared_ptr<cv::VideoCapture> Capture = std::make_shared<cv::VideoCapture>(videoName); //動画をオープン
@@ -15,6 +16,8 @@ std::string getVideoSize(const char *videoName)
     std::string videoSize = std::to_string((int)Capture->get(cv::CAP_PROP_FRAME_WIDTH)) + std::string("x") + std::to_string((int)Capture->get(cv::CAP_PROP_FRAME_HEIGHT));
     return videoSize;
 }
+
+// std::map<int, std::vector<cv::Point2f>> getCornerDictionary(std::shared_ptr<cv::VideoCapture> capture, cv::Size &pattern_size, bool debug_speedup, bool Verbose);
 
 int main(int argc, char **argv)
 {
@@ -92,39 +95,9 @@ int main(int argc, char **argv)
     std::vector<std::vector<cv::Point2f>> imagePoints; // チェッカー交点座標を格納するベクトルのベクトル インデックスの並びは[撮影画像番号][点のIndex]
 
     //キャリブレーションの準備ここまで
-    std::map<int, std::vector<cv::Point2f>> corner_dict;
-    cv::Mat gray_image;
-    cv::Mat color_image;
+    std::map<int, std::vector<cv::Point2f>> corner_dict = manager.getCornerDictionary(PatternSize, debug_speedup, true);
 
-    {
-        std::vector<cv::Point2f> acquired_image_points;
-        cv::TermCriteria criteria(cv::TermCriteria::MAX_ITER | cv::TermCriteria::EPS, 20, 0.001);
-
-        for (int i = 0, e = capture->get(cv::CAP_PROP_FRAME_COUNT); i < e; ++i)
-        {
-            (*capture) >> color_image;
-            cv::cvtColor(color_image, gray_image, cv::COLOR_RGB2GRAY);
-            if (cv::findChessboardCorners(gray_image, PatternSize, acquired_image_points, cv::CALIB_CB_FAST_CHECK))
-            {
-                cv::cornerSubPix(gray_image, acquired_image_points, cv::Size(11, 11), cv::Size(-1, -1), criteria);
-                corner_dict[i] = acquired_image_points;
-            }
-            printf("%d/%d\r", i, e);
-            std::cout << std::flush;
-
-            // Speed up for debug
-            if (debug_speedup)
-            {
-                if (i == 100)
-                    break;
-            }
-        }
-    }
-
-    cv::Mat CameraMatrix = (cv::Mat_<float>(3, 3) << camera_info->fx_, 0, camera_info->cx_, 0, camera_info->fy_, camera_info->cy_, 0, 0, 1);
-    cv::Mat DistCoeffs = (cv::Mat_<float>(1, 4) << camera_info->k1_, camera_info->k2_, camera_info->p1_, camera_info->p2_);
-    std::map<int, cv::Mat> RotationVector;
-    std::map<int, cv::Mat> TranslationVector;
+    
 
     std::vector<cv::Point3f> world_points; // チェッカー交点座標と対応する世界座標の値を格納する行列
     // 世界座標を決める
@@ -135,59 +108,23 @@ int main(int argc, char **argv)
                                            0.0));
     }
 
-    Eigen::VectorXd confidence = Eigen::VectorXd::Zero(capture->get(cv::CAP_PROP_FRAME_COUNT));
-    Eigen::MatrixXd estimated_angular_velocity = Eigen::MatrixXd::Zero(capture->get(cv::CAP_PROP_FRAME_COUNT), 3);
-
-    for (const auto &el : corner_dict)
-    {
-        cv::solvePnP(world_points, el.second, CameraMatrix, DistCoeffs, RotationVector[el.first], TranslationVector[el.first]);
-        // printf("%d,%f,%f,%f ",el.first,RotationVector[el.first].at<float>(0,0),RotationVector[el.first].at<float>(1,0),RotationVector[el.first].at<float>(2,0));
-        // std::cout << "tvec:\r\n" << TranslationVector[el.first] << std::endl << std::flush;
-        // std::cout << "rvec:\r\n" << RotationVector[el.first] << std::endl << std::flush;
-
-        Eigen::Quaterniond rotation_quaternion = vsp::Vector2Quaternion<double>(Eigen::Vector3d(RotationVector[el.first].at<float>(0, 0), RotationVector[el.first].at<float>(1, 0), RotationVector[el.first].at<float>(2, 0))).conjugate();
-        printf("%d,%f,%f,%f,%f,", el.first, rotation_quaternion.x(), rotation_quaternion.y(), rotation_quaternion.z(), rotation_quaternion.w());
-        if (0 != RotationVector.count(el.first - 1))
-        {
-            Eigen::Quaterniond rotation_quaternion_previous = vsp::Vector2Quaternion<double>(Eigen::Vector3d(RotationVector[el.first - 1].at<float>(0, 0), RotationVector[el.first - 1].at<float>(1, 0), RotationVector[el.first - 1].at<float>(2, 0))).conjugate();
-            // cv::Mat diff = RotationVector[el.first]-RotationVector[el.first-1];
-            Eigen::Quaterniond diff = rotation_quaternion * rotation_quaternion_previous.conjugate();
-            // printf("%f,%f,%f\n",diff.at<float>(0,0),diff.at<float>(1,0),diff.at<float>(2,0));
-            printf("%f,%f,%f,%f\n", diff.x(), diff.y(), diff.z(), diff.w());
-            Eigen::Vector3d diff_vector = vsp::Quaternion2Vector(diff);
-            Eigen::Quaterniond estimated_angular_velocity_in_board_coordinate(0.0,diff_vector[0],diff_vector[1],diff_vector[2]);
-            Eigen::Quaterniond estimated_angular_velocity_in_camera_coordinate = (rotation_quaternion.conjugate()*estimated_angular_velocity_in_board_coordinate*rotation_quaternion);
-            estimated_angular_velocity.row(el.first) << estimated_angular_velocity_in_camera_coordinate.x() , estimated_angular_velocity_in_camera_coordinate.y(), estimated_angular_velocity_in_camera_coordinate.z() ;
-            confidence(el.first) = 1.0;
-        }
-        else
-        {
-            printf("0,0,0\n");
-        }
-    }
-    std::cout << std::flush;
-
-    estimated_angular_velocity = estimated_angular_velocity * capture->get(cv::CAP_PROP_FPS);
+    Eigen::VectorXd confidence;
+    Eigen::MatrixXd estimated_angular_velocity = manager.estimateAngularVelocity(corner_dict, world_points,confidence);
+    std::cout << estimated_angular_velocity << std::endl << std::flush;
     manager.setEstimatedAngularVelocity(estimated_angular_velocity, confidence, capture->get(cv::CAP_PROP_FPS));
-
-    // std::cout << "estimated_angular_velocity:" << std::endl;
-    // std::cout << estimated_angular_velocity << std::endl;
-    // std::cout << "confidence" << std::endl;
-    // std::cout << confidence.block(0,0,100,1) << std::endl;
 
     Eigen::MatrixXd correlation = manager.estimate();
     std::vector<string> legends_angular_velocity = {"c"};
     vgp::plot(correlation, "correlation", legends_angular_velocity);
 
     Eigen::MatrixXd mat = manager.getSynchronizedMeasuredAngularVelocity();
-    // for(int i=0;i<mat.cols();++i){
-    //     mat.col(i) = Eigen::VectorXd::Ones(mat.rows())*i;
-    // }
+
     vgp::plot(mat, "Compare angular velocity", legends_angular_velocity);
     vgp::plot(mat.block(0, 0, mat.rows(), 3), "Estimated", legends_angular_velocity);
     vgp::plot(mat.block(0, 3, mat.rows(), 3), "Measured", legends_angular_velocity);
 
     return 0;
+
 
     // double Tav = 1. / readSamplingRateFromJson(jsonPass); //Sampling period of angular velocity
     // double Tvideo = 1.0 / capture->get(cv::CAP_PROP_FPS);
@@ -202,6 +139,7 @@ int main(int argc, char **argv)
     // int c;
     cv::namedWindow("image", cv::WINDOW_AUTOSIZE);
 
+    cv::Mat color_image;
     while ('q' != (char)cv::waitKey(1))
     { //信号が来るまで
         //ここからキャリブレーションの本体
@@ -212,3 +150,6 @@ int main(int argc, char **argv)
     }
     return 0;
 }
+
+
+

@@ -33,6 +33,7 @@ void VirtualGimbalManager::setVideoParam(const char *file_name, CameraInformatio
     video_param->video_frames = capture->get(cv::CAP_PROP_FRAME_COUNT);
     video_param->rolling_shutter_time = 0.0;
     video_param->camera_info = info;
+    video_param->video_file_name = file_name;
 }
 
 void VirtualGimbalManager::setMeasuredAngularVelocity(const char *file_name, CameraInformationPtr info)
@@ -165,3 +166,86 @@ Eigen::MatrixXd VirtualGimbalManager::getSynchronizedMeasuredAngularVelocity()
 //     resampler_parameter rp =
 //     // data.block(0,estimated_angular_velocity->data.cols(),measured_angular_velocity) =
 // }
+
+std::map<int, std::vector<cv::Point2f>> VirtualGimbalManager::getCornerDictionary(cv::Size &pattern_size, bool debug_speedup, bool Verbose)
+{
+    auto capture = std::make_shared<cv::VideoCapture>(video_param->video_file_name); //動画をオープン
+    std::map<int, std::vector<cv::Point2f>> corner_dict;
+    cv::Mat gray_image;
+    cv::Mat color_image;
+
+    {
+        std::vector<cv::Point2f> acquired_image_points;
+        cv::TermCriteria criteria(cv::TermCriteria::MAX_ITER | cv::TermCriteria::EPS, 20, 0.001);
+
+        for (int i = 0, e = capture->get(cv::CAP_PROP_FRAME_COUNT); i < e; ++i)
+        {
+            (*capture) >> color_image;
+            cv::cvtColor(color_image, gray_image, cv::COLOR_RGB2GRAY);
+            if (cv::findChessboardCorners(gray_image, pattern_size, acquired_image_points, cv::CALIB_CB_FAST_CHECK))
+            {
+                cv::cornerSubPix(gray_image, acquired_image_points, cv::Size(11, 11), cv::Size(-1, -1), criteria);
+                corner_dict[i] = acquired_image_points;
+            }
+            if (Verbose)
+            {
+                printf("%d/%d\r", i, e);
+                std::cout << std::flush;
+            }
+            // Speed up for debug
+            if (debug_speedup)
+            {
+                if (i == 100)
+                    break;
+            }
+        }
+    }
+    return corner_dict;
+}
+
+Eigen::MatrixXd VirtualGimbalManager::estimateAngularVelocity(const std::map<int, std::vector<cv::Point2f>> &corner_dict, const std::vector<cv::Point3f> &world_points, Eigen::VectorXd &confidence)
+{
+    cv::Mat CameraMatrix = (cv::Mat_<float>(3, 3) << video_param->camera_info->fx_, 0, video_param->camera_info->cx_, 0, video_param->camera_info->fy_, video_param->camera_info->cy_, 0, 0, 1);
+    cv::Mat DistCoeffs = (cv::Mat_<float>(1, 4) << video_param->camera_info->k1_, video_param->camera_info->k2_, video_param->camera_info->p1_, video_param->camera_info->p2_);
+    std::map<int, cv::Mat> RotationVector;
+    std::map<int, cv::Mat> TranslationVector;
+
+    confidence = Eigen::VectorXd::Zero(video_param->video_frames);
+
+    Eigen::MatrixXd estimated_angular_velocity = Eigen::MatrixXd::Zero(video_param->video_frames, 3);
+    for (const auto &el : corner_dict)
+    {
+        cv::solvePnP(world_points, el.second, CameraMatrix, DistCoeffs, RotationVector[el.first], TranslationVector[el.first]);
+        // printf("%d,%f,%f,%f ",el.first,RotationVector[el.first].at<float>(0,0),RotationVector[el.first].at<float>(1,0),RotationVector[el.first].at<float>(2,0));
+        // std::cout << "tvec:\r\n" << TranslationVector[el.first] << std::endl << std::flush;
+        // std::cout << "rvec:\r\n" << RotationVector[el.first] << std::endl << std::flush;
+
+        Eigen::Quaterniond rotation_quaternion = Vector2Quaternion<double>(
+                                                     Eigen::Vector3d(RotationVector[el.first].at<float>(0, 0), RotationVector[el.first].at<float>(1, 0), RotationVector[el.first].at<float>(2, 0)))
+                                                     .conjugate();
+        printf("%d,%f,%f,%f,%f,", el.first, rotation_quaternion.x(), rotation_quaternion.y(), rotation_quaternion.z(), rotation_quaternion.w());
+        if (0 != RotationVector.count(el.first - 1))
+        {
+            Eigen::Quaterniond rotation_quaternion_previous = Vector2Quaternion<double>(
+                                                                  Eigen::Vector3d(RotationVector[el.first - 1].at<float>(0, 0), RotationVector[el.first - 1].at<float>(1, 0), RotationVector[el.first - 1].at<float>(2, 0)))
+                                                                  .conjugate();
+            // cv::Mat diff = RotationVector[el.first]-RotationVector[el.first-1];
+            Eigen::Quaterniond diff = rotation_quaternion * rotation_quaternion_previous.conjugate();
+            // printf("%f,%f,%f\n",diff.at<float>(0,0),diff.at<float>(1,0),diff.at<float>(2,0));
+            printf("%f,%f,%f,%f\n", diff.x(), diff.y(), diff.z(), diff.w());
+            Eigen::Vector3d diff_vector = Quaternion2Vector(diff);
+            Eigen::Quaterniond estimated_angular_velocity_in_board_coordinate(0.0, diff_vector[0], diff_vector[1], diff_vector[2]);
+            Eigen::Quaterniond estimated_angular_velocity_in_camera_coordinate = (rotation_quaternion.conjugate() * estimated_angular_velocity_in_board_coordinate * rotation_quaternion);
+            estimated_angular_velocity.row(el.first) << estimated_angular_velocity_in_camera_coordinate.x(), estimated_angular_velocity_in_camera_coordinate.y(),
+                estimated_angular_velocity_in_camera_coordinate.z();
+            confidence(el.first) = 1.0;
+        }
+        else
+        {
+            printf("0,0,0\n");
+        }
+    }
+    std::cout << std::flush;
+
+    return estimated_angular_velocity * video_param->getFrequency();
+}

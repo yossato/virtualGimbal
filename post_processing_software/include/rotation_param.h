@@ -65,6 +65,7 @@ class Video : public BaseParam
     Video(double frequency);
     int32_t video_frames;        //! Number of frames in a video
     double rolling_shutter_time; //! Time to read all rows of CMOS sensor
+    std::string video_file_name;
     CameraInformationPtr camera_info;
 };
 

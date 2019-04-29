@@ -67,36 +67,8 @@ Eigen::MatrixXd BaseParam::generateResampledData(const ResamplerParameterPtr res
     return resampled_data;
 }
 
-/**
- * @brief Convert a sampling rate and generate a resampled data.
- * @resample_param index
- * @resample_param resampling_frequency
- * @return
- */
-// Eigen::VectorXd BaseParam::operator()(int32_t index, double resampling_frequency)
-// {
-// if (0 == resampled_data.count(resampling_frequency))
-// {
-// generateResampledData(resampling_frequency);
-// }
-// return generateResampledData(resampling_frequency, ResamplerParameter()).row(index).transpose();
-// }
-
-// Eigen::MatrixXd BaseParam::getResampledData(double resampling_frequency)
-// {
-//     // if (0 == resampled_data.count(resampling_frequency))
-//     // {
-//     //     generateResampledData(resampling_frequency);
-//     // }
-//     return generateResampledData(resampling_frequency, ResamplerParameter());
-// }
-
 Eigen::MatrixXd BaseParam::getResampledData(const ResamplerParameterPtr resample_param)
 {
-    // if (0 == resampled_data.count(resampling_frequency))
-    // {
-    // generateResampledData(resampling_frequency);
-    // }
     return generateResampledData(resample_param);
 }
 
