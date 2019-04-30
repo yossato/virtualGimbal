@@ -31,24 +31,26 @@
 #include "rotation_math.h"
 class VirtualGimbalManager
 {
-public:
-EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     VirtualGimbalManager();
-    void setVideoParam(const char* file_name,  CameraInformationPtr info);
-    void setMeasuredAngularVelocity(const char* file_name, CameraInformationPtr info=nullptr);
-    void setEstimatedAngularVelocity(const char* file_name, CameraInformationPtr info, int32_t maximum_synchronize_frames=1000);
+    void setVideoParam(const char *file_name, CameraInformationPtr info);
+    void setMeasuredAngularVelocity(const char *file_name, CameraInformationPtr info = nullptr);
+    void setEstimatedAngularVelocity(const char *file_name, CameraInformationPtr info, int32_t maximum_synchronize_frames = 1000);
     void setEstimatedAngularVelocity(Eigen::MatrixXd &angular_velocity, Eigen::VectorXd &confidence, double frequency);
-    void setRotation(const char *file_name, CameraInformation& cameraInfo);
+    void setRotation(const char *file_name, CameraInformation &cameraInfo);
     // void getEstimatedAndMeasuredAngularVelocity(Eigen::MatrixXd &data);
     Eigen::MatrixXd estimate();
     Eigen::MatrixXd getSynchronizedMeasuredAngularVelocity();
-    std::map<int, std::vector<cv::Point2f>> getCornerDictionary(cv::Size &pattern_size, bool debug_speedup=false, bool Verbose=false);
+    std::map<int, std::vector<cv::Point2f>> getCornerDictionary(cv::Size &pattern_size, bool debug_speedup = false, bool Verbose = false);
     Eigen::MatrixXd estimateAngularVelocity(const std::map<int, std::vector<cv::Point2f>> &corner_dict, const std::vector<cv::Point3f> &world_points, Eigen::VectorXd &confidence);
-protected:
+    Eigen::MatrixXd getRotationQuaternions();
+
+  protected:
     RotationPtr rotation;
     AngularVelocityPtr measured_angular_velocity;
     AngularVelocityPtr estimated_angular_velocity;
-
+    RotationQuaternionPtr rotation_quaternion;
     //Synchronize
     AngularVelocityPtr resampled_synchronized_angular_velocity;
     ResamplerParameterPtr resampler_parameter_;
@@ -56,21 +58,19 @@ protected:
     VideoPtr video_param;
     FilterPtr filter;
 
-    
-
     void rotateAngularVelocity(Eigen::MatrixXd &angular_velocity, const Eigen::Quaterniond &rotation)
     {
         Eigen::Quaterniond avq;
         avq.w() = 0.0;
-        for (int32_t row = 0,e=angular_velocity.rows();row<e;++row)
+        for (int32_t row = 0, e = angular_velocity.rows(); row < e; ++row)
         {
-            avq.x() = angular_velocity(row,0);
-            avq.y() = angular_velocity(row,1);
-            avq.z() = angular_velocity(row,2);
+            avq.x() = angular_velocity(row, 0);
+            avq.y() = angular_velocity(row, 1);
+            avq.z() = angular_velocity(row, 2);
             avq = rotation * avq * rotation.conjugate(); //Rotate angular velocity vector
-            angular_velocity(row,0) = avq.x();
-            angular_velocity(row,1) = avq.y();
-            angular_velocity(row,2) = avq.z();
+            angular_velocity(row, 0) = avq.x();
+            angular_velocity(row, 1) = avq.y();
+            angular_velocity(row, 2) = avq.z();
         }
     }
 };

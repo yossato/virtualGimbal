@@ -93,6 +93,8 @@ private:
   std::map<int, Eigen::Quaterniond> angle_;
 };
 
+using RotationQuaternionPtr = std::shared_ptr<RotationQuaternion>;
+
 /**
  * @brief The RotationData class
  * @detains クォータニオンデータを保持。必要に応じて差分のクォータニオンを差し出す。

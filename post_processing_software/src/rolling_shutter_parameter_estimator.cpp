@@ -65,8 +65,6 @@ int main(int argc, char **argv)
     manager.setVideoParam(videoPass, camera_info);
     manager.setRotation(jsonPass, *camera_info); //なんか変だぞ？
 
-    //    manager.setEstimatedAngularVelocity(videoPass,camera_info);
-
     //角速度を読み込み
     //角速度を同期
     //角度を保存
@@ -97,8 +95,6 @@ int main(int argc, char **argv)
     //キャリブレーションの準備ここまで
     std::map<int, std::vector<cv::Point2f>> corner_dict = manager.getCornerDictionary(PatternSize, debug_speedup, true);
 
-    
-
     std::vector<cv::Point3f> world_points; // チェッカー交点座標と対応する世界座標の値を格納する行列
     // 世界座標を決める
     for (int j = 0; j < PatternSize.area(); j++)
@@ -123,20 +119,11 @@ int main(int argc, char **argv)
     vgp::plot(mat.block(0, 0, mat.rows(), 3), "Estimated", legends_angular_velocity);
     vgp::plot(mat.block(0, 3, mat.rows(), 3), "Measured", legends_angular_velocity);
 
+    mat = manager.getRotationQuaternions();
+    vgp::plot(mat, "Rotation quaternion", legends_angular_velocity);
+
     return 0;
 
-
-    // double Tav = 1. / readSamplingRateFromJson(jsonPass); //Sampling period of angular velocity
-    // double Tvideo = 1.0 / capture->get(cv::CAP_PROP_FPS);
-
-    //    vsp v2(9,9,*camera_info,1.0,angular_velocity_from_csv,
-    //               Tvideo,
-    //               Tav,
-    //               min_position + subframeOffset,
-    //               (int32_t)(capture->get(cv::CAP_PROP_FRAME_COUNT)),
-    //               199);
-
-    // int c;
     cv::namedWindow("image", cv::WINDOW_AUTOSIZE);
 
     cv::Mat color_image;

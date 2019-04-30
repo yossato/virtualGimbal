@@ -160,6 +160,22 @@ Eigen::MatrixXd VirtualGimbalManager::getSynchronizedMeasuredAngularVelocity()
     return data;
 }
 
+Eigen::MatrixXd VirtualGimbalManager::getRotationQuaternions()
+{
+    Eigen::MatrixXd data;
+    data.resize(estimated_angular_velocity->data.rows(), 4);
+    rotation_quaternion = std::make_shared<RotationQuaternion>(measured_angular_velocity,*resampler_parameter_);
+    for (int i = 0, e = data.rows(); i < e; ++i)
+    {
+
+        Eigen::MatrixXd temp = rotation_quaternion->getRotationQuaternion((double)i * video_param->getInterval()).coeffs().transpose();
+        // std::cout << rotation_quaternion->getRotationQuaternion((double)i * video_param->getInterval()).coeffs().transpose() << std::endl;
+        // std::cout << temp << std::endl << std::flush;
+        data.row(i) = temp;
+    }
+    return data;
+}
+
 // void VirtualGimbalManager::getEstimatedAndMeasuredAngularVelocity(Eigen::MatrixXd &data){
 //     data.resize(estimated_angular_velocity->data.rows(),estimated_angular_velocity->data.cols()+measured_angular_velocity->data.cols());
 //     data.block(0,0,estimated_angular_velocity->data.rows(),estimated_angular_velocity->data.cols()) = estimated_angular_velocity->data;

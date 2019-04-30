@@ -96,7 +96,7 @@ Eigen::Quaterniond Rotation::getDiffQuaternion(double index)
 RotationQuaternion::RotationQuaternion(AngularVelocityPtr angular_velocity, ResamplerParameter &resampler) : angular_velocity_(angular_velocity), resampler_(resampler)
 {
     double frame = resampler_.start * angular_velocity_->getFrequency();
-    angle_[(int)frame] = Eigen::Quaterniond();
+    angle_[(int)frame] = Eigen::Quaterniond(1,0,0,0);
 }
 
 Eigen::Quaterniond RotationQuaternion::getRotationQuaternion(double time)
@@ -106,6 +106,9 @@ Eigen::Quaterniond RotationQuaternion::getRotationQuaternion(double time)
     assert(frame >= 0);
     int integer_frame = floor(frame);
 
+    // std::cout << "angle_.rbegin()->first : " << angle_.rbegin()->first << std::endl;
+    // std::cout << "angle_.begin()->first : " << angle_.begin()->first << std::endl;
+    // std::cout << "*angle_.begin() : " << angle_.begin()->second.coeffs().transpose() << std::endl;
     // Check data availability.
     // If there is no available data, Generate it.
     if (angle_.rbegin()->first < (integer_frame + 1))
@@ -115,6 +118,8 @@ Eigen::Quaterniond RotationQuaternion::getRotationQuaternion(double time)
             // Eigen::Vector3d vec = angular_velocity_->data.row(i).transpose() * angular_velocity_->getInterval();
             Eigen::Quaterniond diff = Vector2Quaternion<double>(angular_velocity_->data.row(i).transpose() * angular_velocity_->getInterval());
             angle_[i + 1] = (angle_[i] * diff).normalized();
+            // std::cout << angle_[i].coeffs().transpose() << std::endl;
+            // std::cout << angle_[i+1].coeffs().transpose() << std::endl << std::flush;
         }
     }
     else if(integer_frame < angle_.begin()->first)
@@ -125,8 +130,6 @@ Eigen::Quaterniond RotationQuaternion::getRotationQuaternion(double time)
             Eigen::Quaterniond diff = Vector2Quaternion<double>(angular_velocity_->data.row(i).transpose() * angular_velocity_->getInterval());
             angle_[i] = (angle_[i+1] * diff.conjugate()).normalized();
         }
-    }else{
-        throw std::string("Invalid state at ") + std::string(__FILE__) + std::string(", Line:") + std::to_string(__LINE__);
     }
     // Return slerped quaternion.
     return angle_[integer_frame].slerp(frame - integer_frame, angle_[integer_frame + 1]);
