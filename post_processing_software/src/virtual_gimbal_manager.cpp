@@ -164,7 +164,7 @@ Eigen::MatrixXd VirtualGimbalManager::getRotationQuaternions()
 {
     Eigen::MatrixXd data;
     data.resize(estimated_angular_velocity->data.rows(), 4);
-    rotation_quaternion = std::make_shared<RotationQuaternion>(measured_angular_velocity,*resampler_parameter_);
+    rotation_quaternion = std::make_shared<RotationQuaternion>(measured_angular_velocity, *resampler_parameter_);
     for (int i = 0, e = data.rows(); i < e; ++i)
     {
 
@@ -264,4 +264,52 @@ Eigen::MatrixXd VirtualGimbalManager::estimateAngularVelocity(const std::map<int
     std::cout << std::flush;
 
     return estimated_angular_velocity * video_param->getFrequency();
+}
+
+/**
+ * @brief Undistort and unrolling chess board board points. 
+ **/
+void VirtualGimbalManager::getUndistortUnrollingChessBoardPoints(double time, const std::vector<cv::Point2f> &src, std::vector<cv::Point2f> &dst)
+{
+    //手順
+    //1.補正前画像を分割した時の分割点の座標(pixel)を計算
+    //2.1の座標を入力として、各行毎のW(t1,t2)を計算
+    //3.補正後の画像上のポリゴン座標(pixel)を計算、歪み補正も含める
+
+    for (const auto &el : src) //(int j = 0; j <= division_y; ++j)
+    {
+        //W(t1,t2)を計算
+        //1
+        double v = el.y; //(double)j / division_y * camera_info_.height_;
+
+        double time_in_row = video_param->camera_info->rolling_shutter_coefficient_ * (v - video_param->camera_info->height_*0.5) / video_param->camera_info->height_;
+        Eigen::MatrixXd R = rotation_quaternion->getRotationQuaternion(time_in_row).matrix();
+        {
+            double u = el.x; //(double)i / division_x * camera_info_.width_;
+            //後々の行列演算に備えて、画像上の座標を同次座標で表現しておく。(x座標、y座標,1)T
+            Eigen::Vector3d p;
+            p << (u - video_param->camera_info->cx_) / video_param->camera_info->fx_, (v - video_param->camera_info->cy_) / video_param->camera_info->fy_, 1.0; // Homogenious coordinate
+            //2
+            Eigen::MatrixXd XYW = R * p;
+
+            double x1 = XYW(0, 0) / XYW(2, 0);
+            double y1 = XYW(1, 0) / XYW(2, 0);
+
+            double r = sqrt(x1 * x1 + y1 * y1);
+
+            double x2 = x1 * (1.0 + video_param->camera_info->inverse_k1_ * r * r + video_param->camera_info->inverse_k2_ * r * r * r * r) + 2.0 * video_param->camera_info->inverse_p1_ * x1 * y1 + video_param->camera_info->inverse_p2_ * (r * r + 2.0 * x1 * x1);
+            double y2 = y1 * (1.0 + video_param->camera_info->inverse_k1_ * r * r + video_param->camera_info->inverse_k2_ * r * r * r * r) + video_param->camera_info->inverse_p1_ * (r * r + 2.0 * y1 * y1) + 2.0 * video_param->camera_info->inverse_p2_ * x1 * y1;
+            //変な折り返しを防止
+            if ((pow(x2 - x1, 2) > 1.0) || (pow(y2 - y1, 2) > 1.0))
+            {
+                //                printf("折り返し防止\r\n");
+                x2 = x1;
+                y2 = y1;
+            }
+            dst.push_back(cv::Point2f(
+                x2 * video_param->camera_info->fx_ + video_param->camera_info->cx_,
+                y2 * video_param->camera_info->fy_ + video_param->camera_info->cy_));
+        }
+    }
+    return;
 }

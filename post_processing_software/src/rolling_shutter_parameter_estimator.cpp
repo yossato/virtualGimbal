@@ -122,6 +122,8 @@ int main(int argc, char **argv)
     mat = manager.getRotationQuaternions();
     vgp::plot(mat, "Rotation quaternion", legends_angular_velocity);
 
+    //ここにgetUndistortUnrollingChessBoardPointsで、Rolling shutter coefficientを変化させながら、チェスボードパターンがどう変化するかを示した画像を表示したい
+
     return 0;
 
     cv::namedWindow("image", cv::WINDOW_AUTOSIZE);

@@ -31,7 +31,7 @@ virtual ~CameraInformation() = default;
     double inverse_k2_;
     double inverse_p1_;
     double inverse_p2_;
-    double rolling_shutter_coefficient_;
+    double rolling_shutter_coefficient_; // Unit is second. 
 };
 
 using CameraInformationPtr = std::shared_ptr<CameraInformation>;
