@@ -105,8 +105,9 @@ int main(int argc, char **argv)
     }
 
     Eigen::VectorXd confidence;
-    Eigen::MatrixXd estimated_angular_velocity = manager.estimateAngularVelocity(corner_dict, world_points,confidence);
-    std::cout << estimated_angular_velocity << std::endl << std::flush;
+    Eigen::MatrixXd estimated_angular_velocity = manager.estimateAngularVelocity(corner_dict, world_points, confidence);
+    std::cout << estimated_angular_velocity << std::endl
+              << std::flush;
     manager.setEstimatedAngularVelocity(estimated_angular_velocity, confidence, capture->get(cv::CAP_PROP_FPS));
 
     Eigen::MatrixXd correlation = manager.estimate();
@@ -124,21 +125,56 @@ int main(int argc, char **argv)
 
     //ここにgetUndistortUnrollingChessBoardPointsで、Rolling shutter coefficientを変化させながら、チェスボードパターンがどう変化するかを示した画像を表示したい
 
-    return 0;
+    //難しいことしないでまずは普通にチェスボードを表示してみる。
+    //画面がでかすぎるので半分に縮小して表示
 
     cv::namedWindow("image", cv::WINDOW_AUTOSIZE);
-
     cv::Mat color_image;
-    while ('q' != (char)cv::waitKey(1))
-    { //信号が来るまで
-        //ここからキャリブレーションの本体
-        // static int init = 0;
-
+    while (1)
+    {
+        int frame = capture->get(cv::CAP_PROP_POS_FRAMES);
         (*capture) >> color_image;
+        if(color_image.empty()){
+            break;
+        }
+
+        cv::resize(color_image, color_image, cv::Size(), 0.5, 0.5);
+        if (corner_dict.count(frame))
+        {
+            // Shrink image and corners since image is too large
+            std::vector<cv::Point2f> shrinked, dst;
+            for (auto &el : corner_dict[frame])
+            {
+                shrinked.push_back(el * 0.5);
+            }
+            cv::drawChessboardCorners(color_image, PatternSize, shrinked, false);
+
+            // Generate unrolled and undistorted corners
+            manager.getUndistortUnrollingChessBoardPoints((double)frame / capture->get(cv::CAP_PROP_FPS), corner_dict[frame], dst);
+            shrinked.clear();
+            for (auto &el : dst)
+            {
+                shrinked.push_back(el * 0.5);
+            }
+            cv::drawChessboardCorners(color_image, PatternSize, shrinked, true);
+        }
+
         cv::imshow("image", color_image);
+        // if (!debug_speedup)
+        // {
+        //     if ('q' == (char)cv::waitKey(1))
+        //     {
+        //         break;
+        //     }
+        // }
+        // else
+        // {
+            if ('q' == (char)cv::waitKey(0))
+            {
+                break;
+            }
+        // }
     }
+    cv::destroyAllWindows();
     return 0;
 }
-
-
-

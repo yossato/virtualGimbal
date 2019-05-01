@@ -283,7 +283,7 @@ void VirtualGimbalManager::getUndistortUnrollingChessBoardPoints(double time, co
         double v = el.y; //(double)j / division_y * camera_info_.height_;
 
         double time_in_row = video_param->camera_info->rolling_shutter_coefficient_ * (v - video_param->camera_info->height_*0.5) / video_param->camera_info->height_;
-        Eigen::MatrixXd R = rotation_quaternion->getRotationQuaternion(time_in_row).matrix();
+        Eigen::MatrixXd R = (rotation_quaternion->getRotationQuaternion(time_in_row + time).conjugate() * rotation_quaternion->getRotationQuaternion(time)) .matrix();
         {
             double u = el.x; //(double)i / division_x * camera_info_.width_;
             //後々の行列演算に備えて、画像上の座標を同次座標で表現しておく。(x座標、y座標,1)T
