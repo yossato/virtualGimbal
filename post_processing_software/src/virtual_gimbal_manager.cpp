@@ -271,6 +271,9 @@ Eigen::MatrixXd VirtualGimbalManager::estimateAngularVelocity(const std::map<int
  **/
 void VirtualGimbalManager::getUndistortUnrollingChessBoardPoints(double time, const std::vector<cv::Point2f> &src, std::vector<cv::Point2f> &dst)
 {
+
+    // Collect time difference between video frame and gyro frame. These frame rates are deferent, so that time should be compensated.
+    time += (measured_angular_velocity->getInterval() - estimated_angular_velocity->getInterval())*0.5;
     //手順
     //1.補正前画像を分割した時の分割点の座標(pixel)を計算
     //2.1の座標を入力として、各行毎のW(t1,t2)を計算
