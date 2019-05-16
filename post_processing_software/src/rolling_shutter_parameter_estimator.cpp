@@ -123,6 +123,86 @@ int main(int argc, char **argv)
     mat = manager.getRotationQuaternions();
     vgp::plot(mat, "Rotation quaternion", legends_angular_velocity);
 
+    //2Dでパラメータを変化させながらどうなるか試してみる
+    //結果をfloatのmatrixに入れる。
+    int32_t image_width = 30;
+    cv::Mat optimize_result_mat = cv::Mat::zeros(image_width, image_width, CV_32FC1);
+    for (int i = 0, ie = image_width; i < ie; ++i)
+    {
+        for (int k = 0, ke = image_width; k < ke; ++k)
+        {
+            // timeとrolling shutter parameterを変化させる
+            double time_offset = 1.0 / capture->get(cv::CAP_PROP_FPS) / ((double)image_width * 0.5) * (double)(i - image_width * 0.5);
+            double rolling_shutter_parameter = 1.0 / capture->get(cv::CAP_PROP_FPS) / ((double)image_width * 0.5) * (double)(k - image_width * 0.5);
+
+            //データが存在する全フレーム繰り返し
+            std::map<int, std::vector<cv::Point2f>> undistorted_corner_dict;
+            for (const auto &el : corner_dict)
+            {
+                // undistorted_corner_dictを生成
+                std::vector<cv::Point2f> dst;
+                manager.getUndistortUnrollingChessBoardPoints(el.first / capture->get(cv::CAP_PROP_FPS) + time_offset, el.second, dst, rolling_shutter_parameter);
+                undistorted_corner_dict[el.first] = dst;
+            }
+
+            // Minimum correration
+            if (0)
+            {
+                // setEstimatedAngularVelocity
+                estimated_angular_velocity = manager.estimateAngularVelocity(undistorted_corner_dict, world_points, confidence);
+                manager.setEstimatedAngularVelocity(estimated_angular_velocity, confidence, capture->get(cv::CAP_PROP_FPS));
+
+                // 相関を取る
+                correlation = manager.estimate();
+
+                // 相関をmatに記録する
+                optimize_result_mat.at<float>(i, k) = correlation.minCoeff(); //i:time offset, 行, u,y //k:rolling shutter_parameter, 列, v, x
+            }
+            else
+            // Reprojection Error
+            {
+                std::vector<cv::Mat> rvecs;
+                std::vector<cv::Mat> tvecs;
+                std::vector<std::vector<cv::Point3f>> vec_world_points;
+                std::vector<std::vector<cv::Point2f>> vec_image_points;
+
+                cv::Mat camera_matrix = (cv::Mat_<float>(3, 3) << camera_info->fx_, 0, camera_info->cx_, 0, camera_info->fy_, camera_info->cy_, 0, 0, 1);
+                cv::Mat dist_coeffs = (cv::Mat_<float>(1, 4) << camera_info->k1_, camera_info->k2_, camera_info->p1_, camera_info->p2_);
+                std::vector<float> per_image_errors;
+                for (auto &el : undistorted_corner_dict)
+                {
+                    cv::Mat rvec;
+                    cv::Mat tvec;
+
+                    cv::solvePnP(world_points, el.second, camera_matrix, dist_coeffs, rvec, tvec);
+                    rvecs.push_back(rvec);
+                    tvecs.push_back(tvec);
+                    vec_world_points.push_back(world_points);
+                    vec_image_points.push_back(el.second);
+                }
+                optimize_result_mat.at<float>(i, k) = (float)manager.computeReprojectionErrors(vec_world_points, vec_image_points, rvecs, tvecs, camera_matrix, dist_coeffs, per_image_errors);
+            }
+        }
+    }
+    cv::normalize(optimize_result_mat, optimize_result_mat, 255, 0, cv::NORM_MINMAX);
+    cv::namedWindow("optimized result", cv::WINDOW_NORMAL);
+    cv::Mat optimize_result_mat_to_show;
+    optimize_result_mat.convertTo(optimize_result_mat_to_show, CV_8UC1);
+    cv::imshow("optimized result", optimize_result_mat_to_show);
+    double minVal;
+    double maxVal;
+    cv::Point minLoc;
+    cv::Point maxLoc;
+    cv::minMaxLoc(optimize_result_mat, &minVal, &maxVal, &minLoc, &maxLoc);
+    double optimal_time_offset = 1.0 / capture->get(cv::CAP_PROP_FPS) / ((double)image_width * 0.5) * (double)(minLoc.y - image_width * 0.5);
+    std::cout << "Optimal time offset is " << optimal_time_offset
+              << "." << std::endl;
+    double optimal_rolling_shutter_coefficient = 1.0 / capture->get(cv::CAP_PROP_FPS) / ((double)image_width * 0.5) * (double)(minLoc.x - image_width * 0.5);
+    std::cout << "Optimal rolling shutter coefficient is " << optimal_rolling_shutter_coefficient
+              << "." << std::endl
+              << std::flush;
+
+    cv::waitKey(0);
     //ここにgetUndistortUnrollingChessBoardPointsで、Rolling shutter coefficientを変化させながら、チェスボードパターンがどう変化するかを示した画像を表示したい
 
     //難しいことしないでまずは普通にチェスボードを表示してみる。
@@ -134,7 +214,8 @@ int main(int argc, char **argv)
     {
         int frame = capture->get(cv::CAP_PROP_POS_FRAMES);
         (*capture) >> color_image;
-        if(color_image.empty()){
+        if (color_image.empty())
+        {
             break;
         }
 
@@ -150,7 +231,7 @@ int main(int argc, char **argv)
             cv::drawChessboardCorners(color_image, PatternSize, shrinked, false);
 
             // Generate unrolled and undistorted corners
-            manager.getUndistortUnrollingChessBoardPoints((double)frame / capture->get(cv::CAP_PROP_FPS), corner_dict[frame], dst);
+            manager.getUndistortUnrollingChessBoardPoints((double)frame / capture->get(cv::CAP_PROP_FPS) + optimal_time_offset, corner_dict[frame], dst, optimal_rolling_shutter_coefficient);
             shrinked.clear();
             for (auto &el : dst)
             {
@@ -169,10 +250,10 @@ int main(int argc, char **argv)
         // }
         // else
         // {
-            if ('q' == (char)cv::waitKey(0))
-            {
-                break;
-            }
+        if ('q' == (char)cv::waitKey(0))
+        {
+            break;
+        }
         // }
     }
     cv::destroyAllWindows();

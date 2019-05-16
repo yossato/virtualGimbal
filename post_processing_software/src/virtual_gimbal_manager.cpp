@@ -18,6 +18,9 @@
 */
 #include "virtual_gimbal_manager.h"
 
+using namespace cv;
+using namespace std;
+
 VirtualGimbalManager::VirtualGimbalManager()
 {
 }
@@ -94,10 +97,10 @@ Eigen::MatrixXd VirtualGimbalManager::estimate()
 {
     Eigen::MatrixXd measured_angular_velocity_resampled = measured_angular_velocity->getResampledData(ResamplerParameterPtr(new ResamplerParameter(video_param->getFrequency(), 0, 0)));
 
-    std::cout << "measured_angular_velocity->data" << std::endl
-              << measured_angular_velocity->data.block(measured_angular_velocity->data.rows() - 100, 0, 100, 3) << std::endl;
-    std::cout << "measured_angular_velocity_resampled" << std::endl
-              << measured_angular_velocity_resampled.block(measured_angular_velocity_resampled.rows() - 100, 0, 100, 3) << std::endl;
+    // std::cout << "measured_angular_velocity->data" << std::endl
+    //           << measured_angular_velocity->data.block(measured_angular_velocity->data.rows() - 100, 0, 100, 3) << std::endl;
+    // std::cout << "measured_angular_velocity_resampled" << std::endl
+    //           << measured_angular_velocity_resampled.block(measured_angular_velocity_resampled.rows() - 100, 0, 100, 3) << std::endl;
     int32_t diff = measured_angular_velocity_resampled.rows() - estimated_angular_velocity->data.rows();
     std::cout << diff << std::endl;
     std::vector<double> correlation_coefficients(diff + 1);
@@ -239,7 +242,7 @@ Eigen::MatrixXd VirtualGimbalManager::estimateAngularVelocity(const std::map<int
         Eigen::Quaterniond rotation_quaternion = Vector2Quaternion<double>(
                                                      Eigen::Vector3d(RotationVector[el.first].at<float>(0, 0), RotationVector[el.first].at<float>(1, 0), RotationVector[el.first].at<float>(2, 0)))
                                                      .conjugate();
-        printf("%d,%f,%f,%f,%f,", el.first, rotation_quaternion.x(), rotation_quaternion.y(), rotation_quaternion.z(), rotation_quaternion.w());
+        // printf("%d,%f,%f,%f,%f,", el.first, rotation_quaternion.x(), rotation_quaternion.y(), rotation_quaternion.z(), rotation_quaternion.w());
         if (0 != RotationVector.count(el.first - 1))
         {
             Eigen::Quaterniond rotation_quaternion_previous = Vector2Quaternion<double>(
@@ -248,7 +251,7 @@ Eigen::MatrixXd VirtualGimbalManager::estimateAngularVelocity(const std::map<int
             // cv::Mat diff = RotationVector[el.first]-RotationVector[el.first-1];
             Eigen::Quaterniond diff = rotation_quaternion * rotation_quaternion_previous.conjugate();
             // printf("%f,%f,%f\n",diff.at<float>(0,0),diff.at<float>(1,0),diff.at<float>(2,0));
-            printf("%f,%f,%f,%f\n", diff.x(), diff.y(), diff.z(), diff.w());
+            // printf("%f,%f,%f,%f\n", diff.x(), diff.y(), diff.z(), diff.w());
             Eigen::Vector3d diff_vector = Quaternion2Vector(diff);
             Eigen::Quaterniond estimated_angular_velocity_in_board_coordinate(0.0, diff_vector[0], diff_vector[1], diff_vector[2]);
             Eigen::Quaterniond estimated_angular_velocity_in_camera_coordinate = (rotation_quaternion.conjugate() * estimated_angular_velocity_in_board_coordinate * rotation_quaternion);
@@ -256,12 +259,12 @@ Eigen::MatrixXd VirtualGimbalManager::estimateAngularVelocity(const std::map<int
                 estimated_angular_velocity_in_camera_coordinate.z();
             confidence(el.first) = 1.0;
         }
-        else
-        {
-            printf("0,0,0\n");
-        }
+        // else
+        // {
+        //     printf("0,0,0\n");
+        // }
     }
-    std::cout << std::flush;
+    // std::cout << std::flush;
 
     return estimated_angular_velocity * video_param->getFrequency();
 }
@@ -269,7 +272,7 @@ Eigen::MatrixXd VirtualGimbalManager::estimateAngularVelocity(const std::map<int
 /**
  * @brief Undistort and unrolling chess board board points. 
  **/
-void VirtualGimbalManager::getUndistortUnrollingChessBoardPoints(double time, const std::vector<cv::Point2f> &src, std::vector<cv::Point2f> &dst)
+void VirtualGimbalManager::getUndistortUnrollingChessBoardPoints(double time, const std::vector<cv::Point2f> &src, std::vector<cv::Point2f> &dst, double rolling_shutter_coefficient)
 {
 
     // Collect time difference between video frame and gyro frame. These frame rates are deferent, so that time should be compensated.
@@ -285,7 +288,7 @@ void VirtualGimbalManager::getUndistortUnrollingChessBoardPoints(double time, co
         //1
         double v = el.y; //(double)j / division_y * camera_info_.height_;
 
-        double time_in_row = video_param->camera_info->rolling_shutter_coefficient_ * (v - video_param->camera_info->height_*0.5) / video_param->camera_info->height_;
+        double time_in_row = rolling_shutter_coefficient * (v - video_param->camera_info->height_*0.5) / video_param->camera_info->height_;
         Eigen::MatrixXd R = (rotation_quaternion->getRotationQuaternion(time_in_row + time).conjugate() * rotation_quaternion->getRotationQuaternion(time)) .matrix();
         {
             double u = el.x; //(double)i / division_x * camera_info_.width_;
@@ -316,3 +319,37 @@ void VirtualGimbalManager::getUndistortUnrollingChessBoardPoints(double time, co
     }
     return;
 }
+
+double VirtualGimbalManager::computeReprojectionErrors( const vector<vector<Point3f> >& objectPoints,
+                                         const vector<vector<Point2f> >& imagePoints,
+                                         const vector<Mat>& rvecs, const vector<Mat>& tvecs,
+                                         const Mat& cameraMatrix , const Mat& distCoeffs,
+                                         vector<float>& perViewErrors, bool fisheye)
+{
+    vector<Point2f> imagePoints2;
+    size_t totalPoints = 0;
+    double totalErr = 0, err;
+    perViewErrors.resize(objectPoints.size());
+
+    for(size_t i = 0; i < objectPoints.size(); ++i )
+    {
+        if (fisheye)
+        {
+            fisheye::projectPoints(objectPoints[i], imagePoints2, rvecs[i], tvecs[i], cameraMatrix,
+                                   distCoeffs);
+        }
+        else
+        {
+            projectPoints(objectPoints[i], rvecs[i], tvecs[i], cameraMatrix, distCoeffs, imagePoints2);
+        }
+        err = norm(imagePoints[i], imagePoints2, NORM_L2);
+
+        size_t n = objectPoints[i].size();
+        perViewErrors[i] = (float) std::sqrt(err*err/n);
+        totalErr        += err*err;
+        totalPoints     += n;
+    }
+
+    return std::sqrt(totalErr/totalPoints);
+}
+
