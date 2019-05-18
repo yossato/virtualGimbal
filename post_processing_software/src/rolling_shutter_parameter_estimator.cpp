@@ -18,7 +18,7 @@ std::string getVideoSize(const char *videoName)
     return videoSize;
 }
 
-// std::map<int, std::vector<cv::Point2f>> getCornerDictionary(std::shared_ptr<cv::VideoCapture> capture, cv::Size &pattern_size, bool debug_speedup, bool Verbose);
+// std::map<int, std::vector<cv::Point2d>> getCornerDictionary(std::shared_ptr<cv::VideoCapture> capture, cv::Size &pattern_size, bool debug_speedup, bool Verbose);
 
 int main(int argc, char **argv)
 {
@@ -91,17 +91,17 @@ int main(int argc, char **argv)
 
     //キャリブレーションの準備
     cv::Size PatternSize = cv::Size((int)Dcbp.NumberOfInnerCorners.X, (int)Dcbp.NumberOfInnerCorners.Y);
-    std::vector<std::vector<cv::Point2f>> imagePoints; // チェッカー交点座標を格納するベクトルのベクトル インデックスの並びは[撮影画像番号][点のIndex]
+    std::vector<std::vector<cv::Point2d>> imagePoints; // チェッカー交点座標を格納するベクトルのベクトル インデックスの並びは[撮影画像番号][点のIndex]
 
     //キャリブレーションの準備ここまで
-    std::map<int, std::vector<cv::Point2f>> corner_dict = manager.getCornerDictionary(PatternSize, debug_speedup, true);
+    std::map<int, std::vector<cv::Point2d>> corner_dict = manager.getCornerDictionary(PatternSize, debug_speedup, true);
 
-    std::vector<cv::Point3f> world_points; // チェッカー交点座標と対応する世界座標の値を格納する行列
+    std::vector<cv::Point3d> world_points; // チェッカー交点座標と対応する世界座標の値を格納する行列
     // 世界座標を決める
     for (int j = 0; j < PatternSize.area(); j++)
     { //チェッカーボードの交点座標を記録
-        world_points.push_back(cv::Point3f(static_cast<float>(j % PatternSize.width * Dcbp.SizeOfQuadsX_mm),
-                                           static_cast<float>(j / PatternSize.width * Dcbp.SizeOfQuadsY_mm),
+        world_points.push_back(cv::Point3d(static_cast<double>(j % PatternSize.width * Dcbp.SizeOfQuadsX_mm),
+                                           static_cast<double>(j / PatternSize.width * Dcbp.SizeOfQuadsY_mm),
                                            0.0));
     }
 
@@ -146,11 +146,14 @@ int main(int argc, char **argv)
     case Eigen::ComputationInfo::NumericalIssue:
         std::cout << "Error : NumericalIssue" << std::endl;
         return -1;
-        // break;
+    // break;
+    default:
+        std::cout << "Default :" << undistortion_params << std::endl;
+        break;
     }
 
     //2Dでパラメータを変化させながらどうなるか試してみる
-    //結果をfloatのmatrixに入れる。
+    //結果をdoubleのmatrixに入れる。
     int32_t image_width = 30;
     cv::Mat optimize_result_mat = cv::Mat::zeros(image_width, image_width, CV_32FC1);
     for (int i = 0, ie = image_width; i < ie; ++i)
@@ -162,11 +165,11 @@ int main(int argc, char **argv)
             double rolling_shutter_parameter = 1.0 / capture->get(cv::CAP_PROP_FPS) / ((double)image_width * 0.5) * (double)(k - image_width * 0.5);
 
             //データが存在する全フレーム繰り返し
-            std::map<int, std::vector<cv::Point2f>> undistorted_corner_dict;
+            std::map<int, std::vector<cv::Point2d>> undistorted_corner_dict;
             for (const auto &el : corner_dict)
             {
                 // undistorted_corner_dictを生成
-                std::vector<cv::Point2f> dst;
+                std::vector<cv::Point2d> dst;
                 manager.getUndistortUnrollingChessBoardPoints(el.first / capture->get(cv::CAP_PROP_FPS) + time_offset, el.second, dst, rolling_shutter_parameter);
                 undistorted_corner_dict[el.first] = dst;
             }
@@ -182,19 +185,19 @@ int main(int argc, char **argv)
                 correlation = manager.estimate();
 
                 // 相関をmatに記録する
-                optimize_result_mat.at<float>(i, k) = correlation.minCoeff(); //i:time offset, 行, u,y //k:rolling shutter_parameter, 列, v, x
+                optimize_result_mat.at<double>(i, k) = correlation.minCoeff(); //i:time offset, 行, u,y //k:rolling shutter_parameter, 列, v, x
             }
             else
             // Reprojection Error
             {
                 std::vector<cv::Mat> rvecs;
                 std::vector<cv::Mat> tvecs;
-                std::vector<std::vector<cv::Point3f>> vec_world_points;
-                std::vector<std::vector<cv::Point2f>> vec_image_points;
+                std::vector<std::vector<cv::Point3d>> vec_world_points;
+                std::vector<std::vector<cv::Point2d>> vec_image_points;
 
-                cv::Mat camera_matrix = (cv::Mat_<float>(3, 3) << camera_info->fx_, 0, camera_info->cx_, 0, camera_info->fy_, camera_info->cy_, 0, 0, 1);
-                cv::Mat dist_coeffs = (cv::Mat_<float>(1, 4) << camera_info->k1_, camera_info->k2_, camera_info->p1_, camera_info->p2_);
-                std::vector<float> per_image_errors;
+                cv::Mat camera_matrix = (cv::Mat_<double>(3, 3) << camera_info->fx_, 0, camera_info->cx_, 0, camera_info->fy_, camera_info->cy_, 0, 0, 1);
+                cv::Mat dist_coeffs = (cv::Mat_<double>(1, 4) << camera_info->k1_, camera_info->k2_, camera_info->p1_, camera_info->p2_);
+                std::vector<double> per_image_errors;
                 for (auto &el : undistorted_corner_dict)
                 {
                     cv::Mat rvec;
@@ -206,7 +209,7 @@ int main(int argc, char **argv)
                     vec_world_points.push_back(world_points);
                     vec_image_points.push_back(el.second);
                 }
-                optimize_result_mat.at<float>(i, k) = (float)manager.computeReprojectionErrors(vec_world_points, vec_image_points, rvecs, tvecs, camera_matrix, dist_coeffs, per_image_errors);
+                optimize_result_mat.at<double>(i, k) = (double)manager.computeReprojectionErrors(vec_world_points, vec_image_points, rvecs, tvecs, camera_matrix, dist_coeffs, per_image_errors);
             }
         }
     }
@@ -249,7 +252,7 @@ int main(int argc, char **argv)
         if (corner_dict.count(frame))
         {
             // Shrink image and corners since image is too large
-            std::vector<cv::Point2f> shrinked, dst;
+            std::vector<cv::Point2d> shrinked, dst;
             for (auto &el : corner_dict[frame])
             {
                 shrinked.push_back(el * 0.5);

@@ -42,16 +42,16 @@ public:
   // void getEstimatedAndMeasuredAngularVelocity(Eigen::MatrixXd &data);
   Eigen::MatrixXd estimate();
   Eigen::MatrixXd getSynchronizedMeasuredAngularVelocity();
-  std::map<int, std::vector<cv::Point2f>> getCornerDictionary(cv::Size &pattern_size, bool debug_speedup = false, bool Verbose = false);
-  Eigen::MatrixXd estimateAngularVelocity(const std::map<int, std::vector<cv::Point2f>> &corner_dict, const std::vector<cv::Point3f> &world_points, Eigen::VectorXd &confidence);
+  std::map<int, std::vector<cv::Point2d>> getCornerDictionary(cv::Size &pattern_size, bool debug_speedup = false, bool Verbose = false);
+  Eigen::MatrixXd estimateAngularVelocity(const std::map<int, std::vector<cv::Point2d>> &corner_dict, const std::vector<cv::Point3d> &world_points, Eigen::VectorXd &confidence);
   Eigen::MatrixXd getRotationQuaternions();
-  void getUndistortUnrollingChessBoardPoints(double time_offset, const std::pair<int, std::vector<cv::Point2f>> &corner_dict, std::vector<cv::Point2f> &dst, double line_delay=0.0);
-  void getUndistortUnrollingChessBoardPoints(double time, const std::vector<cv::Point2f> &src, std::vector<cv::Point2f> &dst, double rolling_shutter_coefficient = 0.0);
-  double computeReprojectionErrors(const std::vector<std::vector<cv::Point3f>> &objectPoints,
-                                   const std::vector<std::vector<cv::Point2f>> &imagePoints,
+  void getUndistortUnrollingChessBoardPoints(double time_offset, const std::pair<int, std::vector<cv::Point2d>> &corner_dict, std::vector<cv::Point2d> &dst, double line_delay=0.0);
+  void getUndistortUnrollingChessBoardPoints(double time, const std::vector<cv::Point2d> &src, std::vector<cv::Point2d> &dst, double rolling_shutter_coefficient = 0.0);
+  double computeReprojectionErrors(const std::vector<std::vector<cv::Point3d>> &objectPoints,
+                                   const std::vector<std::vector<cv::Point2d>> &imagePoints,
                                    const std::vector<cv::Mat> &rvecs, const std::vector<cv::Mat> &tvecs,
                                    const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs,
-                                   std::vector<float> &perViewErrors, bool fisheye = false);
+                                   std::vector<double> &perViewErrors, bool fisheye = false);
 
 protected:
   RotationPtr rotation;

@@ -28,8 +28,8 @@ struct line_delay_functor : Functor<double>
 {
   line_delay_functor(int inputs, int values,
                      std::shared_ptr<CameraInformation> &camera_info,
-                     std::vector<cv::Point3f> &world_points,
-                     std::map<int, std::vector<cv::Point2f>> &corner_dict,
+                     std::vector<cv::Point3d> &world_points,
+                     std::map<int, std::vector<cv::Point2d>> &corner_dict,
                      VirtualGimbalManager &manager)
       : inputs_(inputs), values_(values),
         camera_info(camera_info), world_points(world_points),
@@ -41,11 +41,11 @@ struct line_delay_functor : Functor<double>
   }
 
   // Fixed parameters
-    const int inputs_;
+  const int inputs_;
   const int values_;
   std::shared_ptr<CameraInformation> camera_info;
-  std::vector<cv::Point3f> world_points;
-  std::map<int, std::vector<cv::Point2f>> corner_dict;
+  std::vector<cv::Point3d> world_points;
+  std::map<int, std::vector<cv::Point2d>> corner_dict;
   VirtualGimbalManager &manager;
 
   // Variables
@@ -56,6 +56,7 @@ struct line_delay_functor : Functor<double>
   {
     double time_offset = b[0];
     double line_delay = b[1];
+    // printf("time_offset:%16.15f line_delay:%16.15f\n", time_offset, line_delay);
     // for (int i = 0; i < values_; ++i)
     // {
     //   fvec[i] = b[0] * (1.0 - exp(-b[1] * x[i])) - y[i];
@@ -63,22 +64,28 @@ struct line_delay_functor : Functor<double>
     // return 0;
 
     //データが存在する全フレーム繰り返し
-    std::map<int, std::vector<cv::Point2f>> undistorted_corner_dict;
+    std::map<int, std::vector<cv::Point2d>> undistorted_corner_dict;
     for (auto &el : corner_dict)
     {
       // undistorted_corner_dictを生成
-      std::vector<cv::Point2f> dst;
+      std::vector<cv::Point2d> dst;
       manager.getUndistortUnrollingChessBoardPoints(time_offset, el, dst, line_delay);
       undistorted_corner_dict[el.first] = dst;
+
+      // if (0 == el.first)
+      // {
+      //   // std::cout << dst[0] << std::endl;
+      //   printf("dst: %1.17f %1.17f\n",dst[0].x,dst[1].y);
+      // }
     }
 
     // Variables
     std::vector<cv::Mat> rvecs;
     std::vector<cv::Mat> tvecs;
-    std::vector<std::vector<cv::Point3f>> vec_world_points;
-    std::vector<std::vector<cv::Point2f>> vec_image_points;
+    std::vector<std::vector<cv::Point3d>> vec_world_points;
+    std::vector<std::vector<cv::Point2d>> vec_image_points;
 
-    std::vector<float> per_image_errors;
+    std::vector<double> per_image_errors;
 
     for (auto &el : undistorted_corner_dict)
     {
@@ -91,9 +98,17 @@ struct line_delay_functor : Functor<double>
       vec_world_points.push_back(world_points);
       vec_image_points.push_back(el.second);
     }
+    // double retval = manager.computeReprojectionErrors(vec_world_points, vec_image_points, rvecs, tvecs, camera_matrix, dist_coeffs, per_image_errors);
     manager.computeReprojectionErrors(vec_world_points, vec_image_points, rvecs, tvecs, camera_matrix, dist_coeffs, per_image_errors);
-    fvec = Eigen::Map<Eigen::VectorXf>(&per_image_errors[0],per_image_errors.size()).cast<double>();
-    std::cout << fvec.transpose() << std::endl << std::flush;
+    // printf("retval:%17.16f\n",retval);
+
+    fvec = Eigen::Map<Eigen::VectorXd>(&per_image_errors[0], per_image_errors.size());
+    // for(int i=0;i<per_image_errors.size();++i){
+    //   fvec[i] = per_image_errors[i];
+    // }
+
+
+    // std::cout << fvec.transpose() << std::endl << std::flush;
     return 0;
   }
   /*
