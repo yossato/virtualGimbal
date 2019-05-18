@@ -269,6 +269,10 @@ Eigen::MatrixXd VirtualGimbalManager::estimateAngularVelocity(const std::map<int
     return estimated_angular_velocity * video_param->getFrequency();
 }
 
+void VirtualGimbalManager::getUndistortUnrollingChessBoardPoints(double time_offset, const std::pair<int, std::vector<cv::Point2f>> &corner_dict, std::vector<cv::Point2f> &dst, double line_delay){
+    getUndistortUnrollingChessBoardPoints(corner_dict.first * video_param->getInterval() + time_offset,corner_dict.second,dst,line_delay /** video_param->camera_info->height_*/);
+}
+
 /**
  * @brief Undistort and unrolling chess board board points. 
  **/

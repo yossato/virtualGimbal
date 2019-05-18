@@ -8,6 +8,7 @@
 #include "json_tools.hpp"
 #include "rotation_param.h"
 #include "virtual_gimbal_manager.h"
+#include "line_delay_estimator.hpp"
 
 std::string getVideoSize(const char *videoName)
 {
@@ -122,6 +123,31 @@ int main(int argc, char **argv)
 
     mat = manager.getRotationQuaternions();
     vgp::plot(mat, "Rotation quaternion", legends_angular_velocity);
+
+    // Optimize
+    Eigen::VectorXd undistortion_params = Eigen::VectorXd::Zero(2);
+    line_delay_functor functor(undistortion_params.size(), corner_dict.size(), camera_info, world_points, corner_dict, manager);
+    Eigen::NumericalDiff<line_delay_functor> numeric_diff(functor);
+    Eigen::LevenbergMarquardt<Eigen::NumericalDiff<line_delay_functor>> lm(numeric_diff);
+    int info = lm.minimize(undistortion_params);
+    switch (info)
+    {
+    case Eigen::ComputationInfo::Success:
+        std::cout << "Success:" << undistortion_params << std::endl;
+        break;
+    case Eigen::ComputationInfo::InvalidInput:
+        std::cout << "Error : InvalidInput" << std::endl;
+        return -1;
+        // break;
+    case Eigen::ComputationInfo::NoConvergence:
+        std::cout << "Error : NoConvergence:" << undistortion_params << std::endl;
+        return -1;
+        // break;
+    case Eigen::ComputationInfo::NumericalIssue:
+        std::cout << "Error : NumericalIssue" << std::endl;
+        return -1;
+        // break;
+    }
 
     //2Dでパラメータを変化させながらどうなるか試してみる
     //結果をfloatのmatrixに入れる。
