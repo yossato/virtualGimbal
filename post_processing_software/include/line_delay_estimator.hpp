@@ -56,7 +56,7 @@ struct line_delay_functor : Functor<double>
   {
     double time_offset = b[0];
     double line_delay = b[1];
-    // printf("time_offset:%16.15f line_delay:%16.15f\n", time_offset, line_delay);
+    printf("time_offset:%16.15f line_delay:%16.15f\n", time_offset, line_delay);
     // for (int i = 0; i < values_; ++i)
     // {
     //   fvec[i] = b[0] * (1.0 - exp(-b[1] * x[i])) - y[i];

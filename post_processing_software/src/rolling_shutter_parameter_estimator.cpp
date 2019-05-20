@@ -126,30 +126,39 @@ int main(int argc, char **argv)
 
     // Optimize
     Eigen::VectorXd undistortion_params = Eigen::VectorXd::Zero(2);
-    line_delay_functor functor(undistortion_params.size(), corner_dict.size(), camera_info, world_points, corner_dict, manager);
+    line_delay_functor functor(undistortion_params.size(), corner_dict.size() * (corner_dict.begin()->second.size()) * 2, camera_info, world_points, corner_dict, manager);
     Eigen::NumericalDiff<line_delay_functor> numeric_diff(functor);
     Eigen::LevenbergMarquardt<Eigen::NumericalDiff<line_delay_functor>> lm(numeric_diff);
-    int info = lm.minimize(undistortion_params);
-    switch (info)
+    int info = 4;
+    double initial_factor = 0.1;
+    while (info != Eigen::ComputationInfo::Success)
     {
-    case Eigen::ComputationInfo::Success:
-        std::cout << "Success:" << undistortion_params << std::endl;
-        break;
-    case Eigen::ComputationInfo::InvalidInput:
-        std::cout << "Error : InvalidInput" << std::endl;
-        return -1;
-        // break;
-    case Eigen::ComputationInfo::NoConvergence:
-        std::cout << "Error : NoConvergence:" << undistortion_params << std::endl;
-        return -1;
-        // break;
-    case Eigen::ComputationInfo::NumericalIssue:
-        std::cout << "Error : NumericalIssue" << std::endl;
-        return -1;
-    // break;
-    default:
-        std::cout << "Default :" << undistortion_params << std::endl;
-        break;
+        printf("Factor : %f", initial_factor);
+        lm.resetParameters();
+        lm.parameters.factor = initial_factor; //step bound for the diagonal shift, is this related to damping parameter, lambda?
+        int info = lm.minimize(undistortion_params);
+        switch (info)
+        {
+        case Eigen::ComputationInfo::Success:
+            std::cout << "Success:" << undistortion_params << std::endl;
+            break;
+        case Eigen::ComputationInfo::InvalidInput:
+            std::cout << "Error : InvalidInput" << std::endl;
+            // return -1;
+            break;
+        case Eigen::ComputationInfo::NoConvergence:
+            std::cout << "Error : NoConvergence:" << undistortion_params << std::endl;
+            return -1;
+            break;
+        case Eigen::ComputationInfo::NumericalIssue:
+            std::cout << "Error : NumericalIssue" << std::endl;
+            // return -1;
+            break;
+        default:
+            std::cout << "Default :" << undistortion_params << std::endl;
+            break;
+        }
+        initial_factor *= 1.1;
     }
 
     //2Dでパラメータを変化させながらどうなるか試してみる

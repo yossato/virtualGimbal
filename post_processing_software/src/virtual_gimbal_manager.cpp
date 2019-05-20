@@ -222,11 +222,12 @@ std::map<int, std::vector<cv::Point2d>> VirtualGimbalManager::getCornerDictionar
 
     std::map<int, std::vector<cv::Point2d>> retval;
     // return corner_dict;
-    for(const auto &el:corner_dict){
-        for(const auto &el2:el.second){
-        retval[el.first].push_back(cv::Point2d(el2.x,el2.y));
+    for (const auto &el : corner_dict)
+    {
+        for (const auto &el2 : el.second)
+        {
+            retval[el.first].push_back(cv::Point2d(el2.x, el2.y));
         }
-
     }
     return retval;
 }
@@ -278,8 +279,9 @@ Eigen::MatrixXd VirtualGimbalManager::estimateAngularVelocity(const std::map<int
     return estimated_angular_velocity * video_param->getFrequency();
 }
 
-void VirtualGimbalManager::getUndistortUnrollingChessBoardPoints(double time_offset, const std::pair<int, std::vector<cv::Point2d>> &corner_dict, std::vector<cv::Point2d> &dst, double line_delay){
-    getUndistortUnrollingChessBoardPoints(corner_dict.first * video_param->getInterval() + time_offset,corner_dict.second,dst,line_delay*video_param->camera_info->height_);
+void VirtualGimbalManager::getUndistortUnrollingChessBoardPoints(double time_offset, const std::pair<int, std::vector<cv::Point2d>> &corner_dict, std::vector<cv::Point2d> &dst, double line_delay)
+{
+    getUndistortUnrollingChessBoardPoints(corner_dict.first * video_param->getInterval() + time_offset, corner_dict.second, dst, line_delay * video_param->camera_info->height_);
 }
 
 /**
@@ -289,7 +291,7 @@ void VirtualGimbalManager::getUndistortUnrollingChessBoardPoints(double time, co
 {
 
     // Collect time difference between video frame and gyro frame. These frame rates are deferent, so that time should be compensated.
-    time += (measured_angular_velocity->getInterval() - estimated_angular_velocity->getInterval())*0.5;
+    time += (measured_angular_velocity->getInterval() - estimated_angular_velocity->getInterval()) * 0.5;
     //手順
     //1.補正前画像を分割した時の分割点の座標(pixel)を計算
     //2.1の座標を入力として、各行毎のW(t1,t2)を計算
@@ -301,8 +303,8 @@ void VirtualGimbalManager::getUndistortUnrollingChessBoardPoints(double time, co
         //1
         double v = el.y; //(double)j / division_y * camera_info_.height_;
 
-        double time_in_row = rolling_shutter_coefficient * (v - video_param->camera_info->height_*0.5) / video_param->camera_info->height_;
-        Eigen::MatrixXd R = (rotation_quaternion->getRotationQuaternion(time_in_row + time).conjugate() * rotation_quaternion->getRotationQuaternion(time)) .matrix();
+        double time_in_row = rolling_shutter_coefficient * (v - video_param->camera_info->height_ * 0.5) / video_param->camera_info->height_;
+        Eigen::MatrixXd R = (rotation_quaternion->getRotationQuaternion(time_in_row + time).conjugate() * rotation_quaternion->getRotationQuaternion(time)).matrix();
         {
             double u = el.x; //(double)i / division_x * camera_info_.width_;
             //後々の行列演算に備えて、画像上の座標を同次座標で表現しておく。(x座標、y座標,1)T
@@ -333,18 +335,21 @@ void VirtualGimbalManager::getUndistortUnrollingChessBoardPoints(double time, co
     return;
 }
 
-double VirtualGimbalManager::computeReprojectionErrors( const vector<vector<Point3d> >& objectPoints,
-                                         const vector<vector<Point2d> >& imagePoints,
-                                         const vector<Mat>& rvecs, const vector<Mat>& tvecs,
-                                         const Mat& cameraMatrix , const Mat& distCoeffs,
-                                         vector<double>& perViewErrors, bool fisheye)
+double VirtualGimbalManager::computeReprojectionErrors(const vector<vector<Point3d>> &objectPoints,
+                                                       const vector<vector<Point2d>> &imagePoints,
+                                                       const vector<Mat> &rvecs, const vector<Mat> &tvecs,
+                                                       const Mat &cameraMatrix, const Mat &distCoeffs,
+                                                       vector<double> &residuals, bool fisheye)
 {
     vector<Point2d> imagePoints2;
     size_t totalPoints = 0;
     double totalErr = 0, err;
-    perViewErrors.resize(objectPoints.size());
+    Point2d diff;
 
-    for(size_t i = 0; i < objectPoints.size(); ++i )
+    residuals.resize(imagePoints.size() * imagePoints.begin()->size() * 2);
+    auto residuals_itr = residuals.begin();
+
+    for (size_t i = 0; i < objectPoints.size(); ++i)
     {
         if (fisheye)
         {
@@ -357,12 +362,17 @@ double VirtualGimbalManager::computeReprojectionErrors( const vector<vector<Poin
         }
         err = norm(imagePoints[i], imagePoints2, NORM_L2);
 
+        for (size_t k = 0; k < imagePoints2.size(); ++k)
+        {
+            diff = imagePoints[i][k] - imagePoints2[k];
+            *(residuals_itr++) = diff.x;
+            *(residuals_itr++) = diff.y;
+        }
         size_t n = objectPoints[i].size();
-        perViewErrors[i] = std::sqrt(err*err/n);
-        totalErr        += err*err;
-        totalPoints     += n;
+        // residuals[i] = std::sqrt(err * err / n);
+        totalErr += err * err;
+        totalPoints += n;
     }
 
-    return std::sqrt(totalErr/totalPoints);
+    return std::sqrt(totalErr / totalPoints);
 }
-

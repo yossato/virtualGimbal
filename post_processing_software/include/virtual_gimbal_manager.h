@@ -51,7 +51,7 @@ public:
                                    const std::vector<std::vector<cv::Point2d>> &imagePoints,
                                    const std::vector<cv::Mat> &rvecs, const std::vector<cv::Mat> &tvecs,
                                    const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs,
-                                   std::vector<double> &perViewErrors, bool fisheye = false);
+                                   std::vector<double> &residuals, bool fisheye = false);
 
 protected:
   RotationPtr rotation;
