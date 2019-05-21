@@ -11,7 +11,7 @@ using namespace Eigen;
 
 // Generic functor
 template <typename _Scalar, int NX = Dynamic, int NY = Dynamic>
-struct Functor
+struct LDEFunctor
 {
   typedef _Scalar Scalar;
   enum
@@ -24,7 +24,7 @@ struct Functor
   typedef Matrix<Scalar, ValuesAtCompileTime, InputsAtCompileTime> JacobianType;
 };
 
-struct line_delay_functor : Functor<double>
+struct line_delay_functor : LDEFunctor<double>
 {
   line_delay_functor(int inputs, int values,
                      std::shared_ptr<CameraInformation> &camera_info,

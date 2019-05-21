@@ -10,6 +10,7 @@
 #include "virtual_gimbal_manager.h"
 #include "line_delay_estimator.hpp"
 
+#include "distortion.h"
 std::string getVideoSize(const char *videoName)
 {
     std::shared_ptr<cv::VideoCapture> Capture = std::make_shared<cv::VideoCapture>(videoName); //動画をオープン
@@ -62,6 +63,7 @@ int main(int argc, char **argv)
 
     VirtualGimbalManager manager;
     shared_ptr<CameraInformation> camera_info(new CameraInformationJsonParser(cameraName, lensName, getVideoSize(videoPass).c_str()));
+    calcInverseDistortCoeff(*camera_info);
     manager.setMeasuredAngularVelocity(jsonPass, camera_info);
     manager.setVideoParam(videoPass, camera_info);
     manager.setRotation(jsonPass, *camera_info); //なんか変だぞ？
@@ -124,47 +126,12 @@ int main(int argc, char **argv)
     mat = manager.getRotationQuaternions();
     vgp::plot(mat, "Rotation quaternion", legends_angular_velocity);
 
-    // Optimize
-    Eigen::VectorXd undistortion_params = Eigen::VectorXd::Zero(2);
-    line_delay_functor functor(undistortion_params.size(), corner_dict.size() * (corner_dict.begin()->second.size()) * 2, camera_info, world_points, corner_dict, manager);
-    Eigen::NumericalDiff<line_delay_functor> numeric_diff(functor);
-    Eigen::LevenbergMarquardt<Eigen::NumericalDiff<line_delay_functor>> lm(numeric_diff);
-    int info = 4;
-    double initial_factor = 0.1;
-    while (info != Eigen::ComputationInfo::Success)
-    {
-        printf("Factor : %f", initial_factor);
-        lm.resetParameters();
-        lm.parameters.factor = initial_factor; //step bound for the diagonal shift, is this related to damping parameter, lambda?
-        int info = lm.minimize(undistortion_params);
-        switch (info)
-        {
-        case Eigen::ComputationInfo::Success:
-            std::cout << "Success:" << undistortion_params << std::endl;
-            break;
-        case Eigen::ComputationInfo::InvalidInput:
-            std::cout << "Error : InvalidInput" << std::endl;
-            // return -1;
-            break;
-        case Eigen::ComputationInfo::NoConvergence:
-            std::cout << "Error : NoConvergence:" << undistortion_params << std::endl;
-            return -1;
-            break;
-        case Eigen::ComputationInfo::NumericalIssue:
-            std::cout << "Error : NumericalIssue" << std::endl;
-            // return -1;
-            break;
-        default:
-            std::cout << "Default :" << undistortion_params << std::endl;
-            break;
-        }
-        initial_factor *= 1.1;
-    }
+    
 
     //2Dでパラメータを変化させながらどうなるか試してみる
     //結果をdoubleのmatrixに入れる。
-    int32_t image_width = 30;
-    cv::Mat optimize_result_mat = cv::Mat::zeros(image_width, image_width, CV_32FC1);
+    int32_t image_width = 10;
+    cv::Mat optimize_result_mat = cv::Mat::zeros(image_width, image_width, CV_64FC1);
     for (int i = 0, ie = image_width; i < ie; ++i)
     {
         for (int k = 0, ke = image_width; k < ke; ++k)
@@ -205,7 +172,8 @@ int main(int argc, char **argv)
                 std::vector<std::vector<cv::Point2d>> vec_image_points;
 
                 cv::Mat camera_matrix = (cv::Mat_<double>(3, 3) << camera_info->fx_, 0, camera_info->cx_, 0, camera_info->fy_, camera_info->cy_, 0, 0, 1);
-                cv::Mat dist_coeffs = (cv::Mat_<double>(1, 4) << camera_info->k1_, camera_info->k2_, camera_info->p1_, camera_info->p2_);
+                // cv::Mat dist_coeffs = (cv::Mat_<double>(1, 4) << camera_info->k1_, camera_info->k2_, camera_info->p1_, camera_info->p2_);
+                cv::Mat dist_coeffs;
                 std::vector<double> per_image_errors;
                 for (auto &el : undistorted_corner_dict)
                 {
@@ -240,11 +208,55 @@ int main(int argc, char **argv)
               << "." << std::endl
               << std::flush;
 
-    cv::waitKey(0);
+    cv::waitKey(3000);
     //ここにgetUndistortUnrollingChessBoardPointsで、Rolling shutter coefficientを変化させながら、チェスボードパターンがどう変化するかを示した画像を表示したい
 
     //難しいことしないでまずは普通にチェスボードを表示してみる。
     //画面がでかすぎるので半分に縮小して表示
+
+// Optimize
+    Eigen::VectorXd undistortion_params = Eigen::VectorXd::Zero(2);
+    // Eigen::VectorXd undistortion_params;
+    undistortion_params << optimal_time_offset, optimal_rolling_shutter_coefficient/camera_info->height_;
+    line_delay_functor functor(undistortion_params.size(), corner_dict.size() * (corner_dict.begin()->second.size()) * 2, camera_info, world_points, corner_dict, manager);
+    Eigen::NumericalDiff<line_delay_functor> numeric_diff(functor);
+    Eigen::LevenbergMarquardt<Eigen::NumericalDiff<line_delay_functor>> lm(numeric_diff);
+    printf("ftol:%1.17f\nxtol:%1.17f\ngtol:%1.17f\n",lm.parameters.ftol,lm.parameters.xtol,lm.parameters.gtol);
+    int info = 4;
+    double initial_factor = 0.1;
+    while (info != Eigen::ComputationInfo::Success)
+    {
+        printf("Factor : %f\n", initial_factor);
+        // undistortion_params = Eigen::VectorXd::Zero(2);
+        undistortion_params << optimal_time_offset, optimal_rolling_shutter_coefficient/camera_info->height_;
+        lm.resetParameters();
+        lm.parameters.factor = initial_factor; //step bound for the diagonal shift, is this related to damping parameter, lambda?
+        int info = lm.minimize(undistortion_params);
+        switch (info)
+        {
+        case Eigen::ComputationInfo::Success:
+            std::cout << "Success:" << undistortion_params << std::endl;
+            break;
+        case Eigen::ComputationInfo::InvalidInput:
+            std::cout << "Error : InvalidInput" << std::endl;
+            // return -1;
+            break;
+        case Eigen::ComputationInfo::NoConvergence:
+            std::cout << "Error : NoConvergence:" << undistortion_params << std::endl;
+            // return -1;
+            break;
+        case Eigen::ComputationInfo::NumericalIssue:
+            std::cout << "Error : NumericalIssue" << std::endl;
+            // return -1;
+            break;
+        default:
+            std::cout << "Default :" << undistortion_params << std::endl;
+            break;
+        }
+        initial_factor *= 1.1;
+    }
+
+
 
     cv::namedWindow("image", cv::WINDOW_AUTOSIZE);
     cv::Mat color_image;

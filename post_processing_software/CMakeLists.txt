@@ -116,6 +116,7 @@ add_executable(rolling_shutter_parameter_estimator src/rolling_shutter_parameter
         src/calcShift.cpp
         src/visualizer.cpp
         src/rotation_math.cpp
+        src/distortion.cpp
         )
 target_link_libraries(rolling_shutter_parameter_estimator ${ALL_LIBS} ${OpenCV_LIBS} ${PYTHON_LIBRARIES})
 
