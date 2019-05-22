@@ -187,6 +187,8 @@ int main(int argc, char **argv)
                     vec_image_points.push_back(el.second);
                 }
                 optimize_result_mat.at<double>(i, k) = (double)manager.computeReprojectionErrors(vec_world_points, vec_image_points, rvecs, tvecs, camera_matrix, dist_coeffs, per_image_errors);
+                printf("Grid searching %d/%d\r",i*k,image_width*image_width);
+                std::cout << std::flush;
             }
         }
     }
@@ -221,16 +223,18 @@ int main(int argc, char **argv)
     line_delay_functor functor(undistortion_params.size(), corner_dict.size() * (corner_dict.begin()->second.size()) * 2, camera_info, world_points, corner_dict, manager);
     Eigen::NumericalDiff<line_delay_functor> numeric_diff(functor);
     Eigen::LevenbergMarquardt<Eigen::NumericalDiff<line_delay_functor>> lm(numeric_diff);
+    // lm.parameters.ftol *= 1000000000000000.0;
+    // lm.parameters.xtol *= 1000000000000000.0;
     printf("ftol:%1.17f\nxtol:%1.17f\ngtol:%1.17f\n",lm.parameters.ftol,lm.parameters.xtol,lm.parameters.gtol);
     int info = 4;
-    double initial_factor = 0.1;
+    // double initial_factor = 0.1;
     while (info != Eigen::ComputationInfo::Success)
     {
-        printf("Factor : %f\n", initial_factor);
+        // printf("Factor : %f\n", initial_factor);
         // undistortion_params = Eigen::VectorXd::Zero(2);
         undistortion_params << optimal_time_offset, optimal_rolling_shutter_coefficient/camera_info->height_;
         lm.resetParameters();
-        lm.parameters.factor = initial_factor; //step bound for the diagonal shift, is this related to damping parameter, lambda?
+        // lm.parameters.factor = initial_factor; //step bound for the diagonal shift, is this related to damping parameter, lambda?
         int info = lm.minimize(undistortion_params);
         switch (info)
         {
@@ -253,7 +257,7 @@ int main(int argc, char **argv)
             std::cout << "Default :" << undistortion_params << std::endl;
             break;
         }
-        initial_factor *= 1.1;
+        // initial_factor *= 1.1;
     }
 
 
