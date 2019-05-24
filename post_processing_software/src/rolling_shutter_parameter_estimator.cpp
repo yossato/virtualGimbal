@@ -63,7 +63,7 @@ int main(int argc, char **argv)
 
     VirtualGimbalManager manager;
     shared_ptr<CameraInformation> camera_info(new CameraInformationJsonParser(cameraName, lensName, getVideoSize(videoPass).c_str()));
-    calcInverseDistortCoeff(*camera_info);
+    // calcInverseDistortCoeff(*camera_info);
     manager.setMeasuredAngularVelocity(jsonPass, camera_info);
     manager.setVideoParam(videoPass, camera_info);
     manager.setRotation(jsonPass, *camera_info); //なんか変だぞ？
@@ -126,8 +126,6 @@ int main(int argc, char **argv)
     mat = manager.getRotationQuaternions();
     vgp::plot(mat, "Rotation quaternion", legends_angular_velocity);
 
-    
-
     //2Dでパラメータを変化させながらどうなるか試してみる
     //結果をdoubleのmatrixに入れる。
     int32_t image_width = 10;
@@ -187,7 +185,7 @@ int main(int argc, char **argv)
                     vec_image_points.push_back(el.second);
                 }
                 optimize_result_mat.at<double>(i, k) = (double)manager.computeReprojectionErrors(vec_world_points, vec_image_points, rvecs, tvecs, camera_matrix, dist_coeffs, per_image_errors);
-                printf("Grid searching %d/%d\r",i*k,image_width*image_width);
+                printf("Grid searching %d/%d\r", i * k, image_width * image_width);
                 std::cout << std::flush;
             }
         }
@@ -216,27 +214,27 @@ int main(int argc, char **argv)
     //難しいことしないでまずは普通にチェスボードを表示してみる。
     //画面がでかすぎるので半分に縮小して表示
 
-// Optimize
+    // Optimize
     Eigen::VectorXd undistortion_params = Eigen::VectorXd::Zero(2);
     // Eigen::VectorXd undistortion_params;
-    undistortion_params << optimal_time_offset, optimal_rolling_shutter_coefficient/camera_info->height_;
+    undistortion_params << optimal_time_offset, optimal_rolling_shutter_coefficient / camera_info->height_;
     line_delay_functor functor(undistortion_params.size(), corner_dict.size() * (corner_dict.begin()->second.size()) * 2, camera_info, world_points, corner_dict, manager);
     Eigen::NumericalDiff<line_delay_functor> numeric_diff(functor);
     Eigen::LevenbergMarquardt<Eigen::NumericalDiff<line_delay_functor>> lm(numeric_diff);
     // lm.parameters.ftol *= 1000000000000000.0;
     // lm.parameters.xtol *= 1000000000000000.0;
-    printf("ftol:%1.17f\nxtol:%1.17f\ngtol:%1.17f\n",lm.parameters.ftol,lm.parameters.xtol,lm.parameters.gtol);
+    printf("ftol:%1.17f\nxtol:%1.17f\ngtol:%1.17f\n", lm.parameters.ftol, lm.parameters.xtol, lm.parameters.gtol);
     int info = 4;
     // double initial_factor = 0.1;
-    while (info != Eigen::ComputationInfo::Success)
-    {
+    // while (info != Eigen::ComputationInfo::Success)
+    // {
         // printf("Factor : %f\n", initial_factor);
         // undistortion_params = Eigen::VectorXd::Zero(2);
-        undistortion_params << optimal_time_offset, optimal_rolling_shutter_coefficient/camera_info->height_;
+        undistortion_params << optimal_time_offset, optimal_rolling_shutter_coefficient / camera_info->height_;
         lm.resetParameters();
         // lm.parameters.factor = initial_factor; //step bound for the diagonal shift, is this related to damping parameter, lambda?
-        int info = lm.minimize(undistortion_params);
-        switch (info)
+        int info2 = lm.minimize(undistortion_params);
+        switch (info2)
         {
         case Eigen::ComputationInfo::Success:
             std::cout << "Success:" << undistortion_params << std::endl;
@@ -258,9 +256,9 @@ int main(int argc, char **argv)
             break;
         }
         // initial_factor *= 1.1;
-    }
-
-
+    // }
+    optimal_time_offset = undistortion_params[0];
+    optimal_rolling_shutter_coefficient = undistortion_params[1] * camera_info->height_;
 
     cv::namedWindow("image", cv::WINDOW_AUTOSIZE);
     cv::Mat color_image;
@@ -277,10 +275,11 @@ int main(int argc, char **argv)
         if (corner_dict.count(frame))
         {
             // Shrink image and corners since image is too large
-            std::vector<cv::Point2d> shrinked, dst;
+            std::vector<cv::Point2f> shrinked;
+            std::vector<cv::Point2d> dst;
             for (auto &el : corner_dict[frame])
             {
-                shrinked.push_back(el * 0.5);
+                shrinked.push_back(cv::Point2f(el.x,el.y) * 0.5);
             }
             cv::drawChessboardCorners(color_image, PatternSize, shrinked, false);
 
@@ -310,6 +309,13 @@ int main(int argc, char **argv)
         }
         // }
     }
+
+    // auto camera_info_json_perser = dynamic_pointer_cast<CameraInformationJsonParser>(camera_info);
+    // if(camera_info_json_perser){
+    //     camera_info_json_perser->line_delay_ = undistortion_params[1];
+    //     camera_info_json_perser->writeCameraInformationJson();
+    // }
+
     cv::destroyAllWindows();
     return 0;
 }
