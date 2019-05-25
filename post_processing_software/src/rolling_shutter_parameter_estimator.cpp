@@ -136,7 +136,7 @@ int main(int argc, char **argv)
         {
             // timeとrolling shutter parameterを変化させる
             double time_offset = 1.0 / capture->get(cv::CAP_PROP_FPS) / ((double)image_width * 0.5) * (double)(i - image_width * 0.5);
-            double rolling_shutter_parameter = 1.0 / capture->get(cv::CAP_PROP_FPS) / ((double)image_width * 0.5) * (double)(k - image_width * 0.5);
+            double line_delay = 1.0 / capture->get(cv::CAP_PROP_FPS) / (double)camera_info->height_ / ((double)image_width * 0.5) * (double)(k - image_width * 0.5);
 
             //データが存在する全フレーム繰り返し
             std::map<int, std::vector<cv::Point2d>> undistorted_corner_dict;
@@ -144,7 +144,7 @@ int main(int argc, char **argv)
             {
                 // undistorted_corner_dictを生成
                 std::vector<cv::Point2d> dst;
-                manager.getUndistortUnrollingChessBoardPoints(el.first / capture->get(cv::CAP_PROP_FPS) + time_offset, el.second, dst, rolling_shutter_parameter);
+                manager.getUndistortUnrollingChessBoardPoints(el.first / capture->get(cv::CAP_PROP_FPS) + time_offset, el.second, dst, line_delay);
                 undistorted_corner_dict[el.first] = dst;
             }
 
@@ -185,7 +185,7 @@ int main(int argc, char **argv)
                     vec_image_points.push_back(el.second);
                 }
                 optimize_result_mat.at<double>(i, k) = (double)manager.computeReprojectionErrors(vec_world_points, vec_image_points, rvecs, tvecs, camera_matrix, dist_coeffs, per_image_errors);
-                printf("Grid searching %d/%d\r", i * k, image_width * image_width);
+                printf("Grid searching :time_offset=%f,line_delay=%f, %d/%d\n", time_offset, line_delay, i * k, image_width * image_width);
                 std::cout << std::flush;
             }
         }
@@ -203,8 +203,8 @@ int main(int argc, char **argv)
     double optimal_time_offset = 1.0 / capture->get(cv::CAP_PROP_FPS) / ((double)image_width * 0.5) * (double)(minLoc.y - image_width * 0.5);
     std::cout << "Optimal time offset is " << optimal_time_offset
               << "." << std::endl;
-    double optimal_rolling_shutter_coefficient = 1.0 / capture->get(cv::CAP_PROP_FPS) / ((double)image_width * 0.5) * (double)(minLoc.x - image_width * 0.5);
-    std::cout << "Optimal rolling shutter coefficient is " << optimal_rolling_shutter_coefficient
+    double optimal_line_delay = 1.0 / capture->get(cv::CAP_PROP_FPS) / (double)camera_info->height_/ ((double)image_width * 0.5) * (double)(minLoc.x - image_width * 0.5);
+    std::cout << "Optimal rolling shutter coefficient is " << optimal_line_delay
               << "." << std::endl
               << std::flush;
 
@@ -217,7 +217,7 @@ int main(int argc, char **argv)
     // Optimize
     Eigen::VectorXd undistortion_params = Eigen::VectorXd::Zero(2);
     // Eigen::VectorXd undistortion_params;
-    undistortion_params << optimal_time_offset, optimal_rolling_shutter_coefficient / camera_info->height_;
+    undistortion_params << optimal_time_offset, optimal_line_delay;
     line_delay_functor functor(undistortion_params.size(), corner_dict.size() * (corner_dict.begin()->second.size()) * 2, camera_info, world_points, corner_dict, manager);
     Eigen::NumericalDiff<line_delay_functor> numeric_diff(functor);
     Eigen::LevenbergMarquardt<Eigen::NumericalDiff<line_delay_functor>> lm(numeric_diff);
@@ -230,7 +230,7 @@ int main(int argc, char **argv)
     // {
         // printf("Factor : %f\n", initial_factor);
         // undistortion_params = Eigen::VectorXd::Zero(2);
-        undistortion_params << optimal_time_offset, optimal_rolling_shutter_coefficient / camera_info->height_;
+        undistortion_params << optimal_time_offset, optimal_line_delay;
         lm.resetParameters();
         // lm.parameters.factor = initial_factor; //step bound for the diagonal shift, is this related to damping parameter, lambda?
         int info2 = lm.minimize(undistortion_params);
@@ -258,7 +258,7 @@ int main(int argc, char **argv)
         // initial_factor *= 1.1;
     // }
     optimal_time_offset = undistortion_params[0];
-    optimal_rolling_shutter_coefficient = undistortion_params[1] * camera_info->height_;
+    optimal_line_delay = undistortion_params[1];
 
     cv::namedWindow("image", cv::WINDOW_AUTOSIZE);
     cv::Mat color_image;
@@ -284,7 +284,7 @@ int main(int argc, char **argv)
             cv::drawChessboardCorners(color_image, PatternSize, shrinked, false);
 
             // Generate unrolled and undistorted corners
-            manager.getUndistortUnrollingChessBoardPoints((double)frame / capture->get(cv::CAP_PROP_FPS) + optimal_time_offset, corner_dict[frame], dst, optimal_rolling_shutter_coefficient);
+            manager.getUndistortUnrollingChessBoardPoints((double)frame / capture->get(cv::CAP_PROP_FPS) + optimal_time_offset, corner_dict[frame], dst, optimal_line_delay);
             shrinked.clear();
             for (auto &el : dst)
             {
@@ -310,11 +310,11 @@ int main(int argc, char **argv)
         // }
     }
 
-    // auto camera_info_json_perser = dynamic_pointer_cast<CameraInformationJsonParser>(camera_info);
-    // if(camera_info_json_perser){
-    //     camera_info_json_perser->line_delay_ = undistortion_params[1];
-    //     camera_info_json_perser->writeCameraInformationJson();
-    // }
+    auto camera_info_json_perser = dynamic_pointer_cast<CameraInformationJsonParser>(camera_info);
+    if(camera_info_json_perser){
+        camera_info_json_perser->line_delay_ = undistortion_params[1];
+        camera_info_json_perser->writeCameraInformationJson();
+    }
 
     cv::destroyAllWindows();
     return 0;

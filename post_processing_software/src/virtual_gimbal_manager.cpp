@@ -281,13 +281,13 @@ Eigen::MatrixXd VirtualGimbalManager::estimateAngularVelocity(const std::map<int
 
 void VirtualGimbalManager::getUndistortUnrollingChessBoardPoints(double time_offset, const std::pair<int, std::vector<cv::Point2d>> &corner_dict, std::vector<cv::Point2d> &dst, double line_delay)
 {
-    getUndistortUnrollingChessBoardPoints(corner_dict.first * video_param->getInterval() + time_offset, corner_dict.second, dst, line_delay * video_param->camera_info->height_);
+    getUndistortUnrollingChessBoardPoints(corner_dict.first * video_param->getInterval() + time_offset, corner_dict.second, dst, line_delay);
 }
 
 /**
  * @brief Undistort and unrolling chess board board points. 
  **/
-void VirtualGimbalManager::getUndistortUnrollingChessBoardPoints(double time, const std::vector<cv::Point2d> &src, std::vector<cv::Point2d> &dst, double rolling_shutter_coefficient)
+void VirtualGimbalManager::getUndistortUnrollingChessBoardPoints(double time, const std::vector<cv::Point2d> &src, std::vector<cv::Point2d> &dst, double line_delay)
 {
 
     // Collect time difference between video frame and gyro frame. These frame rates are deferent, so that time should be compensated.
@@ -303,7 +303,7 @@ void VirtualGimbalManager::getUndistortUnrollingChessBoardPoints(double time, co
         //1
         double v = el.y; //(double)j / division_y * camera_info_.height_;
 
-        double time_in_row = rolling_shutter_coefficient * (v - video_param->camera_info->height_ * 0.5) / video_param->camera_info->height_;
+        double time_in_row = line_delay * (v - video_param->camera_info->height_ * 0.5);
         Eigen::MatrixXd R = (rotation_quaternion->getRotationQuaternion(time_in_row + time).conjugate() * rotation_quaternion->getRotationQuaternion(time)).matrix();
         {
             double u = el.x; //(double)i / division_x * camera_info_.width_;

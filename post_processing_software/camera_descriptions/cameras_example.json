@@ -15,7 +15,7 @@
                     "k2": 0.0958966,
                     "p1": -0.00505715,
                     "p2": -0.00805462,
-                    "rolling_shutter_coefficient": 0.5
+                    "line_delay": 0.0
                 }
             }
         }
@@ -36,7 +36,7 @@
                     "k2": 0.0958966,
                     "p1": -0.00505715,
                     "p2": -0.00805462,
-                    "rolling_shutter_coefficient": 0.5
+                    "line_delay": 0.0
                 }
             }
         }

@@ -235,7 +235,7 @@ int main(int argc, char** argv){
         cameraInfo.inverse_k2_ = 0.;
         cameraInfo.inverse_p1_ = 0.;
         cameraInfo.inverse_p2_ = 0.;
-        cameraInfo.rolling_shutter_coefficient_ = 0.; //This calibration does not estimate rolling shutter coefficient.
+        cameraInfo.line_delay_ = 0.; //This calibration does not estimate rolling shutter coefficient.
         cameraInfo.width_ = Capture.get(cv::CAP_PROP_FRAME_WIDTH);
         cameraInfo.height_ = Capture.get(cv::CAP_PROP_FRAME_HEIGHT);
 

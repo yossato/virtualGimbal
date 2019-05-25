@@ -11,7 +11,7 @@ public:
     CameraInformation();
     CameraInformation(std::string camera_name,std::string lens_name,Eigen::Quaterniond sd_card_rotation,int32_t width,int32_t height,
                       double fx,double fy,double cx,double cy,double k1,double k2,double p1,
-                      double p2,double rolling_shutter_coefficient);
+                      double p2,double line_delay);
 virtual ~CameraInformation() = default;
 
     std::string camera_name_;
@@ -27,11 +27,11 @@ virtual ~CameraInformation() = default;
     double k2_;
     double p1_;
     double p2_;
+    double line_delay_; // Unit is second. 
     double inverse_k1_;
     double inverse_k2_;
     double inverse_p1_;
     double inverse_p2_;
-    double rolling_shutter_coefficient_; // Unit is second. 
 };
 
 using CameraInformationPtr = std::shared_ptr<CameraInformation>;

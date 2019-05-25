@@ -51,7 +51,7 @@ CameraInformationJsonParser::CameraInformationJsonParser(const char *camera_name
     k2_ = parameters["k2"].GetDouble();
     p1_ = parameters["p1"].GetDouble();
     p2_ = parameters["p2"].GetDouble();
-    rolling_shutter_coefficient_ = parameters["rolling_shutter_coefficient"].GetDouble();
+    line_delay_ = parameters["line_delay"].GetDouble();
     std::shared_ptr<char> ptr_image_size(new char[std::strlen(image_size)], std::default_delete<char[]>());
     strcpy(ptr_image_size.get(), image_size);
     width_ = std::atoi(strtok(ptr_image_size.get(), "x"));
@@ -95,7 +95,7 @@ void CameraInformationJsonParser::writeCameraInformationJson(const char *file_na
     Value k2(k2_);
     Value p1(p1_);
     Value p2(p2_);
-    Value rolling_shutter_coefficient(rolling_shutter_coefficient_);
+    Value line_delay(line_delay_);
 
     image_size.AddMember("fx", fx, image_size.GetAllocator());
     image_size.AddMember("fy", fy, image_size.GetAllocator());
@@ -105,7 +105,7 @@ void CameraInformationJsonParser::writeCameraInformationJson(const char *file_na
     image_size.AddMember("k2", k2, image_size.GetAllocator());
     image_size.AddMember("p1", p1, image_size.GetAllocator());
     image_size.AddMember("p2", p2, image_size.GetAllocator());
-    image_size.AddMember("rolling_shutter_coefficient", rolling_shutter_coefficient, image_size.GetAllocator());
+    image_size.AddMember("line_delay", line_delay, image_size.GetAllocator());
     
     std::string image_size_string = std::to_string(width_) + std::string("x") + std::to_string(height_);
     

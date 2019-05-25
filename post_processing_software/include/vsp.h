@@ -278,7 +278,7 @@ class vsp
             //1
             double v = (double)j / division_y * camera_info_.height_;
 
-            double exposureTimingInEachRow = camera_info_.rolling_shutter_coefficient_ * v / camera_info_.height_; //ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
+            double exposureTimingInEachRow = camera_info_.line_delay_ * v; //ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
 
             Eigen::Quaternion<double> slerpedAngleQuaternion;
             if (exposureTimingInEachRow >= 0)
@@ -331,7 +331,7 @@ class vsp
             //1
             double v = (double)j / division_y * camera_info_.height_;
 
-            double exposureTimingInEachRow = camera_info_.rolling_shutter_coefficient_ * v / camera_info_.height_; //ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
+            double exposureTimingInEachRow = camera_info_.line_delay_ * v ; //ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
 
             Eigen::Quaternion<double> slerpedAngleQuaternion;
             if (exposureTimingInEachRow >= 0)
@@ -384,7 +384,7 @@ class vsp
             //1
             double v = (double)j / division_y * camera_info_.height_;
 
-            double exposureTimingInEachRow = camera_info_.rolling_shutter_coefficient_ * v / camera_info_.height_; //ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
+            double exposureTimingInEachRow = camera_info_.line_delay_ * v; //ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
 
             Eigen::Quaternion<double> slerpedAngleQuaternion;
             if (exposureTimingInEachRow >= 0)
@@ -460,7 +460,7 @@ class vsp
             //1
             double v = (double)j / division_y * camera_info_.height_;
 
-            double exposureTimingInEachRow = camera_info_.rolling_shutter_coefficient_ * v / camera_info_.height_; //ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
+            double exposureTimingInEachRow = camera_info_.line_delay_ * v; //ローリングシャッターの読み込みを考慮した各行毎のサンプル時間[sec]
 
             Eigen::Quaternion<double> slerpedAngleQuaternion;
             if (exposureTimingInEachRow >= 0)
@@ -609,7 +609,7 @@ class vsp
     bool quaternion_is_filtered = false;
     int32_t division_x = 9;
     int32_t division_y = 9;
-    //    double camera_info_.rolling_shutter_coefficient_ = 0.0;
+    //    double camera_info_.line_delay_ = 0.0;
     //    Eigen::MatrixXd IK = Eigen::MatrixXd::Zero(1,4);
     //    Eigen::MatrixXd matIntrinsic = Eigen::MatrixXd::Identity(3,3);
     //    int32_t image_width=1920;
