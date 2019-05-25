@@ -205,6 +205,7 @@ int main(int argc, char** argv){
     std::cout << "height_" << cameraInfo->height_ << std::endl;
     std::cout << "fx_" << cameraInfo->fx_ << std::endl;
     std::cout << "fy_" << cameraInfo->fy_ << std::endl;
+    std::cout << "line_delay_" << cameraInfo->line_delay_ << std::endl;
 
     // std::dynamic_pointer_cast<CameraInformationJsonParser>(cameraInfo)->writeCameraInformationJson("camera_descriptions/cameras.json");
 

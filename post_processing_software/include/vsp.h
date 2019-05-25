@@ -478,8 +478,14 @@ class vsp
                 //後々の行列演算に備えて、画像上の座標を同次座標で表現しておく。(x座標、y座標,1)T
                 Eigen::Vector3d p;
                 p << (u - camera_info_.cx_) / camera_info_.fx_, (v - camera_info_.cy_) / camera_info_.fy_, 1.0; //1のポリゴン座標に、K^-1を掛けた結果の３x１行列
+
                 //2
-                Eigen::MatrixXd XYW = R * p; //inv()なし
+                Eigen::MatrixXd XYW;
+                if(0){
+                    XYW = R * p; //inv()なし
+                }else{
+                    XYW = p;
+                }
 
                 if (XYW(2, 0) < 0.0)
                 {
@@ -500,6 +506,16 @@ class vsp
                     x2 = x1;
                     y2 = y1;
                 }
+
+                if(0){
+
+                }else{
+                    p << x2, y2,1.0;
+                    XYW = R * p;
+                    x2 = XYW(0, 0) / XYW(2, 0);
+                    y2 = XYW(1, 0) / XYW(2, 0);
+                }
+
                 //                vecPorigonn_uv.push_back(x2*fx*zoom/camera_info_.width_*2.0);
                 //                vecPorigonn_uv.push_back(y2*fy*zoom/camera_info_.height_*2.0);
                 map_x(j, i) = x2 * camera_info_.fx_ * zoom / camera_info_.width_ * 2.0;
