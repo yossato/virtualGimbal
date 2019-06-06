@@ -35,6 +35,7 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   VirtualGimbalManager();
   void setVideoParam(const char *file_name, CameraInformationPtr info);
+  static std::string getVideoSize(const char *videoName);
   void setMeasuredAngularVelocity(const char *file_name, CameraInformationPtr info = nullptr);
   void setEstimatedAngularVelocity(const char *file_name, CameraInformationPtr info, int32_t maximum_synchronize_frames = 1000);
   void setEstimatedAngularVelocity(Eigen::MatrixXd &angular_velocity, Eigen::VectorXd &confidence, double frequency);

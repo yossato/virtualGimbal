@@ -11,13 +11,13 @@
 #include "line_delay_estimator.hpp"
 
 #include "distortion.h"
-std::string getVideoSize(const char *videoName)
-{
-    std::shared_ptr<cv::VideoCapture> Capture = std::make_shared<cv::VideoCapture>(videoName); //動画をオープン
-    assert(Capture->isOpened());
-    std::string videoSize = std::to_string((int)Capture->get(cv::CAP_PROP_FRAME_WIDTH)) + std::string("x") + std::to_string((int)Capture->get(cv::CAP_PROP_FRAME_HEIGHT));
-    return videoSize;
-}
+// std::string getVideoSize(const char *videoName)
+// {
+//     std::shared_ptr<cv::VideoCapture> Capture = std::make_shared<cv::VideoCapture>(videoName); //動画をオープン
+//     assert(Capture->isOpened());
+//     std::string videoSize = std::to_string((int)Capture->get(cv::CAP_PROP_FRAME_WIDTH)) + std::string("x") + std::to_string((int)Capture->get(cv::CAP_PROP_FRAME_HEIGHT));
+//     return videoSize;
+// }
 
 // std::map<int, std::vector<cv::Point2d>> getCornerDictionary(std::shared_ptr<cv::VideoCapture> capture, cv::Size &pattern_size, bool debug_speedup, bool Verbose);
 
@@ -62,7 +62,7 @@ int main(int argc, char **argv)
     }
 
     VirtualGimbalManager manager;
-    shared_ptr<CameraInformation> camera_info(new CameraInformationJsonParser(cameraName, lensName, getVideoSize(videoPass).c_str()));
+    shared_ptr<CameraInformation> camera_info(new CameraInformationJsonParser(cameraName, lensName, VirtualGimbalManager::getVideoSize(videoPass).c_str()));
     // calcInverseDistortCoeff(*camera_info);
     manager.setMeasuredAngularVelocity(jsonPass, camera_info);
     manager.setVideoParam(videoPass, camera_info);

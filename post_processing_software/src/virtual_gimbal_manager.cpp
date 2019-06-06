@@ -25,6 +25,14 @@ VirtualGimbalManager::VirtualGimbalManager()
 {
 }
 
+std::string VirtualGimbalManager::getVideoSize(const char *videoName)
+{
+    std::shared_ptr<cv::VideoCapture> Capture = std::make_shared<cv::VideoCapture>(videoName); //動画をオープン
+    assert(Capture->isOpened());
+    std::string videoSize = std::to_string((int)Capture->get(cv::CAP_PROP_FRAME_WIDTH)) + std::string("x") + std::to_string((int)Capture->get(cv::CAP_PROP_FRAME_HEIGHT));
+    return videoSize;
+}
+
 void VirtualGimbalManager::setVideoParam(const char *file_name, CameraInformationPtr info)
 {
     std::shared_ptr<cv::VideoCapture> capture = std::make_shared<cv::VideoCapture>(file_name); //動画をオープン
