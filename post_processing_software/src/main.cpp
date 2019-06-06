@@ -8,7 +8,8 @@
 #include "distortion.h"
 using namespace std;
 
-int main(int argc, char **argv){
+int main(int argc, char **argv)
+{
     //引数の確認
     char *videoPass = NULL;
     char *cameraName = NULL;
@@ -52,10 +53,22 @@ int main(int argc, char **argv){
     calcInverseDistortCoeff(*camera_info);
     manager.setMeasuredAngularVelocity(jsonPass, camera_info);
     manager.setVideoParam(videoPass, camera_info);
-    // manager.estimateAngularVelocity()    //オプティカルフローから角速度検出
+    Eigen::MatrixXd estimated_angular_velocity,confidence;
+    if(debug_speedup){
+        manager.estimateAngularVelocity(estimated_angular_velocity,confidence,100);
+    }else{
+        manager.estimateAngularVelocity(estimated_angular_velocity,confidence,1000);
+    }
+    
+    manager.setEstimatedAngularVelocity(estimated_angular_velocity, confidence);
+    std::cout << "estimated_angular_velocity:" << estimated_angular_velocity.transpose() << std::endl
+              << std::flush;
+    std::cout << "confidence:" << confidence.transpose() << std::endl
+              << std::flush;
+              
     // manager.getCorrelation() //タイミング検出のために相関を計算
     // manager.getTiming()
     // manager.setTiming()
     // manager.spin()
-
+    return 0;
 }

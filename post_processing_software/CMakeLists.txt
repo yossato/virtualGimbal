@@ -120,7 +120,7 @@ add_executable(rolling_shutter_parameter_estimator src/rolling_shutter_parameter
         )
 target_link_libraries(rolling_shutter_parameter_estimator ${ALL_LIBS} ${OpenCV_LIBS} ${PYTHON_LIBRARIES})
 
-add_executable(stabilize_pixelwise src/main.cpp
+add_executable(pixelwise_stabilizer src/main.cpp
         src/virtual_gimbal_manager.cpp
         src/json_tools.cpp
         src/camera_information.cpp
@@ -128,7 +128,7 @@ add_executable(stabilize_pixelwise src/main.cpp
         src/calcShift.cpp
         src/distortion.cpp
 )
-target_link_libraries(stabilize_pixelwise ${ALL_LIBS} ${OpenCV_LIBS} ${PYTHON_LIBRARIES})
+target_link_libraries(pixelwise_stabilizer ${ALL_LIBS} ${OpenCV_LIBS} ${PYTHON_LIBRARIES})
 
 # デバッグビルド
 IF(CMAKE_BUILD_TYPE MATCHES DEBUG)

@@ -38,13 +38,14 @@ public:
   static std::string getVideoSize(const char *videoName);
   void setMeasuredAngularVelocity(const char *file_name, CameraInformationPtr info = nullptr);
   void setEstimatedAngularVelocity(const char *file_name, CameraInformationPtr info, int32_t maximum_synchronize_frames = 1000);
-  void setEstimatedAngularVelocity(Eigen::MatrixXd &angular_velocity, Eigen::VectorXd &confidence, double frequency);
+  void setEstimatedAngularVelocity(Eigen::MatrixXd &angular_velocity, Eigen::VectorXd confidence, double frequency=0.0);
   void setRotation(const char *file_name, CameraInformation &cameraInfo);
   // void getEstimatedAndMeasuredAngularVelocity(Eigen::MatrixXd &data);
   Eigen::MatrixXd estimate();
   Eigen::MatrixXd getSynchronizedMeasuredAngularVelocity();
   std::map<int, std::vector<cv::Point2d>> getCornerDictionary(cv::Size &pattern_size, bool debug_speedup = false, bool Verbose = false);
   Eigen::MatrixXd estimateAngularVelocity(const std::map<int, std::vector<cv::Point2d>> &corner_dict, const std::vector<cv::Point3d> &world_points, Eigen::VectorXd &confidence);
+  void estimateAngularVelocity(Eigen::MatrixXd &estimated_angular_velocity, Eigen::MatrixXd &confidence,int frames=1000);
   Eigen::MatrixXd getRotationQuaternions();
   void getUndistortUnrollingChessBoardPoints(double time_offset, const std::pair<int, std::vector<cv::Point2d>> &corner_dict, std::vector<cv::Point2d> &dst, double line_delay=0.0);
   void getUndistortUnrollingChessBoardPoints(double time, const std::vector<cv::Point2d> &src, std::vector<cv::Point2d> &dst, double line_delay = 0.0);

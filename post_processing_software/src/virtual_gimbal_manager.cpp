@@ -60,30 +60,34 @@ void VirtualGimbalManager::setMeasuredAngularVelocity(const char *file_name, Cam
 /**
  * @brief For angular velocity from optical flow 
  **/
-void VirtualGimbalManager::setEstimatedAngularVelocity(const char *file_name, CameraInformationPtr info, int32_t maximum_synchronize_frames)
-{
-    std::shared_ptr<cv::VideoCapture> capture = std::make_shared<cv::VideoCapture>(file_name); //動画をオープン
+// void VirtualGimbalManager::setEstimatedAngularVelocity(const char *file_name, CameraInformationPtr info, int32_t maximum_synchronize_frames)
+// {
+//     std::shared_ptr<cv::VideoCapture> capture = std::make_shared<cv::VideoCapture>(file_name); //動画をオープン
 
-    Eigen::MatrixXd optical_flow;
+//     Eigen::MatrixXd optical_flow;
 
-    calcShiftFromVideo(capture, maximum_synchronize_frames, optical_flow);
+//     calcShiftFromVideo(capture, maximum_synchronize_frames, optical_flow);
 
-    estimated_angular_velocity.reset(new AngularVelocity(capture->get(cv::CAP_PROP_FPS)));
-    estimated_angular_velocity->data.resize(optical_flow.rows(), optical_flow.cols());
+//     estimated_angular_velocity.reset(new AngularVelocity(capture->get(cv::CAP_PROP_FPS)));
+//     estimated_angular_velocity->data.resize(optical_flow.rows(), optical_flow.cols());
 
-    estimated_angular_velocity->data.col(0) =
-        optical_flow.col(1).unaryExpr([&](double a) { return estimated_angular_velocity->getFrequency() * atan(a / (-info->fy_)); });
-    estimated_angular_velocity->data.col(1) =
-        optical_flow.col(0).unaryExpr([&](double a) { return estimated_angular_velocity->getFrequency() * -atan(a / (info->fx_)); });
-    estimated_angular_velocity->data.col(2) = -estimated_angular_velocity->getFrequency() * optical_flow.col(2);
-}
+//     estimated_angular_velocity->data.col(0) =
+//         optical_flow.col(1).unaryExpr([&](double a) { return estimated_angular_velocity->getFrequency() * atan(a / (-info->fy_)); });
+//     estimated_angular_velocity->data.col(1) =
+//         optical_flow.col(0).unaryExpr([&](double a) { return estimated_angular_velocity->getFrequency() * -atan(a / (info->fx_)); });
+//     estimated_angular_velocity->data.col(2) = -estimated_angular_velocity->getFrequency() * optical_flow.col(2);
+// }
 
 /**
  * @brief For angular velocity from chess board 
  **/
-void VirtualGimbalManager::setEstimatedAngularVelocity(Eigen::MatrixXd &angular_velocity, Eigen::VectorXd &confidence, double frequency)
+void VirtualGimbalManager::setEstimatedAngularVelocity(Eigen::MatrixXd &angular_velocity, Eigen::VectorXd confidence, double frequency)
 {
-    estimated_angular_velocity = std::make_shared<AngularVelocity>(frequency);
+    if(0.0 == frequency){
+        estimated_angular_velocity = std::make_shared<AngularVelocity>(video_param->getFrequency());
+    }else{
+        estimated_angular_velocity = std::make_shared<AngularVelocity>(frequency);
+    }
     estimated_angular_velocity->confidence = confidence;
     estimated_angular_velocity->data = angular_velocity;
 }
@@ -285,6 +289,30 @@ Eigen::MatrixXd VirtualGimbalManager::estimateAngularVelocity(const std::map<int
     // std::cout << std::flush;
 
     return estimated_angular_velocity * video_param->getFrequency();
+}
+
+/**
+ * @brief Estimate angular velocity from video optical flow
+ **/
+void VirtualGimbalManager::estimateAngularVelocity(Eigen::MatrixXd &estimated_angular_velocity, Eigen::MatrixXd &confidence,int frames)
+{
+    Eigen::MatrixXd optical_shift;
+    // std::vector<cv::Vec3d> optical_shift = CalcShiftFromVideo(video_param->video_file_name.c_str(),frames);
+    // Eigen::MatrixXd estimated(optical_shift.size(),3);
+    // for(int i=0,e=optical_shift.size();i<e;++i)
+    // {
+    //     estimated.row(i) << atan(optical_shift[i][1]/video_param->camera_info->fy_),
+    //     -atan(optical_shift[i][0]/video_param->camera_info->fx_),
+    //     -optical_shift[i][2];
+    // }
+    // return estimated*video_param->getFrequency();
+    CalcShiftFromVideo(video_param->video_file_name.c_str(),frames,optical_shift,confidence);
+    estimated_angular_velocity.resize(optical_shift.rows(),optical_shift.cols());
+    estimated_angular_velocity.col(0) =
+        optical_shift.col(1).unaryExpr([&](double a) { return video_param->getFrequency() * atan(a / (-video_param->camera_info->fy_)); });
+    estimated_angular_velocity.col(1) =
+        optical_shift.col(0).unaryExpr([&](double a) { return video_param->getFrequency() * -atan(a / (video_param->camera_info->fx_)); });
+    estimated_angular_velocity.col(2) = -video_param->getFrequency() * optical_shift.col(2);
 }
 
 void VirtualGimbalManager::getUndistortUnrollingChessBoardPoints(double time_offset, const std::pair<int, std::vector<cv::Point2d>> &corner_dict, std::vector<cv::Point2d> &dst, double line_delay)
