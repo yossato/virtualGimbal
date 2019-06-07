@@ -6,6 +6,11 @@
 #include "json_tools.hpp"
 #include "rotation_param.h"
 #include "distortion.h"
+
+#define __DEBUG_ONLY
+#ifdef __DEBUG_ONLY
+#include "visualizer.h"
+#endif
 using namespace std;
 
 int main(int argc, char **argv)
@@ -66,6 +71,12 @@ int main(int argc, char **argv)
     std::cout << "confidence:" << confidence.transpose() << std::endl
               << std::flush;
               
+
+    Eigen::MatrixXd correlation = manager.estimate();
+#ifdef __DEBUG_ONLY
+    std::vector<string> legends_angular_velocity = {"c"};
+    vgp::plot(correlation, "correlation", legends_angular_velocity);
+#endif 
     // manager.getCorrelation() //タイミング検出のために相関を計算
     // manager.getTiming()
     // manager.setTiming()

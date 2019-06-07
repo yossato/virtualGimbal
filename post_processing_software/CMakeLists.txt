@@ -127,6 +127,7 @@ add_executable(pixelwise_stabilizer src/main.cpp
         src/rotation_param.cpp
         src/calcShift.cpp
         src/distortion.cpp
+        src/visualizer.cpp #デバッグ専用。後で消す。
 )
 target_link_libraries(pixelwise_stabilizer ${ALL_LIBS} ${OpenCV_LIBS} ${PYTHON_LIBRARIES})
 
