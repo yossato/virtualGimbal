@@ -81,5 +81,10 @@ int main(int argc, char **argv)
     // manager.getTiming()
     // manager.setTiming()
     // manager.spin()
+
+for(int i=0;i<20;++i){
+    std::cout << i << ":" << estimated_angular_velocity.row(i) << std::endl << std::flush;
+}
+
     return 0;
 }

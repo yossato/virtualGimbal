@@ -309,7 +309,7 @@ void VirtualGimbalManager::estimateAngularVelocity(Eigen::MatrixXd &estimated_an
     CalcShiftFromVideo(video_param->video_file_name.c_str(),frames,optical_shift,confidence);
     estimated_angular_velocity.resize(optical_shift.rows(),optical_shift.cols());
     estimated_angular_velocity.col(0) =
-        optical_shift.col(1).unaryExpr([&](double a) { return video_param->getFrequency() * atan(a / (-video_param->camera_info->fy_)); });
+        optical_shift.col(1).unaryExpr([&](double a) { return video_param->getFrequency() * atan(a / (video_param->camera_info->fy_)); });
     estimated_angular_velocity.col(1) =
         optical_shift.col(0).unaryExpr([&](double a) { return video_param->getFrequency() * -atan(a / (video_param->camera_info->fx_)); });
     estimated_angular_velocity.col(2) = -video_param->getFrequency() * optical_shift.col(2);
