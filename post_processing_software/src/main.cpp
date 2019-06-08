@@ -72,19 +72,16 @@ int main(int argc, char **argv)
               << std::flush;
               
 
-    Eigen::MatrixXd correlation = manager.estimate();
+    Eigen::MatrixXd correlation = manager.getCorrelationCoefficient();
 #ifdef __DEBUG_ONLY
     std::vector<string> legends_angular_velocity = {"c"};
     vgp::plot(correlation, "correlation", legends_angular_velocity);
 #endif 
-    // manager.getCorrelation() //タイミング検出のために相関を計算
     // manager.getTiming()
     // manager.setTiming()
+    // manager.getFilterCoefficients() //黒帯の出ないフィルタ係数を計算
+    // manager.getFilteredRotation();
     // manager.spin()
-
-for(int i=0;i<20;++i){
-    std::cout << i << ":" << estimated_angular_velocity.row(i) << std::endl << std::flush;
-}
 
     return 0;
 }

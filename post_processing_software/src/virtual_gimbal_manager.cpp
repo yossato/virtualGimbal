@@ -105,14 +105,9 @@ void VirtualGimbalManager::setRotation(const char *file_name, CameraInformation 
     // angularVelocityCoordinateTransformer(angular_velocity,cameraInfo.sd_card_rotation_);
 }
 
-Eigen::MatrixXd VirtualGimbalManager::estimate()
+Eigen::MatrixXd VirtualGimbalManager::getCorrelationCoefficient()
 {
     Eigen::MatrixXd measured_angular_velocity_resampled = measured_angular_velocity->getResampledData(ResamplerParameterPtr(new ResamplerParameter(video_param->getFrequency(), 0, 0)));
-
-    // std::cout << "measured_angular_velocity->data" << std::endl
-    //           << measured_angular_velocity->data.block(measured_angular_velocity->data.rows() - 100, 0, 100, 3) << std::endl;
-    // std::cout << "measured_angular_velocity_resampled" << std::endl
-    //           << measured_angular_velocity_resampled.block(measured_angular_velocity_resampled.rows() - 100, 0, 100, 3) << std::endl;
     int32_t diff = measured_angular_velocity_resampled.rows() - estimated_angular_velocity->data.rows();
     std::cout << diff << std::endl;
     std::vector<double> correlation_coefficients(diff + 1);
@@ -411,4 +406,15 @@ double VirtualGimbalManager::computeReprojectionErrors(const vector<vector<Point
     }
 
     return std::sqrt(totalErr / totalPoints);
+}
+
+void spin(){
+    // OpenCLの準備
+    // 動画を開く
+    // 全フレームについて繰り返し
+    // 1フレーム読みだす
+    // 1フレーム中の各行のline delayを考慮した回転行列Rを計算、floatに詰める
+    // カーネルにRをわたす
+    // kernel.run
+    // 画面に表示
 }

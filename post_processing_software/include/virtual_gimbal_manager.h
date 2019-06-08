@@ -41,7 +41,7 @@ public:
   void setEstimatedAngularVelocity(Eigen::MatrixXd &angular_velocity, Eigen::VectorXd confidence, double frequency=0.0);
   void setRotation(const char *file_name, CameraInformation &cameraInfo);
   // void getEstimatedAndMeasuredAngularVelocity(Eigen::MatrixXd &data);
-  Eigen::MatrixXd estimate();
+  Eigen::MatrixXd getCorrelationCoefficient();
   Eigen::MatrixXd getSynchronizedMeasuredAngularVelocity();
   std::map<int, std::vector<cv::Point2d>> getCornerDictionary(cv::Size &pattern_size, bool debug_speedup = false, bool Verbose = false);
   Eigen::MatrixXd estimateAngularVelocity(const std::map<int, std::vector<cv::Point2d>> &corner_dict, const std::vector<cv::Point3d> &world_points, Eigen::VectorXd &confidence);
@@ -54,7 +54,8 @@ public:
                                    const std::vector<cv::Mat> &rvecs, const std::vector<cv::Mat> &tvecs,
                                    const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs,
                                    std::vector<double> &residuals, bool fisheye = false);
-
+  void spin();
+  
 protected:
   RotationPtr rotation;
   AngularVelocityPtr measured_angular_velocity;

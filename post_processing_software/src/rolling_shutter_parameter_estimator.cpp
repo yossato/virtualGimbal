@@ -113,7 +113,7 @@ int main(int argc, char **argv)
               << std::flush;
     manager.setEstimatedAngularVelocity(estimated_angular_velocity, confidence, capture->get(cv::CAP_PROP_FPS));
 
-    Eigen::MatrixXd correlation = manager.estimate();
+    Eigen::MatrixXd correlation = manager.getCorrelationCoefficient();
     std::vector<string> legends_angular_velocity = {"c"};
     vgp::plot(correlation, "correlation", legends_angular_velocity);
 
@@ -156,7 +156,7 @@ int main(int argc, char **argv)
                 manager.setEstimatedAngularVelocity(estimated_angular_velocity, confidence, capture->get(cv::CAP_PROP_FPS));
 
                 // 相関を取る
-                correlation = manager.estimate();
+                correlation = manager.getCorrelationCoefficient();
 
                 // 相関をmatに記録する
                 optimize_result_mat.at<double>(i, k) = correlation.minCoeff(); //i:time offset, 行, u,y //k:rolling shutter_parameter, 列, v, x
