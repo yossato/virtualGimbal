@@ -318,7 +318,7 @@ class vsp
                     x2 = x1;
                     y2 = y1;
                 }
-                vecPorigonn_uv.push_back(x2 * camera_info_.fx_ * zoom / camera_info_.width_ * 2.0);
+                vecPorigonn_uv.push_back(x2 * camera_info_.fx_ * zoom / camera_info_.width_ * 2.0);//TODO:ここ多分間違えている。修正。
                 vecPorigonn_uv.push_back(y2 * camera_info_.fy_ * zoom / camera_info_.height_ * 2.0);
             }
         }
