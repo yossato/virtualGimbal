@@ -156,6 +156,37 @@ bool hasBlackSpace(double time,
     return !isGoodWarp(contour);
 }
 
+
+
+Eigen::VectorXd getKaiserWindow(uint32_t tap_length, uint32_t alpha, bool swap){
+    Eigen::VectorXd window = Eigen::VectorXd::Zero(tap_length);
+
+    if(tap_length % 2){ //奇数
+        int32_t L = tap_length/2;
+        for(int32_t n=-L,e=L;n<=e;++n){
+            window[n+L] = boost::math::cyl_bessel_i(0.0,alpha*sqrt(1.0-pow((double)n/(double)L,2.0)))
+                    /boost::math::cyl_bessel_i(0.0,alpha);
+        }
+    }else{  //偶数
+        int32_t L = tap_length/2;
+        for(int32_t n=-L,e=L;n<e;++n){//異なる終了条件
+            window[n+L] = boost::math::cyl_bessel_i(0.0,alpha*sqrt(1.0-pow((double)n/(double)L,2.0)))
+                    /boost::math::cyl_bessel_i(0.0,alpha);
+        }
+    }
+
+    if(true == swap){
+        Eigen::VectorXd buff2(window.rows());
+        buff2.block(0,0,window.rows()/2,1) = window.block(window.rows()/2,0,window.rows()/2,1);
+        buff2.block(window.rows()/2,0,window.rows()-window.rows()/2,1) = window.block(0,0,window.rows()-window.rows()/2,1);
+
+        return buff2;
+    }else{
+        return window;
+    }
+}
+
+
 uint32_t bisectionMethod(double time, int32_t minimum_filter_strength, int32_t maximum_filter_strength, int max_iteration, uint32_t eps)
 {
     int32_t a = minimum_filter_strength;
@@ -169,7 +200,7 @@ uint32_t bisectionMethod(double time, int32_t minimum_filter_strength, int32_t m
     while ((abs(a - b) > eps) && (count++ < max_iteration))
     {
         m = (a + b) * 0.5;
-        if (hasBlackSpace(a, frame) ^ hasBlackSpace(m, frame))
+        if (hasBlackSpace(a, time) ^ hasBlackSpace(m, time))
         {
             b = m;
         }

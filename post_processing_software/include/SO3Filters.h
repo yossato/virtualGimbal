@@ -5,7 +5,7 @@
 #include <Eigen/Dense>
 #include <vector>
 #include <rotation_param.h>
-
+#include <boost/math/special_functions/bessel.hpp>
 // Eigen::MatrixXd getFilterCoefficients
 void gradientLimit(Eigen::VectorXd &input, double maximum_gradient_);
 bool isGoodWarp(std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> &contour);
@@ -15,8 +15,9 @@ void getUndistortUnrollingContour(
     RotationQuaternionPtr rotation_quaternion,
     std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> &contour,
     double zoom,
-    VideoPtr video_param
-    );
+    VideoPtr video_param);
+Eigen::VectorXd getKaiserWindow(uint32_t tap_length, uint32_t alpha, bool swap);
+
 bool hasBlackSpace(double time,
                    RotationQuaternionPtr rotation_quaternion,
                    double zoom,
