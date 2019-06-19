@@ -102,7 +102,8 @@ void getUndistortUnrollingContour(
     RotationQuaternionPtr rotation_quaternion,
     std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> &contour,
     double zoom,
-    VideoPtr video_param)
+    VideoPtr video_param,
+    Eigen::VectorXd &filter_coeffs)
 {
     //手順
     //1.補正前画像を分割した時の分割点の座標(pixel)を計算
@@ -125,7 +126,9 @@ void getUndistortUnrollingContour(
     {
         double time_in_row = line_delay * (p[1] - video_param->camera_info->height_ * 0.5);
         //↓まちがってる。本来はフィルタされたカメラ姿勢とフィルタ後の姿勢の差分が必要。
-        R = (rotation_quaternion->getRotationQuaternion(time_in_row + time).conjugate() * rotation_quaternion->getRotationQuaternion(time)).matrix();
+        // R = (rotation_quaternion->getRotationQuaternion(time_in_row + time).conjugate() * rotation_quaternion->getRotationQuaternion(time)).matrix();
+        //↓これでいい
+        R = rotation_quaternion->getCorrectionQuaternion(time_in_row,filter_coeffs).matrix();
         //↑
         x1 = (p - c) / f;
         double r = x1.matrix().norm();
@@ -151,7 +154,7 @@ bool hasBlackSpace(double time,
                    VideoPtr video_param)
 {
     std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> contour;
-
+    Eigen::VectorXd filter_coeff = getKaiserWindow()//★フィルタクラス作ろう！
     getUndistortUnrollingContour(time, rotation_quaternion, contour, zoom, video_param);
     return !isGoodWarp(contour);
 }

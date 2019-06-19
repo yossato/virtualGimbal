@@ -7,6 +7,8 @@
 #include <rotation_param.h>
 #include <boost/math/special_functions/bessel.hpp>
 // Eigen::MatrixXd getFilterCoefficients
+
+
 void gradientLimit(Eigen::VectorXd &input, double maximum_gradient_);
 bool isGoodWarp(std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> &contour);
 std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> getSparseContour(VideoPtr video_info, int n);

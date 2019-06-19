@@ -183,7 +183,7 @@ Eigen::Quaterniond RotationQuaternion::getCorrectionQuaternion(double time, Eige
         double ratio = frame - floor(frame);
         Eigen::MatrixXd first  = getRelativeAngle(integer_frame,filter_coeff.rows());
         Eigen::MatrixXd second = getRelativeAngle(integer_frame+1,filter_coeff.rows());
-        return Vector2Quaternion<double>(first.transpose() *  filter_coeff * (1.0 - ratio) + second.transpose() * filter_coeff * ratio);
+        return Vector2Quaternion<double>(first.transpose() *  filter_coeff * (1.0 - ratio) + second.transpose() * filter_coeff * ratio).conjugate();
     }
 
 }
