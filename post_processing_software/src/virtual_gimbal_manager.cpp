@@ -408,6 +408,10 @@ double VirtualGimbalManager::computeReprojectionErrors(const vector<vector<Point
     return std::sqrt(totalErr / totalPoints);
 }
 
+void VirtualGimbalManager::setFilter(FilterPtr filter){
+    filter_ = filter;
+}
+
 void spin(){
     // OpenCLの準備
     // 動画を開く

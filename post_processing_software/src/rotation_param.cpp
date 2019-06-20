@@ -19,7 +19,7 @@
 
 #include "rotation_param.h"
 #include "rotation_math.h"
-
+#include <boost/math/special_functions/bessel.hpp>
 const double BaseParam::getFrequency()
 {
     return frequency_;
@@ -166,7 +166,7 @@ Eigen::Quaterniond RotationQuaternion::getRotationQuaternion(double time)
     return angle_[integer_frame].slerp(frame - integer_frame, angle_[integer_frame + 1]);
 }
 
-Eigen::Quaterniond RotationQuaternion::getCorrectionQuaternion(double time, Eigen::VectorXd &filter_coeff)
+Eigen::Quaterniond RotationQuaternion::getCorrectionQuaternion(double time, const Eigen::VectorXd &filter_coeff)
 {
     // Convert time to measured anguler velocity frame position
     const double frame = (resampler_.start + time) * angular_velocity_->getFrequency();
@@ -223,4 +223,29 @@ const Eigen::MatrixXd &RotationQuaternion::getRelativeAngle(int frame, int lengt
     }
     relative_angle_vectors[frame] = rotation_vector;
     return relative_angle_vectors[frame];
+}
+
+
+
+KaiserWindowFilter::KaiserWindowFilter(uint32_t filter_length, uint32_t alpha) : Filter(), filter_length_(filter_length)
+{
+    assert(filter_length_ % 2);// Must be odd
+    setFilterCoefficient(alpha);
+}
+
+const Eigen::VectorXd &KaiserWindowFilter::getFilterCoefficient(){
+    return filter_coefficients_[alpha_];
+}
+
+void KaiserWindowFilter::setFilterCoefficient(int32_t alpha){
+    alpha_ = alpha;
+    if(filter_coefficients_.count(alpha_)){ // Filter cofficient already exists.
+        return;
+    }
+   
+    int32_t L = filter_length_/2;
+    for(int32_t n=-L,e=L;n<=e;++n){
+        filter_coefficients_[alpha][n+L] = boost::math::cyl_bessel_i(0.0,alpha_*sqrt(1.0-pow((double)n/(double)L,2.0)))
+                /boost::math::cyl_bessel_i(0.0,alpha_);
+    }
 }

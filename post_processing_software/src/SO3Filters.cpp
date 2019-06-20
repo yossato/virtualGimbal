@@ -103,7 +103,7 @@ void getUndistortUnrollingContour(
     std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> &contour,
     double zoom,
     VideoPtr video_param,
-    Eigen::VectorXd &filter_coeffs)
+    const Eigen::VectorXd &filter_coeffs)
 {
     //手順
     //1.補正前画像を分割した時の分割点の座標(pixel)を計算
@@ -128,7 +128,7 @@ void getUndistortUnrollingContour(
         //↓まちがってる。本来はフィルタされたカメラ姿勢とフィルタ後の姿勢の差分が必要。
         // R = (rotation_quaternion->getRotationQuaternion(time_in_row + time).conjugate() * rotation_quaternion->getRotationQuaternion(time)).matrix();
         //↓これでいい
-        R = rotation_quaternion->getCorrectionQuaternion(time_in_row,filter_coeffs).matrix();
+        R = rotation_quaternion->getCorrectionQuaternion(time_in_row, filter_coeffs).matrix();
         //↑
         x1 = (p - c) / f;
         double r = x1.matrix().norm();
@@ -149,61 +149,38 @@ void getUndistortUnrollingContour(
 }
 
 bool hasBlackSpace(double time,
-                   RotationQuaternionPtr rotation_quaternion,
                    double zoom,
-                   VideoPtr video_param)
+                   RotationQuaternionPtr rotation_quaternion,
+                   VideoPtr video_param,
+                   FilterPtr filter)
 {
     std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> contour;
-    Eigen::VectorXd filter_coeff = getKaiserWindow()//★フィルタクラス作ろう！
-    getUndistortUnrollingContour(time, rotation_quaternion, contour, zoom, video_param);
+    getUndistortUnrollingContour(time, rotation_quaternion, contour, zoom, video_param, filter->getFilterCoefficient());
     return !isGoodWarp(contour);
 }
 
-
-
-Eigen::VectorXd getKaiserWindow(uint32_t tap_length, uint32_t alpha, bool swap){
-    Eigen::VectorXd window = Eigen::VectorXd::Zero(tap_length);
-
-    if(tap_length % 2){ //奇数
-        int32_t L = tap_length/2;
-        for(int32_t n=-L,e=L;n<=e;++n){
-            window[n+L] = boost::math::cyl_bessel_i(0.0,alpha*sqrt(1.0-pow((double)n/(double)L,2.0)))
-                    /boost::math::cyl_bessel_i(0.0,alpha);
-        }
-    }else{  //偶数
-        int32_t L = tap_length/2;
-        for(int32_t n=-L,e=L;n<e;++n){//異なる終了条件
-            window[n+L] = boost::math::cyl_bessel_i(0.0,alpha*sqrt(1.0-pow((double)n/(double)L,2.0)))
-                    /boost::math::cyl_bessel_i(0.0,alpha);
-        }
-    }
-
-    if(true == swap){
-        Eigen::VectorXd buff2(window.rows());
-        buff2.block(0,0,window.rows()/2,1) = window.block(window.rows()/2,0,window.rows()/2,1);
-        buff2.block(window.rows()/2,0,window.rows()-window.rows()/2,1) = window.block(0,0,window.rows()-window.rows()/2,1);
-
-        return buff2;
-    }else{
-        return window;
-    }
-}
-
-
-uint32_t bisectionMethod(double time, int32_t minimum_filter_strength, int32_t maximum_filter_strength, int max_iteration, uint32_t eps)
+uint32_t bisectionMethod(double time,
+                         double zoom,
+                         RotationQuaternionPtr rotation_quaternion,
+                         VideoPtr video_param,
+                         FilterPtr filter,
+                         int32_t minimum_filter_strength,
+                         int32_t maximum_filter_strength,
+                         int max_iteration, uint32_t eps)
 {
     int32_t a = minimum_filter_strength;
     int32_t b = maximum_filter_strength;
     int count = 0;
-    int32_t m;
-    //    while(hasBlackSpace(maximum_filter_strength,frame)){
-    //        minimum_filter_strength = maximum_filter_strength;
-    //        maximum_filter_strength *= 2;
-    //    }
+    int32_t m=0;
     while ((abs(a - b) > eps) && (count++ < max_iteration))
     {
         m = (a + b) * 0.5;
-        if (hasBlackSpace(a, time) ^ hasBlackSpace(m, time))
+        std::shared_ptr<KaiserWindowFilter> fir_filter = std::dynamic_pointer_cast<KaiserWindowFilter>(filter);
+        fir_filter->setFilterCoefficient(a);
+        bool ra = hasBlackSpace(time, zoom, rotation_quaternion, video_param, filter);
+        fir_filter->setFilterCoefficient(m);
+        bool rm = hasBlackSpace(time, zoom, rotation_quaternion, video_param, filter);
+        if (ra ^ rm)
         {
             b = m;
         }

@@ -40,6 +40,7 @@ public:
   void setEstimatedAngularVelocity(const char *file_name, CameraInformationPtr info, int32_t maximum_synchronize_frames = 1000);
   void setEstimatedAngularVelocity(Eigen::MatrixXd &angular_velocity, Eigen::VectorXd confidence, double frequency=0.0);
   void setRotation(const char *file_name, CameraInformation &cameraInfo);
+  void setFilter(FilterPtr filter);
   // void getEstimatedAndMeasuredAngularVelocity(Eigen::MatrixXd &data);
   Eigen::MatrixXd getCorrelationCoefficient();
   Eigen::MatrixXd getSynchronizedMeasuredAngularVelocity();
@@ -66,7 +67,7 @@ protected:
   ResamplerParameterPtr resampler_parameter_;
 
   VideoPtr video_param;
-  FilterPtr filter;
+  FilterPtr filter_;
 
   void rotateAngularVelocity(Eigen::MatrixXd &angular_velocity, const Eigen::Quaterniond &rotation)
   {

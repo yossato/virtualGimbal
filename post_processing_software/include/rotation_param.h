@@ -90,13 +90,14 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   RotationQuaternion(AngularVelocityPtr angular_velocity, ResamplerParameter &resampler);
   Eigen::Quaterniond getRotationQuaternion(double time);
-  Eigen::Quaterniond getCorrectionQuaternion(double time ,Eigen::VectorXd &filter_coeff);
+  Eigen::Quaterniond getCorrectionQuaternion(double time, const Eigen::VectorXd &filter_coeff);
+
 private:
   AngularVelocityPtr angular_velocity_;
   ResamplerParameter resampler_;
   std::map<int, Eigen::Quaterniond> angle_;
-  std::map<int, Eigen::MatrixXd> relative_angle_vectors; 
-  const Eigen::MatrixXd &getRelativeAngle(int frame,int length);
+  std::map<int, Eigen::MatrixXd> relative_angle_vectors;
+  const Eigen::MatrixXd &getRelativeAngle(int frame, int length);
 };
 
 using RotationQuaternionPtr = std::shared_ptr<RotationQuaternion>;
@@ -126,19 +127,35 @@ class Filter
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  Filter(uint32_t filter_lenght);
-
-protected:
-  int32_t filter_length_;
-  std::map<int32_t, Eigen::VectorXd> filter_coefficients_;
+  Filter(){};
+  virtual const Eigen::VectorXd &getFilterCoefficient() = 0;
+  virtual ~Filter(){};
 };
+
+// class FIRFilter : public Filter
+// {
+// public:
+//   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+//   FIRFilter(){};
+//   virtual ~FIRFilter(){};
+//   virtual Eigen::VectorXd getFilterCoefficient() = 0;
+
+// protected:
+// };
 
 class KaiserWindowFilter : public Filter
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   KaiserWindowFilter(uint32_t filter_length, uint32_t alpha);
-  void SetFilterCoefficient(int32_t alpha);
+  virtual ~KaiserWindowFilter(){}
+  void setFilterCoefficient(int32_t alpha);
+  const Eigen::VectorXd &getFilterCoefficient() override;
+
+protected:
+  int32_t filter_length_;
+  int32_t alpha_;
+  std::map<int32_t, Eigen::VectorXd> filter_coefficients_;
 };
 
 using VideoPtr = std::shared_ptr<Video>;
