@@ -152,10 +152,10 @@ bool hasBlackSpace(double time,
                    double zoom,
                    RotationQuaternionPtr rotation_quaternion,
                    VideoPtr video_param,
-                   FilterPtr filter)
+                   KaiserWindowFilter &filter)
 {
     std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> contour;
-    getUndistortUnrollingContour(time, rotation_quaternion, contour, zoom, video_param, filter->getFilterCoefficient());
+    getUndistortUnrollingContour(time, rotation_quaternion, contour, zoom, video_param, filter.getFilterCoefficient());
     return !isGoodWarp(contour);
 }
 
@@ -163,7 +163,7 @@ uint32_t bisectionMethod(double time,
                          double zoom,
                          RotationQuaternionPtr rotation_quaternion,
                          VideoPtr video_param,
-                         FilterPtr filter,
+                         KaiserWindowFilter &filter,
                          int32_t minimum_filter_strength,
                          int32_t maximum_filter_strength,
                          int max_iteration, uint32_t eps)
@@ -175,12 +175,8 @@ uint32_t bisectionMethod(double time,
     while ((abs(a - b) > eps) && (count++ < max_iteration))
     {
         m = (a + b) * 0.5;
-        std::shared_ptr<KaiserWindowFilter> fir_filter = std::dynamic_pointer_cast<KaiserWindowFilter>(filter);
-        fir_filter->setFilterCoefficient(a);
-        bool ra = hasBlackSpace(time, zoom, rotation_quaternion, video_param, filter);
-        fir_filter->setFilterCoefficient(m);
-        bool rm = hasBlackSpace(time, zoom, rotation_quaternion, video_param, filter);
-        if (ra ^ rm)
+        
+        if (hasBlackSpace(time, zoom, rotation_quaternion, video_param, filter(a)) ^ hasBlackSpace(time, zoom, rotation_quaternion, video_param, filter(m)))
         {
             b = m;
         }

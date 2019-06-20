@@ -243,9 +243,14 @@ void KaiserWindowFilter::setFilterCoefficient(int32_t alpha){
         return;
     }
    
-    int32_t L = filter_length_/2;
+    int32_t L = filter_coefficients_[alpha].rows()/2;
     for(int32_t n=-L,e=L;n<=e;++n){
         filter_coefficients_[alpha][n+L] = boost::math::cyl_bessel_i(0.0,alpha_*sqrt(1.0-pow((double)n/(double)L,2.0)))
                 /boost::math::cyl_bessel_i(0.0,alpha_);
     }
+}
+
+KaiserWindowFilter  &KaiserWindowFilter::operator()(int alpha){
+    setFilterCoefficient(alpha);
+    return *this;
 }

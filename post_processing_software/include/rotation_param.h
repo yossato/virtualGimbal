@@ -151,6 +151,8 @@ public:
   virtual ~KaiserWindowFilter(){}
   void setFilterCoefficient(int32_t alpha);
   const Eigen::VectorXd &getFilterCoefficient() override;
+  KaiserWindowFilter & operator()(int alpha);
+  
 
 protected:
   int32_t filter_length_;

@@ -30,7 +30,7 @@ uint32_t bisectionMethod(double time,
                          double zoom,
                          RotationQuaternionPtr rotation_quaternion,
                          VideoPtr video_param,
-                         FilterPtr filter,
+                         KaiserWindowFilter &filter,
                          int32_t minimum_filter_strength,
                          int32_t maximum_filter_strength,
                          int max_iteration, uint32_t eps);
