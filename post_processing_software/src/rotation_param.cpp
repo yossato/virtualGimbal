@@ -254,3 +254,7 @@ KaiserWindowFilter  &KaiserWindowFilter::operator()(int alpha){
     setFilterCoefficient(alpha);
     return *this;
 }
+
+size_t  KaiserWindowFilter::size(){
+    return filter_length_;
+}

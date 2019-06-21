@@ -171,11 +171,11 @@ uint32_t bisectionMethod(double time,
     int32_t a = minimum_filter_strength;
     int32_t b = maximum_filter_strength;
     int count = 0;
-    int32_t m=0;
+    int32_t m = 0;
     while ((abs(a - b) > eps) && (count++ < max_iteration))
     {
         m = (a + b) * 0.5;
-        
+
         if (hasBlackSpace(time, zoom, rotation_quaternion, video_param, filter(a)) ^ hasBlackSpace(time, zoom, rotation_quaternion, video_param, filter(m)))
         {
             b = m;
@@ -192,27 +192,33 @@ uint32_t bisectionMethod(double time,
     return m;
 }
 
-// Eigen::VectorXd getFilterCoefficients(int32_t minimum_filter_strength, int32_t maximum_filter_strength)
-// {
-//     Eigen::VectorXd filter_strength(raw_quaternion.rows());
-//     //Calcurate in all frame
-//     for (int frame = 0, e = filter_strength.rows(); frame < e; ++frame)
-//     {
-//         if (hasBlackSpace(maximum_filter_strength, frame))
-//         {
-//             filter_strength[frame] = maximum_filter_strength;
-//         }
-//         else if (!hasBlackSpace(minimum_filter_strength, frame))
-//         {
-//             filter_strength[frame] = minimum_filter_strength;
-//         }
-//         else
-//         {
-//             filter_strength[frame] = bisectionMethod(frame, minimum_filter_strength, maximum_filter_strength);
-//         }
-//     }
-//     //    std::cout << filter_strength << std::endl;
-//     gradientLimit(filter_strength);
+//↓この関数はmanagerに移動するべきでは？
+Eigen::VectorXd getFilterCoefficients(double time,
+                                      double zoom,
+                                      RotationQuaternionPtr rotation_quaternion,
+                                      VideoPtr video_param,
+                                      KaiserWindowFilter &filter,
+                                      int32_t minimum_filter_strength, int32_t maximum_filter_strength)
+{
+    Eigen::VectorXd filter_strength(filter.size());
+    //Calcurate in all frame
+    for (int frame = 0, e = filter_strength.rows(); frame < e; ++frame)
+    {
+        if (hasBlackSpace(maximum_filter_strength, frame))
+        {
+            filter_strength[frame] = maximum_filter_strength;
+        }
+        else if (!hasBlackSpace(minimum_filter_strength, frame))
+        {
+            filter_strength[frame] = minimum_filter_strength;
+        }
+        else
+        {
+            filter_strength[frame] = bisectionMethod(frame, minimum_filter_strength, maximum_filter_strength);
+        }
+    }
+    //    std::cout << filter_strength << std::endl;
+    gradientLimit(filter_strength);
 
-//     return (filter_strength);
-// }
+    return (filter_strength);
+}

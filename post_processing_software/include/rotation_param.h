@@ -152,7 +152,7 @@ public:
   void setFilterCoefficient(int32_t alpha);
   const Eigen::VectorXd &getFilterCoefficient() override;
   KaiserWindowFilter & operator()(int alpha);
-  
+  size_t size();
 
 protected:
   int32_t filter_length_;
