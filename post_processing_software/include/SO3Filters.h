@@ -35,5 +35,4 @@ uint32_t bisectionMethod(double time,
                          int32_t maximum_filter_strength,
                          int max_iteration, uint32_t eps);
 bool isGoodWarp(std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> &contour);
-Eigen::VectorXd getFilterCoefficients(int32_t minimum_filter_strength, int32_t maximum_filter_strength);
 #endif //__SO3FILTERS__H__

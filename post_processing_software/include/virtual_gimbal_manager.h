@@ -55,6 +55,12 @@ public:
                                    const std::vector<cv::Mat> &rvecs, const std::vector<cv::Mat> &tvecs,
                                    const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs,
                                    std::vector<double> &residuals, bool fisheye = false);
+  Eigen::VectorXd getFilterCoefficients(double time,
+                                      double zoom,
+                                      RotationQuaternionPtr rotation_quaternion,
+                                      VideoPtr video_param,
+                                      KaiserWindowFilter &filter,
+                                      int32_t minimum_filter_strength, int32_t maximum_filter_strength);
   void spin();
   
 protected:
