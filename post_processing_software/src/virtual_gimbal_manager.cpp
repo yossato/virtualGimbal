@@ -412,36 +412,38 @@ void VirtualGimbalManager::setFilter(FilterPtr filter){
     filter_ = filter;
 }
 
+void VirtualGimbalManager::setMaximumGradient(double value){
+    maximum_gradient_ = value;
+}
 
-// Eigen::VectorXd VirtualGimbalManager::getFilterCoefficients(double zoom,
-//                                       RotationQuaternionPtr rotation_quaternion,
-//                                       VideoPtr video_param,
-//                                       KaiserWindowFilter &filter,
-//                                       int32_t minimum_filter_strength, int32_t maximum_filter_strength)
-// {
-//     double time = 0.0;
-//     Eigen::VectorXd filter_strength(filter.size());
-//     //Calcurate in all frame
-//     for (int frame = 0, e = filter_strength.rows(); frame < e; ++frame)
-//     {
-//         if (hasBlackSpace(time,zoom,rotation_quaternion, maximum_filter_strength, frame))
-//         {
-//             filter_strength[frame] = maximum_filter_strength;
-//         }
-//         else if (!hasBlackSpace(minimum_filter_strength, frame))
-//         {
-//             filter_strength[frame] = minimum_filter_strength;
-//         }
-//         else
-//         {
-//             filter_strength[frame] = bisectionMethod(frame, minimum_filter_strength, maximum_filter_strength);
-//         }
-//     }
-//     //    std::cout << filter_strength << std::endl;
-//     gradientLimit(filter_strength);
+Eigen::VectorXd VirtualGimbalManager::getFilterCoefficients(double zoom,
+                                      AngularVelocityPtr angular_velocity,
+                                      KaiserWindowFilter &filter,
+                                      int32_t minimum_filter_strength, int32_t maximum_filter_strength)
+{
+    double time = resampler_parameter_->start;
+    Eigen::VectorXd filter_strength(filter.size());
+    //Calcurate in all frame
+    for (int frame = 0, e = filter_strength.rows(); frame < e; ++frame)
+    {
+        if (hasBlackSpace(time,zoom,angular_velocity, video_param, filter(maximum_filter_strength)))
+        {
+            filter_strength[frame] = maximum_filter_strength;
+        }
+        else if (!hasBlackSpace(time,zoom,angular_velocity, video_param, filter(minimum_filter_strength)))
+        {
+            filter_strength[frame] = minimum_filter_strength;
+        }
+        else
+        {
+            filter_strength[frame] = bisectionMethod(time, zoom, angular_velocity, video_param, filter, minimum_filter_strength, maximum_filter_strength);
+        }
+    }
+    //    std::cout << filter_strength << std::endl;
+    gradientLimit(filter_strength,maximum_gradient_);
 
-//     return (filter_strength);
-// }
+    return (filter_strength);
+}
 
 void spin(){
     // OpenCLの準備

@@ -80,6 +80,11 @@ public:
   Eigen::Vector3d getAngularVelocityVector(int frame);
   Eigen::Vector3d getAngularVelocityVector(double frame);
   Eigen::Quaterniond getAngularVelocity(int frame);
+  Eigen::Quaterniond getCorrectionQuaternion(double time, const Eigen::VectorXd &filter_coeff);
+private:
+  // ResamplerParameter resampler_;
+  std::map<int, Eigen::MatrixXd> relative_angle_vectors;
+  const Eigen::MatrixXd &getRelativeAngle(int frame, int length);
 };
 
 using AngularVelocityPtr = std::shared_ptr<AngularVelocity>;
@@ -90,14 +95,13 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   RotationQuaternion(AngularVelocityPtr angular_velocity, ResamplerParameter &resampler);
   Eigen::Quaterniond getRotationQuaternion(double time);
-  Eigen::Quaterniond getCorrectionQuaternion(double time, const Eigen::VectorXd &filter_coeff);
+
 
 private:
   AngularVelocityPtr angular_velocity_;
   ResamplerParameter resampler_;
   std::map<int, Eigen::Quaterniond> angle_;
-  std::map<int, Eigen::MatrixXd> relative_angle_vectors;
-  const Eigen::MatrixXd &getRelativeAngle(int frame, int length);
+
 };
 
 using RotationQuaternionPtr = std::shared_ptr<RotationQuaternion>;

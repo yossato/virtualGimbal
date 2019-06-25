@@ -14,7 +14,7 @@ bool isGoodWarp(std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Arra
 std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> getSparseContour(VideoPtr video_info, int n);
 void getUndistortUnrollingContour(
     double time,
-    RotationQuaternionPtr rotation_quaternion,
+    AngularVelocityPtr angular_velocity,
     std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> &contour,
     double zoom,
     VideoPtr video_param,
@@ -23,16 +23,16 @@ void getUndistortUnrollingContour(
 
 bool hasBlackSpace(double time,
                    double zoom,
-                   RotationQuaternionPtr rotation_quaternion,
+                   AngularVelocityPtr angular_velocity,
                    VideoPtr video_param,
-                   FilterPtr filter);
+                   KaiserWindowFilter &filter);
 uint32_t bisectionMethod(double time,
                          double zoom,
-                         RotationQuaternionPtr rotation_quaternion,
+                         AngularVelocityPtr angular_velocity,
                          VideoPtr video_param,
                          KaiserWindowFilter &filter,
                          int32_t minimum_filter_strength,
                          int32_t maximum_filter_strength,
-                         int max_iteration, uint32_t eps);
+                         int max_iteration = 1000, uint32_t eps = 1);
 bool isGoodWarp(std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> &contour);
 #endif //__SO3FILTERS__H__

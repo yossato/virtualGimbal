@@ -115,6 +115,10 @@ Eigen::Quaterniond AngularVelocity::getAngularVelocity(int frame)
     return Vector2Quaternion<double>(getAngularVelocityVector(frame));
 }
 
+// void AngularVelocity::setResampler(ResamplerParameter &resampler){
+//     resampler_ = resampler;
+// }
+
 Rotation::~Rotation()
 {
 }
@@ -166,13 +170,13 @@ Eigen::Quaterniond RotationQuaternion::getRotationQuaternion(double time)
     return angle_[integer_frame].slerp(frame - integer_frame, angle_[integer_frame + 1]);
 }
 
-Eigen::Quaterniond RotationQuaternion::getCorrectionQuaternion(double time, const Eigen::VectorXd &filter_coeff)
+Eigen::Quaterniond AngularVelocity::getCorrectionQuaternion(double time, const Eigen::VectorXd &filter_coeff)
 {
     // Convert time to measured anguler velocity frame position
-    const double frame = (resampler_.start + time) * angular_velocity_->getFrequency();
+    const double frame = time * getInterval();
     int integer_frame = floor(frame);
 
-    if ((frame < 0) || (frame >= angular_velocity_->data.rows()))
+    if ((frame < 0) || (frame >= data.rows()))
     {
         std::cout << "Waring: Frame range is out of range." << std::endl;
         return Eigen::Quaterniond(1., 0., 0., 0.);
@@ -188,7 +192,7 @@ Eigen::Quaterniond RotationQuaternion::getCorrectionQuaternion(double time, cons
 
 }
 
-const Eigen::MatrixXd &RotationQuaternion::getRelativeAngle(int frame, int length)
+const Eigen::MatrixXd &AngularVelocity::getRelativeAngle(int frame, int length)
 {
     // Read the angle from a buffer if available.
     if (relative_angle_vectors.count(frame))
@@ -210,7 +214,7 @@ const Eigen::MatrixXd &RotationQuaternion::getRelativeAngle(int frame, int lengt
     int r = center + 1;
     for (int frame_position = frame + 1; length + frame - center > frame_position; ++r, ++frame_position)
     {
-        diff_rotation = diff_rotation * Vector2Quaternion<double>(angular_velocity_->getAngularVelocityVector(frame_position));
+        diff_rotation = diff_rotation * Vector2Quaternion<double>(getAngularVelocityVector(frame_position));
         rotation_vector.row(frame_position - frame + center) = Quaternion2Vector(diff_rotation);
     }
 
@@ -218,7 +222,7 @@ const Eigen::MatrixXd &RotationQuaternion::getRelativeAngle(int frame, int lengt
     diff_rotation = Eigen::Quaterniond(1., 0., 0., 0.);
     for (int frame_position = frame - 1; frame - center <= frame_position; --frame_position)
     {
-        diff_rotation = diff_rotation * Vector2Quaternion<double>(angular_velocity_->getAngularVelocityVector(frame_position));
+        diff_rotation = diff_rotation * Vector2Quaternion<double>(getAngularVelocityVector(frame_position));
         rotation_vector.row(frame_position - frame + center) = Quaternion2Vector(diff_rotation);
     }
     relative_angle_vectors[frame] = rotation_vector;

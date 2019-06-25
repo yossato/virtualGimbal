@@ -81,6 +81,7 @@ int main(int argc, char **argv)
     // manager.setTiming()
     auto fir_filter = std::make_shared<KaiserWindowFilter>(199,2);
     manager.setFilter(fir_filter);
+    manager.setMaximumGradient(0.5);
     // manager.getFilterCoefficients() //黒帯の出ないフィルタ係数を計算
     // manager.getFilteredRotation();
     // manager.spin()

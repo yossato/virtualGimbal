@@ -29,6 +29,7 @@
 #include "calcShift.hpp"
 #include "Eigen/Dense"
 #include "rotation_math.h"
+#include "SO3Filters.h"
 class VirtualGimbalManager
 {
 public:
@@ -55,14 +56,12 @@ public:
                                    const std::vector<cv::Mat> &rvecs, const std::vector<cv::Mat> &tvecs,
                                    const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs,
                                    std::vector<double> &residuals, bool fisheye = false);
-  Eigen::VectorXd getFilterCoefficients(double time,
-                                      double zoom,
-                                      RotationQuaternionPtr rotation_quaternion,
-                                      VideoPtr video_param,
+  Eigen::VectorXd getFilterCoefficients(double zoom,
+                                      AngularVelocityPtr angular_velocity,
                                       KaiserWindowFilter &filter,
                                       int32_t minimum_filter_strength, int32_t maximum_filter_strength);
   void spin();
-  
+  void setMaximumGradient(double value);
 protected:
   RotationPtr rotation;
   AngularVelocityPtr measured_angular_velocity;
@@ -74,7 +73,7 @@ protected:
 
   VideoPtr video_param;
   FilterPtr filter_;
-
+double maximum_gradient_;
   void rotateAngularVelocity(Eigen::MatrixXd &angular_velocity, const Eigen::Quaterniond &rotation)
   {
     Eigen::Quaterniond avq;

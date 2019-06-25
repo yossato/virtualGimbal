@@ -99,7 +99,7 @@ std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> getSparseC
  **/
 void getUndistortUnrollingContour(
     double time,
-    RotationQuaternionPtr rotation_quaternion,
+    AngularVelocityPtr angular_velocity,
     std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> &contour,
     double zoom,
     VideoPtr video_param,
@@ -128,7 +128,7 @@ void getUndistortUnrollingContour(
         //↓まちがってる。本来はフィルタされたカメラ姿勢とフィルタ後の姿勢の差分が必要。
         // R = (rotation_quaternion->getRotationQuaternion(time_in_row + time).conjugate() * rotation_quaternion->getRotationQuaternion(time)).matrix();
         //↓これでいい
-        R = rotation_quaternion->getCorrectionQuaternion(time_in_row, filter_coeffs).matrix();
+        R = angular_velocity->getCorrectionQuaternion(time_in_row, filter_coeffs).matrix();
         //↑
         x1 = (p - c) / f;
         double r = x1.matrix().norm();
@@ -150,18 +150,18 @@ void getUndistortUnrollingContour(
 
 bool hasBlackSpace(double time,
                    double zoom,
-                   RotationQuaternionPtr rotation_quaternion,
+                   AngularVelocityPtr angular_velocity,
                    VideoPtr video_param,
                    KaiserWindowFilter &filter)
 {
     std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> contour;
-    getUndistortUnrollingContour(time, rotation_quaternion, contour, zoom, video_param, filter.getFilterCoefficient());
+    getUndistortUnrollingContour(time, angular_velocity, contour, zoom, video_param, filter.getFilterCoefficient());
     return !isGoodWarp(contour);
 }
 
 uint32_t bisectionMethod(double time,
                          double zoom,
-                         RotationQuaternionPtr rotation_quaternion,
+                         AngularVelocityPtr angular_velocity,
                          VideoPtr video_param,
                          KaiserWindowFilter &filter,
                          int32_t minimum_filter_strength,
@@ -176,7 +176,7 @@ uint32_t bisectionMethod(double time,
     {
         m = (a + b) * 0.5;
 
-        if (hasBlackSpace(time, zoom, rotation_quaternion, video_param, filter(a)) ^ hasBlackSpace(time, zoom, rotation_quaternion, video_param, filter(m)))
+        if (hasBlackSpace(time, zoom, angular_velocity, video_param, filter(a)) ^ hasBlackSpace(time, zoom, angular_velocity, video_param, filter(m)))
         {
             b = m;
         }
