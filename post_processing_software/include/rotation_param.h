@@ -77,14 +77,14 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   AngularVelocity(double frequency);
   Eigen::VectorXd confidence;
-  Eigen::Vector3d getAngularVelocityVector(int frame);
+  Eigen::Vector3d getAngularVelocityVector(size_t frame);
   Eigen::Vector3d getAngularVelocityVector(double frame);
-  Eigen::Quaterniond getAngularVelocity(int frame);
+  Eigen::Quaterniond getAngularVelocity(size_t frame);
   Eigen::Quaterniond getCorrectionQuaternion(double time, const Eigen::VectorXd &filter_coeff);
 private:
   // ResamplerParameter resampler_;
   std::map<int, Eigen::MatrixXd> relative_angle_vectors;
-  const Eigen::MatrixXd &getRelativeAngle(int frame, int length);
+  const Eigen::MatrixXd &getRelativeAngle(size_t frame, int length);
 };
 
 using AngularVelocityPtr = std::shared_ptr<AngularVelocity>;

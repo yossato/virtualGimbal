@@ -417,26 +417,27 @@ void VirtualGimbalManager::setMaximumGradient(double value){
 }
 
 Eigen::VectorXd VirtualGimbalManager::getFilterCoefficients(double zoom,
-                                      AngularVelocityPtr angular_velocity,
                                       KaiserWindowFilter &filter,
                                       int32_t minimum_filter_strength, int32_t maximum_filter_strength)
 {
-    double time = resampler_parameter_->start;
+    
     Eigen::VectorXd filter_strength(filter.size());
     //Calcurate in all frame
     for (int frame = 0, e = filter_strength.rows(); frame < e; ++frame)
     {
-        if (hasBlackSpace(time,zoom,angular_velocity, video_param, filter(maximum_filter_strength)))
+        double time = resampler_parameter_->start + frame * video_param->getInterval();
+
+        if (hasBlackSpace(time,zoom,measured_angular_velocity, video_param, filter(maximum_filter_strength)))
         {
             filter_strength[frame] = maximum_filter_strength;
         }
-        else if (!hasBlackSpace(time,zoom,angular_velocity, video_param, filter(minimum_filter_strength)))
+        else if (!hasBlackSpace(time,zoom,measured_angular_velocity, video_param, filter(minimum_filter_strength)))
         {
             filter_strength[frame] = minimum_filter_strength;
         }
         else
         {
-            filter_strength[frame] = bisectionMethod(time, zoom, angular_velocity, video_param, filter, minimum_filter_strength, maximum_filter_strength);
+            filter_strength[frame] = bisectionMethod(time, zoom, measured_angular_velocity, video_param, filter, minimum_filter_strength, maximum_filter_strength);
         }
     }
     //    std::cout << filter_strength << std::endl;

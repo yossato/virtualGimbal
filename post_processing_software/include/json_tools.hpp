@@ -55,15 +55,15 @@ template <typename _Tp, typename _Alloc = std::allocator<_Tp>> int readAngularVe
     e.ParseStream(is);
     fclose(fp);
 
-    const rapidjson::Value& ff = e["frequency"];
-    assert(ff.IsDouble());
+    // const rapidjson::Value& ff = ;
+    assert(e["frequency"].IsDouble());
     const rapidjson::Value& angular_velocity_rad_per_sec_array = e["angular_velocity_rad_per_sec"];
     assert(angular_velocity_rad_per_sec_array.IsArray());
     assert(angular_velocity_rad_per_sec_array[0][0].IsDouble());
     _Tp val;
     int width = 3;
-    for(int a =0;a<angular_velocity_rad_per_sec_array.Size();++a){
-        for(int i=0;i<angular_velocity_rad_per_sec_array[a].Size();i+=width){
+    for(size_t a =0;a<angular_velocity_rad_per_sec_array.Size();++a){
+        for(size_t i=0;i<angular_velocity_rad_per_sec_array[a].Size();i+=width){
             for(int k=0;k<width;++k){
                 val[k]=angular_velocity_rad_per_sec_array[a][i+k].GetDouble();
             }

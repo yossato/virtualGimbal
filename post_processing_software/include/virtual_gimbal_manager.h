@@ -57,7 +57,6 @@ public:
                                    const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs,
                                    std::vector<double> &residuals, bool fisheye = false);
   Eigen::VectorXd getFilterCoefficients(double zoom,
-                                      AngularVelocityPtr angular_velocity,
                                       KaiserWindowFilter &filter,
                                       int32_t minimum_filter_strength, int32_t maximum_filter_strength);
   void spin();

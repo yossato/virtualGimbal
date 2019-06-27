@@ -21,10 +21,11 @@ int main(int argc, char **argv)
     char *lensName = NULL;
     char *jsonPass = NULL;
     bool debug_speedup = false;
+    double zoom = 1.0;
     int opt;
     //    Eigen::Quaterniond camera_rotation;
 
-    while ((opt = getopt(argc, argv, "j:i:c:l:d::")) != -1)
+    while ((opt = getopt(argc, argv, "j:i:c:l:d::z:")) != -1)
     {
         switch (opt)
         {
@@ -43,7 +44,9 @@ int main(int argc, char **argv)
         case 'd':
             debug_speedup = true;
             break;
-
+        case 'z':       //zoom ratio, dafault 1.0
+            zoom = std::stof(optarg);
+            break;
         default:
             //            printf(     "virtualGimbal\r\n"
             //                        "Hyper fast video stabilizer\r\n\r\n"
@@ -82,7 +85,11 @@ int main(int argc, char **argv)
     auto fir_filter = std::make_shared<KaiserWindowFilter>(199,2);
     manager.setFilter(fir_filter);
     manager.setMaximumGradient(0.5);
+    Eigen::VectorXd filter_coefficients = manager.getFilterCoefficients(zoom,*fir_filter,2,499);
     // manager.getFilterCoefficients() //黒帯の出ないフィルタ係数を計算
+#ifdef __DEBUG_ONLY
+    vgp::plot(filter_coefficients, "filter_coefficients", legends_angular_velocity);
+#endif
     // manager.getFilteredRotation();
     // manager.spin()
 

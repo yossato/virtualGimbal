@@ -84,9 +84,9 @@ AngularVelocity::AngularVelocity(double frequency)
     frequency_ = frequency;
 }
 
-Eigen::Vector3d AngularVelocity::getAngularVelocityVector(int frame)
+Eigen::Vector3d AngularVelocity::getAngularVelocityVector(size_t frame)
 {
-    if ((frame < 0) || (frame >= data.rows()))
+    if (frame >= (size_t)data.rows())
     {
         return Eigen::Vector3d(0., 0., 0.);
     }
@@ -110,7 +110,7 @@ Eigen::Vector3d AngularVelocity::getAngularVelocityVector(double frame)
     }
 }
 
-Eigen::Quaterniond AngularVelocity::getAngularVelocity(int frame)
+Eigen::Quaterniond AngularVelocity::getAngularVelocity(size_t frame)
 {
     return Vector2Quaternion<double>(getAngularVelocityVector(frame));
 }
@@ -173,8 +173,10 @@ Eigen::Quaterniond RotationQuaternion::getRotationQuaternion(double time)
 Eigen::Quaterniond AngularVelocity::getCorrectionQuaternion(double time, const Eigen::VectorXd &filter_coeff)
 {
     // Convert time to measured anguler velocity frame position
-    const double frame = time * getInterval();
-    int integer_frame = floor(frame);
+    const double frame = time * getFrequency();
+    assert((frame + 1.) < (double)std::numeric_limits<size_t>::max());
+    assert(frame > 0.);
+    size_t integer_frame = floor(frame);
 
     if ((frame < 0) || (frame >= data.rows()))
     {
@@ -187,12 +189,19 @@ Eigen::Quaterniond AngularVelocity::getCorrectionQuaternion(double time, const E
         double ratio = frame - floor(frame);
         Eigen::MatrixXd first  = getRelativeAngle(integer_frame,filter_coeff.rows());
         Eigen::MatrixXd second = getRelativeAngle(integer_frame+1,filter_coeff.rows());
+        // std::cout << "first:\r\n" << first << std::endl;
+        // std::cout << "second:\r\n" << second << std::endl;
+        std::cout << "filter_coeff\r\n" << filter_coeff << std::endl;
+        // std::cout << "first:\r\n" << first.transpose() * filter_coeff << std::endl;
+        // std::cout << "second:\r\n" << second.transpose() * filter_coeff << std::endl;
+        
+
         return Vector2Quaternion<double>(first.transpose() *  filter_coeff * (1.0 - ratio) + second.transpose() * filter_coeff * ratio).conjugate();
     }
 
 }
 
-const Eigen::MatrixXd &AngularVelocity::getRelativeAngle(int frame, int length)
+const Eigen::MatrixXd &AngularVelocity::getRelativeAngle(size_t frame, int length)
 {
     // Read the angle from a buffer if available.
     if (relative_angle_vectors.count(frame))
@@ -210,21 +219,22 @@ const Eigen::MatrixXd &AngularVelocity::getRelativeAngle(int frame, int length)
     // It is not available, create it.
     Eigen::Quaterniond diff_rotation(1., 0., 0., 0.);
     Eigen::MatrixXd rotation_vector = Eigen::MatrixXd::Zero(length, 3);
-    int center = length / 2;
-    int r = center + 1;
-    for (int frame_position = frame + 1; length + frame - center > frame_position; ++r, ++frame_position)
+    size_t center = length / 2;
+    size_t r = center + 1;
+    for (size_t frame_position = frame + 1; length + frame - center > frame_position; ++r, ++frame_position)
     {
-        diff_rotation = diff_rotation * Vector2Quaternion<double>(getAngularVelocityVector(frame_position));
+        diff_rotation = (diff_rotation * Vector2Quaternion<double>(getAngularVelocityVector(frame_position))).normalized();
         rotation_vector.row(frame_position - frame + center) = Quaternion2Vector(diff_rotation);
     }
 
     // r = center - 1;
     diff_rotation = Eigen::Quaterniond(1., 0., 0., 0.);
-    for (int frame_position = frame - 1; frame - center <= frame_position; --frame_position)
+    for (size_t frame_position = frame - 1; frame - center <= frame_position; --frame_position)
     {
-        diff_rotation = diff_rotation * Vector2Quaternion<double>(getAngularVelocityVector(frame_position));
+        diff_rotation = (diff_rotation * Vector2Quaternion<double>(getAngularVelocityVector(frame_position)).conjugate()).normalized();
         rotation_vector.row(frame_position - frame + center) = Quaternion2Vector(diff_rotation);
     }
+    // std::cout << "rotation_vector:\r\n" << rotation_vector << std::endl;
     relative_angle_vectors[frame] = rotation_vector;
     return relative_angle_vectors[frame];
 }
@@ -245,13 +255,16 @@ void KaiserWindowFilter::setFilterCoefficient(int32_t alpha){
     alpha_ = alpha;
     if(filter_coefficients_.count(alpha_)){ // Filter cofficient already exists.
         return;
+    }else{
+        filter_coefficients_[alpha_] = Eigen::VectorXd::Zero(filter_length_);
     }
    
-    int32_t L = filter_coefficients_[alpha].rows()/2;
+    int32_t L = filter_length_/2;
     for(int32_t n=-L,e=L;n<=e;++n){
         filter_coefficients_[alpha][n+L] = boost::math::cyl_bessel_i(0.0,alpha_*sqrt(1.0-pow((double)n/(double)L,2.0)))
                 /boost::math::cyl_bessel_i(0.0,alpha_);
     }
+    filter_coefficients_[alpha].array() /= filter_coefficients_[alpha].sum();
 }
 
 KaiserWindowFilter  &KaiserWindowFilter::operator()(int alpha){

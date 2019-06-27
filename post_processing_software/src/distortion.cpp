@@ -57,7 +57,7 @@ void calcInverseDistortCoeff(CameraInformation &camera_info){
 
     NumericalDiff<calc_invert_distortion_coeff> numDiff2(functor2);
     LevenbergMarquardt<NumericalDiff<calc_invert_distortion_coeff> > lm2(numDiff2);
-    int info = lm2.minimize(distortionCoeff);
+    /* int info = */lm2.minimize(distortionCoeff);
     printf("After:\t%f,%f,%f,%f\r\n",distortionCoeff[0],distortionCoeff[1],distortionCoeff[2],distortionCoeff[3]);
 
 //    matInvDistort = (cv::Mat_<double>(1, 4) << distortionCoeff[0],distortionCoeff[1],distortionCoeff[2],distortionCoeff[3]);

@@ -224,7 +224,7 @@ int main(int argc, char **argv)
     // lm.parameters.ftol *= 1000000000000000.0;
     // lm.parameters.xtol *= 1000000000000000.0;
     printf("ftol:%1.17f\nxtol:%1.17f\ngtol:%1.17f\n", lm.parameters.ftol, lm.parameters.xtol, lm.parameters.gtol);
-    int info = 4;
+    // int info = 4;
     // double initial_factor = 0.1;
     // while (info != Eigen::ComputationInfo::Success)
     // {

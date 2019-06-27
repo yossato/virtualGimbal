@@ -268,7 +268,7 @@ template <typename _Tp> struct calc_timing_from_image : Functor<double>
 struct calc_invert_distortion_coeff : Functor<double>
 {
 	calc_invert_distortion_coeff(int inputs, int values, std::vector<double> &undistortedPointsX, std::vector<double> &undistortedPointsY, std::vector<double> &refPointsX, std::vector<double> &refPointsY, Matrix3d &intrinsicCoeff)
-	: m_undistortedPointsX(undistortedPointsX),m_undistortedPointsY(undistortedPointsY), m_refPointsX(refPointsX), m_refPointsY(refPointsY), m_intrinsicCoeff(intrinsicCoeff), Functor(inputs, values) {}
+	: Functor(inputs, values), m_undistortedPointsX(undistortedPointsX),m_undistortedPointsY(undistortedPointsY), m_refPointsX(refPointsX), m_refPointsY(refPointsY), m_intrinsicCoeff(intrinsicCoeff)  {}
 	
 	std::vector<double> m_undistortedPointsX;
 	std::vector<double> m_undistortedPointsY;

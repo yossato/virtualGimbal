@@ -105,6 +105,9 @@ void getUndistortUnrollingContour(
     VideoPtr video_param,
     const Eigen::VectorXd &filter_coeffs)
 {
+
+    std::cout << "fc:" << filter_coeffs << std::endl;
+
     //手順
     //1.補正前画像を分割した時の分割点の座標(pixel)を計算
     //2.1の座標を入力として、各行毎のW(t1,t2)を計算
@@ -118,17 +121,19 @@ void getUndistortUnrollingContour(
     const double &ip1 = video_param->camera_info->inverse_p1_;
     const double &ip2 = video_param->camera_info->inverse_p2_;
 
-    contour = getSparseContour(video_param, 9);
+    contour.clear();
+    std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> src_contour = getSparseContour(video_param, 9);
     Eigen::MatrixXd R;
     Eigen::Array2d x1;
     Eigen::Vector3d x3, xyz;
-    for (auto &p : contour)
+    for (auto &p : src_contour)
     {
-        double time_in_row = line_delay * (p[1] - video_param->camera_info->height_ * 0.5);
+        double time_in_row = time + line_delay * (p[1] - video_param->camera_info->height_ * 0.5);
         //↓まちがってる。本来はフィルタされたカメラ姿勢とフィルタ後の姿勢の差分が必要。
         // R = (rotation_quaternion->getRotationQuaternion(time_in_row + time).conjugate() * rotation_quaternion->getRotationQuaternion(time)).matrix();
         //↓これでいい
         R = angular_velocity->getCorrectionQuaternion(time_in_row, filter_coeffs).matrix();
+        std::cout << "R:\r\n" << R << std::endl;
         //↑
         x1 = (p - c) / f;
         double r = x1.matrix().norm();
@@ -145,6 +150,10 @@ void getUndistortUnrollingContour(
         xyz = R * x3;
         x2 << xyz[0] / xyz[2], xyz[1] / xyz[2];
         contour.push_back(x2 * f * zoom + c);
+    }
+    std::cout << "contour:" << std::endl;
+    for(auto &el:contour){
+        std::cout << el.transpose() << std::endl;
     }
 }
 
@@ -172,7 +181,7 @@ uint32_t bisectionMethod(double time,
     int32_t b = maximum_filter_strength;
     int count = 0;
     int32_t m = 0;
-    while ((abs(a - b) > eps) && (count++ < max_iteration))
+    while (((uint32_t)abs(a - b) > eps) && (count++ < max_iteration))
     {
         m = (a + b) * 0.5;
 
