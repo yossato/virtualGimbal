@@ -191,7 +191,7 @@ Eigen::Quaterniond AngularVelocity::getCorrectionQuaternion(double time, const E
         Eigen::MatrixXd second = getRelativeAngle(integer_frame+1,filter_coeff.rows());
         // std::cout << "first:\r\n" << first << std::endl;
         // std::cout << "second:\r\n" << second << std::endl;
-        std::cout << "filter_coeff\r\n" << filter_coeff << std::endl;
+        // std::cout << "filter_coeff\r\n" << filter_coeff << std::endl;
         // std::cout << "first:\r\n" << first.transpose() * filter_coeff << std::endl;
         // std::cout << "second:\r\n" << second.transpose() * filter_coeff << std::endl;
         

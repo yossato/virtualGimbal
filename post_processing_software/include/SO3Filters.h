@@ -10,7 +10,7 @@
 // Eigen::MatrixXd getFilterCoefficients
 
 void gradientLimit(Eigen::VectorXd &input, double maximum_gradient_);
-bool isGoodWarp(std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> &contour);
+bool isGoodWarp(std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> &contour, VideoPtr video_param);
 std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> getSparseContour(VideoPtr video_info, int n);
 void getUndistortUnrollingContour(
     double time,
@@ -34,5 +34,5 @@ uint32_t bisectionMethod(double time,
                          int32_t minimum_filter_strength,
                          int32_t maximum_filter_strength,
                          int max_iteration = 1000, uint32_t eps = 1);
-bool isGoodWarp(std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> &contour);
+// bool isGoodWarp(std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> &contour);
 #endif //__SO3FILTERS__H__

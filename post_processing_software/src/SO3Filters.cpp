@@ -36,12 +36,17 @@ void gradientLimit(Eigen::VectorXd &input, double maximum_gradient_)
      * @brief ワープした時に欠けがないかチェックします
      * @retval false:欠けあり true:ワープが良好
      **/
-bool isGoodWarp(std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> &contour)
+bool isGoodWarp(std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> &contour, VideoPtr video_param)
 {
     for (const auto &p : contour)
     {
         // if ((abs(contour[i]) < 1.0) && (abs(contour[i + 1]) < 1.0))
-        if ((p.abs() < 1.0).all())
+        // std::cout << "p[0]:" << p[0] << std::endl;
+        // std::cout << "p[1]:" << p[1] << std::endl;
+        if ((0. < p[0]) 
+        && ( (video_param->camera_info->width_ - 1.) > p[0])
+        && (0. < p[1])
+        && ((video_param->camera_info->height_ - 1.) > p[1]))
         {
             return false;
         }
@@ -106,7 +111,7 @@ void getUndistortUnrollingContour(
     const Eigen::VectorXd &filter_coeffs)
 {
 
-    std::cout << "fc:" << filter_coeffs << std::endl;
+    // std::cout << "fc:" << filter_coeffs << std::endl;
 
     //手順
     //1.補正前画像を分割した時の分割点の座標(pixel)を計算
@@ -133,7 +138,7 @@ void getUndistortUnrollingContour(
         // R = (rotation_quaternion->getRotationQuaternion(time_in_row + time).conjugate() * rotation_quaternion->getRotationQuaternion(time)).matrix();
         //↓これでいい
         R = angular_velocity->getCorrectionQuaternion(time_in_row, filter_coeffs).matrix();
-        std::cout << "R:\r\n" << R << std::endl;
+        // std::cout << "R:\r\n" << R << std::endl;
         //↑
         x1 = (p - c) / f;
         double r = x1.matrix().norm();
@@ -151,10 +156,10 @@ void getUndistortUnrollingContour(
         x2 << xyz[0] / xyz[2], xyz[1] / xyz[2];
         contour.push_back(x2 * f * zoom + c);
     }
-    std::cout << "contour:" << std::endl;
-    for(auto &el:contour){
-        std::cout << el.transpose() << std::endl;
-    }
+    // std::cout << "contour:" << std::endl;
+    // for(auto &el:contour){
+    //     std::cout << el.transpose() << std::endl;
+    // }
 }
 
 bool hasBlackSpace(double time,
@@ -165,7 +170,7 @@ bool hasBlackSpace(double time,
 {
     std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> contour;
     getUndistortUnrollingContour(time, angular_velocity, contour, zoom, video_param, filter.getFilterCoefficient());
-    return !isGoodWarp(contour);
+    return !isGoodWarp(contour,video_param);
 }
 
 uint32_t bisectionMethod(double time,

@@ -69,10 +69,10 @@ int main(int argc, char **argv)
     }
     
     manager.setEstimatedAngularVelocity(estimated_angular_velocity, confidence);
-    std::cout << "estimated_angular_velocity:" << estimated_angular_velocity.transpose() << std::endl
-              << std::flush;
-    std::cout << "confidence:" << confidence.transpose() << std::endl
-              << std::flush;
+    // std::cout << "estimated_angular_velocity:" << estimated_angular_velocity.transpose() << std::endl
+    //           << std::flush;
+    // std::cout << "confidence:" << confidence.transpose() << std::endl
+    //           << std::flush;
               
 
     Eigen::MatrixXd correlation = manager.getCorrelationCoefficient();

@@ -58,7 +58,7 @@ public:
                                    std::vector<double> &residuals, bool fisheye = false);
   Eigen::VectorXd getFilterCoefficients(double zoom,
                                       KaiserWindowFilter &filter,
-                                      int32_t minimum_filter_strength, int32_t maximum_filter_strength);
+                                      int32_t strongest_filter_param, int32_t weakest_filter_param);
   void spin();
   void setMaximumGradient(double value);
 protected:

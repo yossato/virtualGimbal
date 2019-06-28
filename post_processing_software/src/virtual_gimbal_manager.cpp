@@ -418,7 +418,7 @@ void VirtualGimbalManager::setMaximumGradient(double value){
 
 Eigen::VectorXd VirtualGimbalManager::getFilterCoefficients(double zoom,
                                       KaiserWindowFilter &filter,
-                                      int32_t minimum_filter_strength, int32_t maximum_filter_strength)
+                                      int32_t strongest_filter_param, int32_t weakest_filter_param)
 {
     
     Eigen::VectorXd filter_strength(filter.size());
@@ -427,17 +427,20 @@ Eigen::VectorXd VirtualGimbalManager::getFilterCoefficients(double zoom,
     {
         double time = resampler_parameter_->start + frame * video_param->getInterval();
 
-        if (hasBlackSpace(time,zoom,measured_angular_velocity, video_param, filter(maximum_filter_strength)))
+
+        // フィルタが弱くて、簡単な条件で、黒帯が出るなら、しょうが無いからこれを採用
+        if (hasBlackSpace(time,zoom,measured_angular_velocity, video_param, filter(weakest_filter_param)))
         {
-            filter_strength[frame] = maximum_filter_strength;
+            filter_strength[frame] = weakest_filter_param;
         }
-        else if (!hasBlackSpace(time,zoom,measured_angular_velocity, video_param, filter(minimum_filter_strength)))
+        // フィルタが強くて、すごく安定化された条件で、難しい条件で、黒帯が出ないなら、喜んでこれを採用
+        else if (!hasBlackSpace(time,zoom,measured_angular_velocity, video_param, filter(strongest_filter_param)))
         {
-            filter_strength[frame] = minimum_filter_strength;
+            filter_strength[frame] = strongest_filter_param;
         }
         else
         {
-            filter_strength[frame] = bisectionMethod(time, zoom, measured_angular_velocity, video_param, filter, minimum_filter_strength, maximum_filter_strength);
+            filter_strength[frame] = bisectionMethod(time, zoom, measured_angular_velocity, video_param, filter, strongest_filter_param, weakest_filter_param);
         }
     }
     //    std::cout << filter_strength << std::endl;
