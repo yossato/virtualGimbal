@@ -421,7 +421,7 @@ Eigen::VectorXd VirtualGimbalManager::getFilterCoefficients(double zoom,
                                       int32_t strongest_filter_param, int32_t weakest_filter_param)
 {
     
-    Eigen::VectorXd filter_strength(filter.size());
+    Eigen::VectorXd filter_strength(video_param->video_frames);
     //Calcurate in all frame
     for (int frame = 0, e = filter_strength.rows(); frame < e; ++frame)
     {
