@@ -6,7 +6,6 @@
 #include "json_tools.hpp"
 #include "rotation_param.h"
 #include "distortion.h"
-
 #define __DEBUG_ONLY
 #ifdef __DEBUG_ONLY
 #include "visualizer.h"
@@ -20,12 +19,14 @@ int main(int argc, char **argv)
     char *cameraName = NULL;
     char *lensName = NULL;
     char *jsonPass = NULL;
+    const char *kernel_name = "stabilizer_kernel.cl";
+    const char *kernel_function = "stabilizer_function";
     bool debug_speedup = false;
     double zoom = 1.0;
     int opt;
     //    Eigen::Quaterniond camera_rotation;
 
-    while ((opt = getopt(argc, argv, "j:i:c:l:d::z:")) != -1)
+    while ((opt = getopt(argc, argv, "j:i:c:l:d::z:k::f::")) != -1)
     {
         switch (opt)
         {
@@ -47,6 +48,12 @@ int main(int argc, char **argv)
         case 'z':       //zoom ratio, dafault 1.0
             zoom = std::stof(optarg);
             break;
+        case 'k':
+            kernel_name = optarg;
+            break;
+        case 'f':
+            kernel_function = optarg;
+            break;
         default:
             //            printf(     "virtualGimbal\r\n"
             //                        "Hyper fast video stabilizer\r\n\r\n"
@@ -57,6 +64,11 @@ int main(int argc, char **argv)
     }
 
     VirtualGimbalManager manager;
+    manager.kernel_function = kernel_function;
+    manager.kernel_name = kernel_name;
+
+    // TODO:Check kernel availability here. Build once.
+
     shared_ptr<CameraInformation> camera_info(new CameraInformationJsonParser(cameraName, lensName, VirtualGimbalManager::getVideoSize(videoPass).c_str()));
     calcInverseDistortCoeff(*camera_info);
     manager.setMeasuredAngularVelocity(jsonPass, camera_info);
@@ -86,12 +98,15 @@ int main(int argc, char **argv)
     manager.setFilter(fir_filter);
     manager.setMaximumGradient(0.5);
     Eigen::VectorXd filter_coefficients = manager.getFilterCoefficients(zoom,*fir_filter,2,499);
-    // manager.getFilterCoefficients() //黒帯の出ないフィルタ係数を計算
 #ifdef __DEBUG_ONLY
     vgp::plot(filter_coefficients, "filter_coefficients", legends_angular_velocity);
 #endif
     // manager.getFilteredRotation();
     // manager.spin()
+
+
+
+    manager.spin();
 
     return 0;
 }

@@ -449,8 +449,17 @@ Eigen::VectorXd VirtualGimbalManager::getFilterCoefficients(double zoom,
     return (filter_strength);
 }
 
-void spin(){
-    // OpenCLの準備
+void VirtualGimbalManager::spin(){
+    // Prepare OpenCL
+    cv::ocl::Context context;
+    cv::ocl::Kernel kernel;
+    cv::Mat mat_src = cv::Mat::zeros(video_param->camera_info->height_,video_param->camera_info->width_,CV_8UC4);// TODO:冗長なので書き換える
+    cv::UMat umat_src = mat_src.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+    cv::UMat umat_dst(mat_src.size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+    cv::String build_opt = cv::format("-D dstT=%s", cv::ocl::typeToStr(umat_dst.depth())); // "-D dstT=float"
+    initializeCL(context);
+
+    getKernel(kernel_name,kernel_function,kernel,context,build_opt);
     // 動画を開く
     // 全フレームについて繰り返し
     // 1フレーム読みだす
