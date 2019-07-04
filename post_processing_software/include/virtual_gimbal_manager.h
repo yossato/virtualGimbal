@@ -60,12 +60,12 @@ public:
   Eigen::VectorXd getFilterCoefficients(double zoom,
                                       KaiserWindowFilter &filter,
                                       int32_t strongest_filter_param, int32_t weakest_filter_param);
-  void spin();
+  void spin(Eigen::VectorXd &filter_coefficients);
   void setMaximumGradient(double value);
-
   const char *kernel_name = "stabilizer_kernel.cl";
   const char *kernel_function = "stabilizer_function";
-
+  std::shared_ptr<cv::VideoCapture> getVideoCapture();
+  
 protected:
   RotationPtr rotation;
   AngularVelocityPtr measured_angular_velocity;

@@ -449,7 +449,12 @@ Eigen::VectorXd VirtualGimbalManager::getFilterCoefficients(double zoom,
     return (filter_strength);
 }
 
-void VirtualGimbalManager::spin(){
+std::shared_ptr<cv::VideoCapture> VirtualGimbalManager::getVideoCapture(){
+    return std::make_shared<cv::VideoCapture>(video_param->video_file_name);
+}
+  
+
+void VirtualGimbalManager::spin(Eigen::VectorXd &filter_coefficients){
     // Prepare OpenCL
     cv::ocl::Context context;
     cv::ocl::Kernel kernel;
@@ -460,11 +465,42 @@ void VirtualGimbalManager::spin(){
     initializeCL(context);
 
     getKernel(kernel_name,kernel_function,kernel,context,build_opt);
-    // 動画を開く
-    // 全フレームについて繰り返し
-    // 1フレーム読みだす
-    // 1フレーム中の各行のline delayを考慮した回転行列Rを計算、floatに詰める
-    // カーネルにRをわたす
+    // Open Video
+    auto capture = getVideoCapture();
+
+    // Stabilize every frames
+    std::vector<float> R(video_param->camera_info->height_ * 9); // lines * 3x3 matrix 
+    for(int frame=0;frame<=video_param->video_frames;++frame){
+        // Read a frame image
+        (*capture) >> umat_src;
+        
+        // Calculate Rotation matrix for every line
+        for(int row=0,e=video_param->camera_info->height_;row<e;++row){
+            double time_in_row = video_param->getInterval() * frame 
+            + resampler_parameter_->start 
+            + video_param->camera_info->line_delay_ * (row - video_param->camera_info->height_ * 0.5);
+            Eigen::Map<Eigen::Matrix<float,3,3,Eigen::RowMajor>>(&R[row*9],3,3) = measured_angular_velocity->getCorrectionQuaternion(time_in_row,filter_coefficients).matrix().cast<float>();
+        }
+
+
+    }
+    
+    // Send arguments to kernel
+    cv::ocl::Image2D image(umat_src);
+    cv::ocl::Image2D image_dst(umat_dst,false,true);
+    kernel.args(image, image_dst,shift_x,shift_y);
+
+    size_t globalThreads[3] = {mat_src.cols, mat_src.rows, 1};
+    //size_t localThreads[3] = { 16, 16, 1 };
+    bool success = kernel.run(3, globalThreads, NULL, true);
+    if (!success)
+    {
+        cout << "Failed running the kernel..." << endl;
+        return 1;
+    }
+
+    
+
     // kernel.run
     // 画面に表示
 }

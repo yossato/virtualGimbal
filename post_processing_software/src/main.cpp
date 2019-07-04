@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 
 
 
-    manager.spin();
+    manager.spin(filter_coefficients);
 
     return 0;
 }
