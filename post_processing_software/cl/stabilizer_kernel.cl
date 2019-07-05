@@ -78,31 +78,39 @@ float2 warp_zoom(
 
 float2 warp_undistort(
    float2 p,                              // UV coordinate position in a image.
-   __global float* rotation_matrix,       // Rotation Matrix in each rows.
+   __constant float* rotation_matrix,       // Rotation Matrix in each rows.
    float k1, float k2,float p1, float p2, // Distortion parameters.
    float2 f, float2 c
 ){
    float2 x1 = (p-c)/f;// (float2)((u - cx)/fx,(v-cy)/fy,1.f);
-   float r = length(x1); // TODO : replace length to dot. It should be faster than length
-   float2 x2 = x1*(1.f + k1*r*r+k2*r*r*r*r);
-   x2[0] += 2.f*p1*x1[0]*x1[1]+p2*(r*r+2.f*x1[0]*x1[0]);
-   x2[1] += p1*(r*r+2.f*x1[1]*x1[1])+2.f*p2*x1[0]*x1[1];
+// p1 = 0;
+// p2 = 0;
+// k1 = 0;
+// k2 = 0;
+   // float r = length(x1); // TODO : replace length to dot. It should be faster than length
+   float r2 = dot(x1,x1);
+   float2 x2 = x1*(1.f + k1*r2+k2*r2*r2);
+   x2[0] += 2.f*p1*x1[0]*x1[1]+p2*(r2+2.f*x1[0]*x1[0]);
+   x2[1] += p1*(r2+2.f*x1[1]*x1[1])+2.f*p2*x1[0]*x1[1];
    
    //折り返しの話はとりあえずスキップ
 
-   float3 x3 = (float3)(x2[0],x2[1],1.f);
-   __global float* R = rotation_matrix + convert_int( 9*p[1]);
+   float3 x3 = (float3)(x2[0],x2[1],1.f); //NG 
+   // float3 x3 = (float3)(x1[0],x1[1],1.f); //OK
+
+   __constant float* R = rotation_matrix + convert_int( 9*p[1]);
    float3 XYZ = (float3)(R[0] * x3.x + R[1] * x3.y + R[2] * x3.z,
                          R[3] * x3.x + R[4] * x3.y + R[5] * x3.z,
                          R[6] * x3.x + R[7] * x3.y + R[8] * x3.z);
    x2 = XYZ.xy / XYZ.z;
    
    return x2*f+c;
+   // return p + x2 - x2;
 }
 
 __kernel void stabilizer_function(
    __read_only image2d_t input, __write_only image2d_t output,
-   __global float* rotation_matrix,       // Rotation Matrix in each rows.
+   __constant float* rotation_matrix,       // Rotation Matrix in each rows.
    float k1, float k2,float p1, float p2, // Distortion parameters.
    float fx, float fy, float cx, float cy
 )

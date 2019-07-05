@@ -485,8 +485,17 @@ void VirtualGimbalManager::spin(Eigen::VectorXd &filter_coefficients)
         for (int row = 0, e = video_param->camera_info->height_; row < e; ++row)
         {
             double time_in_row = video_param->getInterval() * frame + resampler_parameter_->start + video_param->camera_info->line_delay_ * (row - video_param->camera_info->height_ * 0.5);
-            Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>>(&R[row * 9], 3, 3) = measured_angular_velocity->getCorrectionQuaternion(time_in_row, filter_coefficients).matrix().cast<float>();
+            // Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>>(&R[row * 9], 3, 3) = measured_angular_velocity->getCorrectionQuaternion(time_in_row, filter_coefficients).matrix().cast<float>();
+            Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>>(&R[row * 9], 3, 3) = Eigen::MatrixXf::Identity(3,3);
         }
+
+        std::cout << "R:" << std::endl;
+        for(int row = 0;row < video_param->camera_info->height_;++row){
+            std::cout << "row:" << row << std::endl;
+            std::cout << Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>>(&R[row * 9], 3, 3) << std::endl;
+        }
+        std::cout << flush;
+
         // Send arguments to kernel
         cv::ocl::Image2D image(umat_src);
         cv::ocl::Image2D image_dst(umat_dst, false, true);
@@ -513,10 +522,16 @@ void VirtualGimbalManager::spin(Eigen::VectorXd &filter_coefficients)
         }
 
         // 画面に表示
-        cv::Mat mat_dst = umat_dst.getMat(cv::ACCESS_READ);
+        // cv::Mat mat_dst = umat_dst.getMat(cv::ACCESS_READ);
         // cv::Mat mat_dst;
         // (*capture) >> mat_dst;
-        cv::imshow("Result",mat_dst);
+        // cv::imshow("Result",mat_dst);
+        // cv::imshow("Result",umat_dst);
+        cv::UMat small,small_src;
+        cv::resize(umat_dst,small,cv::Size(),0.5,0.5);
+        cv::resize(umat_src,small_src,cv::Size(),0.5,0.5);
+        cv::imshow("Result",small);
+        cv::imshow("Original",small_src);
         char key = cv::waitKey(1);
         if ('q' == key){
             break;
