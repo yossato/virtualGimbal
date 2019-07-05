@@ -83,9 +83,12 @@ void VirtualGimbalManager::setMeasuredAngularVelocity(const char *file_name, Cam
  **/
 void VirtualGimbalManager::setEstimatedAngularVelocity(Eigen::MatrixXd &angular_velocity, Eigen::VectorXd confidence, double frequency)
 {
-    if(0.0 == frequency){
+    if (0.0 == frequency)
+    {
         estimated_angular_velocity = std::make_shared<AngularVelocity>(video_param->getFrequency());
-    }else{
+    }
+    else
+    {
         estimated_angular_velocity = std::make_shared<AngularVelocity>(frequency);
     }
     estimated_angular_velocity->confidence = confidence;
@@ -289,7 +292,7 @@ Eigen::MatrixXd VirtualGimbalManager::estimateAngularVelocity(const std::map<int
 /**
  * @brief Estimate angular velocity from video optical flow
  **/
-void VirtualGimbalManager::estimateAngularVelocity(Eigen::MatrixXd &estimated_angular_velocity, Eigen::MatrixXd &confidence,int frames)
+void VirtualGimbalManager::estimateAngularVelocity(Eigen::MatrixXd &estimated_angular_velocity, Eigen::MatrixXd &confidence, int frames)
 {
     Eigen::MatrixXd optical_shift;
     // std::vector<cv::Vec3d> optical_shift = CalcShiftFromVideo(video_param->video_file_name.c_str(),frames);
@@ -301,8 +304,8 @@ void VirtualGimbalManager::estimateAngularVelocity(Eigen::MatrixXd &estimated_an
     //     -optical_shift[i][2];
     // }
     // return estimated*video_param->getFrequency();
-    CalcShiftFromVideo(video_param->video_file_name.c_str(),frames,optical_shift,confidence);
-    estimated_angular_velocity.resize(optical_shift.rows(),optical_shift.cols());
+    CalcShiftFromVideo(video_param->video_file_name.c_str(), frames, optical_shift, confidence);
+    estimated_angular_velocity.resize(optical_shift.rows(), optical_shift.cols());
     estimated_angular_velocity.col(0) =
         optical_shift.col(1).unaryExpr([&](double a) { return video_param->getFrequency() * atan(a / (video_param->camera_info->fy_)); });
     estimated_angular_velocity.col(1) =
@@ -408,33 +411,34 @@ double VirtualGimbalManager::computeReprojectionErrors(const vector<vector<Point
     return std::sqrt(totalErr / totalPoints);
 }
 
-void VirtualGimbalManager::setFilter(FilterPtr filter){
+void VirtualGimbalManager::setFilter(FilterPtr filter)
+{
     filter_ = filter;
 }
 
-void VirtualGimbalManager::setMaximumGradient(double value){
+void VirtualGimbalManager::setMaximumGradient(double value)
+{
     maximum_gradient_ = value;
 }
 
 Eigen::VectorXd VirtualGimbalManager::getFilterCoefficients(double zoom,
-                                      KaiserWindowFilter &filter,
-                                      int32_t strongest_filter_param, int32_t weakest_filter_param)
+                                                            KaiserWindowFilter &filter,
+                                                            int32_t strongest_filter_param, int32_t weakest_filter_param)
 {
-    
+
     Eigen::VectorXd filter_strength(video_param->video_frames);
     //Calcurate in all frame
     for (int frame = 0, e = filter_strength.rows(); frame < e; ++frame)
     {
         double time = resampler_parameter_->start + frame * video_param->getInterval();
 
-
         // フィルタが弱くて、簡単な条件で、黒帯が出るなら、しょうが無いからこれを採用
-        if (hasBlackSpace(time,zoom,measured_angular_velocity, video_param, filter(weakest_filter_param)))
+        if (hasBlackSpace(time, zoom, measured_angular_velocity, video_param, filter(weakest_filter_param)))
         {
             filter_strength[frame] = weakest_filter_param;
         }
         // フィルタが強くて、すごく安定化された条件で、難しい条件で、黒帯が出ないなら、喜んでこれを採用
-        else if (!hasBlackSpace(time,zoom,measured_angular_velocity, video_param, filter(strongest_filter_param)))
+        else if (!hasBlackSpace(time, zoom, measured_angular_velocity, video_param, filter(strongest_filter_param)))
         {
             filter_strength[frame] = strongest_filter_param;
         }
@@ -444,63 +448,70 @@ Eigen::VectorXd VirtualGimbalManager::getFilterCoefficients(double zoom,
         }
     }
     //    std::cout << filter_strength << std::endl;
-    gradientLimit(filter_strength,maximum_gradient_);
+    gradientLimit(filter_strength, maximum_gradient_);
 
     return (filter_strength);
 }
 
-std::shared_ptr<cv::VideoCapture> VirtualGimbalManager::getVideoCapture(){
+std::shared_ptr<cv::VideoCapture> VirtualGimbalManager::getVideoCapture()
+{
     return std::make_shared<cv::VideoCapture>(video_param->video_file_name);
 }
-  
 
-void VirtualGimbalManager::spin(Eigen::VectorXd &filter_coefficients){
+void VirtualGimbalManager::spin(Eigen::VectorXd &filter_coefficients)
+{
     // Prepare OpenCL
     cv::ocl::Context context;
     cv::ocl::Kernel kernel;
-    cv::Mat mat_src = cv::Mat::zeros(video_param->camera_info->height_,video_param->camera_info->width_,CV_8UC4);// TODO:冗長なので書き換える
+    cv::ocl::
+    cv::Mat mat_src = cv::Mat::zeros(video_param->camera_info->height_, video_param->camera_info->width_, CV_8UC4); // TODO:冗長なので書き換える
     cv::UMat umat_src = mat_src.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
     cv::UMat umat_dst(mat_src.size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
     cv::String build_opt = cv::format("-D dstT=%s", cv::ocl::typeToStr(umat_dst.depth())); // "-D dstT=float"
     initializeCL(context);
 
-    getKernel(kernel_name,kernel_function,kernel,context,build_opt);
+    getKernel(kernel_name, kernel_function, kernel, context, build_opt);
     // Open Video
     auto capture = getVideoCapture();
 
     // Stabilize every frames
-    std::vector<float> R(video_param->camera_info->height_ * 9); // lines * 3x3 matrix 
-    for(int frame=0;frame<=video_param->video_frames;++frame){
+    std::vector<float> R(video_param->camera_info->height_ * 9); // lines * 3x3 matrix
+    for (int frame = 0; frame <= video_param->video_frames; ++frame)
+    {
         // Read a frame image
         (*capture) >> umat_src;
+        cv::cvtColor(umat_src, umat_src, cv::COLOR_BGR2BGRA);
         
         // Calculate Rotation matrix for every line
-        for(int row=0,e=video_param->camera_info->height_;row<e;++row){
-            double time_in_row = video_param->getInterval() * frame 
-            + resampler_parameter_->start 
-            + video_param->camera_info->line_delay_ * (row - video_param->camera_info->height_ * 0.5);
-            Eigen::Map<Eigen::Matrix<float,3,3,Eigen::RowMajor>>(&R[row*9],3,3) = measured_angular_velocity->getCorrectionQuaternion(time_in_row,filter_coefficients).matrix().cast<float>();
+        for (int row = 0, e = video_param->camera_info->height_; row < e; ++row)
+        {
+            double time_in_row = video_param->getInterval() * frame + resampler_parameter_->start + video_param->camera_info->line_delay_ * (row - video_param->camera_info->height_ * 0.5);
+            Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>>(&R[row * 9], 3, 3) = measured_angular_velocity->getCorrectionQuaternion(time_in_row, filter_coefficients).matrix().cast<float>();
+        }
+        // Send arguments to kernel
+        cv::ocl::Image2D image(umat_src);
+        cv::ocl::Image2D image_dst(umat_dst, false, true);
+        kernel.args(image, image_dst, cv::ocl::KernelArg::PTR_ONLY((float *)R.data()),
+                    video_param->camera_info->inverse_k1_,
+                    video_param->camera_info->inverse_k2_,
+                    video_param->camera_info->inverse_p1_,
+                    video_param->camera_info->inverse_p2_,
+                    video_param->camera_info->fx_,
+                    video_param->camera_info->fy_,
+                    video_param->camera_info->cx_,
+                    video_param->camera_info->cy_);
+
+        size_t globalThreads[3] = {(size_t)mat_src.cols, (size_t)mat_src.rows, 1};
+        //size_t localThreads[3] = { 16, 16, 1 };
+        bool success = kernel.run(3, globalThreads, NULL, true);
+        if (!success)
+        {
+            cout << "Failed running the kernel..." << endl
+                 << flush;
+            throw "Failed running the kernel...";
         }
 
-
+        // kernel.run
+        // 画面に表示
     }
-    
-    // Send arguments to kernel
-    cv::ocl::Image2D image(umat_src);
-    cv::ocl::Image2D image_dst(umat_dst,false,true);
-    kernel.args(image, image_dst,shift_x,shift_y);
-
-    size_t globalThreads[3] = {mat_src.cols, mat_src.rows, 1};
-    //size_t localThreads[3] = { 16, 16, 1 };
-    bool success = kernel.run(3, globalThreads, NULL, true);
-    if (!success)
-    {
-        cout << "Failed running the kernel..." << endl;
-        return 1;
-    }
-
-    
-
-    // kernel.run
-    // 画面に表示
 }

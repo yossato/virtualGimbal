@@ -33,8 +33,10 @@ void initializeCL(cv::ocl::Context &context)
 
 void getKernel(const char *kernel_code_file_name, const char *kernel_function, cv::ocl::Kernel &kernel, cv::ocl::Context &context, std::string &build_opt)
 {
+
+
     std::ifstream ifs(kernel_code_file_name);
-    assert(!ifs.fail() && "kernel code file not found.");
+
         
     std::string kernelSource((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     cv::ocl::ProgramSource programSource(kernelSource);

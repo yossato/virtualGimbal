@@ -9,6 +9,9 @@
 #define __DEBUG_ONLY
 #ifdef __DEBUG_ONLY
 #include "visualizer.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #endif
 using namespace std;
 
@@ -19,7 +22,7 @@ int main(int argc, char **argv)
     char *cameraName = NULL;
     char *lensName = NULL;
     char *jsonPass = NULL;
-    const char *kernel_name = "stabilizer_kernel.cl";
+    const char *kernel_name = "cl/stabilizer_kernel.cl";
     const char *kernel_function = "stabilizer_function";
     bool debug_speedup = false;
     double zoom = 1.0;
@@ -62,6 +65,14 @@ int main(int argc, char **argv)
             return 1;
         }
     }
+
+    struct stat st;
+    if (stat(kernel_name, &st))
+    {
+        std::cerr << "Kernel file not found." << std::endl << std::flush;
+        throw "Kernel file not found.";
+    }
+
 
     VirtualGimbalManager manager;
     manager.kernel_function = kernel_function;

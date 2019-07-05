@@ -80,12 +80,11 @@ float2 warp_undistort(
    float2 p,                              // UV coordinate position in a image.
    __global float* rotation_matrix,       // Rotation Matrix in each rows.
    float k1, float k2,float p1, float p2, // Distortion parameters.
-   // float fx, float fy, float cx, float cy
    float2 f, float2 c
 ){
 
    float2 x1 = (p-c)/f;// (float2)((u - cx)/fx,(v-cy)/fy,1.f);
-   float r = length(x1);
+   float r = length(x1); // TODO : replace length to dot. It should be faster than length
    float2 x2 = x1*(1.f + k1*r*r+k2*r*r*r*r);
    x2[0] += 2.f*p1*x1[0]*x1[1]+p2*(r*r+2.f*x1[0]*x1[0]);
    x2[1] += p1*(r*r+2.f*x1[1]*x1[1])+2.f*p2*x1[0]*x1[1];
@@ -105,56 +104,48 @@ float2 warp_undistort(
 
 __kernel void stabilizer_function(
    __read_only image2d_t input, __write_only image2d_t output,
-   float shift_x,
-   float shift_y
+   __global float* rotation_matrix,       // Rotation Matrix in each rows.
+   float k1, float k2,float p1, float p2, // Distortion parameters.
+   float fx, float fy, float cx, float cy
 )
 {
    int2 size = get_image_dim(input);
-   float2 p_warp = (float2)(shift_x,shift_y);
-   float2 p_cam = convert_float2((int2)(get_global_id(0),get_global_id(1)));
-   // float2 p0 = warp(p_cam,(float2)(0,0)-p_warp);
-   // float2 p1 = warp(p_cam,(float2)(1,0)-p_warp);
-   // float2 p2 = warp(p_cam,(float2)(1,1)-p_warp);
-   // float2 p3 = warp(p_cam,(float2)(0,1)-p_warp);
-   
-   float2 zoom_ratio = (float2)(2.0f,2.0f);
-   float2 p0_ = p_cam+(float2)(0,0);
-   float2 p1_ = p_cam+(float2)(1,0);
-   float2 p2_ = p_cam+(float2)(1,1);
-   float2 p3_ = p_cam+(float2)(0,1);
-   float2 p0 = warp_zoom(p0_,zoom_ratio);
-   float2 p1 = warp_zoom(p1_,zoom_ratio);
-   float2 p2 = warp_zoom(p2_,zoom_ratio);
-   float2 p3 = warp_zoom(p3_,zoom_ratio);
+   float2 uv = convert_float2((int2)(get_global_id(0),get_global_id(1)));
+   float2 f = (float2)(fx,fy);
+   float2 c = (float2)(cx,cy);
+
+   float2 uv0_ = uv;
+   float2 uv1_ = uv + (float2)(1,0);
+   float2 uv2_ = uv + (float2)(1,1);
+   float2 uv3_ = uv + (float2)(0,1);
+   float2 uv0 = warp_undistort(uv0_, rotation_matrix, k1, k2, p1, p2, f, c);
+   float2 uv1 = warp_undistort(uv1_, rotation_matrix, k1, k2, p1, p2, f, c);
+   float2 uv2 = warp_undistort(uv2_, rotation_matrix, k1, k2, p1, p2, f, c);
+   float2 uv3 = warp_undistort(uv3_, rotation_matrix, k1, k2, p1, p2, f, c);
    
 
-   int2 pMin = convert_int2(round(min(min(p0,p1),min(p2,p3))));
-   int2 pMax = convert_int2(round(max(max(p0,p1),max(p2,p3))));
-   for(int v= pMin[1];v<pMax[1];++v){
-      for(int u=pMin[0];u<pMax[0];++u){
-         int2 pt = (int2)(u,v);
-         if(any(convert_int2(pt) >= size)) continue;
-         if(any(convert_int2(pt) < 0)) continue;
+   int2 uvMin = convert_int2(round(min(min(uv0,uv1),min(uv2,uv3))));
+   int2 uvMax = convert_int2(round(max(max(uv0,uv1),max(uv2,uv3))));
+   for(int v= uvMin[1];v<uvMax[1];++v){
+      for(int u=uvMin[0];u<uvMax[0];++u){
+         int2 uvt = (int2)(u,v);
+         if(any(convert_int2(uvt) >= size)) continue;
+         if(any(convert_int2(uvt) < 0)) continue;
          
 
          float2 uw_cam;
-         if(point_in_triangle(convert_float2(pt),p0,p1,p3)){
-            float3 ratio = baryventrid_coordinate(convert_float2(pt),p0,p1,p3);
-            uw_cam = p0_*ratio[0]+p1_*ratio[1]+p3_*ratio[2];
-         }else if(point_in_triangle(convert_float2(pt),p1,p2,p3)){
-            float3 ratio = baryventrid_coordinate(convert_float2(pt),p1,p2,p3);
-            uw_cam = p1_*ratio[0]+p2_*ratio[1]+p3_*ratio[2];
+         if(point_in_triangle(convert_float2(uvt),uv0,uv1,uv3)){
+            float3 ratio = baryventrid_coordinate(convert_float2(uvt),uv0,uv1,uv3);
+            uw_cam = uv0_*ratio[0]+uv1_*ratio[1]+uv3_*ratio[2];
+         }else if(point_in_triangle(convert_float2(uvt),uv1,uv2,uv3)){
+            float3 ratio = baryventrid_coordinate(convert_float2(uvt),uv1,uv2,uv3);
+            uw_cam = uv1_*ratio[0]+uv2_*ratio[1]+uv3_*ratio[2];
          }else{
             continue;
          }
          uint4 pixel = read_imageui(input, samplerLN, uw_cam);
-         write_imageui(output, pt, pixel);
+         write_imageui(output, uvt, pixel);
       }
    }
-   // int2 size = get_image_dim(input);
-   // if(all(convert_int2(p_cam) < size)){
-   //    uint4 pixel = read_imageui(input, samplerLN, p0);
-   //    write_imageui(output, convert_int2(p_cam), pixel);
-   // }
 }
 
