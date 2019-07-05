@@ -6,11 +6,12 @@
 #include "json_tools.hpp"
 #include "rotation_param.h"
 #include "distortion.h"
-#define __DEBUG_ONLY
-#ifdef __DEBUG_ONLY
-#include "visualizer.h"
 #include <sys/types.h>
 #include <sys/stat.h>
+
+// #define __DEBUG_ONLY
+#ifdef __DEBUG_ONLY
+#include "visualizer.h"
 
 #endif
 using namespace std;

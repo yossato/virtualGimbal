@@ -463,7 +463,6 @@ void VirtualGimbalManager::spin(Eigen::VectorXd &filter_coefficients)
     // Prepare OpenCL
     cv::ocl::Context context;
     cv::ocl::Kernel kernel;
-    cv::ocl::
     cv::Mat mat_src = cv::Mat::zeros(video_param->camera_info->height_, video_param->camera_info->width_, CV_8UC4); // TODO:冗長なので書き換える
     cv::UMat umat_src = mat_src.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
     cv::UMat umat_dst(mat_src.size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
@@ -491,15 +490,17 @@ void VirtualGimbalManager::spin(Eigen::VectorXd &filter_coefficients)
         // Send arguments to kernel
         cv::ocl::Image2D image(umat_src);
         cv::ocl::Image2D image_dst(umat_dst, false, true);
-        kernel.args(image, image_dst, cv::ocl::KernelArg::PTR_ONLY((float *)R.data()),
-                    video_param->camera_info->inverse_k1_,
-                    video_param->camera_info->inverse_k2_,
-                    video_param->camera_info->inverse_p1_,
-                    video_param->camera_info->inverse_p2_,
-                    video_param->camera_info->fx_,
-                    video_param->camera_info->fy_,
-                    video_param->camera_info->cx_,
-                    video_param->camera_info->cy_);
+        cv::Mat mat_R = cv::Mat(R.size(),1,CV_32F,R.data());
+        cv::UMat umat_R = mat_R.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+        kernel.args(image, image_dst, cv::ocl::KernelArg::ReadOnlyNoSize(umat_R),
+                    (float)video_param->camera_info->inverse_k1_,
+                    (float)video_param->camera_info->inverse_k2_,
+                    (float)video_param->camera_info->inverse_p1_,
+                    (float)video_param->camera_info->inverse_p2_,
+                    (float)video_param->camera_info->fx_,
+                    (float)video_param->camera_info->fy_,
+                    (float)video_param->camera_info->cx_,
+                    (float)video_param->camera_info->cy_);
 
         size_t globalThreads[3] = {(size_t)mat_src.cols, (size_t)mat_src.rows, 1};
         //size_t localThreads[3] = { 16, 16, 1 };
@@ -511,7 +512,15 @@ void VirtualGimbalManager::spin(Eigen::VectorXd &filter_coefficients)
             throw "Failed running the kernel...";
         }
 
-        // kernel.run
         // 画面に表示
+        cv::Mat mat_dst = umat_dst.getMat(cv::ACCESS_READ);
+        // cv::Mat mat_dst;
+        // (*capture) >> mat_dst;
+        cv::imshow("Result",mat_dst);
+        char key = cv::waitKey(1);
+        if ('q' == key){
+            break;
+        }
     }
+    cv::destroyAllWindows();
 }

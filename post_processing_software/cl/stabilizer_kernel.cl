@@ -82,7 +82,6 @@ float2 warp_undistort(
    float k1, float k2,float p1, float p2, // Distortion parameters.
    float2 f, float2 c
 ){
-
    float2 x1 = (p-c)/f;// (float2)((u - cx)/fx,(v-cy)/fy,1.f);
    float r = length(x1); // TODO : replace length to dot. It should be faster than length
    float2 x2 = x1*(1.f + k1*r*r+k2*r*r*r*r);
@@ -99,7 +98,6 @@ float2 warp_undistort(
    x2 = XYZ.xy / XYZ.z;
    
    return x2*f+c;
-
 }
 
 __kernel void stabilizer_function(
@@ -118,14 +116,20 @@ __kernel void stabilizer_function(
    float2 uv1_ = uv + (float2)(1,0);
    float2 uv2_ = uv + (float2)(1,1);
    float2 uv3_ = uv + (float2)(0,1);
+   // float2 uv0 = warp_zoom(uv0_,(float2)(2.0f,2.0f));//warp_undistort(uv0_, rotation_matrix, k1, k2, p1, p2, f, c);
+   // float2 uv1 = warp_zoom(uv1_,(float2)(2.0f,2.0f));//warp_undistort(uv1_, rotation_matrix, k1, k2, p1, p2, f, c);
+   // float2 uv2 = warp_zoom(uv2_,(float2)(2.0f,2.0f));//warp_undistort(uv2_, rotation_matrix, k1, k2, p1, p2, f, c);
+   // float2 uv3 = warp_zoom(uv3_,(float2)(2.0f,2.0f));//warp_undistort(uv3_, rotation_matrix, k1, k2, p1, p2, f, c);
    float2 uv0 = warp_undistort(uv0_, rotation_matrix, k1, k2, p1, p2, f, c);
    float2 uv1 = warp_undistort(uv1_, rotation_matrix, k1, k2, p1, p2, f, c);
    float2 uv2 = warp_undistort(uv2_, rotation_matrix, k1, k2, p1, p2, f, c);
    float2 uv3 = warp_undistort(uv3_, rotation_matrix, k1, k2, p1, p2, f, c);
-   
 
    int2 uvMin = convert_int2(round(min(min(uv0,uv1),min(uv2,uv3))));
    int2 uvMax = convert_int2(round(max(max(uv0,uv1),max(uv2,uv3))));
+
+
+
    for(int v= uvMin[1];v<uvMax[1];++v){
       for(int u=uvMin[0];u<uvMax[0];++u){
          int2 uvt = (int2)(u,v);
@@ -147,5 +151,7 @@ __kernel void stabilizer_function(
          write_imageui(output, uvt, pixel);
       }
    }
+   // uint4 pixel = (uint4)(0,0,0,0);
+   // write_imageui(output, (int2)(get_global_id(0),get_global_id(1)),pixel);
 }
 
