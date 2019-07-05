@@ -3,7 +3,26 @@
 
 #include "Eigen/Dense"
 #define EPS_Q 1E-4
-/**
+    
+    template <typename T_num>
+    Eigen::Vector3d Quaternion2Vector(Eigen::Quaternion<T_num> q, Eigen::Vector3d prev){
+        double denom = sqrt(1-q.w()*q.w());
+        if(denom==0.0){//まったく回転しない時は０割になるので、場合分けする
+            return Eigen::Vector3d(0,0,0);//return zero vector
+        }
+        double theta_2 = atan2(denom,q.w());
+        double prev_theta_2 = prev.norm()/2;
+        double diff = theta_2 - prev_theta_2;
+        theta_2 -= 2.0*M_PI*(double)(static_cast<int>(diff/(2.0*M_PI)));//マイナスの符号に注意
+        //~ printf("Theta_2:%4.3f sc:%d\n",theta_2,static_cast<int>(diff/(2.0*M_PI)));
+        if(static_cast<int>(diff/(2.0*M_PI))!=0){
+            printf("\n###########Unwrapping %d\n",static_cast<int>(diff/(2.0*M_PI)));
+        }
+
+        return  Eigen::Vector3d(q.x(),q.y(),q.z())*2.0*theta_2/denom;
+    }
+    
+    /**
      * @param 回転を表すクォータニオンをシングルローテーションをあらわすベクトルへ変換
      **/
     template <typename T_num>

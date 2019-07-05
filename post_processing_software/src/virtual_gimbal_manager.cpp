@@ -458,7 +458,7 @@ std::shared_ptr<cv::VideoCapture> VirtualGimbalManager::getVideoCapture()
     return std::make_shared<cv::VideoCapture>(video_param->video_file_name);
 }
 
-void VirtualGimbalManager::spin(Eigen::VectorXd &filter_coefficients)
+void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::VectorXd &filter_strength)
 {
     // Prepare OpenCL
     cv::ocl::Context context;
@@ -475,6 +475,14 @@ void VirtualGimbalManager::spin(Eigen::VectorXd &filter_coefficients)
 
     // Stabilize every frames
     std::vector<float> R(video_param->camera_info->height_ * 9); // lines * 3x3 matrix
+    float ik1 = video_param->camera_info->inverse_k1_;
+        float ik2 = video_param->camera_info->inverse_k2_;
+        float ip1 = video_param->camera_info->inverse_p1_;
+        float ip2 = video_param->camera_info->inverse_p2_;
+        float fx = video_param->camera_info->fx_;
+        float fy = video_param->camera_info->fy_;
+        float cx = video_param->camera_info->cx_;
+        float cy = video_param->camera_info->cy_;
     for (int frame = 0; frame <= video_param->video_frames; ++frame)
     {
         // Read a frame image
@@ -485,8 +493,12 @@ void VirtualGimbalManager::spin(Eigen::VectorXd &filter_coefficients)
         for (int row = 0, e = video_param->camera_info->height_; row < e; ++row)
         {
             double time_in_row = video_param->getInterval() * frame + resampler_parameter_->start + video_param->camera_info->line_delay_ * (row - video_param->camera_info->height_ * 0.5);
-            // Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>>(&R[row * 9], 3, 3) = measured_angular_velocity->getCorrectionQuaternion(time_in_row, filter_coefficients).matrix().cast<float>();
-            Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>>(&R[row * 9], 3, 3) = Eigen::MatrixXf::Identity(3,3);
+            // std::cout << "time_in_row:" <<  std::setprecision(10) << time_in_row << " row:" << row << std::endl; 
+            // std::cout << measured_angular_velocity->getCorrectionQuaternion(time_in_row, filter(filter_strength(row)).getFilterCoefficient()).coeffs() << std::endl;
+            
+            Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>>(&R[row * 9], 3, 3) = measured_angular_velocity->getCorrectionQuaternion(time_in_row, filter(filter_strength(row)).getFilterCoefficient()).matrix().cast<float>();
+            // std::cout << Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>>(&R[row * 9], 3, 3) << std::endl;
+            // Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>>(&R[row * 9], 3, 3) = Eigen::MatrixXf::Identity(3,3);
         }
 
         std::cout << "R:" << std::endl;
@@ -501,15 +513,16 @@ void VirtualGimbalManager::spin(Eigen::VectorXd &filter_coefficients)
         cv::ocl::Image2D image_dst(umat_dst, false, true);
         cv::Mat mat_R = cv::Mat(R.size(),1,CV_32F,R.data());
         cv::UMat umat_R = mat_R.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+        
         kernel.args(image, image_dst, cv::ocl::KernelArg::ReadOnlyNoSize(umat_R),
-                    (float)video_param->camera_info->inverse_k1_,
-                    (float)video_param->camera_info->inverse_k2_,
-                    (float)video_param->camera_info->inverse_p1_,
-                    (float)video_param->camera_info->inverse_p2_,
-                    (float)video_param->camera_info->fx_,
-                    (float)video_param->camera_info->fy_,
-                    (float)video_param->camera_info->cx_,
-                    (float)video_param->camera_info->cy_);
+        ik1,
+        ik2,
+        ip1,
+        ip2,
+        fx,
+        fy,
+        cx,
+        cy);
 
         size_t globalThreads[3] = {(size_t)mat_src.cols, (size_t)mat_src.rows, 1};
         //size_t localThreads[3] = { 16, 16, 1 };

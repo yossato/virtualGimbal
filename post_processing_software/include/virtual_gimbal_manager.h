@@ -60,7 +60,7 @@ public:
   Eigen::VectorXd getFilterCoefficients(double zoom,
                                       KaiserWindowFilter &filter,
                                       int32_t strongest_filter_param, int32_t weakest_filter_param);
-  void spin(Eigen::VectorXd &filter_coefficients);
+  void spin(double zoom, KaiserWindowFilter &filter,Eigen::VectorXd &filter_strength);
   void setMaximumGradient(double value);
   const char *kernel_name = "stabilizer_kernel.cl";
   const char *kernel_function = "stabilizer_function";

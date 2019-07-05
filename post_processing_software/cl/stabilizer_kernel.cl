@@ -1,4 +1,7 @@
 __constant sampler_t samplerLN = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP_TO_EDGE | CLK_FILTER_LINEAR;
+
+#pragma OPENCL EXTENSION cl_khr_fp64
+
 __kernel void color_shift(
    const image2d_t src,
    float shift_x,
@@ -77,34 +80,45 @@ float2 warp_zoom(
 }
 
 float2 warp_undistort(
-   float2 p,                              // UV coordinate position in a image.
+   float2 p_half,                              // UV coordinate position in a image.
    __constant float* rotation_matrix,       // Rotation Matrix in each rows.
-   float k1, float k2,float p1, float p2, // Distortion parameters.
-   float2 f, float2 c
+   float k1_half, float k2_half,float p1_half, float p2_half, // Distortion parameters.
+   float2 f_half, float2 c_half
 ){
-   float2 x1 = (p-c)/f;// (float2)((u - cx)/fx,(v-cy)/fy,1.f);
-// p1 = 0;
-// p2 = 0;
-// k1 = 0;
-// k2 = 0;
+   //OK
+   /** double2 pp = convert_double2(p);
+   double2 cc = (double2)(c[0],c[1]);
+   double2 ff = (double2)(f[0],f[1]);
+   double2 value = ((pp-cc)/ff*ff+cc);
+   return (float2)(value[0],value[1]);**/
+   double2 p = convert_double2(p_half);
+   double k1 = convert_double(k1_half);
+   double k2 = convert_double(k2_half);
+   double p1 = convert_double(p1_half);
+   double p2 = convert_double(p2_half);
+   double2 f = convert_double2(f_half);
+   double2 c = convert_double2(c_half);
+
+   double2 x1 = (p-c)/f;// (float2)((u - cx)/fx,(v-cy)/fy,1.f);
    // float r = length(x1); // TODO : replace length to dot. It should be faster than length
-   float r2 = dot(x1,x1);
-   float2 x2 = x1*(1.f + k1*r2+k2*r2*r2);
-   x2[0] += 2.f*p1*x1[0]*x1[1]+p2*(r2+2.f*x1[0]*x1[0]);
-   x2[1] += p1*(r2+2.f*x1[1]*x1[1])+2.f*p2*x1[0]*x1[1];
+   double r2 = dot(x1,x1);
+   double2 x2 = x1;
+   // double2 x2 = x1*(1.0 + k1*r2+k2*r2*r2);
+   // x2[0] += 2.0*p1*x1[0]*x1[1]+p2*(r2+2.0*x1[0]*x1[0]);
+   // x2[1] += p1*(r2+2.0*x1[1]*x1[1])+2.0*p2*x1[0]*x1[1];
    
    //折り返しの話はとりあえずスキップ
 
-   float3 x3 = (float3)(x2[0],x2[1],1.f); //NG 
-   // float3 x3 = (float3)(x1[0],x1[1],1.f); //OK
+   double3 x3 = (double3)(x2[0],x2[1],1.f); //NG 
+   // double3 x3 = (double3)(x1[0],x1[1],1.f); //OK
 
    __constant float* R = rotation_matrix + convert_int( 9*p[1]);
-   float3 XYZ = (float3)(R[0] * x3.x + R[1] * x3.y + R[2] * x3.z,
-                         R[3] * x3.x + R[4] * x3.y + R[5] * x3.z,
-                         R[6] * x3.x + R[7] * x3.y + R[8] * x3.z);
+   double3 XYZ = (double3)(convert_double(R[0]) * x3.x + convert_double(R[1]) * x3.y + convert_double(R[2]) * x3.z,
+                         convert_double(R[3]) * x3.x + convert_double(R[4]) * x3.y + convert_double(R[5]) * x3.z,
+                         convert_double(R[6]) * x3.x + convert_double(R[7]) * x3.y + convert_double(R[8]) * x3.z);
    x2 = XYZ.xy / XYZ.z;
    
-   return x2*f+c;
+   return convert_float2(x2*f+c);
    // return p + x2 - x2;
 }
 
@@ -136,29 +150,30 @@ __kernel void stabilizer_function(
    int2 uvMin = convert_int2(round(min(min(uv0,uv1),min(uv2,uv3))));
    int2 uvMax = convert_int2(round(max(max(uv0,uv1),max(uv2,uv3))));
 
+   uint4 pixel = read_imageui(input, samplerLN, uv0);
+   write_imageui(output, convert_int2(uv),pixel);
 
-
-   for(int v= uvMin[1];v<uvMax[1];++v){
-      for(int u=uvMin[0];u<uvMax[0];++u){
-         int2 uvt = (int2)(u,v);
-         if(any(convert_int2(uvt) >= size)) continue;
-         if(any(convert_int2(uvt) < 0)) continue;
+   // for(int v= uvMin[1];v<uvMax[1];++v){
+   //    for(int u=uvMin[0];u<uvMax[0];++u){
+   //       int2 uvt = (int2)(u,v);
+   //       if(any(uvt >= size)) continue;
+   //       if(any(uvt < 0)) continue;
          
 
-         float2 uw_cam;
-         if(point_in_triangle(convert_float2(uvt),uv0,uv1,uv3)){
-            float3 ratio = baryventrid_coordinate(convert_float2(uvt),uv0,uv1,uv3);
-            uw_cam = uv0_*ratio[0]+uv1_*ratio[1]+uv3_*ratio[2];
-         }else if(point_in_triangle(convert_float2(uvt),uv1,uv2,uv3)){
-            float3 ratio = baryventrid_coordinate(convert_float2(uvt),uv1,uv2,uv3);
-            uw_cam = uv1_*ratio[0]+uv2_*ratio[1]+uv3_*ratio[2];
-         }else{
-            continue;
-         }
-         uint4 pixel = read_imageui(input, samplerLN, uw_cam);
-         write_imageui(output, uvt, pixel);
-      }
-   }
+   //       float2 uw_cam;
+   //       if(point_in_triangle(convert_float2(uvt),uv0,uv1,uv3)){
+   //          float3 ratio = baryventrid_coordinate(convert_float2(uvt),uv0,uv1,uv3);
+   //          uw_cam = uv0_*ratio[0]+uv1_*ratio[1]+uv3_*ratio[2];
+   //       }else if(point_in_triangle(convert_float2(uvt),uv1,uv2,uv3)){
+   //          float3 ratio = baryventrid_coordinate(convert_float2(uvt),uv1,uv2,uv3);
+   //          uw_cam = uv1_*ratio[0]+uv2_*ratio[1]+uv3_*ratio[2];
+   //       }else{
+   //          continue;
+   //       }
+   //       uint4 pixel = read_imageui(input, samplerLN, uw_cam);
+   //       write_imageui(output, uvt, pixel);
+   //    }
+   // }
    // uint4 pixel = (uint4)(0,0,0,0);
    // write_imageui(output, (int2)(get_global_id(0),get_global_id(1)),pixel);
 }

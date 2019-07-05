@@ -118,7 +118,7 @@ int main(int argc, char **argv)
 
 
 
-    manager.spin(filter_coefficients);
+    manager.spin(zoom,*fir_filter,filter_coefficients);
 
     return 0;
 }
