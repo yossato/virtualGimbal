@@ -501,12 +501,12 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
             // Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>>(&R[row * 9], 3, 3) = Eigen::MatrixXf::Identity(3,3);
         }
 
-        std::cout << "R:" << std::endl;
-        for(int row = 0;row < video_param->camera_info->height_;++row){
-            std::cout << "row:" << row << std::endl;
-            std::cout << Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>>(&R[row * 9], 3, 3) << std::endl;
-        }
-        std::cout << flush;
+        // std::cout << "R:" << std::endl;
+        // for(int row = 0;row < video_param->camera_info->height_;++row){
+        //     std::cout << "row:" << row << std::endl;
+        //     std::cout << Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>>(&R[row * 9], 3, 3) << std::endl;
+        // }
+        // std::cout << flush;
 
         // Send arguments to kernel
         cv::ocl::Image2D image(umat_src);
@@ -543,12 +543,20 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
         cv::UMat small,small_src;
         cv::resize(umat_dst,small,cv::Size(),0.5,0.5);
         cv::resize(umat_src,small_src,cv::Size(),0.5,0.5);
-        cv::imshow("Result",small);
         cv::imshow("Original",small_src);
+        cv::imshow("Result",small);
         char key = cv::waitKey(1);
         if ('q' == key){
             break;
+        }else if('s' == key){
+            sleep(1);
+            key = cv::waitKey(0);
+            if('q' == key){
+                cv::destroyAllWindows();
+                return;
+            }
         }
     }
     cv::destroyAllWindows();
+    return;
 }

@@ -1,6 +1,7 @@
+#pragma OPENCL EXTENSION cl_khr_fp64: enable
 __constant sampler_t samplerLN = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP_TO_EDGE | CLK_FILTER_LINEAR;
 
-#pragma OPENCL EXTENSION cl_khr_fp64
+
 
 __kernel void color_shift(
    const image2d_t src,
@@ -100,35 +101,33 @@ float2 warp_undistort(
    double2 c = convert_double2(c_half);
 
    double2 x1 = (p-c)/f;// (float2)((u - cx)/fx,(v-cy)/fy,1.f);
-   // float r = length(x1); // TODO : replace length to dot. It should be faster than length
    double r2 = dot(x1,x1);
-   double2 x2 = x1;
-   // double2 x2 = x1*(1.0 + k1*r2+k2*r2*r2);
-   // x2[0] += 2.0*p1*x1[0]*x1[1]+p2*(r2+2.0*x1[0]*x1[0]);
-   // x2[1] += p1*(r2+2.0*x1[1]*x1[1])+2.0*p2*x1[0]*x1[1];
-   
+   double2 x2 = x1*(1.0 + k1*r2+k2*r2*r2);
+   x2 += (double2)(2.0*p1*x1[0]*x1[1]+p2*(r2+2.0*x1[0]*x1[0]), p1*(r2+2.0*x1[1]*x1[1])+2.0*p2*x1[0]*x1[1]);
    //折り返しの話はとりあえずスキップ
 
-   double3 x3 = (double3)(x2[0],x2[1],1.f); //NG 
-   // double3 x3 = (double3)(x1[0],x1[1],1.f); //OK
+   double3 x3 = (double3)(x2[0],x2[1],1.0); //NG 
 
    __constant float* R = rotation_matrix + convert_int( 9*p[1]);
    double3 XYZ = (double3)(convert_double(R[0]) * x3.x + convert_double(R[1]) * x3.y + convert_double(R[2]) * x3.z,
                          convert_double(R[3]) * x3.x + convert_double(R[4]) * x3.y + convert_double(R[5]) * x3.z,
                          convert_double(R[6]) * x3.x + convert_double(R[7]) * x3.y + convert_double(R[8]) * x3.z);
    x2 = XYZ.xy / XYZ.z;
-   
-   return convert_float2(x2*f+c);
-   // return p + x2 - x2;
+  return convert_float2(x2*f+c);
 }
 
 __kernel void stabilizer_function(
    __read_only image2d_t input, __write_only image2d_t output,
    __constant float* rotation_matrix,       // Rotation Matrix in each rows.
+   int src_step, int src_offset,
    float k1, float k2,float p1, float p2, // Distortion parameters.
    float fx, float fy, float cx, float cy
 )
 {
+
+   if(0 == get_global_id(0) && 0 == get_global_id(1)){
+      printf("k1:%f k2:%f p1:%f p2:%f fx:%f fy:%f cx:%f cy:%f\n",k1,k2,p1,p2,fx,fy,cx,fy);
+   }
    int2 size = get_image_dim(input);
    float2 uv = convert_float2((int2)(get_global_id(0),get_global_id(1)));
    float2 f = (float2)(fx,fy);
