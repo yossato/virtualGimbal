@@ -81,39 +81,27 @@ float2 warp_zoom(
 }
 
 float2 warp_undistort(
-   float2 p_half,                              // UV coordinate position in a image.
+   float2 p,                              // UV coordinate position in a image.
    __constant float* rotation_matrix,       // Rotation Matrix in each rows.
-   float k1_half, float k2_half,float p1_half, float p2_half, // Distortion parameters.
-   float2 f_half, float2 c_half
+   float k1, float k2,float p1, float p2, // Distortion parameters.
+   float2 f, float2 c
 ){
-   //OK
-   /** double2 pp = convert_double2(p);
-   double2 cc = (double2)(c[0],c[1]);
-   double2 ff = (double2)(f[0],f[1]);
-   double2 value = ((pp-cc)/ff*ff+cc);
-   return (float2)(value[0],value[1]);**/
-   double2 p = convert_double2(p_half);
-   double k1 = convert_double(k1_half);
-   double k2 = convert_double(k2_half);
-   double p1 = convert_double(p1_half);
-   double p2 = convert_double(p2_half);
-   double2 f = convert_double2(f_half);
-   double2 c = convert_double2(c_half);
-
-   double2 x1 = (p-c)/f;// (float2)((u - cx)/fx,(v-cy)/fy,1.f);
-   double r2 = dot(x1,x1);
-   double2 x2 = x1*(1.0 + k1*r2+k2*r2*r2);
-   x2 += (double2)(2.0*p1*x1[0]*x1[1]+p2*(r2+2.0*x1[0]*x1[0]), p1*(r2+2.0*x1[1]*x1[1])+2.0*p2*x1[0]*x1[1]);
+   float2 x1 = (p-c)/f;// (float2)((u - cx)/fx,(v-cy)/fy,1.f);
+   float r2 = dot(x1,x1);
+   float2 x2 = x1*(1.f + k1*r2+k2*r2*r2);
+   x2 += (float2)(2.f*p1*x1[0]*x1[1]+p2*(r2+2.f*x1[0]*x1[0]), p1*(r2+2.f*x1[1]*x1[1])+2.f*p2*x1[0]*x1[1]);
    //折り返しの話はとりあえずスキップ
 
-   double3 x3 = (double3)(x2[0],x2[1],1.0); //NG 
-
+   float3 x3 = (float3)(x2[0],x2[1],1.0);
    __constant float* R = rotation_matrix + convert_int( 9*p[1]);
-   double3 XYZ = (double3)(convert_double(R[0]) * x3.x + convert_double(R[1]) * x3.y + convert_double(R[2]) * x3.z,
-                         convert_double(R[3]) * x3.x + convert_double(R[4]) * x3.y + convert_double(R[5]) * x3.z,
-                         convert_double(R[6]) * x3.x + convert_double(R[7]) * x3.y + convert_double(R[8]) * x3.z);
+   float3 XYZ = (float3)(R[0] * x3.x + R[1] * x3.y + R[2] * x3.z,
+                         R[3] * x3.x + R[4] * x3.y + R[5] * x3.z,
+                         R[6] * x3.x + R[7] * x3.y + R[8] * x3.z);
+   // float3 XYZ = (float3)(0.99922 * x3.x -0.00527565 * x3.y + 0.0391454 * x3.z,
+   //                       0.00500257 * x3.x + 0.999963 * x3.y + 0.00707079 * x3.z,
+   //                       -0.0391812 * x3.x  -0.00686944 * x3.y + 0.999209 * x3.z);
    x2 = XYZ.xy / XYZ.z;
-  return convert_float2(x2*f+c);
+  return x2*f+c;
 }
 
 __kernel void stabilizer_function(
@@ -124,10 +112,6 @@ __kernel void stabilizer_function(
    float fx, float fy, float cx, float cy
 )
 {
-
-   if(0 == get_global_id(0) && 0 == get_global_id(1)){
-      printf("k1:%f k2:%f p1:%f p2:%f fx:%f fy:%f cx:%f cy:%f\n",k1,k2,p1,p2,fx,fy,cx,fy);
-   }
    int2 size = get_image_dim(input);
    float2 uv = convert_float2((int2)(get_global_id(0),get_global_id(1)));
    float2 f = (float2)(fx,fy);
@@ -146,32 +130,39 @@ __kernel void stabilizer_function(
    float2 uv2 = warp_undistort(uv2_, rotation_matrix, k1, k2, p1, p2, f, c);
    float2 uv3 = warp_undistort(uv3_, rotation_matrix, k1, k2, p1, p2, f, c);
 
-   int2 uvMin = convert_int2(round(min(min(uv0,uv1),min(uv2,uv3))));
-   int2 uvMax = convert_int2(round(max(max(uv0,uv1),max(uv2,uv3))));
+   
+   int2 uvMin = convert_int2(floor(min(min(uv0,uv1),min(uv2,uv3))));
+   int2 uvMax = convert_int2(ceil(max(max(uv0,uv1),max(uv2,uv3))));
 
-   uint4 pixel = read_imageui(input, samplerLN, uv0);
-   write_imageui(output, convert_int2(uv),pixel);
+   // uint4 pixel = read_imageui(input, samplerLN, uv1_);
+   // write_imageui(output, convert_int2(uv),pixel);
 
-   // for(int v= uvMin[1];v<uvMax[1];++v){
-   //    for(int u=uvMin[0];u<uvMax[0];++u){
-   //       int2 uvt = (int2)(u,v);
-   //       if(any(uvt >= size)) continue;
-   //       if(any(uvt < 0)) continue;
+   // int wrote = 0;
+   for(int v= uvMin[1];v<=uvMax[1];++v){
+      for(int u=uvMin[0];u<=uvMax[0];++u){
+         int2 uvt = (int2)(u,v);
+         if(any(uvt >= size)) continue;
+         if(any(uvt < 0)) continue;
          
 
-   //       float2 uw_cam;
-   //       if(point_in_triangle(convert_float2(uvt),uv0,uv1,uv3)){
-   //          float3 ratio = baryventrid_coordinate(convert_float2(uvt),uv0,uv1,uv3);
-   //          uw_cam = uv0_*ratio[0]+uv1_*ratio[1]+uv3_*ratio[2];
-   //       }else if(point_in_triangle(convert_float2(uvt),uv1,uv2,uv3)){
-   //          float3 ratio = baryventrid_coordinate(convert_float2(uvt),uv1,uv2,uv3);
-   //          uw_cam = uv1_*ratio[0]+uv2_*ratio[1]+uv3_*ratio[2];
-   //       }else{
-   //          continue;
-   //       }
-   //       uint4 pixel = read_imageui(input, samplerLN, uw_cam);
-   //       write_imageui(output, uvt, pixel);
-   //    }
+         float2 uw_cam;
+         if(point_in_triangle(convert_float2(uvt),uv0,uv1,uv3)){
+            float3 ratio = baryventrid_coordinate(convert_float2(uvt),uv0,uv1,uv3);
+            uw_cam = uv0_*ratio[0]+uv1_*ratio[1]+uv3_*ratio[2];
+         }else if(point_in_triangle(convert_float2(uvt),uv1,uv2,uv3)){
+            float3 ratio = baryventrid_coordinate(convert_float2(uvt),uv1,uv2,uv3);
+            uw_cam = uv1_*ratio[0]+uv2_*ratio[1]+uv3_*ratio[2];
+         }else{
+            continue;
+         }
+         uint4 pixel = read_imageui(input, samplerLN, uw_cam);
+         write_imageui(output, uvt, pixel);
+         // wrote = 1;
+      }
+   }
+   // if(wrote == 0 && get_global_id(1) > 1000 && get_global_id(0) > 100){
+   //    printf("uv,%u,%u\nuv0,%f,%f\nuv1,%f,%f\nuv2,%f,%f\nuv3,%f,%f\nuvMin,%d,%d\nuvMax,%d,%d\n",get_global_id(0),get_global_id(1),uv0.x,uv0.y,uv1.x,uv1.y,uv2.x,uv2.y,uv3.x,uv3.y
+   //    ,uvMin[0],uvMin[1],uvMax[0],uvMax[1]);
    // }
    // uint4 pixel = (uint4)(0,0,0,0);
    // write_imageui(output, (int2)(get_global_id(0),get_global_id(1)),pixel);
