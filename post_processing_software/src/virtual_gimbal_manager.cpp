@@ -515,6 +515,7 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
         cv::UMat umat_R = mat_R.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
         
         kernel.args(image, image_dst, cv::ocl::KernelArg::ReadOnlyNoSize(umat_R),
+        (float)zoom,
         ik1,
         ik2,
         ip1,

@@ -82,6 +82,7 @@ float2 warp_zoom(
 
 float2 warp_undistort(
    float2 p,                              // UV coordinate position in a image.
+   float zoom_ratio,
    __constant float* rotation_matrix,       // Rotation Matrix in each rows.
    float k1, float k2,float p1, float p2, // Distortion parameters.
    float2 f, float2 c
@@ -101,13 +102,14 @@ float2 warp_undistort(
    //                       0.00500257 * x3.x + 0.999963 * x3.y + 0.00707079 * x3.z,
    //                       -0.0391812 * x3.x  -0.00686944 * x3.y + 0.999209 * x3.z);
    x2 = XYZ.xy / XYZ.z;
-  return x2*f+c;
+  return x2*f*zoom_ratio+c;
 }
 
 __kernel void stabilizer_function(
    __read_only image2d_t input, __write_only image2d_t output,
    __constant float* rotation_matrix,       // Rotation Matrix in each rows.
    int src_step, int src_offset,
+   float zoom_ratio,
    float k1, float k2,float p1, float p2, // Distortion parameters.
    float fx, float fy, float cx, float cy
 )
@@ -125,10 +127,10 @@ __kernel void stabilizer_function(
    // float2 uv1 = warp_zoom(uv1_,(float2)(2.0f,2.0f));//warp_undistort(uv1_, rotation_matrix, k1, k2, p1, p2, f, c);
    // float2 uv2 = warp_zoom(uv2_,(float2)(2.0f,2.0f));//warp_undistort(uv2_, rotation_matrix, k1, k2, p1, p2, f, c);
    // float2 uv3 = warp_zoom(uv3_,(float2)(2.0f,2.0f));//warp_undistort(uv3_, rotation_matrix, k1, k2, p1, p2, f, c);
-   float2 uv0 = warp_undistort(uv0_, rotation_matrix, k1, k2, p1, p2, f, c);
-   float2 uv1 = warp_undistort(uv1_, rotation_matrix, k1, k2, p1, p2, f, c);
-   float2 uv2 = warp_undistort(uv2_, rotation_matrix, k1, k2, p1, p2, f, c);
-   float2 uv3 = warp_undistort(uv3_, rotation_matrix, k1, k2, p1, p2, f, c);
+   float2 uv0 = warp_undistort(uv0_, zoom_ratio, rotation_matrix, k1, k2, p1, p2, f, c);
+   float2 uv1 = warp_undistort(uv1_, zoom_ratio, rotation_matrix, k1, k2, p1, p2, f, c);
+   float2 uv2 = warp_undistort(uv2_, zoom_ratio, rotation_matrix, k1, k2, p1, p2, f, c);
+   float2 uv3 = warp_undistort(uv3_, zoom_ratio, rotation_matrix, k1, k2, p1, p2, f, c);
 
    
    int2 uvMin = convert_int2(floor(min(min(uv0,uv1),min(uv2,uv3))));
