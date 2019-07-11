@@ -462,14 +462,13 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
 {
     // Prepare OpenCL
     cv::ocl::Context context;
-    cv::ocl::Kernel kernel;
     cv::Mat mat_src = cv::Mat::zeros(video_param->camera_info->height_, video_param->camera_info->width_, CV_8UC4); // TODO:冗長なので書き換える
     cv::UMat umat_src = mat_src.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
     cv::UMat umat_dst(mat_src.size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
     cv::String build_opt = cv::format("-D dstT=%s", cv::ocl::typeToStr(umat_dst.depth())); // "-D dstT=float"
     initializeCL(context);
 
-    getKernel(kernel_name, kernel_function, kernel, context, build_opt);
+   
     // Open Video
     auto capture = getVideoCapture();
 
@@ -493,27 +492,17 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
         for (int row = 0, e = video_param->camera_info->height_; row < e; ++row)
         {
             double time_in_row = video_param->getInterval() * frame + resampler_parameter_->start + video_param->camera_info->line_delay_ * (row - video_param->camera_info->height_ * 0.5);
-            // std::cout << "time_in_row:" <<  std::setprecision(10) << time_in_row << " row:" << row << std::endl; 
-            // std::cout << measured_angular_velocity->getCorrectionQuaternion(time_in_row, filter(filter_strength(row)).getFilterCoefficient()).coeffs() << std::endl;
-            
             Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>>(&R[row * 9], 3, 3) = measured_angular_velocity->getCorrectionQuaternion(time_in_row, filter(filter_strength(row)).getFilterCoefficient()).matrix().cast<float>();
-            // std::cout << Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>>(&R[row * 9], 3, 3) << std::endl;
-            // Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>>(&R[row * 9], 3, 3) = Eigen::MatrixXf::Identity(3,3);
         }
-
-        // std::cout << "R:" << std::endl;
-        // for(int row = 0;row < video_param->camera_info->height_;++row){
-        //     std::cout << "row:" << row << std::endl;
-        //     std::cout << Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>>(&R[row * 9], 3, 3) << std::endl;
-        // }
-        // std::cout << flush;
 
         // Send arguments to kernel
         cv::ocl::Image2D image(umat_src);
         cv::ocl::Image2D image_dst(umat_dst, false, true);
         cv::Mat mat_R = cv::Mat(R.size(),1,CV_32F,R.data());
         cv::UMat umat_R = mat_R.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
-        
+
+         cv::ocl::Kernel kernel;
+        getKernel(kernel_name, kernel_function, kernel, context, build_opt);
         kernel.args(image, image_dst, cv::ocl::KernelArg::ReadOnlyNoSize(umat_R),
         (float)zoom,
         ik1,
@@ -524,7 +513,6 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
         fy,
         cx,
         cy);
-
         size_t globalThreads[3] = {(size_t)mat_src.cols, (size_t)mat_src.rows, 1};
         //size_t localThreads[3] = { 16, 16, 1 };
         bool success = kernel.run(3, globalThreads, NULL, true);
@@ -536,11 +524,6 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
         }
 
         // 画面に表示
-        // cv::Mat mat_dst = umat_dst.getMat(cv::ACCESS_READ);
-        // cv::Mat mat_dst;
-        // (*capture) >> mat_dst;
-        // cv::imshow("Result",mat_dst);
-        // cv::imshow("Result",umat_dst);
         cv::UMat small,small_src;
         cv::resize(umat_dst,small,cv::Size(),0.5,0.5);
         cv::resize(umat_src,small_src,cv::Size(),0.5,0.5);

@@ -53,22 +53,22 @@ void getKernel(const char *kernel_code_file_name, const char *kernel_function, c
     kernel = cv::ocl::Kernel(kernel_function, program);
 }
 
-void runKernel(cv::UMat &umat_src, cv::UMat &umat_dst,cv::ocl::Kernel &kernel){
-    cv::ocl::Image2D image(umat_src);
-    cv::ocl::Image2D image_dst(umat_dst,false,true);
-    float shift_x = 100.5;
-    float shift_y = -50.0;
-    // cv::ocl::Kernel kernel("color_shift_invert", program);
-    kernel.args(image, image_dst,shift_x,shift_y);
+// void runKernel(cv::UMat &umat_src, cv::UMat &umat_dst,cv::ocl::Kernel &kernel){
+//     cv::ocl::Image2D image(umat_src);
+//     cv::ocl::Image2D image_dst(umat_dst,false,true);
+//     float shift_x = 100.5;
+//     float shift_y = -50.0;
+//     // cv::ocl::Kernel kernel("color_shift_invert", program);
+//     kernel.args(image, image_dst,shift_x,shift_y);
 
-    size_t globalThreads[3] = {(size_t)umat_src.cols, (size_t)umat_src.rows, 1};
-    bool success = kernel.run(3, globalThreads, NULL, true);
-    if (!success)
-    {
-        cout << "Failed running the kernel..." << endl << flush;
-        throw "Failed running the kernel...";
-    }
+//     size_t globalThreads[3] = {(size_t)umat_src.cols, (size_t)umat_src.rows, 1};
+//     bool success = kernel.run(3, globalThreads, NULL, true);
+//     if (!success)
+//     {
+//         cout << "Failed running the kernel..." << endl << flush;
+//         throw "Failed running the kernel...";
+//     }
 
-    // Download the dst data from the device (?)
-    // cv::Mat mat_dst = umat_dst.getMat(cv::ACCESS_READ);
-}
+//     // Download the dst data from the device (?)
+//     // cv::Mat mat_dst = umat_dst.getMat(cv::ACCESS_READ);
+// }
