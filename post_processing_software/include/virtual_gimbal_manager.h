@@ -44,7 +44,9 @@ public:
   void setRotation(const char *file_name, CameraInformation &cameraInfo);
   void setFilter(FilterPtr filter);
   // void getEstimatedAndMeasuredAngularVelocity(Eigen::MatrixXd &data);
-  Eigen::MatrixXd getCorrelationCoefficient();
+  Eigen::VectorXd getCorrelationCoefficient();
+  double getSubframeOffset(Eigen::VectorXd &correlation_coefficients);
+  void setResamplerParameter(double start);
   Eigen::MatrixXd getSynchronizedMeasuredAngularVelocity();
   std::map<int, std::vector<cv::Point2d>> getCornerDictionary(cv::Size &pattern_size, bool debug_speedup = false, bool Verbose = false);
   Eigen::MatrixXd estimateAngularVelocity(const std::map<int, std::vector<cv::Point2d>> &corner_dict, const std::vector<cv::Point3d> &world_points, Eigen::VectorXd &confidence);

@@ -99,7 +99,9 @@ int main(int argc, char **argv)
     //           << std::flush;
               
 
-    Eigen::MatrixXd correlation = manager.getCorrelationCoefficient();
+    Eigen::VectorXd correlation = manager.getCorrelationCoefficient();
+    double offset = manager.getSubframeOffset(correlation);
+    manager.setResamplerParameter(offset);
 #ifdef __DEBUG_ONLY
     std::vector<string> legends_angular_velocity = {"c"};
     vgp::plot(correlation, "correlation", legends_angular_velocity);

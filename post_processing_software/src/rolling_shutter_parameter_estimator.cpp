@@ -113,7 +113,10 @@ int main(int argc, char **argv)
               << std::flush;
     manager.setEstimatedAngularVelocity(estimated_angular_velocity, confidence, capture->get(cv::CAP_PROP_FPS));
 
-    Eigen::MatrixXd correlation = manager.getCorrelationCoefficient();
+    Eigen::VectorXd correlation = manager.getCorrelationCoefficient();
+    double offset = manager.getSubframeOffset(correlation);
+    manager.setResamplerParameter(offset);
+
     std::vector<string> legends_angular_velocity = {"c"};
     vgp::plot(correlation, "correlation", legends_angular_velocity);
 
