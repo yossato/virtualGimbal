@@ -138,7 +138,6 @@ void CalcShiftFromVideo(const char *filename, int calcPeriod, Eigen::MatrixXd &o
     std::vector <cv::Vec3d> prev_to_cur_transform; // previous to current
     // int k=1;
 
-    cv::Mat last_T;
 
     //繰り返し処理
     for(int frame=0;frame<max_frames;++frame) {
@@ -183,18 +182,16 @@ void CalcShiftFromVideo(const char *filename, int calcPeriod, Eigen::MatrixXd &o
 
             // in rare cases no transform is found. We'll just use the last known good transform.
             if(T.data == NULL) {
-                last_T.copyTo(T);
+                optical_shift.row(frame) << 0.0, 0.0, 0.0;
+                confidence.row(frame) << 0.0;
+            }else{
+                double dx = T.at<double>(0,2);
+                double dy = T.at<double>(1,2);
+                double da = atan2(T.at<double>(1,0), T.at<double>(0,0));
+                // prev_to_cur_transform.push_back(cv::Vec3d(dx, dy, da));
+                optical_shift.row(frame) << dx, dy, da;
+                confidence.row(frame) << 1.0;
             }
-
-            T.copyTo(last_T);
-
-            double dx = T.at<double>(0,2);
-            double dy = T.at<double>(1,2);
-            double da = atan2(T.at<double>(1,0), T.at<double>(0,0));
-            // prev_to_cur_transform.push_back(cv::Vec3d(dx, dy, da));
-            optical_shift.row(frame) << dx, dy, da;
-            confidence.row(frame) << 1.0;
-
         }catch(...){
             optical_shift.row(frame) << 0.0, 0.0, 0.0;
             confidence.row(frame) << 0.0;

@@ -31,6 +31,7 @@
 #include "rotation_math.h"
 #include "SO3Filters.h"
 #include "cl_manager.h"
+#include "multi_thread_video_writer.h"
 class VirtualGimbalManager
 {
 public:
@@ -64,11 +65,14 @@ public:
                                       int32_t strongest_filter_param, int32_t weakest_filter_param);
   void spin(double zoom, KaiserWindowFilter &filter,Eigen::VectorXd &filter_strength);
   void setMaximumGradient(double value);
+  void enableWriter(const char *video_path);
   const char *kernel_name = "stabilizer_kernel.cl";
   const char *kernel_function = "stabilizer_function";
   std::shared_ptr<cv::VideoCapture> getVideoCapture();
   
 protected:
+  std::shared_ptr<MultiThreadVideoWriter> writer_;
+
   RotationPtr rotation;
   AngularVelocityPtr measured_angular_velocity;
   AngularVelocityPtr estimated_angular_velocity;

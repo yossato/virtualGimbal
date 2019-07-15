@@ -157,6 +157,7 @@ double VirtualGimbalManager::getSubframeOffset(Eigen::VectorXd &correlation_coef
         / (2 * correlation_coefficients[minimum_correlation_frame - 1] 
         - 4 * correlation_coefficients[minimum_correlation_frame] + 2 * correlation_coefficients[minimum_correlation_frame + 1]);
     }else{
+        std::cout << "minimum_correlation_frame" << minimum_correlation_frame << std::endl;
         double min_value=std::numeric_limits<double>::max();
         int32_t number_of_data = estimated_angular_velocity->confidence.cast<int>().array().sum();
         for(double sub_frame = -2.0 ; sub_frame<=2.0; sub_frame+=0.001){
@@ -506,6 +507,9 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
     {
         // Read a frame image
         (*capture) >> umat_src;
+        if(umat_src.empty()){
+            break;
+        }
         cv::cvtColor(umat_src, umat_src, cv::COLOR_BGR2BGRA);
         
         // Calculate Rotation matrix for every line
@@ -543,6 +547,12 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
             throw "Failed running the kernel...";
         }
 
+        cv::Mat mat_for_writer = umat_dst.getMat(cv::ACCESS_READ);
+        if(writer_){
+
+            writer_->addFrame(mat_for_writer);
+        }
+
         // 画面に表示
         cv::UMat small,small_src;
         cv::resize(umat_dst,small,cv::Size(),0.5,0.5);
@@ -563,4 +573,7 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
     }
     cv::destroyAllWindows();
     return;
+}
+void VirtualGimbalManager::enableWriter(const char *video_path){
+    writer_ = std::make_shared<MultiThreadVideoWriter>(MultiThreadVideoWriter::getOutputName(video_path),*video_param);
 }

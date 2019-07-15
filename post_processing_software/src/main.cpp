@@ -23,6 +23,7 @@ int main(int argc, char **argv)
     char *cameraName = NULL;
     char *lensName = NULL;
     char *jsonPass = NULL;
+    bool output = false;
     const char *kernel_name = "cl/stabilizer_kernel.cl";
     const char *kernel_function = "stabilizer_function";
     bool debug_speedup = false;
@@ -30,7 +31,7 @@ int main(int argc, char **argv)
     int opt;
     //    Eigen::Quaterniond camera_rotation;
 
-    while ((opt = getopt(argc, argv, "j:i:c:l:d::z:k::f::")) != -1)
+    while ((opt = getopt(argc, argv, "j:i:c:l:d::z:k::f::o::")) != -1)
     {
         switch (opt)
         {
@@ -57,6 +58,9 @@ int main(int argc, char **argv)
             break;
         case 'f':
             kernel_function = optarg;
+            break;
+        case 'o':
+            output = true;
             break;
         default:
             //            printf(     "virtualGimbal\r\n"
@@ -85,6 +89,11 @@ int main(int argc, char **argv)
     calcInverseDistortCoeff(*camera_info);
     manager.setMeasuredAngularVelocity(jsonPass, camera_info);
     manager.setVideoParam(videoPass, camera_info);
+
+    if(output){
+        manager.enableWriter(videoPass);
+    }
+
     Eigen::MatrixXd estimated_angular_velocity,confidence;
     if(debug_speedup){
         manager.estimateAngularVelocity(estimated_angular_velocity,confidence,100);

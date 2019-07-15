@@ -119,6 +119,7 @@ add_executable(rolling_shutter_parameter_estimator src/rolling_shutter_parameter
         src/distortion.cpp
         src/cl_manager.cpp
         src/SO3Filters.cpp
+        src/multi_thread_video_writer.cpp
         )
 target_link_libraries(rolling_shutter_parameter_estimator ${ALL_LIBS} ${OpenCV_LIBS} ${PYTHON_LIBRARIES})
 
@@ -131,6 +132,7 @@ add_executable(pixelwise_stabilizer src/main.cpp
         src/distortion.cpp
         src/SO3Filters.cpp
         src/cl_manager.cpp
+        src/multi_thread_video_writer.cpp
         src/visualizer.cpp #デバッグ専用。後で消す。
 )
 target_link_libraries(pixelwise_stabilizer ${ALL_LIBS} ${OpenCV_LIBS} ${PYTHON_LIBRARIES})

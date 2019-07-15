@@ -31,7 +31,7 @@ void initializeCL(cv::ocl::Context &context)
     cv::ocl::Device(context.device(0));
 }
 
-void getKernel(const char *kernel_code_file_name, const char *kernel_function, cv::ocl::Kernel &kernel, cv::ocl::Context &context, std::string &build_opt)
+void getKernel(const char *kernel_code_file_name, const char *kernel_function, cv::ocl::Kernel &kernel, cv::ocl::Context &context, std::string build_opt)
 {
 
 
