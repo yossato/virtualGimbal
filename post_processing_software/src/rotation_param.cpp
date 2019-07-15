@@ -44,7 +44,7 @@ Eigen::MatrixXd BaseParam::generateResampledData(const ResamplerParameterPtr res
     // Zero length means there is no specific value of resampled data length, so sets it maximum.
     if (resample_param->length < std::numeric_limits<double>::epsilon())
     {
-        resampled_data = Eigen::MatrixXd::Zero(round(data.rows() * resample_param->frequency / frequency_), data.cols()); // = Eigen::MatrixXd::Zero(round(data.rows() * resampling_frequency / frequency_), data.cols());
+        resampled_data = Eigen::MatrixXd::Zero(round((data.rows() * getInterval() - resample_param->start) * resample_param->frequency), data.cols()); // = Eigen::MatrixXd::Zero(round(data.rows() * resampling_frequency / frequency_), data.cols());
         resample_param->length = resampled_data.rows() / resample_param->frequency;
     }
     else
@@ -63,7 +63,8 @@ Eigen::MatrixXd BaseParam::generateResampledData(const ResamplerParameterPtr res
         double frame_original = (resample_param->start + (double)frame_resampled / resample_param->frequency) * frequency_; //ここ
         int integer_part_frame = (int)frame_original;
         double ratio = frame_original - (double)integer_part_frame;
-        std::cout << "frame_original:" << frame_original << " start:" << resample_param->start << " integer_part_frame" << integer_part_frame << std::endl;
+        assert(frame_resampled + 1 < data.rows());
+        // std::cout << "frame_original:" << frame_original << " start:" << resample_param->start << " integer_part_frame" << integer_part_frame << std::endl;
         resampled_data.row(frame_resampled) = data.row(integer_part_frame) * (1.0 - ratio) + data.row(integer_part_frame + 1) * ratio;
     }
 
@@ -119,6 +120,10 @@ Eigen::Quaterniond AngularVelocity::getAngularVelocity(size_t frame)
 // void AngularVelocity::setResampler(ResamplerParameter &resampler){
 //     resampler_ = resampler;
 // }
+
+double AngularVelocity::getLengthInSecond(){
+    return data.rows()*getInterval();
+}
 
 Rotation::~Rotation()
 {

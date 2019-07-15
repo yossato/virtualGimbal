@@ -81,6 +81,7 @@ public:
   Eigen::Vector3d getAngularVelocityVector(double frame);
   Eigen::Quaterniond getAngularVelocity(size_t frame);
   Eigen::Quaterniond getCorrectionQuaternion(double time, const Eigen::VectorXd &filter_coeff);
+  double getLengthInSecond();
 private:
   // ResamplerParameter resampler_;
   std::map<int, Eigen::MatrixXd> relative_angle_vectors;

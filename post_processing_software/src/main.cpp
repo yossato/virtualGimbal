@@ -94,6 +94,9 @@ int main(int argc, char **argv)
         manager.enableWriter(videoPass);
     }
 
+
+    
+
     Eigen::MatrixXd estimated_angular_velocity,confidence;
     if(debug_speedup){
         manager.estimateAngularVelocity(estimated_angular_velocity,confidence,100);

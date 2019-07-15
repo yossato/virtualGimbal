@@ -161,8 +161,10 @@ double VirtualGimbalManager::getSubframeOffset(Eigen::VectorXd &correlation_coef
         double min_value=std::numeric_limits<double>::max();
         int32_t number_of_data = estimated_angular_velocity->confidence.cast<int>().array().sum();
         for(double sub_frame = -2.0 ; sub_frame<=2.0; sub_frame+=0.001){
-            Eigen::MatrixXd measured_angular_velocity_resampled = measured_angular_velocity->getResampledData(ResamplerParameterPtr(new ResamplerParameter(video_param->getFrequency(), (sub_frame + minimum_correlation_frame) * video_param->getInterval(), 0)));
-            double value = ((measured_angular_velocity_resampled.block(0, 0, estimated_angular_velocity->data.rows(), estimated_angular_velocity->data.cols()) - estimated_angular_velocity->data).array().colwise() * estimated_angular_velocity->confidence.array()).abs().sum() / (double)number_of_data;
+            Eigen::MatrixXd measured_angular_velocity_resampled = measured_angular_velocity->getResampledData(std::make_shared<ResamplerParameter>(video_param->getFrequency(), (sub_frame + minimum_correlation_frame) * video_param->getInterval(), estimated_angular_velocity->getLengthInSecond()));
+            // double value = ((measured_angular_velocity_resampled.block(0, 0, estimated_angular_velocity->data.rows(), estimated_angular_velocity->data.cols()) - estimated_angular_velocity->data).array().colwise() * estimated_angular_velocity->confidence.array()).abs().sum() / (double)number_of_data;
+            assert(measured_angular_velocity_resampled.rows() == estimated_angular_velocity->data.rows());
+            double value = ((measured_angular_velocity_resampled - estimated_angular_velocity->data).array().colwise() * estimated_angular_velocity->confidence.array()).abs().sum() / (double)number_of_data;
             if(min_value > value){
                 min_value = value;
                 minimum_correlation_subframe = sub_frame;
@@ -503,6 +505,10 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
         float fy = video_param->camera_info->fy_;
         float cx = video_param->camera_info->cx_;
         float cy = video_param->camera_info->cy_;
+
+
+cv::VideoWriter video_writer = cv::VideoWriter(MultiThreadVideoWriter::getOutputName(video_param->video_file_name.c_str()), cv::VideoWriter::fourcc('F', 'M', 'P', '4'), 23.97, cv::Size(video_param->camera_info->width_, video_param->camera_info->height_), true);
+    
     for (int frame = 0; frame <= video_param->video_frames; ++frame)
     {
         // Read a frame image
@@ -553,9 +559,15 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
             writer_->addFrame(mat_for_writer);
         }
 
+        cv::Mat bgr;
+        cv::cvtColor(mat_for_writer,bgr,cv::COLOR_BGRA2BGR);
+
+        video_writer << bgr;
+
         // 画面に表示
         cv::UMat small,small_src;
-        cv::resize(umat_dst,small,cv::Size(),0.5,0.5);
+        // cv::resize(umat_dst,small,cv::Size(),0.5,0.5);
+        cv::resize(mat_for_writer,small,cv::Size(),0.5,0.5);
         cv::resize(umat_src,small_src,cv::Size(),0.5,0.5);
         cv::imshow("Original",small_src);
         cv::imshow("Result",small);

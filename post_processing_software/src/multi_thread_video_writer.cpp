@@ -91,7 +91,7 @@ void MultiThreadVideoWriter::addFrame(cv::Mat image)
 {
     std::lock_guard<std::mutex> lock(mtx);
     images.push_back(cv::Mat());
-    images.back() = image;
+    images.back() = image.clone();
 }
 
 // void MultiThreadVideoWriter::beginThread(){
