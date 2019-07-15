@@ -159,7 +159,7 @@ double VirtualGimbalManager::getSubframeOffset(Eigen::VectorXd &correlation_coef
     }else{
         double min_value=std::numeric_limits<double>::max();
         int32_t number_of_data = estimated_angular_velocity->confidence.cast<int>().array().sum();
-        for(double sub_frame = -2.0 ; sub_frame<=2.0; sub_frame+=0.0001){
+        for(double sub_frame = -2.0 ; sub_frame<=2.0; sub_frame+=0.001){
             Eigen::MatrixXd measured_angular_velocity_resampled = measured_angular_velocity->getResampledData(ResamplerParameterPtr(new ResamplerParameter(video_param->getFrequency(), (sub_frame + minimum_correlation_frame) * video_param->getInterval(), 0)));
             double value = ((measured_angular_velocity_resampled.block(0, 0, estimated_angular_velocity->data.rows(), estimated_angular_velocity->data.cols()) - estimated_angular_velocity->data).array().colwise() * estimated_angular_velocity->confidence.array()).abs().sum() / (double)number_of_data;
             if(min_value > value){
@@ -175,7 +175,7 @@ double VirtualGimbalManager::getSubframeOffset(Eigen::VectorXd &correlation_coef
     std::cout << std::endl
               << minimum_correlation_subframe << std::endl;
 
-    return minimum_correlation_subframe / video_param->getFrequency();// + (estimated_angular_velocity->getInterval() - measured_angular_velocity->getInterval()) * 0.5;
+    return minimum_correlation_subframe / video_param->getFrequency() - (estimated_angular_velocity->getInterval() - measured_angular_velocity->getInterval()) * 0.5;
 }
 
 void VirtualGimbalManager::setResamplerParameter(double start){
