@@ -105,8 +105,6 @@ int main(int argc, char **argv)
     }
     
     manager.setEstimatedAngularVelocity(estimated_angular_velocity, confidence);
-    // std::cout << "estimated_angular_velocity:" << estimated_angular_velocity.transpose() << std::endl
-    //           << std::flush;
     // std::cout << "confidence:" << confidence.transpose() << std::endl
     //           << std::flush;
               
@@ -118,8 +116,7 @@ int main(int argc, char **argv)
     std::vector<string> legends_angular_velocity = {"c"};
     vgp::plot(correlation, "correlation", legends_angular_velocity);
 #endif 
-    // manager.getTiming()
-    // manager.setTiming()
+
     auto fir_filter = std::make_shared<KaiserWindowFilter>(199,2);
     manager.setFilter(fir_filter);
     manager.setMaximumGradient(0.5);
@@ -127,10 +124,6 @@ int main(int argc, char **argv)
 #ifdef __DEBUG_ONLY
     vgp::plot(filter_coefficients, "filter_coefficients", legends_angular_velocity);
 #endif
-    // manager.getFilteredRotation();
-    // manager.spin()
-
-
 
     manager.spin(zoom,*fir_filter,filter_coefficients);
 

@@ -17,7 +17,7 @@ MultiThreadVideoWriter::MultiThreadVideoWriter(std::string output_pass, Video &v
     }
 
     is_writing = true;
-    th1 = std::thread(&MultiThreadVideoWriter::videoWriterProcess,this);//スレッド起動
+    th1 = std::thread(&MultiThreadVideoWriter::videoWriterProcess, this); //スレッド起動
 }
 
 void MultiThreadVideoWriter::videoWriterProcess()
@@ -43,7 +43,9 @@ void MultiThreadVideoWriter::videoWriterProcess()
         //mutexがunlockされたあとにゆっくりvideoWriterに書き込み
         if (!_buf.empty())
         {
-            video_writer << _buf.clone();
+            cv::Mat bgr;
+            cv::cvtColor(_buf, bgr, cv::COLOR_BGRA2BGR);
+            video_writer << bgr;
             _buf = cv::Mat();
         }
         else
@@ -51,10 +53,10 @@ void MultiThreadVideoWriter::videoWriterProcess()
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
     }
-
 }
 
-std::string MultiThreadVideoWriter::getOutputName(const char *source_video_name){
+std::string MultiThreadVideoWriter::getOutputName(const char *source_video_name)
+{
     std::string output_pass(source_video_name);
     std::string::size_type pos;
 
@@ -95,10 +97,11 @@ void MultiThreadVideoWriter::addFrame(cv::Mat image)
 }
 
 // void MultiThreadVideoWriter::beginThread(){
-    
+
 // }
 
-MultiThreadVideoWriter::~MultiThreadVideoWriter(){
+MultiThreadVideoWriter::~MultiThreadVideoWriter()
+{
     join();
 }
 

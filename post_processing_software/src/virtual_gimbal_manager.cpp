@@ -507,7 +507,7 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
         float cy = video_param->camera_info->cy_;
 
 
-cv::VideoWriter video_writer = cv::VideoWriter(MultiThreadVideoWriter::getOutputName(video_param->video_file_name.c_str()), cv::VideoWriter::fourcc('F', 'M', 'P', '4'), 23.97, cv::Size(video_param->camera_info->width_, video_param->camera_info->height_), true);
+// cv::VideoWriter video_writer = cv::VideoWriter(MultiThreadVideoWriter::getOutputName(video_param->video_file_name.c_str()), cv::VideoWriter::fourcc('F', 'M', 'P', '4'), 23.97, cv::Size(video_param->camera_info->width_, video_param->camera_info->height_), true);
     
     for (int frame = 0; frame <= video_param->video_frames; ++frame)
     {
@@ -559,10 +559,9 @@ cv::VideoWriter video_writer = cv::VideoWriter(MultiThreadVideoWriter::getOutput
             writer_->addFrame(mat_for_writer);
         }
 
-        cv::Mat bgr;
-        cv::cvtColor(mat_for_writer,bgr,cv::COLOR_BGRA2BGR);
 
-        video_writer << bgr;
+
+        // video_writer << bgr;
 
         // 画面に表示
         cv::UMat small,small_src;
