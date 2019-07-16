@@ -90,9 +90,9 @@ int main(int argc, char **argv)
     manager.setMeasuredAngularVelocity(jsonPass, camera_info);
     manager.setVideoParam(videoPass, camera_info);
 
-    if(output){
-        manager.enableWriter(videoPass);
-    }
+    // if(output){
+    //     manager.enableWriter(videoPass);
+    // }
 
 
     

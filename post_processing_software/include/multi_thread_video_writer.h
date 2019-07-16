@@ -18,7 +18,7 @@ public:
     MultiThreadVideoWriter(std::string output_pass, Video &video_param);
     
     // void beginThread();
-    void addFrame(cv::Mat image);
+    void addFrame(cv::Mat &image);
     ~MultiThreadVideoWriter();
     std::string output_name(char *source_name);
     static std::string getOutputName(const char *source_video_name);

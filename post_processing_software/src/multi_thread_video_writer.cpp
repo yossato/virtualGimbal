@@ -89,7 +89,7 @@ std::string MultiThreadVideoWriter::getOutputName(const char *source_video_name)
     return output_pass;
 }
 
-void MultiThreadVideoWriter::addFrame(cv::Mat image)
+void MultiThreadVideoWriter::addFrame(cv::Mat &image)
 {
     std::lock_guard<std::mutex> lock(mtx);
     images.push_back(cv::Mat());

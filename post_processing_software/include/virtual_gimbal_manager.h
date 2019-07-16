@@ -32,6 +32,7 @@
 #include "SO3Filters.h"
 #include "cl_manager.h"
 #include "multi_thread_video_writer.h"
+#include <chrono>         // std::chrono::seconds
 class VirtualGimbalManager
 {
 public:

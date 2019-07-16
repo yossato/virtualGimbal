@@ -507,7 +507,7 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
         float cy = video_param->camera_info->cy_;
 
 
-// cv::VideoWriter video_writer = cv::VideoWriter(MultiThreadVideoWriter::getOutputName(video_param->video_file_name.c_str()), cv::VideoWriter::fourcc('F', 'M', 'P', '4'), 23.97, cv::Size(video_param->camera_info->width_, video_param->camera_info->height_), true);
+    cv::VideoWriter video_writer = cv::VideoWriter(MultiThreadVideoWriter::getOutputName(video_param->video_file_name.c_str()), cv::VideoWriter::fourcc('F', 'M', 'P', '4'), 23.97, cv::Size(video_param->camera_info->width_, video_param->camera_info->height_), true);
     
     for (int frame = 0; frame <= video_param->video_frames; ++frame)
     {
@@ -553,20 +553,22 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
             throw "Failed running the kernel...";
         }
 
-        cv::Mat mat_for_writer = umat_dst.getMat(cv::ACCESS_READ);
-        if(writer_){
+        // cv::Mat mat_for_writer = umat_dst.getMat(cv::ACCESS_READ);
+        // if(writer_){
 
-            writer_->addFrame(mat_for_writer);
-        }
+            // writer_->addFrame(mat_for_writer);
+        // }
 
 
-
-        // video_writer << bgr;
+        cv::Mat bgr;
+        cv::cvtColor(umat_dst, bgr, cv::COLOR_BGRA2BGR);
+        video_writer << bgr;
 
         // 画面に表示
         cv::UMat small,small_src;
-        // cv::resize(umat_dst,small,cv::Size(),0.5,0.5);
-        cv::resize(mat_for_writer,small,cv::Size(),0.5,0.5);
+        cv::resize(umat_dst,small,cv::Size(),0.5,0.5);
+        // cv::resize(mat_for_writer,small,cv::Size(),0.5,0.5);
+        // mat_for_writer.release();
         cv::resize(umat_src,small_src,cv::Size(),0.5,0.5);
         cv::imshow("Original",small_src);
         cv::imshow("Result",small);
@@ -581,6 +583,19 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
                 return;
             }
         }
+
+        //Show fps
+        auto t4 = std::chrono::system_clock::now();
+        static auto t3 = t4;
+        // 処理の経過時間
+        double elapsedmicroseconds = std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count() ;
+        static double fps = 0.0;
+        if(elapsedmicroseconds != 0.0){
+            fps = 0.03*(1e6/elapsedmicroseconds) +  0.97*fps;
+        }
+        t3 = t4;
+        printf("fps:%4.2f\r",fps);
+        fflush(stdout);
     }
     cv::destroyAllWindows();
     return;
