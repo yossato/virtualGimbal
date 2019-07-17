@@ -3,7 +3,7 @@
 #include <opencv2/opencv.hpp>
 #include <memory>
 #include "mINIRead.hpp"
-#include "vsp.h"
+// #include "vsp.h"
 #include "visualizer.h"
 #include "json_tools.hpp"
 #include "rotation_param.h"
@@ -62,7 +62,7 @@ int main(int argc, char **argv)
     }
 
     VirtualGimbalManager manager;
-    shared_ptr<CameraInformation> camera_info(new CameraInformationJsonParser(cameraName, lensName, VirtualGimbalManager::getVideoSize(videoPass).c_str()));
+    std::shared_ptr<CameraInformation> camera_info(new CameraInformationJsonParser(cameraName, lensName, VirtualGimbalManager::getVideoSize(videoPass).c_str()));
     // calcInverseDistortCoeff(*camera_info);
     manager.setMeasuredAngularVelocity(jsonPass, camera_info);
     manager.setVideoParam(videoPass, camera_info);
@@ -117,7 +117,7 @@ int main(int argc, char **argv)
     double offset = manager.getSubframeOffset(correlation);
     manager.setResamplerParameter(offset);
 
-    std::vector<string> legends_angular_velocity = {"c"};
+    std::vector<std::string> legends_angular_velocity = {"c"};
     vgp::plot(correlation, "correlation", legends_angular_velocity);
 
     Eigen::MatrixXd mat = manager.getSynchronizedMeasuredAngularVelocity();
@@ -313,7 +313,7 @@ int main(int argc, char **argv)
         // }
     }
 
-    auto camera_info_json_perser = dynamic_pointer_cast<CameraInformationJsonParser>(camera_info);
+    auto camera_info_json_perser = std::dynamic_pointer_cast<CameraInformationJsonParser>(camera_info);
     if(camera_info_json_perser){
         camera_info_json_perser->line_delay_ = undistortion_params[1];
         camera_info_json_perser->writeCameraInformationJson();

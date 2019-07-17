@@ -22,20 +22,20 @@ using namespace boost::math;
 #include <stdlib.h>
 
 // Include GLEW
-#include <GL/glew.h>
+// #include <GL/glew.h>
 
 // Include GLFW
-#include <glfw3.h>
+// #include <glfw3.h>
 //extern GLFWwindow* window;
 
 // Include GLM
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-using namespace glm;
+// #include <glm/glm.hpp>
+// #include <glm/gtc/matrix_transform.hpp>
+// using namespace glm;
 
-#include <common/shader.hpp>
-#include <common/texture.hpp>
-#include <common/controls.hpp>
+// #include <common/shader.hpp>
+// #include <common/texture.hpp>
+// #include <common/controls.hpp>
 #include "seekablevideocapture.h"
 #include "camera_information.h"
 
