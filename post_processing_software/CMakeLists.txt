@@ -3,7 +3,10 @@ cmake_minimum_required (VERSION 3.0)
 project (virtualGimbal)
 
 find_package(OpenGL REQUIRED)
-find_package(OpenCV REQUIRED )
+find_package(OpenCV 4 REQUIRED 
+NO_MODULE 
+PATHS /usr/local 
+NO_DEFAULT_PATH)
 set(Python_ADDITIONAL_VERSIONS 3.5)
 find_package(PythonInterp 3.5 REQUIRED)
 find_package(PythonLibs 3.5 REQUIRED)
