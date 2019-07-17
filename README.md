@@ -91,14 +91,14 @@ sudo apt-get install build-essential module-assistant
 sudo m-a prepare  
 git clone --depth 1 https://github.com/Itseez/opencv.git  
 cd opencv/  
-
+  
 mkdir build  
 cd build  
 cmake .. -DWITH_TBB=ON -DWITH_QT=ON -DWITH_OPENGL=ON -DWITH_VTK=ON  
 make -j4  
 sudo make install  
-
-sudo sh -c "echo /usr/local/lib >> /etc/ld.so.conf.d/opencv.conf"  
+ 
+    sudo sh -c "echo /usr/local/lib >> /etc/ld.so.conf.d/opencv.conf"  
 sudo sh -c "echo PKG_CONFIG_PATH=\\\$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig >> /etc/bash.bashrc"  
 sudo sh -c "echo export PKG_CONFIG_PATH >> /etc/bash.bashrc"  
 ```
@@ -132,7 +132,8 @@ make -j4
 ```
 
 ## Contribution
-Yoshiaki Sato & Emmett Reiner
+
+## Todo/Issues/Wishlist
 
 ## Author
-Yoshiaki Sato & Emmett Reiner
+Yoshiaki Sato
