@@ -159,9 +159,9 @@ void CameraInformationJsonParser::writeCameraInformationJson(const char *file_na
     return;
 }
 
-bool readCameraInformation()
-{
-}
+// bool readCameraInformation()
+// {
+// }
 
 bool syncronizedQuarternionExist(const std::string &video_name)
 {
@@ -381,15 +381,15 @@ Eigen::MatrixXd readAngularVelocityFromJson(const char* filename){
     assert(angular_velocity_rad_per_sec_array.IsArray());
     assert(angular_velocity_rad_per_sec_array[0][0].IsDouble());
     int32_t total_number_of_data=0;
-    for(int num=0;num<angular_velocity_rad_per_sec_array.Size();++num){
+    for(size_t num=0;num<angular_velocity_rad_per_sec_array.Size();++num){
         total_number_of_data += angular_velocity_rad_per_sec_array[num].Size();
     }
 
     int width = 3;
     retval.resize(total_number_of_data/width,3);
     int num=0;
-    for(int record =0;record<angular_velocity_rad_per_sec_array.Size();++record){
-        for(int i=0;i<angular_velocity_rad_per_sec_array[record].Size();++i){
+    for(size_t record =0;record<angular_velocity_rad_per_sec_array.Size();++record){
+        for(size_t i=0;i<angular_velocity_rad_per_sec_array[record].Size();++i){
             retval(num/3,num%3)=angular_velocity_rad_per_sec_array[record][i].GetDouble();
             ++num;
         }

@@ -35,8 +35,8 @@ std::vector<cv::Point2f> findChessboardCornersInMultithread(cv::Mat &image, cv::
 {
     Finish = 0;//コーナ検索未完
     std::vector<cv::Point2f>		tempImagePoints;
-    static int n = 0;//この関数は何回呼ばれた？
-    int cn = n++;
+    // static int n = 0;//この関数は何回呼ばれた？
+    // int cn = n++;
     cv::Mat GrayImage;
     cv::TermCriteria						criteria(cv::TermCriteria::MAX_ITER | cv::TermCriteria::EPS, 20, 0.001);
     //std::cout << "Finding corners from Image " << cn;
@@ -135,7 +135,10 @@ int main(int argc, char** argv){
 
     //チェッカーボードの設定iniファイルを読み込み
     char path[512];
-    getcwd(path,sizeof(path));
+    if(NULL == getcwd(path,sizeof(path))){
+        std::cerr << "Current work directory error" << std::endl;
+        throw "Current work directory error";
+    }
     std::string path_string(path);
     path_string = path_string + "/chess_board_settings.ini";
     if (ReadINIs(path_string.c_str(), INICheckerBoardParamNum, INICheckerBoardValueNames, Dcbp) != 0){
@@ -161,7 +164,7 @@ int main(int argc, char** argv){
     cv::Mat colorImg;
     while(!_Quit){	//信号が来るまで
         //ここからキャリブレーションの本体
-        static int init = 0;
+        // static int init = 0;
 
         Capture >> colorImg;
 
@@ -183,7 +186,7 @@ int main(int argc, char** argv){
         }
         int Finish = 0;
         auto result = findChessboardCornersInMultithread(grayImg, PatternSize, Finish, cv::CALIB_CB_FAST_CHECK);
-        if (result.size()==PatternSize.area()) {// If a result found
+        if (result.size()==(size_t)PatternSize.area()) {// If a result found
             static int CapturedTimes = 0;
             static cv::Mat colorImg = cv::Mat::zeros(height,width,CV_8UC3);	//画面表示用のカラー画像の準備
             cv::cvtColor(grayImg,colorImg,cv::COLOR_GRAY2RGB);

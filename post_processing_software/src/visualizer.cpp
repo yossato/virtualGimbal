@@ -1,9 +1,8 @@
 #include "visualizer.h"
-#include "stabilize.h"
 #include "matplotlib-cpp/matplotlibcpp.h"
+#include "rotation_math.h"
 namespace plt = matplotlibcpp;
 using namespace std;
-using namespace boost::math;
 namespace vgp
 {
 /**
@@ -23,7 +22,7 @@ void plot(vector<cv::Vec3d> data, string title, string legend_x, string legend_y
         z.push_back(el[2]);
     }
     index.resize(x.size());
-    for(int i=0;i<index.size();i++){
+    for(size_t i=0;i<index.size();i++){
         index[i] = static_cast<double>(i);
     }
     if(legend_x.empty()){
@@ -49,17 +48,17 @@ void plot(vector<cv::Vec3d> data, string title, string legend_x, string legend_y
     plt::show();
 }
 
-void plot(vector<quaternion<double>> data, string title, string legend_x, string legend_y, string legend_z){
+void plot(vector<Eigen::Quaterniond> data, string title, string legend_x, string legend_y, string legend_z){
     vector<double> x,y,z,index;
     //Refill
     for(auto el:data){
-        cv::Vec3d vec = Quaternion2Vector(el);
+        Eigen::Vector3d vec = Quaternion2Vector(el);
         x.push_back(vec[0]);
         y.push_back(vec[1]);
         z.push_back(vec[2]);
     }
     index.resize(x.size());
-    for(int i=0;i<index.size();i++){
+    for(size_t i=0;i<index.size();i++){
         index[i] = static_cast<double>(i);
     }
     if(legend_x.empty()){
@@ -88,7 +87,7 @@ void plot(vector<quaternion<double>> data, string title, string legend_x, string
 void plot(vector<double> x,vector<double>  y,vector<double> z, string title, string legend_x, string legend_y, string legend_z){
     vector<double> index;
     index.resize(x.size());
-    for(int i=0;i<index.size();i++){
+    for(size_t i=0;i<index.size();i++){
         index[i] = static_cast<double>(i);
     }
     if(legend_x.empty()){
@@ -117,11 +116,11 @@ void plot(vector<double> x,vector<double>  y,vector<double> z, string title, str
 void plot(const Eigen::MatrixXd mat, std::string title, std::vector<std::string> &legends){
     vector<double> index(mat.rows());
     vector<string> format = {"r","g","b","m","y","c"};
-    for(int i=0;i<index.size();i++){
+    for(size_t i=0;i<index.size();i++){
         index[i] = static_cast<double>(i);
     }
     vector<double> value;
-    for(int i=0,e=mat.cols();i<e;++i){
+    for(size_t i=0,e=mat.cols();i<e;++i){
         value.resize(mat.rows());
         Eigen::MatrixXd part = mat.block(0,i,mat.rows(),1);
         memcpy(value.data(),part.data(),mat.rows()*sizeof(double));

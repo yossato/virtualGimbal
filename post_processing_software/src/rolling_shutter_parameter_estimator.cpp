@@ -82,7 +82,10 @@ int main(int argc, char **argv)
 
     //チェッカーボードの設定iniファイルを読み込み
     char path[512];
-    getcwd(path, sizeof(path));
+    if(NULL == getcwd(path, sizeof(path))){
+        std::cerr << "getcwd error." << std::endl << std::flush;
+        throw "getcwd error.";
+    }
     std::string path_string(path);
     path_string = path_string + "/chess_board_settings.ini";
     if (ReadINIs(path_string.c_str(), INICheckerBoardParamNum, INICheckerBoardValueNames, Dcbp) != 0)
