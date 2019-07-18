@@ -12,8 +12,6 @@ find_package(PythonLibs 3.5 REQUIRED)
 
 # Copy setting files
 configure_file(chess_board_settings.ini chess_board_settings.ini)
-# configure_file(TextureFragmentShader.fragmentshader TextureFragmentShader.fragmentshader)
-# configure_file(TransformVertexShader.vertexshader TransformVertexShader.vertexshader)
 configure_file(camera_descriptions/cameras_example.json camera_descriptions/cameras_example.json )
 configure_file(scripts/read_angular_velocity_from_virtualGimbal.py scripts/read_angular_velocity_from_virtualGimbal.py)
 configure_file(scripts/generate_angular_velocity_json.py scripts/generate_angular_velocity_json.py)
