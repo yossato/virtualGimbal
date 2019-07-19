@@ -1,34 +1,34 @@
-# virtualGimbal
-The virtualGimbal is an electronic stabilize device for videos that were taken by a hand-held camera such as a DSLR. For more information, see [PetaPixel] ( https://petapixel.com/2016/08/11/sd-card-built-gyro-sensor-stabilize-shots/ "PetaPixel").  The virtualGimbal consists of an SD card and post-processing software. This repository releases the post-processing software.
+# VirtualGimbal
+The VirtualGimbal is an electronic stabilize device for videos that were taken by a hand-held camera such as a DSLR. For more information, see [PetaPixel] ( https://petapixel.com/2016/08/11/sd-card-built-gyro-sensor-stabilize-shots/ "PetaPixel").  The VirtualGimbal consists of an SD card and post-processing software. This repository releases the post-processing software, a SD card circuit and a SD card firmware.
 
 ## Demo
 <https://youtu.be/E9JKbxqoJcY>
 
 ## Features
 1.Post-processing video stabilization software on PC.  
-2.Real-time up to 30fps at 1920x1080  
+2.4K video available.  
 3.Stabilization completely based on captured angular velocity data.  
 
 ## Requirement
 Ubuntu 16.04 or later
-OpenGL 3.3 or later compatible graphics card
+FFMPEG and OpenCV3
 
 ## Usage  
 See post_processing_software/README.md  
-~~Download~~ [Example Video](https://drive.google.com/uc?export=download&id=0B9nCHvB3LdAxZWNKdmdxMTFzam8) and [Angular Velocity data](https://drive.google.com/uc?export=download&id=0B9nCHvB3LdAxTHB1dk0zMkZWbDQ), then put them in ~/vgdataset.
+Download [Example Video](https://drive.google.com/uc?export=download&id=0B9nCHvB3LdAxZWNKdmdxMTFzam8) and [Angular Velocity data](https://drive.google.com/uc?export=download&id=0B9nCHvB3LdAxTHB1dk0zMkZWbDQ), then put them in ~/vgdataset.
 
-~~Demo:  
-`./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/angularVelocity.csv -z 1.1`~~
+Demo:  
+```
+./rolling_shutter_parameter_estimator -i ~/vgdataset/syukugawara/C0003.MP4 -c ILCE-6500 -l SEL1670Z -j records/2019-04-03_07.27.36.json -z 1.3  
+```
 
-~~Generating stabilized video:  
-`./virtualGimbal -i ~/vgdataset/guam.mts -c ~/vgdataset/angularVelocity.csv  -z 1.1 -o`~~
 
-~~Here, `i` option is an input video file. `c` is a CSV file which contains angular velocity of a camera. `z` is the zooming ratio. This parameter must be an integer; the default value is 3. It should be between 0 and 11. `v` is the vertical video position adjustment [rad], the default value is 0.00. `h` is horizontal video position adjustment [rad], default value is 0.00. `o` option generates output video.~~
+Here, `i` option is an input video file. `c` is a camera name that is calibrated using a calibrator. `l` is a lens name. `j` is a json file that include an angular velocity record of a gyro sensor. `z` is a zooming ratio. Recommended zooming ratio is 1.3 . 
 
 ## Install dependencies
 ### Install system dependencies:
 ```
-sudo apt-get install cmake make g++ libx11-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev libxrandr-dev libxext-dev xorg-dev
+sudo apt-get install cmake make 
 ```
 
 ### Install Git:
