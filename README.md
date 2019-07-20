@@ -11,7 +11,7 @@ The VirtualGimbal is an electronic stabilize device for videos that were taken b
 
 ## Requirement
 Ubuntu 16.04 or later
-FFMPEG, OpenCV3, boost and some python libraries.
+FFMPEG, OpenCV3, Eigen, boost and some python libraries.
 
 ## Usage  
 See post_processing_software/README.md  
