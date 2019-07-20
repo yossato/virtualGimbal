@@ -11,15 +11,16 @@ The VirtualGimbal is an electronic stabilize device for videos that were taken b
 
 ## Requirement
 Ubuntu 16.04 or later
-FFMPEG and OpenCV3
+FFMPEG, OpenCV3, boost and some python libraries.
 
 ## Usage  
 See post_processing_software/README.md  
-Download [Example Video](https://drive.google.com/uc?export=download&id=0B9nCHvB3LdAxZWNKdmdxMTFzam8) and [Angular Velocity data](https://drive.google.com/uc?export=download&id=0B9nCHvB3LdAxTHB1dk0zMkZWbDQ), then put them in ~/vgdataset.
+Download [Example Video](https://drive.google.com/open?id=1_9TezzdYGgDiATJohvIWNb1i1sQY_SVI) and [Angular Velocity data](https://drive.google.com/open?id=1T-ELckV5Ple4VH9Uazb1MwpPFaCNudmW), then put them in ~/vgdataset. A camera calibration file also required so download [Calibration file](https://drive.google.com/open?id=1rUfCPRwqXse2QZHDRD8aU7ulSAihqEy4) then put it in virtualGimbal/post_processing_software/build/camera_descriptions
+yoshiaki .
 
 Demo:  
 ```
-./rolling_shutter_parameter_estimator -i ~/vgdataset/syukugawara/C0003.MP4 -c ILCE-6500 -l SEL1670Z -j records/2019-04-03_07.27.36.json -z 1.3  
+./pixelwise_stabilizer -i ~/vgdataset/syukugawara/C0003.MP4 -c ILCE-6500 -l SEL1670Z -j records/2019-04-03_07.27.36.json -z 1.3  
 ```
 
 
@@ -51,32 +52,16 @@ sudo apt-get install python3-numpy python3-scipy
 sudo apt-get install python3-matplotlib
 ```
 
-### Install lame:  
-```
-cd  
-wget -O lame-3.99.5.tar.gz http://downloads.sourceforge.net/project/lame/lame/3.99/lame-3.99.5.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Flame%2Ffiles%2Flame%2F3.99%2F&ts=1438787999&use_mirror=jaist  
-tar zxvf lame-3.99.5.tar.gz  
-cd lame-3.99.5  
-./configure  
-make -j4  
-sudo make install  
-sudo ldconfig
-```
 
 ### Install ffmpeg:  
 ```
 cd  
 git clone --depth 1 git://source.ffmpeg.org/ffmpeg.git  
 cd ffmpeg  
-./configure --enable-gpl --enable-libmp3lame --disable-yasm --enable-ffmpeg --enable-ffmpeg --enable-pic --enable-shared --enable-swscale --enable-avresample  
+./configure --enable-gpl --enable-libmp3lame --disable-yasm --enable-ffmpeg --enable-pic --enable-shared --enable-swscale --enable-avresample  
 make all -j4  
 sudo make install  
 sudo ldconfig  
-```
-
-### Install QT:  
-```
-sudo apt-get install qt5-default
 ```
 
 ### Install cmake:
@@ -94,7 +79,7 @@ cd opencv/
   
 mkdir build  
 cd build  
-cmake .. -DWITH_TBB=ON -DWITH_QT=ON -DWITH_OPENGL=ON -DWITH_VTK=ON  
+cmake .. -DWITH_TBB=ON -DWITH_OPENGL=ON -DWITH_VTK=ON  
 make -j4  
 sudo make install  
  
@@ -123,8 +108,8 @@ sudo apt-get install libboost-dev
 ## Build
 ```
 cd
-git clone https://github.com/yossato/macadamia.git  
-cd macadamia  
+git clone https://github.com/yossato/virtualGimbal.git  
+cd virtualGimbal  
 mkdir build  
 cd build  
 cmake ../post_processing_software/  
