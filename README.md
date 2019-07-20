@@ -23,8 +23,12 @@ Demo:
 ./pixelwise_stabilizer -i ~/vgdataset/syukugawara/C0003.MP4 -c ILCE-6500 -l SEL1670Z -j records/2019-04-03_07.27.36.json -z 1.3  
 ```
 
-
 Here, `i` option is an input video file. `c` is a camera name that is calibrated using a calibrator. `l` is a lens name. `j` is a json file that include an angular velocity record of a gyro sensor. `z` is a zooming ratio. Recommended zooming ratio is 1.3 . 
+  
+  
+  
+Calibration is required before you stabilize your video. See a [detail information](https://github.com/yossato/virtualGimbal/tree/master/post_processing_software) to do it.
+
 
 ## Install dependencies
 ### Install system dependencies:
