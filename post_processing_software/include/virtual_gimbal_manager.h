@@ -77,6 +77,7 @@ protected:
   RotationPtr rotation;
   AngularVelocityPtr measured_angular_velocity;
   AngularVelocityPtr estimated_angular_velocity;
+  AngularVelocityPtr estimated_angular_velocity_back;
   RotationQuaternionPtr rotation_quaternion;
   //Synchronize
   AngularVelocityPtr resampled_synchronized_angular_velocity;

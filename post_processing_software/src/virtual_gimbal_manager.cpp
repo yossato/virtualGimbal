@@ -318,15 +318,6 @@ Eigen::MatrixXd VirtualGimbalManager::estimateAngularVelocity(const std::map<int
 void VirtualGimbalManager::estimateAngularVelocity(Eigen::MatrixXd &estimated_angular_velocity, Eigen::MatrixXd &confidence, int frames)
 {
     Eigen::MatrixXd optical_shift;
-    // std::vector<cv::Vec3d> optical_shift = CalcShiftFromVideo(video_param->video_file_name.c_str(),frames);
-    // Eigen::MatrixXd estimated(optical_shift.size(),3);
-    // for(int i=0,e=optical_shift.size();i<e;++i)
-    // {
-    //     estimated.row(i) << atan(optical_shift[i][1]/video_param->camera_info->fy_),
-    //     -atan(optical_shift[i][0]/video_param->camera_info->fx_),
-    //     -optical_shift[i][2];
-    // }
-    // return estimated*video_param->getFrequency();
     CalcShiftFromVideo(video_param->video_file_name.c_str(), frames, optical_shift, confidence);
     estimated_angular_velocity.resize(optical_shift.rows(), optical_shift.cols());
     estimated_angular_velocity.col(0) =

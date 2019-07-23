@@ -63,6 +63,13 @@ add_executable(pixelwise_stabilizer src/main.cpp
 )
 target_link_libraries(pixelwise_stabilizer ${ALL_LIBS} ${OpenCV_LIBS} ${PYTHON_LIBRARIES})
 
+add_executable(angular_velocity_estimator src/angular_velocity_estimator.cpp
+        src/json_tools.cpp
+        src/calcShift.cpp
+        src/camera_information.cpp
+)
+target_link_libraries(angular_velocity_estimator ${ALL_LIBS} ${OpenCV_LIBS} ${PYTHON_LIBRARIES})
+
 # デバッグビルド
 IF(CMAKE_BUILD_TYPE MATCHES DEBUG)
 set(CMAKE_C_FLAGS_DEBUG "-O0 -g")
