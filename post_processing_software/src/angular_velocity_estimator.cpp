@@ -26,13 +26,13 @@ int main(int argc, char **argv)
     //動画からオプティカルフローを計算する
     for (int i = 1; i < argc; ++i)
     {
-        printf("%d %s\r\n", i, argv[i]);
+        printf("Processing... %s  \r\n", argv[i]);
         //ファイルが存在する？
         //動画ファイル？
         cv::VideoCapture video(argv[i]);
         if (!video.isOpened())
         {
-            std::cerr << "Warning: Video file " << argv[i] << " is not found. It's skipped." << std::endl;
+            std::cerr << argv[i] << " can't be opened." << std::endl;
             continue;
         }
        
@@ -40,7 +40,10 @@ int main(int argc, char **argv)
         if (!jsonExists(std::string(argv[i])))
         {
             CalcShiftFromVideo(argv[i], getVideoLength(argv[i]), optical_flow, confidence); //ビデオからオプティカルフローを用いてシフト量を算出
-            writeOpticalFrowToJson(optical_flow, std::string(argv[i]));
+            writeOpticalFrowToJson(std::string(argv[i]),optical_flow,confidence);
+            std::cout << argv[i] << " done." << std::endl;
+        }else{
+            std::cout << argv[i] << " already exists." << std::endl;
         }
     }
     return 0;

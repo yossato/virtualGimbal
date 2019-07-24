@@ -34,8 +34,8 @@ bool syncronizedQuarternionExist(const std::string &video_name);
 void writeSynchronizedQuaternion(const Eigen::MatrixXd &raw_quaternion, const Eigen::MatrixXd &filtered_quaternion, const std::string video_name);
 int readSynchronizedQuaternion( Eigen::MatrixXd &raw_quaternion, Eigen::MatrixXd &filtered_quaternion, const std::string video_name);
 bool jsonExists(std::string video_file_name);
-int writeOpticalFrowToJson(Eigen::MatrixXd &optical_flow,std::string video_file_name);
-int readOpticalFlowFromJson(Eigen::MatrixXd &optical_flow,std::string video_file_name);
+int writeOpticalFrowToJson(std::string video_file_name, Eigen::MatrixXd &optical_flow, Eigen::MatrixXd &confidence);
+int readOpticalFlowFromJson(std::string video_file_name, Eigen::MatrixXd &optical_flow, Eigen::MatrixXd &confidence);
 std::string videoNameToJsonName(std::string video_name);
 
 

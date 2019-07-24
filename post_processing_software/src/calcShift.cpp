@@ -100,7 +100,8 @@ void CalcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd 
         cur.copyTo(prev);
         cur_grey.copyTo(prev_grey);
 
-        std::cout << "Frame: " << frame << "/" << total_frames << " - good optical flow: " << prev_corner2.size() << std::endl;
+        printf("Frame: %d/%d - good optical flow: %u       \r",frame,total_frames,prev_corner2.size());
+        // std::cout << "Frame: " << frame << "/" << total_frames << " - good optical flow: " << prev_corner2.size() << std::endl;
         // k++;
         
         // if(calcPeriod <= 0){continue;}	//長さ0ならビデオ全域で継続

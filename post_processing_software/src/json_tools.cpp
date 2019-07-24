@@ -310,23 +310,28 @@ bool jsonExists(std::string video_file_name)
     return !stat(json_file_name.c_str(), &st);
 }
 
-int writeOpticalFrowToJson(Eigen::MatrixXd &optical_flow, std::string video_file_name)
+int writeOpticalFrowToJson(std::string video_file_name, Eigen::MatrixXd &optical_flow, Eigen::MatrixXd &confidence)
 {
 
     Document d(kObjectType);
 
     Document v(kArrayType);
-
     Document::AllocatorType &allocator = v.GetAllocator();
-
     for (int i = 0, e = optical_flow.rows(); i < e; ++i)
     {
         v.PushBack(optical_flow(i, 0), allocator);
         v.PushBack(optical_flow(i, 1), allocator);
         v.PushBack(optical_flow(i, 2), allocator);
     }
-
     d.AddMember("optical_flow", v, d.GetAllocator());
+
+    Document c(kArrayType);
+    Document::AllocatorType &allocator_c = c.GetAllocator();
+    for (int i = 0, e = confidence.rows(); i < e; ++i)
+    {
+        c.PushBack(confidence(i, 0), allocator_c);
+    }
+    d.AddMember("confidence", c, d.GetAllocator());
 
     std::string json_file_name = videoNameToJsonName(video_file_name);
 
@@ -340,7 +345,7 @@ int writeOpticalFrowToJson(Eigen::MatrixXd &optical_flow, std::string video_file
     return 0;
 }
 
-int readOpticalFlowFromJson(Eigen::MatrixXd &optical_flow, std::string video_file_name)
+int readOpticalFlowFromJson(std::string video_file_name, Eigen::MatrixXd &optical_flow, Eigen::MatrixXd &confidence)
 {
 
     FILE *fp = fopen(videoNameToJsonName(video_file_name).c_str(), "rb"); // non-Windows use "r"
@@ -358,6 +363,13 @@ int readOpticalFlowFromJson(Eigen::MatrixXd &optical_flow, std::string video_fil
         {
             optical_flow(r, c) = optical_flow_array[r * 3 + c].GetDouble();
         }
+    }
+
+    const Value &confidence_array = e["confidence"];
+    confidence.resize(confidence_array.Size() , 1);
+    for (int r = 0; r < confidence.rows(); ++r)
+    {
+            confidence(r) = confidence_array[r].GetDouble();
     }
 
     return 0;
