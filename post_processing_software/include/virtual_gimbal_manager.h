@@ -46,13 +46,13 @@ public:
   void setRotation(const char *file_name, CameraInformation &cameraInfo);
   void setFilter(FilterPtr filter);
   // void getEstimatedAndMeasuredAngularVelocity(Eigen::MatrixXd &data);
-  Eigen::VectorXd getCorrelationCoefficient();
-  double getSubframeOffset(Eigen::VectorXd &correlation_coefficients);
+  Eigen::VectorXd getCorrelationCoefficient(int32_t begin=0, int32_t length=0);
+  double getSubframeOffset(Eigen::VectorXd &correlation_coefficients,int32_t begin=0, int32_t length=0);
   void setResamplerParameter(double start);
   Eigen::MatrixXd getSynchronizedMeasuredAngularVelocity();
   std::map<int, std::vector<cv::Point2d>> getCornerDictionary(cv::Size &pattern_size, bool debug_speedup = false, bool Verbose = false);
   Eigen::MatrixXd estimateAngularVelocity(const std::map<int, std::vector<cv::Point2d>> &corner_dict, const std::vector<cv::Point3d> &world_points, Eigen::VectorXd &confidence);
-  void estimateAngularVelocity(Eigen::MatrixXd &estimated_angular_velocity, Eigen::MatrixXd &confidence,int frames=1000);
+  void estimateAngularVelocity(Eigen::MatrixXd &estimated_angular_velocity, Eigen::MatrixXd &confidence);
   Eigen::MatrixXd getRotationQuaternions();
   void getUndistortUnrollingChessBoardPoints(double time_offset, const std::pair<int, std::vector<cv::Point2d>> &corner_dict, std::vector<cv::Point2d> &dst, double line_delay=0.0);
   void getUndistortUnrollingChessBoardPoints(double time, const std::vector<cv::Point2d> &src, std::vector<cv::Point2d> &dst, double line_delay = 0.0);
@@ -77,7 +77,6 @@ protected:
   RotationPtr rotation;
   AngularVelocityPtr measured_angular_velocity;
   AngularVelocityPtr estimated_angular_velocity;
-  AngularVelocityPtr estimated_angular_velocity_back;
   RotationQuaternionPtr rotation_quaternion;
   //Synchronize
   AngularVelocityPtr resampled_synchronized_angular_velocity;

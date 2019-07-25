@@ -98,19 +98,15 @@ int main(int argc, char **argv)
     
 
     Eigen::MatrixXd estimated_angular_velocity,confidence;
-    if(debug_speedup){
-        manager.estimateAngularVelocity(estimated_angular_velocity,confidence,100);
-    }else{
-        manager.estimateAngularVelocity(estimated_angular_velocity,confidence,1000);
-    }
+    manager.estimateAngularVelocity(estimated_angular_velocity,confidence);
     
     manager.setEstimatedAngularVelocity(estimated_angular_velocity, confidence);
     // std::cout << "confidence:" << confidence.transpose() << std::endl
     //           << std::flush;
               
 
-    Eigen::VectorXd correlation = manager.getCorrelationCoefficient();
-    double offset = manager.getSubframeOffset(correlation);
+    Eigen::VectorXd correlation = manager.getCorrelationCoefficient(0,1000);
+    double offset = manager.getSubframeOffset(correlation,0,1000);
     manager.setResamplerParameter(offset);
 #ifdef __DEBUG_ONLY
     std::vector<string> legends_angular_velocity = {"c"};

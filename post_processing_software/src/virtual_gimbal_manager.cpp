@@ -108,23 +108,30 @@ void VirtualGimbalManager::setRotation(const char *file_name, CameraInformation 
     // angularVelocityCoordinateTransformer(angular_velocity,cameraInfo.sd_card_rotation_);
 }
 
-Eigen::VectorXd VirtualGimbalManager::getCorrelationCoefficient()
+Eigen::VectorXd VirtualGimbalManager::getCorrelationCoefficient(int32_t begin, int32_t length)
 {
+    if(0 == length){
+        length = estimated_angular_velocity->data.rows();
+    }
     Eigen::MatrixXd measured_angular_velocity_resampled = measured_angular_velocity->getResampledData(ResamplerParameterPtr(new ResamplerParameter(video_param->getFrequency(), 0, 0)));
-    int32_t diff = measured_angular_velocity_resampled.rows() - estimated_angular_velocity->data.rows();
+    assert(length <= estimated_angular_velocity->data.rows());
+    
+    Eigen::MatrixXd particial_estimated_angular_velocity = estimated_angular_velocity->data.block(begin,0,length,estimated_angular_velocity->data.cols());
+    Eigen::VectorXd particial_confidence = estimated_angular_velocity->confidence.block(begin,0,length,estimated_angular_velocity->confidence.cols());
+
+    int32_t diff = measured_angular_velocity_resampled.rows() - particial_estimated_angular_velocity.rows();
     std::cout << diff << std::endl;
-    // /*  std::vector<double>*/ Eigen::VectorXd correlation_coefficients(diff + 1);
     Eigen::VectorXd correlation_coefficients(diff+1);
     for (int32_t frame = 0, end = correlation_coefficients.rows(); frame < end; ++frame)
     {
-        int32_t number_of_data = estimated_angular_velocity->confidence.cast<int>().array().sum();
+        int32_t number_of_data = particial_confidence.cast<int>().array().sum();
         if (0 == number_of_data)
         {
             correlation_coefficients[frame] = std::numeric_limits<double>::max();
         }
         else
         {
-            correlation_coefficients[frame] = ((measured_angular_velocity_resampled.block(frame, 0, estimated_angular_velocity->data.rows(), estimated_angular_velocity->data.cols()) - estimated_angular_velocity->data).array().colwise() * estimated_angular_velocity->confidence.array()).abs().sum() / (double)number_of_data;
+            correlation_coefficients[frame] = ((measured_angular_velocity_resampled.block(frame, 0, particial_estimated_angular_velocity.rows(), particial_estimated_angular_velocity.cols()) - particial_estimated_angular_velocity).array().colwise() * particial_confidence.array()).abs().sum() / (double)number_of_data;
         }
 
         if (frame % 100 == 0)
@@ -136,11 +143,19 @@ Eigen::VectorXd VirtualGimbalManager::getCorrelationCoefficient()
     return correlation_coefficients;
 }
 
-double VirtualGimbalManager::getSubframeOffset(Eigen::VectorXd &correlation_coefficients){
+double VirtualGimbalManager::getSubframeOffset(Eigen::VectorXd &correlation_coefficients, int32_t begin, int32_t length){
+    if(0 == length){
+        length = estimated_angular_velocity->data.rows();
+    }
+    assert(length<=estimated_angular_velocity->data.rows());
     // std::cout << correlation_coefficients.block(0,0,100,1) << std::endl;
     std::vector<double> vec_correlation_cofficients(correlation_coefficients.rows());
     Eigen::Map<Eigen::VectorXd>(vec_correlation_cofficients.data(),correlation_coefficients.rows(),1) = correlation_coefficients;
     int32_t minimum_correlation_frame = std::distance(vec_correlation_cofficients.begin(), min_element(vec_correlation_cofficients.begin(), vec_correlation_cofficients.end()));
+
+    Eigen::MatrixXd particial_estimated_angular_velocity = estimated_angular_velocity->data.block(begin,0,length,estimated_angular_velocity->data.cols());
+    Eigen::VectorXd particial_confidence = estimated_angular_velocity->confidence.block(begin,0,length,estimated_angular_velocity->confidence.cols());
+
     //最小値サブピクセル推定
     double minimum_correlation_subframe = 0.0;
     if (minimum_correlation_frame == 0)
@@ -151,20 +166,16 @@ double VirtualGimbalManager::getSubframeOffset(Eigen::VectorXd &correlation_coef
     { //末尾
         minimum_correlation_subframe = (double)(correlation_coefficients.rows() - 2);
     }
-    else if(0)
-    { //その他
-        minimum_correlation_subframe = -(correlation_coefficients[minimum_correlation_frame + 1] - correlation_coefficients[minimum_correlation_frame - 1]) 
-        / (2 * correlation_coefficients[minimum_correlation_frame - 1] 
-        - 4 * correlation_coefficients[minimum_correlation_frame] + 2 * correlation_coefficients[minimum_correlation_frame + 1]);
-    }else{
+    else
+    {
         std::cout << "minimum_correlation_frame" << minimum_correlation_frame << std::endl;
         double min_value=std::numeric_limits<double>::max();
-        int32_t number_of_data = estimated_angular_velocity->confidence.cast<int>().array().sum();
+        int32_t number_of_data = particial_confidence.cast<int>().array().sum();
         for(double sub_frame = -2.0 ; sub_frame<=2.0; sub_frame+=0.001){
-            Eigen::MatrixXd measured_angular_velocity_resampled = measured_angular_velocity->getResampledData(std::make_shared<ResamplerParameter>(video_param->getFrequency(), (sub_frame + minimum_correlation_frame) * video_param->getInterval(), estimated_angular_velocity->getLengthInSecond()));
-            // double value = ((measured_angular_velocity_resampled.block(0, 0, estimated_angular_velocity->data.rows(), estimated_angular_velocity->data.cols()) - estimated_angular_velocity->data).array().colwise() * estimated_angular_velocity->confidence.array()).abs().sum() / (double)number_of_data;
-            assert(measured_angular_velocity_resampled.rows() == estimated_angular_velocity->data.rows());
-            double value = ((measured_angular_velocity_resampled - estimated_angular_velocity->data).array().colwise() * estimated_angular_velocity->confidence.array()).abs().sum() / (double)number_of_data;
+            Eigen::MatrixXd measured_angular_velocity_resampled = measured_angular_velocity->getResampledData(std::make_shared<ResamplerParameter>(video_param->getFrequency(), (sub_frame + minimum_correlation_frame) * video_param->getInterval(), estimated_angular_velocity->getInterval()*particial_estimated_angular_velocity.rows()));
+            // double value = ((measured_angular_velocity_resampled.block(0, 0, particial_estimated_angular_velocity.rows(), particial_estimated_angular_velocity.cols()) - particial_estimated_angular_velocity).array().colwise() * particial_confidence.array()).abs().sum() / (double)number_of_data;
+            assert(measured_angular_velocity_resampled.rows() == particial_estimated_angular_velocity.rows());
+            double value = ((measured_angular_velocity_resampled - particial_estimated_angular_velocity).array().colwise() * particial_confidence.array()).abs().sum() / (double)number_of_data;
             if(min_value > value){
                 min_value = value;
                 minimum_correlation_subframe = sub_frame;
@@ -315,13 +326,13 @@ Eigen::MatrixXd VirtualGimbalManager::estimateAngularVelocity(const std::map<int
 /**
  * @brief Estimate angular velocity from video optical flow
  **/
-void VirtualGimbalManager::estimateAngularVelocity(Eigen::MatrixXd &estimated_angular_velocity, Eigen::MatrixXd &confidence, int frames)
+void VirtualGimbalManager::estimateAngularVelocity(Eigen::MatrixXd &estimated_angular_velocity, Eigen::MatrixXd &confidence)
 {
     Eigen::MatrixXd optical_flow;
     if(jsonExists(video_param->video_file_name)){
         readOpticalFlowFromJson(video_param->video_file_name,optical_flow,confidence);
     }else{
-        CalcShiftFromVideo(video_param->video_file_name.c_str(), frames, optical_flow, confidence);
+        CalcShiftFromVideo(video_param->video_file_name.c_str(), video_param->video_frames, optical_flow, confidence);
     }
     estimated_angular_velocity.resize(optical_flow.rows(), optical_flow.cols());
     estimated_angular_velocity.col(0) =
