@@ -48,7 +48,8 @@ public:
   // void getEstimatedAndMeasuredAngularVelocity(Eigen::MatrixXd &data);
   Eigen::VectorXd getCorrelationCoefficient(int32_t begin=0, int32_t length=0);
   double getSubframeOffset(Eigen::VectorXd &correlation_coefficients,int32_t begin=0, int32_t length=0);
-  void setResamplerParameter(double start);
+  void setResamplerParameter(double start, double new_frequency = 0.0);
+  void setResamplerParameter(ResamplerParameterPtr param);
   Eigen::MatrixXd getSynchronizedMeasuredAngularVelocity();
   std::map<int, std::vector<cv::Point2d>> getCornerDictionary(cv::Size &pattern_size, bool debug_speedup = false, bool Verbose = false);
   Eigen::MatrixXd estimateAngularVelocity(const std::map<int, std::vector<cv::Point2d>> &corner_dict, const std::vector<cv::Point3d> &world_points, Eigen::VectorXd &confidence);

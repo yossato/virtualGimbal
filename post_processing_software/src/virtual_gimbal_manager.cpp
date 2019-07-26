@@ -192,8 +192,18 @@ double VirtualGimbalManager::getSubframeOffset(Eigen::VectorXd &correlation_coef
     return minimum_correlation_subframe * video_param->getInterval() - (estimated_angular_velocity->getInterval() - measured_angular_velocity->getInterval()) * 0.5;
 }
 
-void VirtualGimbalManager::setResamplerParameter(double start){
-    resampler_parameter_ = std::make_shared<ResamplerParameter>(video_param->getFrequency(), start, estimated_angular_velocity->data.rows() / estimated_angular_velocity->getFrequency());
+void VirtualGimbalManager::setResamplerParameter(double start, double new_frequency){
+    if(0.0 == new_frequency)
+    {
+        resampler_parameter_ = std::make_shared<ResamplerParameter>(video_param->getFrequency(), start, estimated_angular_velocity->data.rows() * estimated_angular_velocity->getInterval());
+    }else
+    {
+        resampler_parameter_ = std::make_shared<ResamplerParameter>(new_frequency,start,estimated_angular_velocity->data.rows() * estimated_angular_velocity->getInterval());
+    }
+}
+
+void VirtualGimbalManager::setResamplerParameter(ResamplerParameterPtr param){
+    resampler_parameter_ = param;
 }
 
 Eigen::MatrixXd VirtualGimbalManager::getSynchronizedMeasuredAngularVelocity()
@@ -619,5 +629,15 @@ std::shared_ptr<ResamplerParameter> VirtualGimbalManager::getResamplerParameterW
     double offset_end = getSubframeOffset(correlation_end,video_param->video_frames-1000,1000);
     double ratio = (offset_end - offset_begin)/((video_param->video_frames - 1000)*video_param->getInterval());
     printf("offset begin: %f, offset end: %f, ratio:%f\r\n",offset_begin,offset_end,ratio);
-    return std::make_shared<ResamplerParameter>(video_param->getFrequency(),offset_begin,estimated_angular_velocity->getLengthInSecond());
+    // return std::make_shared<ResamplerParameter>(video_param->getFrequency(),offset_begin,estimated_angular_velocity->getLengthInSecond());
+    double L = estimated_angular_velocity->getLengthInSecond();
+    double W = 1000.0*estimated_angular_velocity->getInterval();
+    double &t2 = offset_end;
+    double &t1 = offset_begin;
+    double a = (t2-t1)/(L-W);
+    printf("L:%f W:%f t1:%f t2:%f a:%f\r\n",L,W,t1,t2,a);
+    double modified_frequency = estimated_angular_velocity->getFrequency()/a;
+    double modified_offset = a*t1;
+    printf("modified_frequency:%f modified_offset:%f\r\n",modified_frequency,modified_offset);
+    return std::make_shared<ResamplerParameter>(modified_frequency,modified_offset,estimated_angular_velocity->getLengthInSecond());
 }

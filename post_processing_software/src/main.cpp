@@ -110,8 +110,8 @@ int main(int argc, char **argv)
     manager.setResamplerParameter(offset);
 
     Eigen::VectorXd correlation_begin,correlation_end;
-    manager.getResamplerParameterWithClockError(correlation_begin,correlation_end);
-
+    auto modified_resampler_parameter = manager.getResamplerParameterWithClockError(correlation_begin,correlation_end);
+    manager.setResamplerParameter(modified_resampler_parameter);
 #ifdef __DEBUG_ONLY
     std::vector<string> legends_angular_velocity = {"c"};
     vgp::plot(correlation_begin, "correlation_begin", legends_angular_velocity);
