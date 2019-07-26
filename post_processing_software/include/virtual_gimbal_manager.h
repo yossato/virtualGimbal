@@ -70,7 +70,7 @@ public:
   const char *kernel_name = "stabilizer_kernel.cl";
   const char *kernel_function = "stabilizer_function";
   std::shared_ptr<cv::VideoCapture> getVideoCapture();
-  
+  std::shared_ptr<ResamplerParameter> getResamplerParameterWithClockError();
 protected:
   std::shared_ptr<MultiThreadVideoWriter> writer_;
 
@@ -84,7 +84,7 @@ protected:
 
   VideoPtr video_param;
   FilterPtr filter_;
-double maximum_gradient_;
+  double maximum_gradient_;
   void rotateAngularVelocity(Eigen::MatrixXd &angular_velocity, const Eigen::Quaterniond &rotation)
   {
     Eigen::Quaterniond avq;
