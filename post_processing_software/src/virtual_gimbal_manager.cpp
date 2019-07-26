@@ -189,7 +189,7 @@ double VirtualGimbalManager::getSubframeOffset(Eigen::VectorXd &correlation_coef
     std::cout << std::endl
               << minimum_correlation_subframe << std::endl;
 
-    return minimum_correlation_subframe / video_param->getFrequency() - (estimated_angular_velocity->getInterval() - measured_angular_velocity->getInterval()) * 0.5;
+    return minimum_correlation_subframe * video_param->getInterval() - (estimated_angular_velocity->getInterval() - measured_angular_velocity->getInterval()) * 0.5;
 }
 
 void VirtualGimbalManager::setResamplerParameter(double start){
@@ -610,13 +610,14 @@ void VirtualGimbalManager::enableWriter(const char *video_path){
     writer_ = std::make_shared<MultiThreadVideoWriter>(MultiThreadVideoWriter::getOutputName(video_path),*video_param);
 }
 
-std::shared_ptr<ResamplerParameter> VirtualGimbalManager::getResamplerParameterWithClockError(){
+std::shared_ptr<ResamplerParameter> VirtualGimbalManager::getResamplerParameterWithClockError(Eigen::VectorXd &correlation_begin, Eigen::VectorXd &correlation_end){
     // TODO: Consider video length is less than 1000
-    Eigen::VectorXd correlation = getCorrelationCoefficient(0,1000);
-    double offset_begin = getSubframeOffset(correlation,0,1000);
-    correlation = getCorrelationCoefficient(video_param->video_frames-1000,1000);
-    double offset_end = getSubframeOffset(correlation,video_param->video_frames-1000,1000);
-    double ratio = (offset_begin - offset_end)/(video_param->video_frames - 1000);
+    // Eigen::VectorXd correlation = getCorrelationCoefficient(0,1000);
+    correlation_begin = getCorrelationCoefficient(0,1000);
+    double offset_begin = getSubframeOffset(correlation_begin,0,1000);
+    correlation_end = getCorrelationCoefficient(video_param->video_frames-1000,1000);
+    double offset_end = getSubframeOffset(correlation_end,video_param->video_frames-1000,1000);
+    double ratio = (offset_end - offset_begin)/((video_param->video_frames - 1000)*video_param->getInterval());
     printf("offset begin: %f, offset end: %f, ratio:%f\r\n",offset_begin,offset_end,ratio);
     return std::make_shared<ResamplerParameter>(video_param->getFrequency(),offset_begin,estimated_angular_velocity->getLengthInSecond());
 }

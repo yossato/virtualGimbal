@@ -9,7 +9,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-// #define __DEBUG_ONLY
+#define __DEBUG_ONLY
 #ifdef __DEBUG_ONLY
 #include "visualizer.h"
 
@@ -109,10 +109,18 @@ int main(int argc, char **argv)
     double offset = manager.getSubframeOffset(correlation,0,1000);
     manager.setResamplerParameter(offset);
 
-    manager.getResamplerParameterWithClockError();
+    Eigen::VectorXd correlation_begin,correlation_end;
+    manager.getResamplerParameterWithClockError(correlation_begin,correlation_end);
 
 #ifdef __DEBUG_ONLY
     std::vector<string> legends_angular_velocity = {"c"};
+    vgp::plot(correlation_begin, "correlation_begin", legends_angular_velocity);
+    vgp::plot(correlation_end, "correlation_end", legends_angular_velocity);
+#endif 
+
+
+#ifdef __DEBUG_ONLY
+    // std::vector<string> legends_angular_velocity = {"c"};
     vgp::plot(correlation, "correlation", legends_angular_velocity);
 #endif 
 
@@ -121,7 +129,7 @@ int main(int argc, char **argv)
     manager.setMaximumGradient(0.5);
     Eigen::VectorXd filter_coefficients = manager.getFilterCoefficients(zoom,*fir_filter,2,499);
 #ifdef __DEBUG_ONLY
-    vgp::plot(filter_coefficients, "filter_coefficients", legends_angular_velocity);
+    vgp::plot(filter_coefficients, "filter_coefficients [Smaller value means Stronger filter.]", legends_angular_velocity);
 #endif
 
     manager.spin(zoom,*fir_filter,filter_coefficients);

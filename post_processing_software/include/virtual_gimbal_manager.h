@@ -70,7 +70,7 @@ public:
   const char *kernel_name = "stabilizer_kernel.cl";
   const char *kernel_function = "stabilizer_function";
   std::shared_ptr<cv::VideoCapture> getVideoCapture();
-  std::shared_ptr<ResamplerParameter> getResamplerParameterWithClockError();
+  std::shared_ptr<ResamplerParameter> getResamplerParameterWithClockError(Eigen::VectorXd &correlation_begin, Eigen::VectorXd &correlation_end);
 protected:
   std::shared_ptr<MultiThreadVideoWriter> writer_;
 
