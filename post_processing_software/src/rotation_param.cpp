@@ -125,6 +125,10 @@ double AngularVelocity::getLengthInSecond(){
     return data.rows()*getInterval();
 }
 
+int32_t AngularVelocity::getFrames(){
+    return data.rows();
+}
+
 Rotation::~Rotation()
 {
 }

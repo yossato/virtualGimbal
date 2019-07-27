@@ -9,7 +9,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#define __DEBUG_ONLY
+// #define __DEBUG_ONLY
 #ifdef __DEBUG_ONLY
 #include "visualizer.h"
 

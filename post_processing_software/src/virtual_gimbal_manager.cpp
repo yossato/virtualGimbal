@@ -625,9 +625,9 @@ std::shared_ptr<ResamplerParameter> VirtualGimbalManager::getResamplerParameterW
     // Eigen::VectorXd correlation = getCorrelationCoefficient(0,1000);
     correlation_begin = getCorrelationCoefficient(0,1000);
     double offset_begin = getSubframeOffset(correlation_begin,0,1000);
-    correlation_end = getCorrelationCoefficient(video_param->video_frames-1000,1000);
-    double offset_end = getSubframeOffset(correlation_end,video_param->video_frames-1000,1000);
-    double ratio = (offset_end - offset_begin)/((video_param->video_frames - 1000)*video_param->getInterval());
+    correlation_end = getCorrelationCoefficient(estimated_angular_velocity->getFrames()-1000,1000);
+    double offset_end = getSubframeOffset(correlation_end,estimated_angular_velocity->getFrames()-1000,1000);
+    double ratio = (offset_end - offset_begin)/((estimated_angular_velocity->getFrames() - 1000)*estimated_angular_velocity->getInterval());
     printf("offset begin: %f, offset end: %f, ratio:%f\r\n",offset_begin,offset_end,ratio);
     // return std::make_shared<ResamplerParameter>(video_param->getFrequency(),offset_begin,estimated_angular_velocity->getLengthInSecond());
     double L = estimated_angular_velocity->getLengthInSecond();
