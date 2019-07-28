@@ -46,8 +46,8 @@ public:
   void setRotation(const char *file_name, CameraInformation &cameraInfo);
   void setFilter(FilterPtr filter);
   // void getEstimatedAndMeasuredAngularVelocity(Eigen::MatrixXd &data);
-  Eigen::VectorXd getCorrelationCoefficient(int32_t begin=0, int32_t length=0);
-  double getSubframeOffset(Eigen::VectorXd &correlation_coefficients,int32_t begin=0, int32_t length=0);
+  Eigen::VectorXd getCorrelationCoefficient(int32_t begin=0, int32_t length=0, double frequency=0.0);
+  double getSubframeOffset(Eigen::VectorXd &correlation_coefficients,int32_t begin=0, int32_t length=0, double frequency=0.0);
   void setResamplerParameter(double start, double new_frequency = 0.0);
   void setResamplerParameter(ResamplerParameterPtr param);
   Eigen::MatrixXd getSynchronizedMeasuredAngularVelocity();

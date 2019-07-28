@@ -108,12 +108,16 @@ void VirtualGimbalManager::setRotation(const char *file_name, CameraInformation 
     // angularVelocityCoordinateTransformer(angular_velocity,cameraInfo.sd_card_rotation_);
 }
 
-Eigen::VectorXd VirtualGimbalManager::getCorrelationCoefficient(int32_t begin, int32_t length)
+Eigen::VectorXd VirtualGimbalManager::getCorrelationCoefficient(int32_t begin, int32_t length, double frequency)
 {
     if(0 == length){
         length = estimated_angular_velocity->data.rows();
     }
-    Eigen::MatrixXd measured_angular_velocity_resampled = measured_angular_velocity->getResampledData(ResamplerParameterPtr(new ResamplerParameter(video_param->getFrequency(), 0, 0)));
+
+    if(frequency <= std::numeric_limits<double>::epsilon()){
+        frequency = video_param->getFrequency();
+    }
+    Eigen::MatrixXd measured_angular_velocity_resampled = measured_angular_velocity->getResampledData(ResamplerParameterPtr(new ResamplerParameter(frequency, 0, 0)));
     assert(length <= estimated_angular_velocity->data.rows());
     
     Eigen::MatrixXd particial_estimated_angular_velocity = estimated_angular_velocity->data.block(begin,0,length,estimated_angular_velocity->data.cols());
@@ -143,9 +147,12 @@ Eigen::VectorXd VirtualGimbalManager::getCorrelationCoefficient(int32_t begin, i
     return correlation_coefficients;
 }
 
-double VirtualGimbalManager::getSubframeOffset(Eigen::VectorXd &correlation_coefficients, int32_t begin, int32_t length){
+double VirtualGimbalManager::getSubframeOffset(Eigen::VectorXd &correlation_coefficients, int32_t begin, int32_t length, double frequency){
     if(0 == length){
         length = estimated_angular_velocity->data.rows();
+    }
+    if(frequency < std::numeric_limits<double>::epsilon()){
+        frequency = video_param->getFrequency();
     }
     assert(length<=estimated_angular_velocity->data.rows());
     // std::cout << correlation_coefficients.block(0,0,100,1) << std::endl;
@@ -172,7 +179,7 @@ double VirtualGimbalManager::getSubframeOffset(Eigen::VectorXd &correlation_coef
         double min_value=std::numeric_limits<double>::max();
         int32_t number_of_data = particial_confidence.cast<int>().array().sum();
         for(double sub_frame = -2.0 ; sub_frame<=2.0; sub_frame+=0.0001){
-            Eigen::MatrixXd measured_angular_velocity_resampled = measured_angular_velocity->getResampledData(std::make_shared<ResamplerParameter>(video_param->getFrequency(), (sub_frame + minimum_correlation_frame) * video_param->getInterval(), estimated_angular_velocity->getInterval()*particial_estimated_angular_velocity.rows()));
+            Eigen::MatrixXd measured_angular_velocity_resampled = measured_angular_velocity->getResampledData(std::make_shared<ResamplerParameter>(frequency, (sub_frame + minimum_correlation_frame) /frequency, estimated_angular_velocity->getInterval()*particial_estimated_angular_velocity.rows()));
             // double value = ((measured_angular_velocity_resampled.block(0, 0, particial_estimated_angular_velocity.rows(), particial_estimated_angular_velocity.cols()) - particial_estimated_angular_velocity).array().colwise() * particial_confidence.array()).abs().sum() / (double)number_of_data;
             assert(measured_angular_velocity_resampled.rows() == particial_estimated_angular_velocity.rows());
             double value = ((measured_angular_velocity_resampled - particial_estimated_angular_velocity).array().colwise() * particial_confidence.array()).abs().sum() / (double)number_of_data;
@@ -189,7 +196,7 @@ double VirtualGimbalManager::getSubframeOffset(Eigen::VectorXd &correlation_coef
     std::cout << std::endl
               << minimum_correlation_subframe << std::endl;
 
-    return minimum_correlation_subframe * video_param->getInterval() - (estimated_angular_velocity->getInterval() - measured_angular_velocity->getInterval()) * 0.5;
+    return minimum_correlation_subframe / frequency - (estimated_angular_velocity->getInterval() - measured_angular_velocity->getInterval()) * 0.5;
 }
 
 void VirtualGimbalManager::setResamplerParameter(double start, double new_frequency){
@@ -636,8 +643,13 @@ std::shared_ptr<ResamplerParameter> VirtualGimbalManager::getResamplerParameterW
     double &t1 = offset_begin;
     double a = (t2-t1)/(L-W);
     printf("L:%f W:%f t1:%f t2:%f a:%f\r\n",L,W,t1,t2,a);
-    double modified_frequency = estimated_angular_velocity->getFrequency()/a;
-    double modified_offset = /*a* */t1;
+    double modified_frequency = estimated_angular_velocity->getFrequency()*a;
+
+    Eigen::VectorXd correlation_modified = getCorrelationCoefficient(0,1000,modified_frequency);
+    double modified_offset = getSubframeOffset(correlation_modified,0,1000,modified_frequency);
+
+
+    // double modified_offset = t1/a + W*(a-1)*0.5;
     printf("modified_frequency:%f modified_offset:%f\r\n",modified_frequency,modified_offset);
     return std::make_shared<ResamplerParameter>(modified_frequency,modified_offset,estimated_angular_velocity->getLengthInSecond());
 }

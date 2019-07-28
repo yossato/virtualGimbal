@@ -26,12 +26,13 @@ int main(int argc, char **argv)
     bool output = false;
     const char *kernel_name = "cl/stabilizer_kernel.cl";
     const char *kernel_function = "stabilizer_function";
-    bool debug_speedup = false;
+    // bool debug_speedup = false;
     double zoom = 1.0;
+    int32_t fileter_length = 199;
     int opt;
     //    Eigen::Quaterniond camera_rotation;
 
-    while ((opt = getopt(argc, argv, "j:i:c:l:d::z:k::f::o::")) != -1)
+    while ((opt = getopt(argc, argv, "j:i:c:l:w::z:k::f::o::")) != -1)
     {
         switch (opt)
         {
@@ -47,11 +48,14 @@ int main(int argc, char **argv)
         case 'l':
             lensName = optarg;
             break;
-        case 'd':
-            debug_speedup = true;
-            break;
+        // case 'd':
+        //     debug_speedup = true;
+        //     break;
         case 'z':       //zoom ratio, dafault 1.0
             zoom = std::stof(optarg);
+            break;
+        case 'w':
+            fileter_length = std::stoi(optarg);
             break;
         case 'k':
             kernel_name = optarg;
@@ -124,7 +128,7 @@ int main(int argc, char **argv)
     vgp::plot(correlation, "correlation", legends_angular_velocity);
 #endif 
 
-    auto fir_filter = std::make_shared<KaiserWindowFilter>(199,2);
+    auto fir_filter = std::make_shared<KaiserWindowFilter>(fileter_length,2);
     manager.setFilter(fir_filter);
     manager.setMaximumGradient(0.5);
     Eigen::VectorXd filter_coefficients = manager.getFilterCoefficients(zoom,*fir_filter,2,499);
