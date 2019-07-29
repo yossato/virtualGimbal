@@ -32,7 +32,7 @@ int main(int argc, char **argv)
     int opt;
     //    Eigen::Quaterniond camera_rotation;
 
-    while ((opt = getopt(argc, argv, "j:i:c:l:w::z:k::f::o::")) != -1)
+    while ((opt = getopt(argc, argv, "j:i:c:l:w:z:k:f:o::")) != -1)
     {
         switch (opt)
         {
@@ -41,6 +41,7 @@ int main(int argc, char **argv)
             break;
         case 'i': //input video file pass
             videoPass = optarg;
+            printf("videoPass %s",videoPass);
             break;
         case 'c':
             cameraName = optarg;
