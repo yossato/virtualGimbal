@@ -1,5 +1,29 @@
 #include "multi_thread_video_writer.h"
 
+// UMatWithMutex::UMatWithMutex(UMatPtr &p){
+//     ptr = std::move(p);
+// }
+
+
+
+int MultiThreadVideoData::push(UMatPtr p){
+    std::lock_guard<std::mutex> lock(mutex);
+    data.emplace(std::move(p));
+    return 0;
+}
+
+int MultiThreadVideoData::get(UMatPtr &p){
+    std::lock_guard<std::mutex> lock(mutex);
+    p = std::move(data.front());
+    return 0;
+}
+
+int MultiThreadVideoData::pop(){
+    std::lock_guard<std::mutex> lock(mutex);
+    data.pop();
+    return 0;
+}
+
 MultiThreadVideoWriter::MultiThreadVideoWriter(std::string output_pass, Video &video_param)
 {
     struct stat st;
@@ -89,11 +113,11 @@ std::string MultiThreadVideoWriter::getOutputName(const char *source_video_name)
     return output_pass;
 }
 
-void MultiThreadVideoWriter::addFrame(cv::Mat &image)
+void MultiThreadVideoWriter::addFrame(UMatPtr &image)
 {
-    std::lock_guard<std::mutex> lock(mtx);
-    images.push_back(cv::Mat());
-    images.back() = image.clone();
+    // std::lock_guard<std::mutex> lock(mtx);
+    // images.push_back(cv::Mat());
+    // images.back() = image.clone();
 }
 
 // void MultiThreadVideoWriter::beginThread(){

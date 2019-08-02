@@ -510,8 +510,9 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
     cv::ocl::Context context;
     cv::Mat mat_src = cv::Mat::zeros(video_param->camera_info->height_, video_param->camera_info->width_, CV_8UC4); // TODO:冗長なので書き換える
     cv::UMat umat_src = mat_src.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
-    cv::UMat umat_dst(mat_src.size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
-    cv::String build_opt = cv::format("-D dstT=%s", cv::ocl::typeToStr(umat_dst.depth())); // "-D dstT=float"
+    // cv::UMat umat_dst(mat_src.size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+    UMatPtr umat_dst_ptr(new cv::UMat(mat_src.size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY));
+    cv::String build_opt = cv::format("-D dstT=%s", cv::ocl::typeToStr(umat_dst_ptr->depth())); // "-D dstT=float"
     initializeCL(context);
 
    
@@ -530,7 +531,7 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
         float cy = video_param->camera_info->cy_;
 
 
-    cv::VideoWriter video_writer = cv::VideoWriter(MultiThreadVideoWriter::getOutputName(video_param->video_file_name.c_str()), cv::VideoWriter::fourcc('F', 'M', 'P', '4'), 23.97, cv::Size(video_param->camera_info->width_, video_param->camera_info->height_), true);
+    // cv::VideoWriter video_writer = cv::VideoWriter(MultiThreadVideoWriter::getOutputName(video_param->video_file_name.c_str()), cv::VideoWriter::fourcc('F', 'M', 'P', '4'), 23.97, cv::Size(video_param->camera_info->width_, video_param->camera_info->height_), true);
     
     for (int frame = 0; frame <= video_param->video_frames; ++frame)
     {
@@ -550,7 +551,7 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
 
         // Send arguments to kernel
         cv::ocl::Image2D image(umat_src);
-        cv::ocl::Image2D image_dst(umat_dst, false, true);
+        cv::ocl::Image2D image_dst(*umat_dst_ptr, false, true);
         cv::Mat mat_R = cv::Mat(R.size(),1,CV_32F,R.data());
         cv::UMat umat_R = mat_R.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
 
@@ -576,20 +577,15 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
             throw "Failed running the kernel...";
         }
 
-        // cv::Mat mat_for_writer = umat_dst.getMat(cv::ACCESS_READ);
-        // if(writer_){
-
-            // writer_->addFrame(mat_for_writer);
-        // }
 
 
-        cv::Mat bgr;
-        cv::cvtColor(umat_dst, bgr, cv::COLOR_BGRA2BGR);
-        video_writer << bgr;
+        // cv::Mat bgr;
+        // cv::cvtColor(umat_dst, bgr, cv::COLOR_BGRA2BGR);
+        // video_writer << bgr;
 
         // 画面に表示
         cv::UMat small,small_src;
-        cv::resize(umat_dst,small,cv::Size(),0.5,0.5);
+        cv::resize(*umat_dst_ptr,small,cv::Size(),0.5,0.5);
         // cv::resize(mat_for_writer,small,cv::Size(),0.5,0.5);
         // mat_for_writer.release();
         cv::resize(umat_src,small_src,cv::Size(),0.5,0.5);
@@ -606,6 +602,14 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
                 return;
             }
         }
+
+        // cv::Mat mat_for_writer = umat_dst.getMat(cv::ACCESS_READ);
+
+        if(writer_){
+
+            writer_->addFrame(umat_dst_ptr);
+        }
+
 
         //Show fps
         auto t4 = std::chrono::system_clock::now();
