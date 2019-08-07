@@ -27,6 +27,7 @@
 #include "camera_information.h"
 #include <iterator>
 #include <list>
+#include <vector>
 using QuaternionData = std::vector<Eigen::Quaterniond, Eigen::aligned_allocator<Eigen::Quaterniond>>;
 using QuaternionDataPtr = std::shared_ptr<std::vector<Eigen::Quaterniond, Eigen::aligned_allocator<Eigen::Quaterniond>>>;
 
