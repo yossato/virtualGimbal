@@ -74,7 +74,7 @@ public:
   std::shared_ptr<ResamplerParameter> getResamplerParameterWithClockError(Eigen::VectorXd &correlation_begin, Eigen::VectorXd &correlation_end);
 protected:
   std::shared_ptr<MultiThreadVideoWriter> writer_;
-  MultiThreadVideoData write_data_;
+  
 
   RotationPtr rotation;
   AngularVelocityPtr measured_angular_velocity;

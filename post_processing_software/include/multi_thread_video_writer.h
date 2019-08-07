@@ -33,9 +33,10 @@ class MultiThreadVideoData
 {
 public:
     MultiThreadVideoData(){};
-    int push(UMatPtr p);
+    int push(UMatPtr &p);
     int get(UMatPtr &p);
     int pop();
+    bool empty();
 private:
     std::queue<UMatPtr> data;
     std::mutex mutex;
@@ -52,6 +53,7 @@ public:
     ~MultiThreadVideoWriter();
     std::string output_name(char *source_name);
     static std::string getOutputName(const char *source_video_name);
+    MultiThreadVideoData write_data_;
 private:
     std::mutex mtx;
     volatile bool is_writing;

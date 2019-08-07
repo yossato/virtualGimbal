@@ -3,26 +3,26 @@ __constant sampler_t samplerLN = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP
 
 
 
-__kernel void color_shift(
-   const image2d_t src,
-   float shift_x,
-   float shift_y,
-   __global uchar* dst,
-   int dst_step, int dst_offset, int dst_rows, int dst_cols)
-{
-   int x = get_global_id(0);
-   int y = get_global_id(1);
-   if (x >= dst_cols) return;
-   int dst_index = mad24(y, dst_step, mad24(x, (int)sizeof(dstT)*4, dst_offset));
-   __global dstT *dstf = (__global dstT *)(dst + dst_index);
-   float2 coord = (float2)((float)x+0.5f+shift_x, (float)y+0.5f+shift_y);
-   // dstf[0] = (dstT)read_imageui(src, samplerLN, coord).x;
-   uint4 pixel = read_imageui(src, samplerLN, coord);
-   dstf[0] = pixel[0];
-   dstf[1] = pixel[1];
-   dstf[2] = pixel[2];
-   dstf[3] = pixel[3];
-}
+// __kernel void color_shift(
+//    const image2d_t src,
+//    float shift_x,
+//    float shift_y,
+//    __global uchar* dst,
+//    int dst_step, int dst_offset, int dst_rows, int dst_cols)
+// {
+//    int x = get_global_id(0);
+//    int y = get_global_id(1);
+//    if (x >= dst_cols) return;
+//    int dst_index = mad24(y, dst_step, mad24(x, (int)sizeof(dstT)*4, dst_offset));
+//    __global dstT *dstf = (__global dstT *)(dst + dst_index);
+//    float2 coord = (float2)((float)x+0.5f+shift_x, (float)y+0.5f+shift_y);
+//    // dstf[0] = (dstT)read_imageui(src, samplerLN, coord).x;
+//    uint4 pixel = read_imageui(src, samplerLN, coord);
+//    dstf[0] = pixel[0];
+//    dstf[1] = pixel[1];
+//    dstf[2] = pixel[2];
+//    dstf[3] = pixel[3];
+// }
 
 __kernel void color_shift2(
    __read_only image2d_t input, __write_only image2d_t output,

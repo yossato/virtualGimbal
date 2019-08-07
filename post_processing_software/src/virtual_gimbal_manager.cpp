@@ -511,8 +511,9 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
     cv::Mat mat_src = cv::Mat::zeros(video_param->camera_info->height_, video_param->camera_info->width_, CV_8UC4); // TODO:冗長なので書き換える
     cv::UMat umat_src = mat_src.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
     // cv::UMat umat_dst(mat_src.size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
-    UMatPtr umat_dst_ptr(new cv::UMat(mat_src.size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY));
-    cv::String build_opt = cv::format("-D dstT=%s", cv::ocl::typeToStr(umat_dst_ptr->depth())); // "-D dstT=float"
+    // UMatPtr umat_dst_ptr(new cv::UMat(mat_src.size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY));
+    // cv::String build_opt = cv::format("-D dstT=%s", cv::ocl::typeToStr(umat_dst_ptr->depth())); // "-D dstT=float"
+    cv::String build_opt;
     initializeCL(context);
 
    
@@ -551,6 +552,7 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
 
         // Send arguments to kernel
         cv::ocl::Image2D image(umat_src);
+        UMatPtr umat_dst_ptr(new cv::UMat(mat_src.size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY));
         cv::ocl::Image2D image_dst(*umat_dst_ptr, false, true);
         cv::Mat mat_R = cv::Mat(R.size(),1,CV_32F,R.data());
         cv::UMat umat_R = mat_R.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
@@ -606,8 +608,9 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
         // cv::Mat mat_for_writer = umat_dst.getMat(cv::ACCESS_READ);
 
         if(writer_){
-
-            writer_->addFrame(umat_dst_ptr);
+            writer_->write_data_.push(umat_dst_ptr);
+            // writer_->addFrame(umat_dst_ptr);
+            // write_data_.push(umat_dst_ptr);
         }
 
 

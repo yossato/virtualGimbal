@@ -6,7 +6,7 @@
 
 
 
-int MultiThreadVideoData::push(UMatPtr p){
+int MultiThreadVideoData::push(UMatPtr &p){
     std::lock_guard<std::mutex> lock(mutex);
     data.emplace(std::move(p));
     return 0;
@@ -20,8 +20,15 @@ int MultiThreadVideoData::get(UMatPtr &p){
 
 int MultiThreadVideoData::pop(){
     std::lock_guard<std::mutex> lock(mutex);
+    // data.front()->~UMat();
     data.pop();
+    std::cout << "data size:" << data.size() << std::endl;
     return 0;
+}
+
+bool MultiThreadVideoData::empty(){
+    std::lock_guard<std::mutex> lock(mutex);
+    return !data.size();
 }
 
 MultiThreadVideoWriter::MultiThreadVideoWriter(std::string output_pass, Video &video_param)
@@ -48,33 +55,46 @@ void MultiThreadVideoWriter::videoWriterProcess()
 {
     cv::Mat _buf;
     while (1)
-    { //繰り返し書き込み
-        {
-            std::lock_guard<std::mutex> lock(mtx);
-            //bufferにデータがあるか確認
-            if (images.size() != 0)
-            {
-                //先頭をコピー
-                _buf = images.front().clone();
-                //先頭を削除
-                images.pop_front();
-            }
-            else if (!is_writing)
-            {
-                return;
-            }
-        }
-        //mutexがunlockされたあとにゆっくりvideoWriterに書き込み
-        if (!_buf.empty())
-        {
-            cv::Mat bgr;
-            cv::cvtColor(_buf, bgr, cv::COLOR_BGRA2BGR);
+    { 
+        if(!write_data_.empty()){
+            UMatPtr data_to_write;
+            cv::UMat bgr;
+            write_data_.get(data_to_write);
+             cv::cvtColor(*data_to_write, bgr, cv::COLOR_BGRA2BGR);
             video_writer << bgr;
-            _buf = cv::Mat();
+            write_data_.pop();
         }
+        // //繰り返し書き込み
+        // {
+        //     std::lock_guard<std::mutex> lock(mtx);
+        //     //bufferにデータがあるか確認
+        //     if (images.size() != 0)
+        //     {
+        //         //先頭をコピー
+        //         _buf = images.front().clone();
+        //         //先頭を削除
+        //         images.pop_front();
+        //     }
+        //     else if (!is_writing)
+        //     {
+        //         return;
+        //     }
+        // }
+        // //mutexがunlockされたあとにゆっくりvideoWriterに書き込み
+        // if (!_buf.empty())
+        // {
+        //     cv::Mat bgr;
+        //     cv::cvtColor(_buf, bgr, cv::COLOR_BGRA2BGR);
+        //     video_writer << bgr;
+        //     _buf = cv::Mat();
+        // }
         else
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        if ((!is_writing) && write_data_.empty())
+        {
+            return;
         }
     }
 }
@@ -115,6 +135,7 @@ std::string MultiThreadVideoWriter::getOutputName(const char *source_video_name)
 
 void MultiThreadVideoWriter::addFrame(UMatPtr &image)
 {
+    
     // std::lock_guard<std::mutex> lock(mtx);
     // images.push_back(cv::Mat());
     // images.back() = image.clone();
