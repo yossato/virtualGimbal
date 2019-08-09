@@ -32,14 +32,17 @@ using UMatPtr = std::unique_ptr<cv::UMat>;
 class MultiThreadVideoData
 {
 public:
-    MultiThreadVideoData(){};
+    MultiThreadVideoData() : max_size_(100){};
     int push(UMatPtr &p);
     int get(UMatPtr &p);
     int pop();
     bool empty();
+    void clear();
+    // int size();
 private:
     std::queue<UMatPtr> data;
     std::mutex mutex;
+    size_t max_size_;
 };
 
 
@@ -47,21 +50,33 @@ class MultiThreadVideoWriter
 {
 public:
     MultiThreadVideoWriter(std::string output_pass, Video &video_param);
-    
-    // void beginThread();
-    void addFrame(UMatPtr &image);
     ~MultiThreadVideoWriter();
     std::string output_name(char *source_name);
     static std::string getOutputName(const char *source_video_name);
-    MultiThreadVideoData write_data_;
+    int push(UMatPtr &p);
 private:
-    std::mutex mtx;
+    MultiThreadVideoData write_data_;
     volatile bool is_writing;
-    std::deque<cv::Mat> images;
     cv::VideoWriter video_writer;
     std::thread th1;
     void join();
     void videoWriterProcess();
+};
+
+class MultiThreadVideoReader
+{
+public:
+    MultiThreadVideoReader(std::string input_path);
+    ~MultiThreadVideoReader();
+    int get(UMatPtr &p);
+private:
+    MultiThreadVideoData read_data_;
+    volatile bool is_reading;
+    cv::VideoCapture video_capture;
+    std::thread th1;
+    void join();
+    void videoReaderProcess();
+
 };
 
 #endif //__MULTI_THREAD_VIDEO_WRITER_H__

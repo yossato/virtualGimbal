@@ -7,6 +7,20 @@
 
 
 int MultiThreadVideoData::push(UMatPtr &p){
+    while(1){
+        size_t data_size;
+        {
+            std::lock_guard<std::mutex> lock(mutex);
+            data_size = data.size();
+        }
+        if(data_size < max_size_){
+            break;
+        }else{
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            // std::cout << "Waiting, data.size:" << data.size() << std::endl;
+        }
+    }
+
     std::lock_guard<std::mutex> lock(mutex);
     data.emplace(std::move(p));
     return 0;
@@ -20,9 +34,12 @@ int MultiThreadVideoData::get(UMatPtr &p){
 
 int MultiThreadVideoData::pop(){
     std::lock_guard<std::mutex> lock(mutex);
-    // data.front()->~UMat();
+    if(data.empty())
+    {
+        return 1;
+    }
     data.pop();
-    std::cout << "data size:" << data.size() << std::endl;
+    // std::cout << "data size:" << data.size() << std::endl;
     return 0;
 }
 
@@ -30,6 +47,19 @@ bool MultiThreadVideoData::empty(){
     std::lock_guard<std::mutex> lock(mutex);
     return !data.size();
 }
+
+void MultiThreadVideoData::clear()
+{
+    std::lock_guard<std::mutex> lock(mutex);
+    while(!data.empty()){
+        data.pop();
+    }
+}
+
+// int MultiThreadVideoData::size(){
+//     std::lock_guard<std::mutex> lock(mutex);
+//     return data.size();
+// }
 
 MultiThreadVideoWriter::MultiThreadVideoWriter(std::string output_pass, Video &video_param)
 {
@@ -48,49 +78,24 @@ MultiThreadVideoWriter::MultiThreadVideoWriter(std::string output_pass, Video &v
     }
 
     is_writing = true;
-    th1 = std::thread(&MultiThreadVideoWriter::videoWriterProcess, this); //スレッド起動
+    th1 = std::thread(&MultiThreadVideoWriter::videoWriterProcess, this); // Run thread
 }
 
 void MultiThreadVideoWriter::videoWriterProcess()
 {
-    cv::Mat _buf;
     while (1)
     { 
         if(!write_data_.empty()){
             UMatPtr data_to_write;
             cv::UMat bgr;
             write_data_.get(data_to_write);
-             cv::cvtColor(*data_to_write, bgr, cv::COLOR_BGRA2BGR);
+            cv::cvtColor(*data_to_write, bgr, cv::COLOR_BGRA2BGR);
             video_writer << bgr;
             write_data_.pop();
         }
-        // //繰り返し書き込み
-        // {
-        //     std::lock_guard<std::mutex> lock(mtx);
-        //     //bufferにデータがあるか確認
-        //     if (images.size() != 0)
-        //     {
-        //         //先頭をコピー
-        //         _buf = images.front().clone();
-        //         //先頭を削除
-        //         images.pop_front();
-        //     }
-        //     else if (!is_writing)
-        //     {
-        //         return;
-        //     }
-        // }
-        // //mutexがunlockされたあとにゆっくりvideoWriterに書き込み
-        // if (!_buf.empty())
-        // {
-        //     cv::Mat bgr;
-        //     cv::cvtColor(_buf, bgr, cv::COLOR_BGRA2BGR);
-        //     video_writer << bgr;
-        //     _buf = cv::Mat();
-        // }
         else
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
         if ((!is_writing) && write_data_.empty())
         {
@@ -133,17 +138,6 @@ std::string MultiThreadVideoWriter::getOutputName(const char *source_video_name)
     return output_pass;
 }
 
-void MultiThreadVideoWriter::addFrame(UMatPtr &image)
-{
-    
-    // std::lock_guard<std::mutex> lock(mtx);
-    // images.push_back(cv::Mat());
-    // images.back() = image.clone();
-}
-
-// void MultiThreadVideoWriter::beginThread(){
-
-// }
 
 MultiThreadVideoWriter::~MultiThreadVideoWriter()
 {
@@ -156,4 +150,68 @@ void MultiThreadVideoWriter::join()
     is_writing = false;
     th1.join();
     std::cout << "Multi thread video writer : Done." << std::endl;
+}
+
+int MultiThreadVideoWriter::push(UMatPtr &p){
+    write_data_.push(p);
+    return 0;
+}
+
+MultiThreadVideoReader::MultiThreadVideoReader(std::string input_path) : video_capture(input_path){
+    if(!video_capture.isOpened())
+    {
+        std::cerr << "Video file: " << input_path << " cannot be opened." << std::endl << std::flush;
+        throw;
+    }
+    is_reading = true;
+    th1 = std::thread(&MultiThreadVideoReader::videoReaderProcess, this); // Run thread
+}
+
+void MultiThreadVideoReader::videoReaderProcess()
+{
+    while (1)
+    {
+        UMatPtr umat_src(new cv::UMat(cv::Size(video_capture.get(cv::CAP_PROP_FRAME_WIDTH),video_capture.get(cv::CAP_PROP_FRAME_HEIGHT)), CV_8UC4, cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY));//mat_src.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+        video_capture >> *umat_src;
+        if(umat_src->empty()){
+            is_reading = false;
+            return;
+        }
+        cv::cvtColor(*umat_src, *umat_src, cv::COLOR_BGR2BGRA);
+        read_data_.push(umat_src);
+        
+        if (!is_reading)
+        {
+            return;
+        }
+    }
+}
+
+void MultiThreadVideoReader::join()
+{
+    std::cout << "Multi thread video reader : Terminating..." << std::endl;
+    is_reading = false;
+    read_data_.clear();
+    th1.join();
+    std::cout << "Multi thread video reader : Done." << std::endl;
+}
+
+int MultiThreadVideoReader::get(UMatPtr &p){
+    while(read_data_.empty())
+    {  
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        if(!is_reading)
+        {
+            p = nullptr;
+            return 1;
+        }
+    }
+    int retval = read_data_.get(p);
+    read_data_.pop();
+    return retval;
+}
+
+MultiThreadVideoReader::~MultiThreadVideoReader()
+{
+    join();
 }

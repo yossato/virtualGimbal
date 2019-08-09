@@ -518,6 +518,7 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
 
    
     // Open Video
+    reader_ = std::make_shared<MultiThreadVideoReader>(video_param->video_file_name);
     auto capture = getVideoCapture();
 
     // Stabilize every frames
@@ -537,12 +538,19 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
     for (int frame = 0; frame <= video_param->video_frames; ++frame)
     {
         // Read a frame image
-        (*capture) >> umat_src;
-        if(umat_src.empty()){
+        // (*capture) >> umat_src;
+        // if(umat_src.empty()){
+        //     break;
+        // }
+        // cv::cvtColor(umat_src, umat_src, cv::COLOR_BGR2BGRA);
+        UMatPtr umat_src;
+        reader_->get(umat_src);
+        if(!umat_src)
+        {
             break;
         }
-        cv::cvtColor(umat_src, umat_src, cv::COLOR_BGR2BGRA);
-        
+
+
         // Calculate Rotation matrix for every line
         for (int row = 0, e = video_param->camera_info->height_; row < e; ++row)
         {
@@ -551,7 +559,7 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
         }
 
         // Send arguments to kernel
-        cv::ocl::Image2D image(umat_src);
+        cv::ocl::Image2D image(*umat_src);
         UMatPtr umat_dst_ptr(new cv::UMat(mat_src.size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY));
         cv::ocl::Image2D image_dst(*umat_dst_ptr, false, true);
         cv::Mat mat_R = cv::Mat(R.size(),1,CV_32F,R.data());
@@ -590,7 +598,7 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
         cv::resize(*umat_dst_ptr,small,cv::Size(),0.5,0.5);
         // cv::resize(mat_for_writer,small,cv::Size(),0.5,0.5);
         // mat_for_writer.release();
-        cv::resize(umat_src,small_src,cv::Size(),0.5,0.5);
+        cv::resize(*umat_src,small_src,cv::Size(),0.5,0.5);
         cv::imshow("Original",small_src);
         cv::imshow("Result",small);
         char key = cv::waitKey(1);
@@ -608,7 +616,7 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter,Eigen::V
         // cv::Mat mat_for_writer = umat_dst.getMat(cv::ACCESS_READ);
 
         if(writer_){
-            writer_->write_data_.push(umat_dst_ptr);
+            writer_->push(umat_dst_ptr);
             // writer_->addFrame(umat_dst_ptr);
             // write_data_.push(umat_dst_ptr);
         }
