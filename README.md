@@ -75,14 +75,14 @@ sudo apt-get install cmake
 ### Install OpenCV  
 ```
 cd  
-sudo apt-get install build-essential module-assistant  
+sudo apt-get install build-essential module-assistant libgtk2.0-dev  
 sudo m-a prepare  
 git clone --depth 1 https://github.com/Itseez/opencv.git  
 cd opencv/  
   
 mkdir build  
 cd build  
-cmake .. -DWITH_TBB=ON -DWITH_OPENGL=ON -DWITH_VTK=ON  
+cmake .. -DWITH_TBB=ON -DWITH_OPENGL=ON -DWITH_VTK=ON -WITH_GTK=ON  
 make -j4  
 sudo make install  
  
