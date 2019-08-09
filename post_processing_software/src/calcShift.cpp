@@ -12,7 +12,7 @@ void CalcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd 
     cv::VideoCapture cap(filename);
     assert(cap.isOpened());
 
-    assert(cap.get(cv::CAP_PROP_FRAME_COUNT) > total_frames);
+    assert(cap.get(cv::CAP_PROP_FRAME_COUNT) >= total_frames);
     optical_flow = Eigen::MatrixXd::Zero(total_frames,3);
     confidence = Eigen::MatrixXd::Zero(total_frames,1);
 
