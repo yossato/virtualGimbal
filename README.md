@@ -15,8 +15,7 @@ FFMPEG, OpenCV3, Eigen, boost and some python libraries.
 
 ## Usage  
 See post_processing_software/README.md  
-Download [Example Video](https://drive.google.com/open?id=1_9TezzdYGgDiATJohvIWNb1i1sQY_SVI) and [Angular Velocity data](https://drive.google.com/open?id=1T-ELckV5Ple4VH9Uazb1MwpPFaCNudmW), then put them in ~/vgdataset. A camera calibration file also required so download [Calibration file](https://drive.google.com/open?id=1rUfCPRwqXse2QZHDRD8aU7ulSAihqEy4) then put it in virtualGimbal/post_processing_software/build/camera_descriptions
-yoshiaki .
+Download [Example Video](https://drive.google.com/open?id=1_9TezzdYGgDiATJohvIWNb1i1sQY_SVI) and [Angular Velocity data](https://drive.google.com/open?id=1T-ELckV5Ple4VH9Uazb1MwpPFaCNudmW), then put them in ~/vgdataset. A camera calibration file also required so download [Calibration file](https://drive.google.com/open?id=1rUfCPRwqXse2QZHDRD8aU7ulSAihqEy4) then put it in virtualGimbal/post_processing_software/build/camera_descriptions    
 
 Demo:  
 ```
@@ -76,14 +75,14 @@ sudo apt-get install cmake
 ### Install OpenCV  
 ```
 cd  
-sudo apt-get install build-essential module-assistant  
+sudo apt-get install build-essential module-assistant libgtk2.0-dev  
 sudo m-a prepare  
 git clone --depth 1 https://github.com/Itseez/opencv.git  
 cd opencv/  
   
 mkdir build  
 cd build  
-cmake .. -DWITH_TBB=ON -DWITH_OPENGL=ON -DWITH_VTK=ON  
+cmake .. -DWITH_TBB=ON -DWITH_OPENGL=ON -DWITH_VTK=ON -WITH_GTK=ON  
 make -j4  
 sudo make install  
  
