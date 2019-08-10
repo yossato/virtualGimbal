@@ -24,6 +24,7 @@ int main(int argc, char **argv)
     char *lensName = NULL;
     char *jsonPass = NULL;
     bool output = false;
+    bool show_image = true;
     const char *kernel_name = "cl/stabilizer_kernel.cl";
     const char *kernel_function = "stabilizer_function";
     // bool debug_speedup = false;
@@ -32,7 +33,7 @@ int main(int argc, char **argv)
     int opt;
     //    Eigen::Quaterniond camera_rotation;
 
-    while ((opt = getopt(argc, argv, "j:i:c:l:w:z:k:f:o::")) != -1)
+    while ((opt = getopt(argc, argv, "j:i:c:l:w:z:k:f:o::n::")) != -1)
     {
         switch (opt)
         {
@@ -66,6 +67,9 @@ int main(int argc, char **argv)
             break;
         case 'o':
             output = true;
+            break;
+        case 'n':
+            show_image = false;
             break;
         default:
             //            printf(     "virtualGimbal\r\n"
@@ -137,7 +141,7 @@ int main(int argc, char **argv)
     vgp::plot(filter_coefficients, "filter_coefficients [Smaller value means Stronger filter.]", legends_angular_velocity);
 #endif
 
-    manager.spin(zoom,*fir_filter,filter_coefficients);
+    manager.spin(zoom,*fir_filter,filter_coefficients,show_image);
 
     return 0;
 }
