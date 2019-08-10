@@ -517,15 +517,18 @@ std::shared_ptr<cv::VideoCapture> VirtualGimbalManager::getVideoCapture()
     return std::make_shared<cv::VideoCapture>(video_param->video_file_name);
 }
 
+#define LAP_BEGIN //auto td1=std::chrono::system_clock::now();int line =__LINE__;
+#define LAP //printf("\r\nDuration from L %d to %d is %ld\r\n", line,__LINE__, std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - td1).count());line=__LINE__;td1=std::chrono::system_clock::now();
+
 void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter, Eigen::VectorXd &filter_strength, bool show_image)
 {
+    // Prepare correction rotation matrix generator. This constructor run a thread.
+    MultiThreadRotationMatrixGenerator gen(video_param,resampler_parameter_,filter,measured_angular_velocity,filter_strength);
+
     // Prepare OpenCL
     cv::ocl::Context context;
     cv::Mat mat_src = cv::Mat::zeros(video_param->camera_info->height_, video_param->camera_info->width_, CV_8UC4); // TODO:冗長なので書き換える
     cv::UMat umat_src = mat_src.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
-    // cv::UMat umat_dst(mat_src.size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
-    // UMatPtr umat_dst_ptr(new cv::UMat(mat_src.size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY));
-    // cv::String build_opt = cv::format("-D dstT=%s", cv::ocl::typeToStr(umat_dst_ptr->depth())); // "-D dstT=float"
     cv::String build_opt;
     initializeCL(context);
 
@@ -534,7 +537,7 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter, Eigen::
     auto capture = getVideoCapture();
 
     // Stabilize every frames
-    std::vector<float> R(video_param->camera_info->height_ * 9); // lines * 3x3 matrix
+    // std::vector<float> R(video_param->camera_info->height_ * 9); // lines * 3x3 matrix
     float ik1 = video_param->camera_info->inverse_k1_;
     float ik2 = video_param->camera_info->inverse_k2_;
     float ip1 = video_param->camera_info->inverse_p1_;
@@ -561,22 +564,32 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter, Eigen::
             break;
         }
 
-        // Calculate Rotation matrix for every line
-        for (int row = 0, e = video_param->camera_info->height_; row < e; ++row)
-        {
-            double time_in_row = video_param->getInterval() * frame + resampler_parameter_->start + video_param->camera_info->line_delay_ * (row - video_param->camera_info->height_ * 0.5);
-            Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>>(&R[row * 9], 3, 3) = measured_angular_velocity->getCorrectionQuaternion(time_in_row, filter(filter_strength(row)).getFilterCoefficient()).matrix().cast<float>();
-        }
+LAP_BEGIN
+        MatrixPtr R;
+        gen.get(R);
+LAP
 
+
+        // Calculate Rotation matrix for every line
+        // for (int row = 0, e = video_param->camera_info->height_; row < e; ++row)
+        // {
+        //     double time_in_row = video_param->getInterval() * frame + resampler_parameter_->start + video_param->camera_info->line_delay_ * (row - video_param->camera_info->height_ * 0.5);
+        //     Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>>(&R[row * 9], 3, 3) = measured_angular_velocity->getCorrectionQuaternion(time_in_row, filter(filter_strength(row)).getFilterCoefficient()).matrix().cast<float>();
+        // }
         // Send arguments to kernel
         cv::ocl::Image2D image(*umat_src);
+LAP
         UMatPtr umat_dst_ptr(new cv::UMat(mat_src.size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY));
+LAP
         cv::ocl::Image2D image_dst(*umat_dst_ptr, false, true);
-        cv::Mat mat_R = cv::Mat(R.size(), 1, CV_32F, R.data());
+LAP        
+        cv::Mat mat_R = cv::Mat(R->size(), 1, CV_32F, R->data());
+LAP
         cv::UMat umat_R = mat_R.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
-
+LAP
         cv::ocl::Kernel kernel;
         getKernel(kernel_name, kernel_function, kernel, context, build_opt);
+LAP
         kernel.args(image, image_dst, cv::ocl::KernelArg::ReadOnlyNoSize(umat_R),
                     (float)zoom,
                     ik1,
@@ -589,6 +602,7 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter, Eigen::
                     cy);
         size_t globalThreads[3] = {(size_t)mat_src.cols, (size_t)mat_src.rows, 1};
         //size_t localThreads[3] = { 16, 16, 1 };
+LAP
         bool success = kernel.run(3, globalThreads, NULL, true);
         if (!success)
         {
@@ -596,11 +610,10 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter, Eigen::
                  << flush;
             throw "Failed running the kernel...";
         }
-
         // cv::Mat bgr;
         // cv::cvtColor(umat_dst, bgr, cv::COLOR_BGRA2BGR);
         // video_writer << bgr;
-
+LAP
         // 画面に表示
         if (show_image)
         {
@@ -628,13 +641,9 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter, Eigen::
             }
         }
 
-        // cv::Mat mat_for_writer = umat_dst.getMat(cv::ACCESS_READ);
-
         if (writer_)
         {
             writer_->push(umat_dst_ptr);
-            // writer_->addFrame(umat_dst_ptr);
-            // write_data_.push(umat_dst_ptr);
         }
 
         //Show fps
@@ -645,7 +654,7 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter, Eigen::
         static double fps = 0.0;
         if (elapsedmicroseconds != 0.0)
         {
-            fps = 0.03 * (1e6 / elapsedmicroseconds) + 0.97 * fps;
+            fps = 0.05 * (1e6 / elapsedmicroseconds) + 0.95 * fps;
         }
         t3 = t4;
         printf("fps:%4.2f\r", fps);
@@ -654,6 +663,10 @@ void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter, Eigen::
     cv::destroyAllWindows();
     return;
 }
+
+#undef LAP_BEGIN
+#undef LAP
+
 void VirtualGimbalManager::enableWriter(const char *video_path)
 {
     writer_ = std::make_shared<MultiThreadVideoWriter>(MultiThreadVideoWriter::getOutputName(video_path), *video_param);

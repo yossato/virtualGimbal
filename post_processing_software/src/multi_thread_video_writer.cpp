@@ -6,57 +6,9 @@
 
 
 
-int MultiThreadVideoData::push(UMatPtr &p){
-    while(1){
-        size_t data_size;
-        {
-            std::lock_guard<std::mutex> lock(mutex);
-            data_size = data.size();
-        }
-        if(data_size < max_size_){
-            break;
-        }else{
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            // std::cout << "Waiting, data.size:" << data.size() << std::endl;
-        }
-    }
 
-    std::lock_guard<std::mutex> lock(mutex);
-    data.emplace(std::move(p));
-    return 0;
-}
 
-int MultiThreadVideoData::get(UMatPtr &p){
-    std::lock_guard<std::mutex> lock(mutex);
-    p = std::move(data.front());
-    return 0;
-}
-
-int MultiThreadVideoData::pop(){
-    std::lock_guard<std::mutex> lock(mutex);
-    if(data.empty())
-    {
-        return 1;
-    }
-    data.pop();
-    // std::cout << "data size:" << data.size() << std::endl;
-    return 0;
-}
-
-bool MultiThreadVideoData::empty(){
-    std::lock_guard<std::mutex> lock(mutex);
-    return !data.size();
-}
-
-void MultiThreadVideoData::clear()
-{
-    std::lock_guard<std::mutex> lock(mutex);
-    while(!data.empty()){
-        data.pop();
-    }
-}
-
-// int MultiThreadVideoData::size(){
+// int MultiThreadData::size(){
 //     std::lock_guard<std::mutex> lock(mutex);
 //     return data.size();
 // }
@@ -212,6 +164,74 @@ int MultiThreadVideoReader::get(UMatPtr &p){
 }
 
 MultiThreadVideoReader::~MultiThreadVideoReader()
+{
+    join();
+}
+
+ MultiThreadRotationMatrixGenerator::MultiThreadRotationMatrixGenerator(
+    VideoPtr video_parameter,
+    ResamplerParameterPtr resampler_parameter,
+    KaiserWindowFilter filter,
+    AngularVelocityPtr measured_angular_velocity,
+    Eigen::VectorXd filter_strength) : 
+    video_parameter(video_parameter) ,
+    resampler_parameter(resampler_parameter),
+    filter(filter),
+    measured_angular_velocity(measured_angular_velocity),
+    filter_strength(filter_strength)
+    {
+        is_reading = true;
+        th1 = std::thread(&MultiThreadRotationMatrixGenerator::process, this); // Run thread  
+    }
+
+void MultiThreadRotationMatrixGenerator::process()
+{
+    for (int frame = 0; frame <= video_parameter->video_frames; ++frame)
+    {
+        MatrixPtr R(new std::vector<float>(video_parameter->camera_info->height_ * 9));
+        // Calculate Rotation matrix for every line
+        for (int row = 0, e = video_parameter->camera_info->height_; row < e; ++row)
+        {
+            double time_in_row = video_parameter->getInterval() * frame + resampler_parameter->start + video_parameter->camera_info->line_delay_ * (row - video_parameter->camera_info->height_ * 0.5);
+            Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>>(&(*R)[row * 9], 3, 3) = measured_angular_velocity->getCorrectionQuaternion(time_in_row, filter(filter_strength(row)).getFilterCoefficient()).matrix().cast<float>();
+        }
+
+        rotation_matrix_.push(R);
+
+        if(!is_reading){
+            break;
+        }
+        // std::cout << "\r\n frame: " << frame << std::endl << std::flush;
+    }
+    
+}
+
+int MultiThreadRotationMatrixGenerator::get(MatrixPtr &p){
+    while(rotation_matrix_.empty())
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        if(!is_reading)
+        {
+            p = nullptr;
+            return 1;
+        }
+        std::cout << "Empty:" << __FILE__ << " : line " <<__LINE__ << std::endl;
+    }
+    int retval = rotation_matrix_.get(p);
+    rotation_matrix_.pop();
+    return retval;
+}
+
+void MultiThreadRotationMatrixGenerator::join()
+{
+    std::cout << "Multi thread rotation matrix generator : Terminating..." << std::endl;
+    is_reading = false;
+    rotation_matrix_.clear();
+    th1.join();
+    std::cout << "Multi thread rotation matrix generator : Done." << std::endl;
+}
+
+MultiThreadRotationMatrixGenerator::~MultiThreadRotationMatrixGenerator()
 {
     join();
 }

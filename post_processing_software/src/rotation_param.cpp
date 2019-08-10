@@ -190,7 +190,7 @@ Eigen::Quaterniond AngularVelocity::getCorrectionQuaternion(double time, const E
 
     if ((frame < 0) || (frame >= data.rows()))
     {
-        std::cout << "Waring: Frame range is out of range." << std::endl;
+        std::cerr << "Waring: Frame range is out of range." << std::endl;
         return Eigen::Quaterniond(1., 0., 0., 0.);
     }
     else

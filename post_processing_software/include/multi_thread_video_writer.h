@@ -15,7 +15,7 @@
 
 #include <opencv2/opencv.hpp>
 #include <memory>
-
+#include "Eigen/Dense"
 using UMatPtr = std::unique_ptr<cv::UMat>;
 
 // class UMatWithMutex
@@ -29,22 +29,76 @@ using UMatPtr = std::unique_ptr<cv::UMat>;
 
 // using UMatWithMutexPtr = std::unique_ptr<UMatWithMutex>;
 
-class MultiThreadVideoData
+template <typename TYPE>
+class MultiThreadQueue
 {
 public:
-    MultiThreadVideoData() : max_size_(100){};
-    int push(UMatPtr &p);
-    int get(UMatPtr &p);
-    int pop();
-    bool empty();
-    void clear();
+    MultiThreadQueue() : max_size_(100){};
+
+    int push(TYPE &p)
+    {
+        while (1)
+        {
+            size_t data_size;
+            {
+                std::lock_guard<std::mutex> lock(mutex);
+                data_size = data.size();
+            }
+            if (data_size < max_size_)
+            {
+                break;
+            }
+            else
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                // std::cout << "Waiting, data.size:" << data.size() << std::endl;
+            }
+        }
+
+        std::lock_guard<std::mutex> lock(mutex);
+        data.emplace(std::move(p));
+        return 0;
+    }
+
+    int get(TYPE &p)
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+        p = std::move(data.front());
+        return 0;
+    }
+
+    int pop()
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+        if (data.empty())
+        {
+            return 1;
+        }
+        data.pop();
+        // std::cout << "data size:" << data.size() << std::endl;
+        return 0;
+    }
+
+    bool empty()
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+        return !data.size();
+    }
+
+    void clear()
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+        while (!data.empty())
+        {
+            data.pop();
+        }
+    }
     // int size();
 private:
-    std::queue<UMatPtr> data;
+    std::queue<TYPE> data;
     std::mutex mutex;
     size_t max_size_;
 };
-
 
 class MultiThreadVideoWriter
 {
@@ -54,8 +108,9 @@ public:
     std::string output_name(char *source_name);
     static std::string getOutputName(const char *source_video_name);
     int push(UMatPtr &p);
+
 private:
-    MultiThreadVideoData write_data_;
+    MultiThreadQueue<UMatPtr> write_data_;
     volatile bool is_writing;
     cv::VideoWriter video_writer;
     std::thread th1;
@@ -69,14 +124,40 @@ public:
     MultiThreadVideoReader(std::string input_path);
     ~MultiThreadVideoReader();
     int get(UMatPtr &p);
+
 private:
-    MultiThreadVideoData read_data_;
+    MultiThreadQueue<UMatPtr> read_data_;
     volatile bool is_reading;
     cv::VideoCapture video_capture;
     std::thread th1;
     void join();
     void videoReaderProcess();
+};
 
+using MatrixPtr = std::unique_ptr<std::vector<float>>;
+class MultiThreadRotationMatrixGenerator
+{
+public:
+    MultiThreadRotationMatrixGenerator(VideoPtr video_parameter,
+                                       ResamplerParameterPtr resampler_parameter,
+                                       KaiserWindowFilter filter,
+                                       AngularVelocityPtr measured_angular_velocity,
+                                       Eigen::VectorXd filter_strength);
+    int get(MatrixPtr &p);
+    ~MultiThreadRotationMatrixGenerator();
+
+private:
+    MultiThreadQueue<MatrixPtr> rotation_matrix_;
+    int32_t rows;
+    VideoPtr video_parameter;
+    ResamplerParameterPtr resampler_parameter;
+    KaiserWindowFilter filter;
+    AngularVelocityPtr measured_angular_velocity;
+    Eigen::VectorXd filter_strength;
+    volatile bool is_reading;
+    std::thread th1;
+    void join();
+    void process();
 };
 
 #endif //__MULTI_THREAD_VIDEO_WRITER_H__
