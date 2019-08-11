@@ -15,7 +15,7 @@ FFMPEG, OpenCV3, Eigen, boost and some python libraries.
 
 ## Usage  
 See post_processing_software/README.md  
-Download [Example Video](https://drive.google.com/open?id=1_9TezzdYGgDiATJohvIWNb1i1sQY_SVI) and [Angular Velocity data](https://drive.google.com/open?id=1T-ELckV5Ple4VH9Uazb1MwpPFaCNudmW), then put them in ~/vgdataset. A camera calibration file also required so download [Calibration file](https://drive.google.com/open?id=1rUfCPRwqXse2QZHDRD8aU7ulSAihqEy4) then put it in virtualGimbal/post_processing_software/build/camera_descriptions    
+Download [Example Video](https://drive.google.com/open?id=1_9TezzdYGgDiATJohvIWNb1i1sQY_SVI) and [Angular Velocity data](https://drive.google.com/open?id=1T-ELckV5Ple4VH9Uazb1MwpPFaCNudmW), then put them in ~/vgdataset. A camera calibration file also required to run a demo below so download [Calibration file](https://drive.google.com/open?id=1rUfCPRwqXse2QZHDRD8aU7ulSAihqEy4) then put it in virtualGimbal/post_processing_software/build/camera_descriptions    
 
 Demo:  
 ```
@@ -27,7 +27,7 @@ Additional option `n` is available to disable preview window. This option speed 
   
   
   
-Calibration is required before you stabilize your video. See a [detail information](https://github.com/yossato/virtualGimbal/tree/master/post_processing_software) to do it.
+Camera calibration is required before you stabilize your own video. See a [detail information](https://github.com/yossato/virtualGimbal/tree/master/post_processing_software) to do it.
 
 
 ## Install dependencies
