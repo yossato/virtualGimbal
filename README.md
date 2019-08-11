@@ -56,13 +56,27 @@ sudo apt-get install python3-numpy python3-scipy
 sudo apt-get install python3-matplotlib
 ```
 
+### Install OpenCL: See [detail information](https://github.com/intel/compute-runtime/releases)
+```
+sudo apt install ocl-icd-libopencl1 opencl-headers clinfo ocl-icd-opencl-dev  
+cd  
+mkdir neo  
+cd neo  
+wget https://github.com/intel/compute-runtime/releases/download/19.31.13700/intel-gmmlib_19.2.3_amd64.deb  
+wget https://github.com/intel/compute-runtime/releases/download/19.31.13700/intel-igc-core_1.0.10-2364_amd64.deb  
+wget https://github.com/intel/compute-runtime/releases/download/19.31.13700/intel-igc-opencl_1.0.10-2364_amd64.deb  
+wget https://github.com/intel/compute-runtime/releases/download/19.31.13700/intel-opencl_19.31.13700_amd64.deb  
+wget https://github.com/intel/compute-runtime/releases/download/19.31.13700/intel-ocloc_19.31.13700_amd64.deb  
+sudo dpkg -i *.deb  
+```
 
 ### Install ffmpeg:  
 ```
+sudo apt install yasm 
 cd  
 git clone --depth 1 git://source.ffmpeg.org/ffmpeg.git  
 cd ffmpeg  
-./configure --enable-gpl --enable-libmp3lame --disable-yasm --enable-ffmpeg --enable-pic --enable-shared --enable-swscale --enable-avresample  
+./configure --enable-gpl --enable-x86asm --enable-opencl --enable-ffmpeg --enable-pic --enable-shared --enable-swscale --enable-avresample  
 make all -j4  
 sudo make install  
 sudo ldconfig  
@@ -83,11 +97,11 @@ cd opencv/
   
 mkdir build  
 cd build  
-cmake .. -DWITH_TBB=ON -DWITH_OPENGL=ON -DWITH_VTK=ON -WITH_GTK=ON  
+cmake .. -DWITH_TBB=ON -DWITH_OPENGL=ON -DWITH_VTK=ON -DWITH_GTK=ON  -DWITH_FFMPEG=ON   
 make -j4  
 sudo make install  
- 
-    sudo sh -c "echo /usr/local/lib >> /etc/ld.so.conf.d/opencv.conf"  
+
+sudo sh -c "echo /usr/local/lib >> /etc/ld.so.conf.d/opencv.conf"  
 sudo sh -c "echo PKG_CONFIG_PATH=\\\$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig >> /etc/bash.bashrc"  
 sudo sh -c "echo export PKG_CONFIG_PATH >> /etc/bash.bashrc"  
 ```
