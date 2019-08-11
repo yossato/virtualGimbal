@@ -130,7 +130,7 @@ git clone https://github.com/yossato/virtualGimbal.git
 cd virtualGimbal  
 mkdir build  
 cd build  
-cmake ../post_processing_software/  
+cmake ../post_processing_software/ -DCMAKE_BUILD_TYPE=Release  
 make -j4  
 ```
 
