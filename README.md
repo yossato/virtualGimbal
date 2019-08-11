@@ -134,9 +134,21 @@ cmake ../post_processing_software/
 make -j4  
 ```
 
+## To start up faster  
+I added a program angular_velocity_estimator that generates a JSON file. The file will be saved in same directory of video file after execution.
+If the file exists, the pixelwise_stabilizer starts up faster.
+To run the program, execute a command like below.
+./angular_velocity_estimator ~/vgdataset/syukugawara/C0003.MP4
+
+This command generates C0003.json .
+
+The file contains estimated angular velocity from the video that is used for synchronizing between video and angular velocity measured by the gyro sensor.
+
 ## Contribution
 
-## Todo/Issues/Wishlist
+## Todo
+- Speeding up
+- Brushing up deblur quality
 
 ## Author
 Yoshiaki Sato
