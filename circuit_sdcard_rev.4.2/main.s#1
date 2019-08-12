@@ -1913,7 +1913,7 @@ Source: &lt;a href="http://www.farnell.com/datasheets/461166.pdf"&gt; Data sheet
 <pinref part="IC1" gate="G$1" pin="P0.1"/>
 <wire x1="-22.86" y1="10.16" x2="-195.58" y2="10.16" width="0.1524" layer="91"/>
 <wire x1="-195.58" y1="10.16" x2="-195.58" y2="-22.86" width="0.1524" layer="91"/>
-<label x="-142.24" y="10.16" size="1.778" layer="95"/>
+<label x="-30.48" y="10.16" size="1.778" layer="95"/>
 <label x="-220.98" y="-78.74" size="1.778" layer="95"/>
 <pinref part="CN2" gate="G$1" pin="P$3"/>
 <wire x1="-195.58" y1="-22.86" x2="-195.58" y2="-78.74" width="0.1524" layer="91"/>
@@ -1924,7 +1924,7 @@ Source: &lt;a href="http://www.farnell.com/datasheets/461166.pdf"&gt; Data sheet
 <segment>
 <pinref part="IC1" gate="G$1" pin="P0.0"/>
 <wire x1="-193.04" y1="7.62" x2="-22.86" y2="7.62" width="0.1524" layer="91"/>
-<label x="-142.24" y="7.62" size="1.778" layer="95"/>
+<label x="-30.48" y="7.62" size="1.778" layer="95"/>
 <label x="-220.98" y="-81.28" size="1.778" layer="95"/>
 <wire x1="-193.04" y1="-20.32" x2="-193.04" y2="7.62" width="0.1524" layer="91"/>
 <wire x1="-193.04" y1="-20.32" x2="-193.04" y2="-40.64" width="0.1524" layer="91"/>

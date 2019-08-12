@@ -853,7 +853,7 @@
 <wire x1="1.55" y1="1.55" x2="1.55" y2="1.25" width="0.1016" layer="21"/>
 <circle x="-1.1" y="1.1" radius="0.2" width="0.127" layer="51"/>
 <smd name="1" x="-1.89" y="1" dx="1.22" dy="0.2" layer="1" roundness="25"/>
-<smd name="B" x="0" y="0" dx="1.59" dy="1.75" layer="1"/>
+<smd name="B" x="0" y="0" dx="1.59" dy="1.75" layer="1" stop="no"/>
 <smd name="2" x="-1.89" y="0.6" dx="1.22" dy="0.2" layer="1" roundness="25"/>
 <smd name="3" x="-1.89" y="0.2" dx="1.22" dy="0.2" layer="1" roundness="25"/>
 <smd name="4" x="-1.89" y="-0.2" dx="1.22" dy="0.2" layer="1" roundness="25"/>
@@ -914,11 +914,19 @@
 <pin name="NC16" x="27.94" y="2.54" length="middle" direction="nc" rot="R180"/>
 <pin name="NC17" x="27.94" y="7.62" length="middle" direction="nc" rot="R180"/>
 </symbol>
+<symbol name="BOTTOM">
+<wire x1="-2.54" y1="-2.54" x2="2.54" y2="-2.54" width="0.254" layer="94"/>
+<wire x1="2.54" y1="-2.54" x2="2.54" y2="2.54" width="0.254" layer="94"/>
+<wire x1="2.54" y1="2.54" x2="-2.54" y2="2.54" width="0.254" layer="94"/>
+<wire x1="-2.54" y1="2.54" x2="-2.54" y2="-2.54" width="0.254" layer="94"/>
+<pin name="BOTTOM/GND" x="0" y="-7.62" length="middle" direction="pwr" rot="R90"/>
+</symbol>
 </symbols>
 <devicesets>
 <deviceset name="MPU-9250" prefix="IC">
 <gates>
 <gate name="G$1" symbol="MPU-9250" x="0" y="0"/>
+<gate name="G$2" symbol="BOTTOM" x="-45.72" y="0"/>
 </gates>
 <devices>
 <device name="" package="QFN-24">
@@ -947,6 +955,7 @@
 <connect gate="G$1" pin="SDA/SDI" pad="24"/>
 <connect gate="G$1" pin="VDD" pad="13"/>
 <connect gate="G$1" pin="VDDIO" pad="8"/>
+<connect gate="G$2" pin="BOTTOM/GND" pad="B"/>
 </connects>
 <technologies>
 <technology name=""/>
@@ -1310,6 +1319,7 @@ Source: &lt;a href="http://www.farnell.com/datasheets/461166.pdf"&gt; Data sheet
 <part name="R3" library="reg,cap" deviceset="R-" device="1005" value="100"/>
 <part name="C1" library="reg,cap" deviceset="C-" device="1005" value="1.0u"/>
 <part name="CN2" library="Connector" deviceset="MICROSD" device=""/>
+<part name="SUPPLY5" library="supply2" deviceset="DGND" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -1473,6 +1483,10 @@ Source: &lt;a href="http://www.farnell.com/datasheets/461166.pdf"&gt; Data sheet
 <attribute name="NAME" x="-229.87" y="-98.933" size="1.778" layer="95"/>
 <attribute name="VALUE" x="-229.87" y="-96.52" size="1.778" layer="96"/>
 </instance>
+<instance part="IC6" gate="G$2" x="86.36" y="-137.16"/>
+<instance part="SUPPLY5" gate="G$1" x="86.36" y="-147.32">
+<attribute name="VALUE" x="83.693" y="-150.495" size="1.778" layer="96"/>
+</instance>
 </instances>
 <busses>
 </busses>
@@ -1574,6 +1588,10 @@ Source: &lt;a href="http://www.farnell.com/datasheets/461166.pdf"&gt; Data sheet
 <segment>
 <pinref part="SUPPLY27" gate="G$1" pin="DGND"/>
 <pinref part="IC1" gate="G$2" pin="BOTTOM/GND"/>
+</segment>
+<segment>
+<pinref part="IC6" gate="G$2" pin="BOTTOM/GND"/>
+<pinref part="SUPPLY5" gate="G$1" pin="DGND"/>
 </segment>
 </net>
 <net name="C2CK" class="0">

@@ -86,7 +86,8 @@
 <text x="3.71" y="23.48" size="1.4224" layer="26" font="vector" ratio="12" rot="SMR270">virtualGimbal v3</text>
 <text x="6.11" y="23.4" size="1.4224" layer="26" font="vector" ratio="12" rot="SMR270">Designed by</text>
 <text x="8.61" y="23.44" size="1.4224" layer="26" font="vector" ratio="12" rot="SMR270">Yoshiaki Sato</text>
-<wire x1="0" y1="0" x2="0" y2="23.15" width="0.03" layer="51"/>
+<wire x1="0" y1="0" x2="0" y2="17.9" width="0.03" layer="51"/>
+<wire x1="0" y1="17.9" x2="0" y2="23.15" width="0.03" layer="51"/>
 <wire x1="0" y1="23.15" x2="-0.3" y2="23.15" width="0.03" layer="51"/>
 <wire x1="-0.3" y1="23.15" x2="-0.3" y2="30.5" width="0.03" layer="51"/>
 <wire x1="-0.3" y1="30.5" x2="18.22" y2="30.5" width="0.03" layer="51"/>
@@ -96,8 +97,8 @@
 <wire x1="21.1" y1="23.15" x2="21.1" y2="0.3" width="0.03" layer="51"/>
 <wire x1="21.1" y1="0.3" x2="12.1" y2="0.3" width="0.03" layer="51"/>
 <wire x1="12.1" y1="0.3" x2="12.1" y2="16.2" width="0.03" layer="51"/>
-<wire x1="12.1" y1="16.2" x2="9.8" y2="17.9" width="0.03" layer="51"/>
-<wire x1="9.8" y1="17.9" x2="9.8" y2="0" width="0.03" layer="51"/>
+<wire x1="12.1" y1="16.2" x2="9.8" y2="16.2" width="0.03" layer="51"/>
+<wire x1="9.8" y1="16.2" x2="9.8" y2="0" width="0.03" layer="51"/>
 <wire x1="9.8" y1="0" x2="0" y2="0" width="0.03" layer="51"/>
 <wire x1="0.05" y1="-0.3" x2="0.05" y2="23.25" width="0.03" layer="20"/>
 <wire x1="0.05" y1="23.25" x2="-0.2" y2="23.25" width="0.03" layer="20"/>
@@ -117,7 +118,7 @@
 <wire x1="-0.5" y1="23.25" x2="21.5" y2="23.25" width="0.2" layer="51"/>
 <wire x1="0.5" y1="25.15" x2="18.47" y2="25.15" width="0.2" layer="51"/>
 <wire x1="18.47" y1="25.15" x2="18.47" y2="24" width="0.2" layer="51"/>
-<wire x1="0.5" y1="17.9" x2="9.8" y2="17.9" width="0.2" layer="51"/>
+<wire x1="0" y1="17.9" x2="9.5" y2="17.9" width="0.1524" layer="51"/>
 </plain>
 <libraries>
 <library name="C8051F34x">

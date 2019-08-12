@@ -160,7 +160,7 @@
 <smd name="NC4" x="-1.43" y="-0.92" dx="0.3" dy="1" layer="1"/>
 </package>
 <package name="SD_V3">
-<smd name="RSV(DAT2)" x="0" y="0" dx="1.9" dy="3.65" layer="1"/>
+<smd name="RSV(DAT2)" x="0.15" y="0" dx="1.6" dy="3.65" layer="1"/>
 <smd name="!CS!(DAT3)" x="2.5" y="2.2" dx="1.9" dy="4.05" layer="1"/>
 <smd name="DI(CMD)" x="5" y="2.2" dx="1.9" dy="4.05" layer="1"/>
 <smd name="VSS1" x="7.5" y="2.3" dx="1.9" dy="4.25" layer="1"/>
@@ -168,7 +168,7 @@
 <smd name="SCLK" x="12.5" y="2.2" dx="1.9" dy="4.05" layer="1"/>
 <smd name="VSS2" x="15" y="2.2" dx="1.9" dy="4.05" layer="1"/>
 <smd name="DO(DAT0)" x="17.42" y="2.2" dx="1.5" dy="4.05" layer="1"/>
-<smd name="RSV(DAT1)" x="19.12" y="2.2" dx="1.3" dy="4.05" layer="1"/>
+<smd name="RSV(DAT1)" x="18.97" y="2.2" dx="1" dy="4.05" layer="1"/>
 </package>
 <package name="ZX62D1-B-5PA(30)">
 <wire x1="-3.75" y1="2.8" x2="3.75" y2="2.8" width="0.254" layer="51"/>
