@@ -127,6 +127,17 @@ int main(int argc, char **argv)
     vgp::plot(correlation_end, "correlation_end", legends_angular_velocity);
 #endif 
 
+    auto table = manager.getSyncTable(30*24,999);
+    printf("Table:\r\n");
+    for(size_t i=0;i<table.size()-1;++i)
+    {
+        printf("(%d,%f), a:%f b=%f\r\n",table[i].first,table[i].second,
+        (table[i+1].second-table[i].second)/(table[i+1].first-table[i].first),
+        (table[i].second*table[i+1].first-table[i].first*table[i+1].second)/(table[i+1].first-table[i].first)
+        );
+    }
+
+
 
 #ifdef __DEBUG_ONLY
     // std::vector<string> legends_angular_velocity = {"c"};

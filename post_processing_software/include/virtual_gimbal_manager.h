@@ -47,6 +47,7 @@ public:
   void setFilter(FilterPtr filter);
   // void getEstimatedAndMeasuredAngularVelocity(Eigen::MatrixXd &data);
   Eigen::VectorXd getCorrelationCoefficient(int32_t begin=0, int32_t length=0, double frequency=0.0);
+  // Eigen::VectorXd getCorrelationCoefficient2(int32_t center, int32_t length, double frequency=0.0);
   double getSubframeOffset(Eigen::VectorXd &correlation_coefficients,int32_t begin=0, int32_t length=0, double frequency=0.0);
   void setResamplerParameter(double start, double new_frequency = 0.0);
   void setResamplerParameter(ResamplerParameterPtr param);
@@ -72,6 +73,7 @@ public:
   const char *kernel_function = "stabilizer_function";
   std::shared_ptr<cv::VideoCapture> getVideoCapture();
   std::shared_ptr<ResamplerParameter> getResamplerParameterWithClockError(Eigen::VectorXd &correlation_begin, Eigen::VectorXd &correlation_end);
+  std::vector<std::pair<int32_t,double>> getSyncTable(int32_t period,int32_t width);
 protected:
   std::shared_ptr<MultiThreadVideoWriter> writer_;
   std::shared_ptr<MultiThreadVideoReader> reader_;

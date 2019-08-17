@@ -4,10 +4,6 @@
 //     ptr = std::move(p);
 // }
 
-
-
-
-
 // int MultiThreadData::size(){
 //     std::lock_guard<std::mutex> lock(mutex);
 //     return data.size();
@@ -36,8 +32,9 @@ MultiThreadVideoWriter::MultiThreadVideoWriter(std::string output_pass, Video &v
 void MultiThreadVideoWriter::videoWriterProcess()
 {
     while (1)
-    { 
-        if(!write_data_.empty()){
+    {
+        if (!write_data_.empty())
+        {
             UMatPtr data_to_write;
             cv::UMat bgr;
             write_data_.get(data_to_write);
@@ -90,7 +87,6 @@ std::string MultiThreadVideoWriter::getOutputName(const char *source_video_name)
     return output_pass;
 }
 
-
 MultiThreadVideoWriter::~MultiThreadVideoWriter()
 {
     join();
@@ -104,15 +100,18 @@ void MultiThreadVideoWriter::join()
     std::cout << "Multi thread video writer : Done." << std::endl;
 }
 
-int MultiThreadVideoWriter::push(UMatPtr &p){
+int MultiThreadVideoWriter::push(UMatPtr &p)
+{
     write_data_.push(p);
     return 0;
 }
 
-MultiThreadVideoReader::MultiThreadVideoReader(std::string input_path) : video_capture(input_path){
-    if(!video_capture.isOpened())
+MultiThreadVideoReader::MultiThreadVideoReader(std::string input_path) : video_capture(input_path)
+{
+    if (!video_capture.isOpened())
     {
-        std::cerr << "Video file: " << input_path << " cannot be opened." << std::endl << std::flush;
+        std::cerr << "Video file: " << input_path << " cannot be opened." << std::endl
+                  << std::flush;
         throw;
     }
     is_reading = true;
@@ -123,15 +122,19 @@ void MultiThreadVideoReader::videoReaderProcess()
 {
     while (1)
     {
-        UMatPtr umat_src(new cv::UMat(cv::Size(video_capture.get(cv::CAP_PROP_FRAME_WIDTH),video_capture.get(cv::CAP_PROP_FRAME_HEIGHT)), CV_8UC4, cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY));//mat_src.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+        UMatPtr umat_src(new cv::UMat(cv::Size(video_capture.get(cv::CAP_PROP_FRAME_WIDTH), video_capture.get(cv::CAP_PROP_FRAME_HEIGHT)),
+                                      CV_8UC4,
+                                      cv::ACCESS_READ,
+                                      cv::USAGE_ALLOCATE_DEVICE_MEMORY)); //mat_src.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
         video_capture >> *umat_src;
-        if(umat_src->empty()){
+        if (umat_src->empty())
+        {
             is_reading = false;
             return;
         }
         cv::cvtColor(*umat_src, *umat_src, cv::COLOR_BGR2BGRA);
         read_data_.push(umat_src);
-        
+
         if (!is_reading)
         {
             return;
@@ -148,11 +151,12 @@ void MultiThreadVideoReader::join()
     std::cout << "Multi thread video reader : Done." << std::endl;
 }
 
-int MultiThreadVideoReader::get(UMatPtr &p){
-    while(read_data_.empty())
-    {  
+int MultiThreadVideoReader::get(UMatPtr &p)
+{
+    while (read_data_.empty())
+    {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        if(!is_reading)
+        if (!is_reading)
         {
             p = nullptr;
             return 1;
@@ -168,21 +172,20 @@ MultiThreadVideoReader::~MultiThreadVideoReader()
     join();
 }
 
- MultiThreadRotationMatrixGenerator::MultiThreadRotationMatrixGenerator(
+MultiThreadRotationMatrixGenerator::MultiThreadRotationMatrixGenerator(
     VideoPtr video_parameter,
     ResamplerParameterPtr resampler_parameter,
     KaiserWindowFilter filter,
     AngularVelocityPtr measured_angular_velocity,
-    Eigen::VectorXd filter_strength) : 
-    video_parameter(video_parameter) ,
-    resampler_parameter(resampler_parameter),
-    filter(filter),
-    measured_angular_velocity(measured_angular_velocity),
-    filter_strength(filter_strength)
-    {
-        is_reading = true;
-        th1 = std::thread(&MultiThreadRotationMatrixGenerator::process, this); // Run thread  
-    }
+    Eigen::VectorXd filter_strength) : video_parameter(video_parameter),
+                                       resampler_parameter(resampler_parameter),
+                                       filter(filter),
+                                       measured_angular_velocity(measured_angular_velocity),
+                                       filter_strength(filter_strength)
+{
+    is_reading = true;
+    th1 = std::thread(&MultiThreadRotationMatrixGenerator::process, this); // Run thread
+}
 
 void MultiThreadRotationMatrixGenerator::process()
 {
@@ -198,24 +201,25 @@ void MultiThreadRotationMatrixGenerator::process()
 
         rotation_matrix_.push(R);
 
-        if(!is_reading){
+        if (!is_reading)
+        {
             break;
         }
         // std::cout << "\r\n frame: " << frame << std::endl << std::flush;
     }
-    
 }
 
-int MultiThreadRotationMatrixGenerator::get(MatrixPtr &p){
-    while(rotation_matrix_.empty())
+int MultiThreadRotationMatrixGenerator::get(MatrixPtr &p)
+{
+    while (rotation_matrix_.empty())
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        if(!is_reading)
+        if (!is_reading)
         {
             p = nullptr;
             return 1;
         }
-        std::cout << "Empty:" << __FILE__ << " : line " <<__LINE__ << std::endl;
+        std::cout << "Empty:" << __FILE__ << " : line " << __LINE__ << std::endl;
     }
     int retval = rotation_matrix_.get(p);
     rotation_matrix_.pop();
