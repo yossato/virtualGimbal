@@ -207,7 +207,7 @@ double AngularVelocity::convertEstimatedToMeasuredAngularVelocityFrame(double es
     double a = (y1-y)/(x1-x);
     double b = (y*x1-x*y1)/(x1-x);
 
-    printf("table position:%ld a:%f b:%f\r\n",(std::distance(sync_table.begin(),result) == (int)sync_table.size() ? -1 : std::distance(sync_table.begin(),result)),a,b);
+    // printf("table position:%ld a:%f b:%f\r\n",(std::distance(sync_table.begin(),result) == (int)sync_table.size() ? -1 : std::distance(sync_table.begin(),result)),a,b);
 
 
 
