@@ -82,6 +82,8 @@ public:
   Eigen::Vector3d getAngularVelocityVector(double frame);
   Eigen::Quaterniond getAngularVelocity(size_t frame);
   Eigen::Quaterniond getCorrectionQuaternion(double time, const Eigen::VectorXd &filter_coeff);
+  double convertEstimatedToMeasuredAngularVelocityFrame(double estimate_angular_velocity_frame, std::vector<std::pair<int32_t,double>> &sync_table);
+  Eigen::Quaterniond getCorrectionQuaternionFromFrame(double estimated_angular_velocity_frame, const Eigen::VectorXd &filter_coeff, std::vector<std::pair<int32_t,double>> &sync_table);
   double getLengthInSecond();
   int32_t getFrames();
 private:

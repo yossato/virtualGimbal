@@ -115,7 +115,7 @@ int main(int argc, char **argv)
               
 
     Eigen::VectorXd correlation = manager.getCorrelationCoefficient(0,1000);
-    double offset = manager.getSubframeOffset(correlation,0,1000);
+    double offset = manager.getSubframeOffsetInSecond(correlation,0,1000);
     manager.setResamplerParameter(offset);
 
     Eigen::VectorXd correlation_begin,correlation_end;
@@ -127,15 +127,7 @@ int main(int argc, char **argv)
     vgp::plot(correlation_end, "correlation_end", legends_angular_velocity);
 #endif 
 
-    auto table = manager.getSyncTable(30*24,999);
-    printf("Table:\r\n");
-    for(size_t i=0;i<table.size()-1;++i)
-    {
-        printf("(%d,%f), a:%f b=%f\r\n",table[i].first,table[i].second,
-        (table[i+1].second-table[i].second)/(table[i+1].first-table[i].first),
-        (table[i].second*table[i+1].first-table[i].first*table[i+1].second)/(table[i+1].first-table[i].first)
-        );
-    }
+
 
 
 

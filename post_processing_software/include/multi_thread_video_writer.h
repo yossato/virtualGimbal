@@ -142,7 +142,8 @@ public:
                                        ResamplerParameterPtr resampler_parameter,
                                        KaiserWindowFilter filter,
                                        AngularVelocityPtr measured_angular_velocity,
-                                       Eigen::VectorXd filter_strength);
+                                       Eigen::VectorXd filter_strength,
+                                       std::vector<std::pair<int32_t,double>> sync_table = std::vector<std::pair<int32_t,double>>());
     int get(MatrixPtr &p);
     ~MultiThreadRotationMatrixGenerator();
 
@@ -154,6 +155,7 @@ private:
     KaiserWindowFilter filter;
     AngularVelocityPtr measured_angular_velocity;
     Eigen::VectorXd filter_strength;
+    std::vector<std::pair<int32_t,double>> sync_table;
     volatile bool is_reading;
     std::thread th1;
     void join();

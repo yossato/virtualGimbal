@@ -200,7 +200,7 @@ Eigen::VectorXd VirtualGimbalManager::getCorrelationCoefficient(int32_t begin, i
 //     return correlation_coefficients;
 // }
 
-double VirtualGimbalManager::getSubframeOffset(Eigen::VectorXd &correlation_coefficients, int32_t begin, int32_t length, double frequency)
+double VirtualGimbalManager::getSubframeOffsetInSecond(Eigen::VectorXd &correlation_coefficients, int32_t begin, int32_t length, double frequency)
 {
     if (0 == length)
     {
@@ -573,8 +573,19 @@ std::shared_ptr<cv::VideoCapture> VirtualGimbalManager::getVideoCapture()
 
 void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter, Eigen::VectorXd &filter_strength, bool show_image)
 {
+
+    auto table = getSyncTable(30*24,999);
+    printf("Table:\r\n");
+    for(size_t i=0;i<table.size()-1;++i)
+    {
+        printf("(%d,%f), a:%f b=%f\r\n",table[i].first,table[i].second,
+        (table[i+1].second-table[i].second)/(table[i+1].first-table[i].first),
+        (table[i].second*table[i+1].first-table[i].first*table[i+1].second)/(table[i+1].first-table[i].first)
+        );
+    }
+
     // Prepare correction rotation matrix generator. This constructor run a thread.
-    MultiThreadRotationMatrixGenerator gen(video_param,resampler_parameter_,filter,measured_angular_velocity,filter_strength);
+    MultiThreadRotationMatrixGenerator gen(video_param,resampler_parameter_,filter,measured_angular_velocity,filter_strength,table);
 
     // Prepare OpenCL
     cv::ocl::Context context;
@@ -726,11 +737,12 @@ void VirtualGimbalManager::enableWriter(const char *video_path)
 
 std::vector<std::pair<int32_t,double>> VirtualGimbalManager::getSyncTable(int32_t period, int32_t width){
     assert(width%2);// Odd
-    int32_t radius = width/2;
+    int32_t radius = width/2; // radius and width means number of frame in estimated angular velocity, not measured angular velocity.
     std::vector<std::pair<int32_t, double>> table;
     for(int center=radius,e=estimated_angular_velocity->getFrames()-radius;center<e;center+=period){
-        Eigen::VectorXd correlation = getCorrelationCoefficient(center-radius, 1000);
-        double measured_frame = (getSubframeOffset(correlation, center-radius, 1000) + (double)radius) * measured_angular_velocity->getFrequency();
+        Eigen::VectorXd correlation = getCorrelationCoefficient(center-radius, width);
+        double measured_frame = getSubframeOffsetInSecond(correlation, center-radius, width) * measured_angular_velocity->getFrequency()
+         + (double)radius / estimated_angular_velocity->getFrequency() * measured_angular_velocity->getFrequency();
         table.emplace_back(center,measured_frame);
     }
     return table;
@@ -741,9 +753,9 @@ std::shared_ptr<ResamplerParameter> VirtualGimbalManager::getResamplerParameterW
     // TODO: Consider video length is less than 1000
     // Eigen::VectorXd correlation = getCorrelationCoefficient(0,1000);
     correlation_begin = getCorrelationCoefficient(0, 1000);
-    double offset_begin = getSubframeOffset(correlation_begin, 0, 1000);
+    double offset_begin = getSubframeOffsetInSecond(correlation_begin, 0, 1000);
     correlation_end = getCorrelationCoefficient(estimated_angular_velocity->getFrames() - 1000, 1000);
-    double offset_end = getSubframeOffset(correlation_end, estimated_angular_velocity->getFrames() - 1000, 1000);
+    double offset_end = getSubframeOffsetInSecond(correlation_end, estimated_angular_velocity->getFrames() - 1000, 1000);
     double ratio = (offset_end - offset_begin) / ((estimated_angular_velocity->getFrames() - 1000) * estimated_angular_velocity->getInterval());
     printf("offset begin: %f, offset end: %f, ratio:%f\r\n", offset_begin, offset_end, ratio);
     // return std::make_shared<ResamplerParameter>(video_param->getFrequency(),offset_begin,estimated_angular_velocity->getLengthInSecond());
@@ -756,7 +768,7 @@ std::shared_ptr<ResamplerParameter> VirtualGimbalManager::getResamplerParameterW
     double modified_frequency = estimated_angular_velocity->getFrequency() * a;
 
     Eigen::VectorXd correlation_modified = getCorrelationCoefficient(0, 1000, modified_frequency);
-    double modified_offset = getSubframeOffset(correlation_modified, 0, 1000, modified_frequency);
+    double modified_offset = getSubframeOffsetInSecond(correlation_modified, 0, 1000, modified_frequency);
 
     // double modified_offset = t1/a + W*(a-1)*0.5;
     printf("modified_frequency:%f modified_offset:%f\r\n", modified_frequency, modified_offset);

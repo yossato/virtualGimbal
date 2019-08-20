@@ -48,7 +48,7 @@ public:
   // void getEstimatedAndMeasuredAngularVelocity(Eigen::MatrixXd &data);
   Eigen::VectorXd getCorrelationCoefficient(int32_t begin=0, int32_t length=0, double frequency=0.0);
   // Eigen::VectorXd getCorrelationCoefficient2(int32_t center, int32_t length, double frequency=0.0);
-  double getSubframeOffset(Eigen::VectorXd &correlation_coefficients,int32_t begin=0, int32_t length=0, double frequency=0.0);
+  double getSubframeOffsetInSecond(Eigen::VectorXd &correlation_coefficients,int32_t begin=0, int32_t length=0, double frequency=0.0);
   void setResamplerParameter(double start, double new_frequency = 0.0);
   void setResamplerParameter(ResamplerParameterPtr param);
   Eigen::MatrixXd getSynchronizedMeasuredAngularVelocity();
