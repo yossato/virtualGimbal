@@ -533,6 +533,7 @@ void VirtualGimbalManager::setMaximumGradient(double value)
 
 Eigen::VectorXd VirtualGimbalManager::getFilterCoefficients(double zoom,
                                                             KaiserWindowFilter &filter,
+                                                            std::vector<std::pair<int32_t,double>> &sync_table, 
                                                             int32_t strongest_filter_param, int32_t weakest_filter_param)
 {
 
@@ -540,21 +541,21 @@ Eigen::VectorXd VirtualGimbalManager::getFilterCoefficients(double zoom,
     //Calcurate in all frame
     for (int frame = 0, e = filter_strength.rows(); frame < e; ++frame)
     {
-        double time = resampler_parameter_->start + frame * video_param->getInterval();
+        // double time = resampler_parameter_->start + frame * video_param->getInterval();
 
         // フィルタが弱くて、簡単な条件で、黒帯が出るなら、しょうが無いからこれを採用
-        if (hasBlackSpace(time, zoom, measured_angular_velocity, video_param, filter(weakest_filter_param)))
+        if (hasBlackSpace(frame, zoom, measured_angular_velocity, video_param, filter(weakest_filter_param),sync_table))
         {
             filter_strength[frame] = weakest_filter_param;
         }
         // フィルタが強くて、すごく安定化された条件で、難しい条件で、黒帯が出ないなら、喜んでこれを採用
-        else if (!hasBlackSpace(time, zoom, measured_angular_velocity, video_param, filter(strongest_filter_param)))
+        else if (!hasBlackSpace(frame, zoom, measured_angular_velocity, video_param, filter(strongest_filter_param),sync_table))
         {
             filter_strength[frame] = strongest_filter_param;
         }
         else
         {
-            filter_strength[frame] = bisectionMethod(time, zoom, measured_angular_velocity, video_param, filter, strongest_filter_param, weakest_filter_param);
+            filter_strength[frame] = bisectionMethod(frame, zoom, measured_angular_velocity, video_param, filter, sync_table, strongest_filter_param, weakest_filter_param);
         }
     }
     //    std::cout << filter_strength << std::endl;
@@ -571,21 +572,12 @@ std::shared_ptr<cv::VideoCapture> VirtualGimbalManager::getVideoCapture()
 #define LAP_BEGIN //auto td1=std::chrono::system_clock::now();int line =__LINE__;
 #define LAP // printf("\r\nDuration from L %d to %d is %ld\r\n", line,__LINE__, std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - td1).count());line=__LINE__;td1=std::chrono::system_clock::now();
 
-void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter, Eigen::VectorXd &filter_strength, bool show_image)
+void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter, Eigen::VectorXd &filter_strength, std::vector<std::pair<int32_t,double>> &sync_table, bool show_image)
 {
 
-    auto table = getSyncTable(30*24,999);
-    printf("Table:\r\n");
-    for(size_t i=0;i<table.size()-1;++i)
-    {
-        printf("(%d,%f), a:%f b=%f\r\n",table[i].first,table[i].second,
-        (table[i+1].second-table[i].second)/(table[i+1].first-table[i].first),
-        (table[i].second*table[i+1].first-table[i].first*table[i+1].second)/(table[i+1].first-table[i].first)
-        );
-    }
 
     // Prepare correction rotation matrix generator. This constructor run a thread.
-    MultiThreadRotationMatrixGenerator gen(video_param,resampler_parameter_,filter,measured_angular_velocity,filter_strength,table);
+    MultiThreadRotationMatrixGenerator gen(video_param,filter,measured_angular_velocity,filter_strength,sync_table);
 
     // Prepare OpenCL
     cv::ocl::Context context;

@@ -174,12 +174,12 @@ MultiThreadVideoReader::~MultiThreadVideoReader()
 
 MultiThreadRotationMatrixGenerator::MultiThreadRotationMatrixGenerator(
     VideoPtr video_parameter,
-    ResamplerParameterPtr resampler_parameter,
+    // ResamplerParameterPtr resampler_parameter,
     KaiserWindowFilter filter,
     AngularVelocityPtr measured_angular_velocity,
     Eigen::VectorXd filter_strength,
     std::vector<std::pair<int32_t,double>> sync_table) : video_parameter(video_parameter),
-                                       resampler_parameter(resampler_parameter),
+                                    //    resampler_parameter(resampler_parameter),
                                        filter(filter),
                                        measured_angular_velocity(measured_angular_velocity),
                                        filter_strength(filter_strength),

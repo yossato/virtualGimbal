@@ -139,7 +139,7 @@ class MultiThreadRotationMatrixGenerator
 {
 public:
     MultiThreadRotationMatrixGenerator(VideoPtr video_parameter,
-                                       ResamplerParameterPtr resampler_parameter,
+                                    //    ResamplerParameterPtr resampler_parameter,
                                        KaiserWindowFilter filter,
                                        AngularVelocityPtr measured_angular_velocity,
                                        Eigen::VectorXd filter_strength,
@@ -151,7 +151,7 @@ private:
     MultiThreadQueue<MatrixPtr> rotation_matrix_;
     int32_t rows;
     VideoPtr video_parameter;
-    ResamplerParameterPtr resampler_parameter;
+    // ResamplerParameterPtr resampler_parameter;
     KaiserWindowFilter filter;
     AngularVelocityPtr measured_angular_velocity;
     Eigen::VectorXd filter_strength;

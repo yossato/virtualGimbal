@@ -65,8 +65,9 @@ public:
                                    std::vector<double> &residuals, bool fisheye = false);
   Eigen::VectorXd getFilterCoefficients(double zoom,
                                       KaiserWindowFilter &filter,
+                                      std::vector<std::pair<int32_t,double>> &sync_table, 
                                       int32_t strongest_filter_param, int32_t weakest_filter_param);
-  void spin(double zoom, KaiserWindowFilter &filter,Eigen::VectorXd &filter_strength, bool show_image = true);
+  void spin(double zoom, KaiserWindowFilter &filter,Eigen::VectorXd &filter_strength, std::vector<std::pair<int32_t,double>> &sync_table, bool show_image = true);
   void setMaximumGradient(double value);
   void enableWriter(const char *video_path);
   const char *kernel_name = "stabilizer_kernel.cl";
