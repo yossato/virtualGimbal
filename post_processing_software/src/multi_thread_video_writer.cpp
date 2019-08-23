@@ -9,7 +9,7 @@
 //     return data.size();
 // }
 
-MultiThreadVideoWriter::MultiThreadVideoWriter(std::string output_pass, Video &video_param)
+MultiThreadVideoWriter::MultiThreadVideoWriter(std::string output_pass, Video &video_param, size_t queue_size) : write_data_(queue_size)
 {
     struct stat st;
     if (!stat(output_pass.c_str(), &st))
@@ -106,7 +106,7 @@ int MultiThreadVideoWriter::push(UMatPtr &p)
     return 0;
 }
 
-MultiThreadVideoReader::MultiThreadVideoReader(std::string input_path) : video_capture(input_path)
+MultiThreadVideoReader::MultiThreadVideoReader(std::string input_path,size_t queue_size) : video_capture(input_path),read_data_(queue_size)
 {
     if (!video_capture.isOpened())
     {
@@ -178,12 +178,14 @@ MultiThreadRotationMatrixGenerator::MultiThreadRotationMatrixGenerator(
     KaiserWindowFilter filter,
     AngularVelocityPtr measured_angular_velocity,
     Eigen::VectorXd filter_strength,
-    std::vector<std::pair<int32_t,double>> sync_table) : video_parameter(video_parameter),
+    std::vector<std::pair<int32_t,double>> sync_table,
+    size_t queue_size) : video_parameter(video_parameter),
                                     //    resampler_parameter(resampler_parameter),
                                        filter(filter),
                                        measured_angular_velocity(measured_angular_velocity),
                                        filter_strength(filter_strength),
-                                       sync_table(sync_table)
+                                       sync_table(sync_table),
+                                     rotation_matrix_(queue_size)
 {
     is_reading = true;
     th1 = std::thread(&MultiThreadRotationMatrixGenerator::process, this); // Run thread

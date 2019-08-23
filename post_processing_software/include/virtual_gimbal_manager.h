@@ -38,6 +38,7 @@ class VirtualGimbalManager
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   VirtualGimbalManager();
+  VirtualGimbalManager(size_t queue_size);
   void setVideoParam(const char *file_name, CameraInformationPtr info);
   static std::string getVideoSize(const char *videoName);
   void setMeasuredAngularVelocity(const char *file_name, CameraInformationPtr info = nullptr);
@@ -91,6 +92,7 @@ protected:
   VideoPtr video_param;
   FilterPtr filter_;
   double maximum_gradient_;
+  size_t queue_size_;
   void rotateAngularVelocity(Eigen::MatrixXd &angular_velocity, const Eigen::Quaterniond &rotation)
   {
     Eigen::Quaterniond avq;

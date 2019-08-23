@@ -31,6 +31,7 @@ int main(int argc, char **argv)
     double zoom = 1.0;
     int32_t fileter_length = 199;
     int opt;
+    int queue_size = 10;
     //    Eigen::Quaterniond camera_rotation;
 
     while ((opt = getopt(argc, argv, "j:i:c:l:w:z:k:f:o::n::")) != -1)
@@ -58,6 +59,9 @@ int main(int argc, char **argv)
             break;
         case 'w':
             fileter_length = std::stoi(optarg);
+            break;
+        case 'q':
+            queue_size = std::stoi(optarg);
             break;
         case 'k':
             kernel_name = optarg;
@@ -88,7 +92,7 @@ int main(int argc, char **argv)
     }
 
 
-    VirtualGimbalManager manager;
+    VirtualGimbalManager manager(queue_size);
     manager.kernel_function = kernel_function;
     manager.kernel_name = kernel_name;
 
