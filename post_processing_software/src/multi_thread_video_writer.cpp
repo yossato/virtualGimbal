@@ -106,7 +106,7 @@ int MultiThreadVideoWriter::push(UMatPtr &p)
     return 0;
 }
 
-MultiThreadVideoReader::MultiThreadVideoReader(std::string input_path,size_t queue_size) : video_capture(input_path),read_data_(queue_size)
+MultiThreadVideoReader::MultiThreadVideoReader(std::string input_path,size_t queue_size) : read_data_(queue_size),video_capture(input_path)
 {
     if (!video_capture.isOpened())
     {

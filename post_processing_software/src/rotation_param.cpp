@@ -358,3 +358,41 @@ KaiserWindowFilter  &KaiserWindowFilter::operator()(int alpha){
 size_t  KaiserWindowFilter::size(){
     return filter_length_;
 }
+
+NormalDistributionFilter::NormalDistributionFilter(){
+    // Do nothing.
+}
+
+void NormalDistributionFilter::setFilterCoefficient(int32_t half_length){
+    if(half_length < 0){
+        std::cerr << "half length should be larger than zero." << std::endl << std::flush;
+        throw;
+    }
+
+    half_length_ = half_length;
+    if(filter_coefficients_.count(half_length)){
+        return;
+    }else{
+        filter_coefficients_[half_length] = Eigen::VectorXd::Zero(half_length*2+1);
+    }
+
+    if(0 == half_length){
+        filter_coefficients_[half_length][0] = 1.0;
+        return;
+    }
+
+    for(int32_t n=-half_length;n<=half_length;++n){
+        filter_coefficients_[half_length][n+half_length]
+        = exp(-9.0*pow((double)n/(double)half_length,2.0));
+    }
+    filter_coefficients_[half_length].array() /= filter_coefficients_[half_length].sum();
+}
+
+const Eigen::VectorXd &NormalDistributionFilter::getFilterCoefficient(){
+    return filter_coefficients_[half_length_];
+}
+
+NormalDistributionFilter &NormalDistributionFilter::operator()(int32_t half_length){
+    setFilterCoefficient(half_length);
+    return *this;
+}

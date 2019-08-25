@@ -169,6 +169,20 @@ protected:
   std::map<int32_t, Eigen::VectorXd> filter_coefficients_;
 };
 
+class NormalDistributionFilter : public Filter
+{
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  NormalDistributionFilter();
+  virtual ~NormalDistributionFilter(){};
+  void setFilterCoefficient(int32_t half_length);
+  const Eigen::VectorXd &getFilterCoefficient() override;
+  NormalDistributionFilter &operator()(int32_t half_length);
+protected:
+  std::map<int32_t, Eigen::VectorXd> filter_coefficients_;
+  int32_t half_length_;
+};
+
 using VideoPtr = std::shared_ptr<Video>;
 
 class VideoRateRotation : Rotation

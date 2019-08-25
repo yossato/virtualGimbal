@@ -149,7 +149,7 @@ public:
     ~MultiThreadRotationMatrixGenerator();
 
 private:
-    MultiThreadQueue<MatrixPtr> rotation_matrix_;
+
     int32_t rows;
     VideoPtr video_parameter;
     // ResamplerParameterPtr resampler_parameter;
@@ -157,6 +157,7 @@ private:
     AngularVelocityPtr measured_angular_velocity;
     Eigen::VectorXd filter_strength;
     std::vector<std::pair<int32_t,double>> sync_table;
+    MultiThreadQueue<MatrixPtr> rotation_matrix_;
     volatile bool is_reading;
     std::thread th1;
     void join();
