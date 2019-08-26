@@ -2,6 +2,9 @@
 
 void gradientLimit(Eigen::VectorXd &input, double maximum_gradient_)
 {
+    input = -1 * input;
+
+
     if (input.rows() < 2)
         return;
     double limited_value = input.head(1)[0];
@@ -30,6 +33,9 @@ void gradientLimit(Eigen::VectorXd &input, double maximum_gradient_)
             input(i) = limited_value;
         }
     }
+
+    input = -1 * input;
+
 }
 
 /**

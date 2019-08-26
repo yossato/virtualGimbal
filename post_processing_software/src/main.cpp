@@ -9,7 +9,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#define __DEBUG_ONLY
+// #define __DEBUG_ONLY
 #ifdef __DEBUG_ONLY
 #include "visualizer.h"
 
@@ -156,7 +156,7 @@ int main(int argc, char **argv)
     }
 
 
-    Eigen::VectorXd filter_coefficients = manager.getFilterCoefficients(zoom,fir_filter,table,fileter_length,0);
+    Eigen::VectorXd filter_coefficients = manager.getFilterCoefficients(zoom,fir_filter,table,fileter_length,0); // Zero is the weakest value since apply no filter, output is equal to input.
 #ifdef __DEBUG_ONLY
     std::vector<string> legends_angular_velocity = {"c"};
     vgp::plot(filter_coefficients, "filter_coefficients", legends_angular_velocity);

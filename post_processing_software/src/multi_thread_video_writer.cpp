@@ -202,7 +202,7 @@ void MultiThreadRotationMatrixGenerator::process()
             double frame_in_row = frame + (video_parameter->camera_info->line_delay_ * (row - video_parameter->camera_info->height_ * 0.5))
             * video_parameter->getFrequency();
             Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>>(&(*R)[row * 9], 3, 3) 
-            = measured_angular_velocity->getCorrectionQuaternionFromFrame(frame_in_row,filter->getFilterCoefficient(filter_strength(row)),sync_table).matrix().cast<float>();
+            = measured_angular_velocity->getCorrectionQuaternionFromFrame(frame_in_row,filter->getFilterCoefficient(filter_strength(frame)),sync_table).matrix().cast<float>();
             
             // double time_in_row = video_parameter->getInterval() * frame + resampler_parameter->start + video_parameter->camera_info->line_delay_ * (row - video_parameter->camera_info->height_ * 0.5);
             // printf("frame_in_row:%f time_in_row%f\r\n",measured_angular_velocity->convertEstimatedToMeasuredAngularVelocityFrame(frame_in_row,sync_table)*measured_angular_velocity->getInterval(),time_in_row);
