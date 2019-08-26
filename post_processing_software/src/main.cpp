@@ -140,7 +140,6 @@ int main(int argc, char **argv)
 //     vgp::plot(correlation, "correlation", legends_angular_velocity);
 // #endif 
 
-    // auto fir_filter = std::make_shared<KaiserWindowFilter>(fileter_length,2);
     auto fir_filter = std::make_shared<NormalDistributionFilter>();
     manager.setFilter(fir_filter);
     manager.setMaximumGradient(0.5);

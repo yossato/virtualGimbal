@@ -119,10 +119,6 @@ make -j4
 sudo make install  
 ```
 
-### Install Boost
-```
-sudo apt-get install libboost-dev
-```
 ## Build
 ```
 cd

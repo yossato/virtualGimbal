@@ -19,7 +19,6 @@
 
 #include "rotation_param.h"
 #include "rotation_math.h"
-#include <boost/math/special_functions/bessel.hpp>
 const double BaseParam::getFrequency()
 {
     return frequency_;
@@ -324,44 +323,7 @@ const Eigen::MatrixXd &AngularVelocity::getRelativeAngle(size_t frame, int lengt
 
 
 
-KaiserWindowFilter::KaiserWindowFilter(uint32_t filter_length, uint32_t alpha) : Filter(), filter_length_(filter_length)
-{
-    assert(filter_length_ % 2);// Must be odd
-    setFilterCoefficient(alpha);
-}
 
-// const Eigen::VectorXd &KaiserWindowFilter::getFilterCoefficient(){
-//     return filter_coefficients_[alpha_];
-// }
-
-const Eigen::VectorXd &KaiserWindowFilter::getFilterCoefficient(int32_t alpha){
-    return filter_coefficients_[alpha];
-}
-
-void KaiserWindowFilter::setFilterCoefficient(int32_t alpha){
-    alpha_ = alpha;
-    if(filter_coefficients_.count(alpha_)){ // Filter cofficient already exists.
-        return;
-    }else{
-        filter_coefficients_[alpha_] = Eigen::VectorXd::Zero(filter_length_);
-    }
-   
-    int32_t L = filter_length_/2;
-    for(int32_t n=-L,e=L;n<=e;++n){
-        filter_coefficients_[alpha][n+L] = boost::math::cyl_bessel_i(0.0,alpha_*sqrt(1.0-pow((double)n/(double)L,2.0)))
-                /boost::math::cyl_bessel_i(0.0,alpha_);
-    }
-    filter_coefficients_[alpha].array() /= filter_coefficients_[alpha].sum();
-}
-
-KaiserWindowFilter  &KaiserWindowFilter::operator()(int alpha){
-    setFilterCoefficient(alpha);
-    return *this;
-}
-
-size_t  KaiserWindowFilter::size(){
-    return filter_length_;
-}
 
 NormalDistributionFilter::NormalDistributionFilter(){
     // Do nothing.

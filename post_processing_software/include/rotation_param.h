@@ -146,36 +146,6 @@ protected:
 
 };
 
-// class FIRFilter : public Filter
-// {
-// public:
-//   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-//   FIRFilter(){};
-//   virtual ~FIRFilter(){};
-//   virtual Eigen::VectorXd getFilterCoefficient() = 0;
-
-// protected:
-// };
-
-class KaiserWindowFilter : public Filter
-{
-public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  KaiserWindowFilter(uint32_t filter_length, uint32_t alpha);
-  virtual ~KaiserWindowFilter(){}
-  // const Eigen::VectorXd &getFilterCoefficient() override;
-  const Eigen::VectorXd &getFilterCoefficient(int32_t alpha) override;
-  KaiserWindowFilter & operator()(int alpha) override;
-  size_t size();
-
-protected:
-  int32_t filter_length_;
-  int32_t alpha_;
-  std::map<int32_t, Eigen::VectorXd> filter_coefficients_;
-  void setFilterCoefficient(int32_t alpha) override;
-  
-};
-
 class NormalDistributionFilter : public Filter
 {
 public:
