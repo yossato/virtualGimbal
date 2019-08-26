@@ -9,7 +9,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-// #define __DEBUG_ONLY
+#define __DEBUG_ONLY
 #ifdef __DEBUG_ONLY
 #include "visualizer.h"
 
@@ -125,22 +125,23 @@ int main(int argc, char **argv)
     // Eigen::VectorXd correlation_begin,correlation_end;
     // auto modified_resampler_parameter = manager.getResamplerParameterWithClockError(correlation_begin,correlation_end);
     // manager.setResamplerParameter(modified_resampler_parameter);
-#ifdef __DEBUG_ONLY
-    std::vector<string> legends_angular_velocity = {"c"};
-    vgp::plot(correlation_begin, "correlation_begin", legends_angular_velocity);
-    vgp::plot(correlation_end, "correlation_end", legends_angular_velocity);
-#endif 
+// #ifdef __DEBUG_ONLY
+//     std::vector<string> legends_angular_velocity = {"c"};
+//     vgp::plot(correlation_begin, "correlation_begin", legends_angular_velocity);
+//     vgp::plot(correlation_end, "correlation_end", legends_angular_velocity);
+// #endif 
 
 
 
 
 
-#ifdef __DEBUG_ONLY
+// #ifdef __DEBUG_ONLY
     // std::vector<string> legends_angular_velocity = {"c"};
-    vgp::plot(correlation, "correlation", legends_angular_velocity);
-#endif 
+//     vgp::plot(correlation, "correlation", legends_angular_velocity);
+// #endif 
 
-    auto fir_filter = std::make_shared<KaiserWindowFilter>(fileter_length,2);
+    // auto fir_filter = std::make_shared<KaiserWindowFilter>(fileter_length,2);
+    auto fir_filter = std::make_shared<NormalDistributionFilter>();
     manager.setFilter(fir_filter);
     manager.setMaximumGradient(0.5);
 
@@ -155,12 +156,13 @@ int main(int argc, char **argv)
     }
 
 
-    Eigen::VectorXd filter_coefficients = manager.getFilterCoefficients(zoom,*fir_filter,table,2,499);
+    Eigen::VectorXd filter_coefficients = manager.getFilterCoefficients(zoom,fir_filter,table,fileter_length,0);
 #ifdef __DEBUG_ONLY
-    vgp::plot(filter_coefficients, "filter_coefficients [Smaller value means Stronger filter.]", legends_angular_velocity);
+    std::vector<string> legends_angular_velocity = {"c"};
+    vgp::plot(filter_coefficients, "filter_coefficients", legends_angular_velocity);
 #endif
 
-    manager.spin(zoom,*fir_filter,filter_coefficients,table, show_image);
+    manager.spin(zoom,fir_filter,filter_coefficients,table, show_image);
 
     return 0;
 }

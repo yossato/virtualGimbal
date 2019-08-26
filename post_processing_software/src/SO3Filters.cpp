@@ -167,11 +167,11 @@ bool hasBlackSpace(int frame,
                    double zoom,
                    AngularVelocityPtr angular_velocity,
                    VideoPtr video_param,
-                   KaiserWindowFilter &filter,
+                   Eigen::VectorXd filter_coefficients,
                    std::vector<std::pair<int32_t,double>> &sync_table)
 {
     std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> contour;
-    getUndistortUnrollingContour(frame, angular_velocity, contour, sync_table, zoom, video_param, filter.getFilterCoefficient());
+    getUndistortUnrollingContour(frame, angular_velocity, contour, sync_table, zoom, video_param, filter_coefficients);
     return !isGoodWarp(contour,video_param);
 }
 
@@ -179,21 +179,21 @@ uint32_t bisectionMethod(int frame,
                          double zoom,
                          AngularVelocityPtr angular_velocity,
                          VideoPtr video_param,
-                         KaiserWindowFilter &filter,
+                         FilterPtr filter,
                          std::vector<std::pair<int32_t,double>> &sync_table,
                          int32_t minimum_filter_strength,
                          int32_t maximum_filter_strength,
                          int max_iteration, uint32_t eps)
 {
-    int32_t a = minimum_filter_strength;
-    int32_t b = maximum_filter_strength;
+    int32_t a = maximum_filter_strength;
+    int32_t b = minimum_filter_strength;
     int count = 0;
     int32_t m = 0;
     while (((uint32_t)abs(a - b) > eps) && (count++ < max_iteration))
     {
         m = (a + b) * 0.5;
 
-        if (hasBlackSpace(frame, zoom, angular_velocity, video_param, filter(a),sync_table) ^ hasBlackSpace(frame, zoom, angular_velocity, video_param, filter(m),sync_table))
+        if (hasBlackSpace(frame, zoom, angular_velocity, video_param, filter->getFilterCoefficient(a),sync_table) ^ hasBlackSpace(frame, zoom, angular_velocity, video_param, filter->getFilterCoefficient(m),sync_table))
         {
             b = m;
         }

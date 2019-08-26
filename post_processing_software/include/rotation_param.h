@@ -137,8 +137,13 @@ class Filter
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   Filter(){};
-  virtual const Eigen::VectorXd &getFilterCoefficient() = 0;
+  // virtual const Eigen::VectorXd &getFilterCoefficient() = 0;
+  virtual const Eigen::VectorXd &getFilterCoefficient(int32_t alpha) = 0;
   virtual ~Filter(){};
+  virtual Filter &operator()(int filter_coefficient) = 0;
+protected:
+  virtual void setFilterCoefficient(int32_t alpha) = 0;
+
 };
 
 // class FIRFilter : public Filter
@@ -158,15 +163,17 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   KaiserWindowFilter(uint32_t filter_length, uint32_t alpha);
   virtual ~KaiserWindowFilter(){}
-  void setFilterCoefficient(int32_t alpha);
-  const Eigen::VectorXd &getFilterCoefficient() override;
-  KaiserWindowFilter & operator()(int alpha);
+  // const Eigen::VectorXd &getFilterCoefficient() override;
+  const Eigen::VectorXd &getFilterCoefficient(int32_t alpha) override;
+  KaiserWindowFilter & operator()(int alpha) override;
   size_t size();
 
 protected:
   int32_t filter_length_;
   int32_t alpha_;
   std::map<int32_t, Eigen::VectorXd> filter_coefficients_;
+  void setFilterCoefficient(int32_t alpha) override;
+  
 };
 
 class NormalDistributionFilter : public Filter
@@ -175,12 +182,14 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   NormalDistributionFilter();
   virtual ~NormalDistributionFilter(){};
-  void setFilterCoefficient(int32_t half_length);
-  const Eigen::VectorXd &getFilterCoefficient() override;
-  NormalDistributionFilter &operator()(int32_t half_length);
+  // const Eigen::VectorXd &getFilterCoefficient() override;
+  const Eigen::VectorXd &getFilterCoefficient(int32_t half_length) override;
+  NormalDistributionFilter &operator()(int32_t half_length) override;
 protected:
   std::map<int32_t, Eigen::VectorXd> filter_coefficients_;
   int32_t half_length_;
+  void setFilterCoefficient(int32_t half_length) override;
+
 };
 
 using VideoPtr = std::shared_ptr<Video>;

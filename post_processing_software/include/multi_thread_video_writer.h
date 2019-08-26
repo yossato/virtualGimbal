@@ -140,7 +140,7 @@ class MultiThreadRotationMatrixGenerator
 public:
     MultiThreadRotationMatrixGenerator(VideoPtr video_parameter,
                                     //    ResamplerParameterPtr resampler_parameter,
-                                       KaiserWindowFilter filter,
+                                       FilterPtr filter,
                                        AngularVelocityPtr measured_angular_velocity,
                                        Eigen::VectorXd filter_strength,
                                        std::vector<std::pair<int32_t,double>> sync_table,
@@ -153,7 +153,7 @@ private:
     int32_t rows;
     VideoPtr video_parameter;
     // ResamplerParameterPtr resampler_parameter;
-    KaiserWindowFilter filter;
+    FilterPtr filter;
     AngularVelocityPtr measured_angular_velocity;
     Eigen::VectorXd filter_strength;
     std::vector<std::pair<int32_t,double>> sync_table;

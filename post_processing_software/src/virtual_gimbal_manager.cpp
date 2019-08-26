@@ -448,7 +448,7 @@ void VirtualGimbalManager::setMaximumGradient(double value)
 }
 
 Eigen::VectorXd VirtualGimbalManager::getFilterCoefficients(double zoom,
-                                                            KaiserWindowFilter &filter,
+                                                            FilterPtr filter,
                                                             std::vector<std::pair<int32_t, double>> &sync_table,
                                                             int32_t strongest_filter_param, int32_t weakest_filter_param)
 {
@@ -460,12 +460,12 @@ Eigen::VectorXd VirtualGimbalManager::getFilterCoefficients(double zoom,
         // double time = resampler_parameter_->start + frame * video_param->getInterval();
 
         // フィルタが弱くて、簡単な条件で、黒帯が出るなら、しょうが無いからこれを採用
-        if (hasBlackSpace(frame, zoom, measured_angular_velocity, video_param, filter(weakest_filter_param), sync_table))
+        if (hasBlackSpace(frame, zoom, measured_angular_velocity, video_param, filter->getFilterCoefficient(weakest_filter_param), sync_table))
         {
             filter_strength[frame] = weakest_filter_param;
         }
         // フィルタが強くて、すごく安定化された条件で、難しい条件で、黒帯が出ないなら、喜んでこれを採用
-        else if (!hasBlackSpace(frame, zoom, measured_angular_velocity, video_param, filter(strongest_filter_param), sync_table))
+        else if (!hasBlackSpace(frame, zoom, measured_angular_velocity, video_param, filter->getFilterCoefficient(strongest_filter_param), sync_table))
         {
             filter_strength[frame] = strongest_filter_param;
         }
@@ -488,7 +488,7 @@ std::shared_ptr<cv::VideoCapture> VirtualGimbalManager::getVideoCapture()
 #define LAP_BEGIN //auto td1=std::chrono::system_clock::now();int line =__LINE__;
 #define LAP       // printf("\r\nDuration from L %d to %d is %ld\r\n", line,__LINE__, std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - td1).count());line=__LINE__;td1=std::chrono::system_clock::now();
 
-void VirtualGimbalManager::spin(double zoom, KaiserWindowFilter &filter, Eigen::VectorXd &filter_strength, std::vector<std::pair<int32_t, double>> &sync_table, bool show_image)
+void VirtualGimbalManager::spin(double zoom, FilterPtr filter, Eigen::VectorXd &filter_strength, std::vector<std::pair<int32_t, double>> &sync_table, bool show_image)
 {
 
     // Prepare correction rotation matrix generator. This constructor run a thread.

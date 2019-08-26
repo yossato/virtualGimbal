@@ -330,8 +330,12 @@ KaiserWindowFilter::KaiserWindowFilter(uint32_t filter_length, uint32_t alpha) :
     setFilterCoefficient(alpha);
 }
 
-const Eigen::VectorXd &KaiserWindowFilter::getFilterCoefficient(){
-    return filter_coefficients_[alpha_];
+// const Eigen::VectorXd &KaiserWindowFilter::getFilterCoefficient(){
+//     return filter_coefficients_[alpha_];
+// }
+
+const Eigen::VectorXd &KaiserWindowFilter::getFilterCoefficient(int32_t alpha){
+    return filter_coefficients_[alpha];
 }
 
 void KaiserWindowFilter::setFilterCoefficient(int32_t alpha){
@@ -388,8 +392,13 @@ void NormalDistributionFilter::setFilterCoefficient(int32_t half_length){
     filter_coefficients_[half_length].array() /= filter_coefficients_[half_length].sum();
 }
 
-const Eigen::VectorXd &NormalDistributionFilter::getFilterCoefficient(){
-    return filter_coefficients_[half_length_];
+// const Eigen::VectorXd &NormalDistributionFilter::getFilterCoefficient(){
+//     return filter_coefficients_[half_length_];
+// }
+
+const Eigen::VectorXd &NormalDistributionFilter::getFilterCoefficient(int32_t half_length){
+    setFilterCoefficient(half_length);
+    return filter_coefficients_[half_length];
 }
 
 NormalDistributionFilter &NormalDistributionFilter::operator()(int32_t half_length){
