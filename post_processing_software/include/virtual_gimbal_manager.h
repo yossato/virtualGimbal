@@ -38,6 +38,7 @@ class VirtualGimbalManager
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   VirtualGimbalManager();
+  VirtualGimbalManager(size_t queue_size);
   void setVideoParam(const char *file_name, CameraInformationPtr info);
   static std::string getVideoSize(const char *videoName);
   void setMeasuredAngularVelocity(const char *file_name, CameraInformationPtr info = nullptr);
@@ -47,7 +48,8 @@ public:
   void setFilter(FilterPtr filter);
   // void getEstimatedAndMeasuredAngularVelocity(Eigen::MatrixXd &data);
   Eigen::VectorXd getCorrelationCoefficient(int32_t begin=0, int32_t length=0, double frequency=0.0);
-  double getSubframeOffset(Eigen::VectorXd &correlation_coefficients,int32_t begin=0, int32_t length=0, double frequency=0.0);
+  // Eigen::VectorXd getCorrelationCoefficient2(int32_t center, int32_t length, double frequency=0.0);
+  double getSubframeOffsetInSecond(Eigen::VectorXd &correlation_coefficients,int32_t begin=0, int32_t length=0, double frequency=0.0);
   void setResamplerParameter(double start, double new_frequency = 0.0);
   void setResamplerParameter(ResamplerParameterPtr param);
   Eigen::MatrixXd getSynchronizedMeasuredAngularVelocity();
@@ -63,15 +65,17 @@ public:
                                    const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs,
                                    std::vector<double> &residuals, bool fisheye = false);
   Eigen::VectorXd getFilterCoefficients(double zoom,
-                                      KaiserWindowFilter &filter,
+                                      FilterPtr filter,
+                                      std::vector<std::pair<int32_t,double>> &sync_table, 
                                       int32_t strongest_filter_param, int32_t weakest_filter_param);
-  void spin(double zoom, KaiserWindowFilter &filter,Eigen::VectorXd &filter_strength, bool show_image = true);
+  void spin(double zoom, FilterPtr filter,Eigen::VectorXd &filter_strength, std::vector<std::pair<int32_t,double>> &sync_table, bool show_image = true);
   void setMaximumGradient(double value);
   void enableWriter(const char *video_path);
   const char *kernel_name = "stabilizer_kernel.cl";
   const char *kernel_function = "stabilizer_function";
   std::shared_ptr<cv::VideoCapture> getVideoCapture();
   std::shared_ptr<ResamplerParameter> getResamplerParameterWithClockError(Eigen::VectorXd &correlation_begin, Eigen::VectorXd &correlation_end);
+  std::vector<std::pair<int32_t,double>> getSyncTable(int32_t period,int32_t width);
 protected:
   std::shared_ptr<MultiThreadVideoWriter> writer_;
   std::shared_ptr<MultiThreadVideoReader> reader_;
@@ -88,6 +92,7 @@ protected:
   VideoPtr video_param;
   FilterPtr filter_;
   double maximum_gradient_;
+  size_t queue_size_;
   void rotateAngularVelocity(Eigen::MatrixXd &angular_velocity, const Eigen::Quaterniond &rotation)
   {
     Eigen::Quaterniond avq;

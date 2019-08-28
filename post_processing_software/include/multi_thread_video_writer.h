@@ -33,7 +33,7 @@ template <typename TYPE>
 class MultiThreadQueue
 {
 public:
-    MultiThreadQueue() : max_size_(100){};
+    MultiThreadQueue(size_t queue_size) : max_size_(queue_size){};
 
     int push(TYPE &p)
     {
@@ -103,7 +103,7 @@ private:
 class MultiThreadVideoWriter
 {
 public:
-    MultiThreadVideoWriter(std::string output_pass, Video &video_param);
+    MultiThreadVideoWriter(std::string output_pass, Video &video_param, size_t queue_size);
     ~MultiThreadVideoWriter();
     std::string output_name(char *source_name);
     static std::string getOutputName(const char *source_video_name);
@@ -121,7 +121,7 @@ private:
 class MultiThreadVideoReader
 {
 public:
-    MultiThreadVideoReader(std::string input_path);
+    MultiThreadVideoReader(std::string input_path,size_t queue_size);
     ~MultiThreadVideoReader();
     int get(UMatPtr &p);
 
@@ -139,21 +139,25 @@ class MultiThreadRotationMatrixGenerator
 {
 public:
     MultiThreadRotationMatrixGenerator(VideoPtr video_parameter,
-                                       ResamplerParameterPtr resampler_parameter,
-                                       KaiserWindowFilter filter,
+                                    //    ResamplerParameterPtr resampler_parameter,
+                                       FilterPtr filter,
                                        AngularVelocityPtr measured_angular_velocity,
-                                       Eigen::VectorXd filter_strength);
+                                       Eigen::VectorXd filter_strength,
+                                       std::vector<std::pair<int32_t,double>> sync_table,
+                                       size_t queue_size);
     int get(MatrixPtr &p);
     ~MultiThreadRotationMatrixGenerator();
 
 private:
-    MultiThreadQueue<MatrixPtr> rotation_matrix_;
+
     int32_t rows;
     VideoPtr video_parameter;
-    ResamplerParameterPtr resampler_parameter;
-    KaiserWindowFilter filter;
+    // ResamplerParameterPtr resampler_parameter;
+    FilterPtr filter;
     AngularVelocityPtr measured_angular_velocity;
     Eigen::VectorXd filter_strength;
+    std::vector<std::pair<int32_t,double>> sync_table;
+    MultiThreadQueue<MatrixPtr> rotation_matrix_;
     volatile bool is_reading;
     std::thread th1;
     void join();

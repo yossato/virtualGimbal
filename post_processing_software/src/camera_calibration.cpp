@@ -200,12 +200,19 @@ int main(int argc, char** argv){
 
     //規定枚数まで結果を縮小
     std::vector<std::vector<cv::Point2f>> shrinkImagePoints;
-    for(int i=0;i<Dcbp.NumberOfCaptureImage;++i){
-        shrinkImagePoints.push_back(imagePoints[(int)round((double)(imagePoints.size())/(double)(Dcbp.NumberOfCaptureImage)*(double)i)]);
+    // Shring image point if there are too much image points.
+    if(imagePoints.empty()){
+        printf("\r\nError: No chess board found in a video. Please check the video and parameters.\r\n");
+        return -1;
     }
+    if(imagePoints.size()>=Dcbp.NumberOfCaptureImage){
+        for(int i=0;i<Dcbp.NumberOfCaptureImage;++i){
+            shrinkImagePoints.push_back(imagePoints[(int)round((double)(imagePoints.size())/(double)(Dcbp.NumberOfCaptureImage)*(double)i)]);
+        }
 
-    printf("shrink size:%d\n",(int)shrinkImagePoints.size());
-    imagePoints = shrinkImagePoints;//入れ替え
+        printf("shrink size:%d\n",(int)shrinkImagePoints.size());
+        imagePoints = shrinkImagePoints;//入れ替え
+    }
 
     //ここからカメラパラメータを求める
     cv::Mat CameraMatrix;

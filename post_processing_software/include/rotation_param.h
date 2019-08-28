@@ -82,6 +82,8 @@ public:
   Eigen::Vector3d getAngularVelocityVector(double frame);
   Eigen::Quaterniond getAngularVelocity(size_t frame);
   Eigen::Quaterniond getCorrectionQuaternion(double time, const Eigen::VectorXd &filter_coeff);
+  double convertEstimatedToMeasuredAngularVelocityFrame(double estimate_angular_velocity_frame, std::vector<std::pair<int32_t,double>> &sync_table);
+  Eigen::Quaterniond getCorrectionQuaternionFromFrame(double estimated_angular_velocity_frame, const Eigen::VectorXd &filter_coeff, std::vector<std::pair<int32_t,double>> &sync_table);
   double getLengthInSecond();
   int32_t getFrames();
 private:
@@ -135,36 +137,29 @@ class Filter
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   Filter(){};
-  virtual const Eigen::VectorXd &getFilterCoefficient() = 0;
+  // virtual const Eigen::VectorXd &getFilterCoefficient() = 0;
+  virtual const Eigen::VectorXd &getFilterCoefficient(int32_t alpha) = 0;
   virtual ~Filter(){};
+  virtual Filter &operator()(int filter_coefficient) = 0;
+protected:
+  virtual void setFilterCoefficient(int32_t alpha) = 0;
+
 };
 
-// class FIRFilter : public Filter
-// {
-// public:
-//   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-//   FIRFilter(){};
-//   virtual ~FIRFilter(){};
-//   virtual Eigen::VectorXd getFilterCoefficient() = 0;
-
-// protected:
-// };
-
-class KaiserWindowFilter : public Filter
+class NormalDistributionFilter : public Filter
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  KaiserWindowFilter(uint32_t filter_length, uint32_t alpha);
-  virtual ~KaiserWindowFilter(){}
-  void setFilterCoefficient(int32_t alpha);
-  const Eigen::VectorXd &getFilterCoefficient() override;
-  KaiserWindowFilter & operator()(int alpha);
-  size_t size();
-
+  NormalDistributionFilter();
+  virtual ~NormalDistributionFilter(){};
+  // const Eigen::VectorXd &getFilterCoefficient() override;
+  const Eigen::VectorXd &getFilterCoefficient(int32_t half_length) override;
+  NormalDistributionFilter &operator()(int32_t half_length) override;
 protected:
-  int32_t filter_length_;
-  int32_t alpha_;
   std::map<int32_t, Eigen::VectorXd> filter_coefficients_;
+  int32_t half_length_;
+  void setFilterCoefficient(int32_t half_length) override;
+
 };
 
 using VideoPtr = std::shared_ptr<Video>;

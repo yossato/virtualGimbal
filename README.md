@@ -2,7 +2,7 @@
 The VirtualGimbal is an electronic stabilize device for videos that were taken by a hand-held camera such as a DSLR. For more information, see [PetaPixel] ( https://petapixel.com/2016/08/11/sd-card-built-gyro-sensor-stabilize-shots/ "PetaPixel").  The VirtualGimbal consists of an SD card and post-processing software. This repository releases the post-processing software, a SD card circuit and a SD card firmware.
 
 ## Demo
-<https://youtu.be/E9JKbxqoJcY>
+<https://youtu.be/NwUnrnFLjD4>
 
 ## Features
 1.Post-processing video stabilization software on PC.  
@@ -119,10 +119,6 @@ make -j4
 sudo make install  
 ```
 
-### Install Boost
-```
-sudo apt-get install libboost-dev
-```
 ## Build
 ```
 cd

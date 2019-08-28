@@ -2,6 +2,9 @@
 
 void gradientLimit(Eigen::VectorXd &input, double maximum_gradient_)
 {
+    input = -1 * input;
+
+
     if (input.rows() < 2)
         return;
     double limited_value = input.head(1)[0];
@@ -30,6 +33,9 @@ void gradientLimit(Eigen::VectorXd &input, double maximum_gradient_)
             input(i) = limited_value;
         }
     }
+
+    input = -1 * input;
+
 }
 
 /**
@@ -103,9 +109,10 @@ std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> getSparseC
  * @retval true:成功 false:折り返し発生で失敗
  **/
 void getUndistortUnrollingContour(
-    double time,
+    int frame,
     AngularVelocityPtr angular_velocity,
     std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> &contour,
+    std::vector<std::pair<int32_t,double>> sync_table,
     double zoom,
     VideoPtr video_param,
     const Eigen::VectorXd &filter_coeffs)
@@ -133,11 +140,11 @@ void getUndistortUnrollingContour(
     Eigen::Vector3d x3, xyz;
     for (auto &p : src_contour)
     {
-        double time_in_row = time + line_delay * (p[1] - video_param->camera_info->height_ * 0.5);
-        //↓まちがってる。本来はフィルタされたカメラ姿勢とフィルタ後の姿勢の差分が必要。
-        // R = (rotation_quaternion->getRotationQuaternion(time_in_row + time).conjugate() * rotation_quaternion->getRotationQuaternion(time)).matrix();
-        //↓これでいい
-        R = angular_velocity->getCorrectionQuaternion(time_in_row, filter_coeffs).matrix();
+        // double time_in_row = time + line_delay * (p[1] - video_param->camera_info->height_ * 0.5);
+        double frame_in_row = frame + (line_delay * (p[1] - video_param->camera_info->height_ * 0.5))
+            * video_param->getFrequency();
+
+        R = angular_velocity->getCorrectionQuaternionFromFrame(frame_in_row, filter_coeffs,sync_table).matrix();
         // std::cout << "R:\r\n" << R << std::endl;
         //↑
         x1 = (p - c) / f;
@@ -162,35 +169,37 @@ void getUndistortUnrollingContour(
     // }
 }
 
-bool hasBlackSpace(double time,
+bool hasBlackSpace(int frame,
                    double zoom,
                    AngularVelocityPtr angular_velocity,
                    VideoPtr video_param,
-                   KaiserWindowFilter &filter)
+                   Eigen::VectorXd filter_coefficients,
+                   std::vector<std::pair<int32_t,double>> &sync_table)
 {
     std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> contour;
-    getUndistortUnrollingContour(time, angular_velocity, contour, zoom, video_param, filter.getFilterCoefficient());
+    getUndistortUnrollingContour(frame, angular_velocity, contour, sync_table, zoom, video_param, filter_coefficients);
     return !isGoodWarp(contour,video_param);
 }
 
-uint32_t bisectionMethod(double time,
+uint32_t bisectionMethod(int frame,
                          double zoom,
                          AngularVelocityPtr angular_velocity,
                          VideoPtr video_param,
-                         KaiserWindowFilter &filter,
+                         FilterPtr filter,
+                         std::vector<std::pair<int32_t,double>> &sync_table,
                          int32_t minimum_filter_strength,
                          int32_t maximum_filter_strength,
                          int max_iteration, uint32_t eps)
 {
-    int32_t a = minimum_filter_strength;
-    int32_t b = maximum_filter_strength;
+    int32_t a = maximum_filter_strength;
+    int32_t b = minimum_filter_strength;
     int count = 0;
     int32_t m = 0;
     while (((uint32_t)abs(a - b) > eps) && (count++ < max_iteration))
     {
         m = (a + b) * 0.5;
 
-        if (hasBlackSpace(time, zoom, angular_velocity, video_param, filter(a)) ^ hasBlackSpace(time, zoom, angular_velocity, video_param, filter(m)))
+        if (hasBlackSpace(frame, zoom, angular_velocity, video_param, filter->getFilterCoefficient(a),sync_table) ^ hasBlackSpace(frame, zoom, angular_velocity, video_param, filter->getFilterCoefficient(m),sync_table))
         {
             b = m;
         }

@@ -11,15 +11,6 @@
 #include "line_delay_estimator.hpp"
 
 #include "distortion.h"
-// std::string getVideoSize(const char *videoName)
-// {
-//     std::shared_ptr<cv::VideoCapture> Capture = std::make_shared<cv::VideoCapture>(videoName); //動画をオープン
-//     assert(Capture->isOpened());
-//     std::string videoSize = std::to_string((int)Capture->get(cv::CAP_PROP_FRAME_WIDTH)) + std::string("x") + std::to_string((int)Capture->get(cv::CAP_PROP_FRAME_HEIGHT));
-//     return videoSize;
-// }
-
-// std::map<int, std::vector<cv::Point2d>> getCornerDictionary(std::shared_ptr<cv::VideoCapture> capture, cv::Size &pattern_size, bool debug_speedup, bool Verbose);
 
 int main(int argc, char **argv)
 {
@@ -30,7 +21,6 @@ int main(int argc, char **argv)
     char *jsonPass = NULL;
     bool debug_speedup = false;
     int opt;
-    //    Eigen::Quaterniond camera_rotation;
 
     while ((opt = getopt(argc, argv, "j:i:c:l:d::")) != -1)
     {
@@ -82,8 +72,10 @@ int main(int argc, char **argv)
 
     //チェッカーボードの設定iniファイルを読み込み
     char path[512];
-    if(NULL == getcwd(path, sizeof(path))){
-        std::cerr << "getcwd error." << std::endl << std::flush;
+    if (NULL == getcwd(path, sizeof(path)))
+    {
+        std::cerr << "getcwd error." << std::endl
+                  << std::flush;
         throw "getcwd error.";
     }
     std::string path_string(path);
@@ -117,7 +109,7 @@ int main(int argc, char **argv)
     manager.setEstimatedAngularVelocity(estimated_angular_velocity, confidence, capture->get(cv::CAP_PROP_FPS));
 
     Eigen::VectorXd correlation = manager.getCorrelationCoefficient();
-    double offset = manager.getSubframeOffset(correlation);
+    double offset = manager.getSubframeOffsetInSecond(correlation);
     manager.setResamplerParameter(offset);
 
     std::vector<std::string> legends_angular_velocity = {"c"};
@@ -209,7 +201,7 @@ int main(int argc, char **argv)
     double optimal_time_offset = 1.0 / capture->get(cv::CAP_PROP_FPS) / ((double)image_width * 0.5) * (double)(minLoc.y - image_width * 0.5);
     std::cout << "Optimal time offset is " << optimal_time_offset
               << "." << std::endl;
-    double optimal_line_delay = 1.0 / capture->get(cv::CAP_PROP_FPS) / (double)camera_info->height_/ ((double)image_width * 0.5) * (double)(minLoc.x - image_width * 0.5);
+    double optimal_line_delay = 1.0 / capture->get(cv::CAP_PROP_FPS) / (double)camera_info->height_ / ((double)image_width * 0.5) * (double)(minLoc.x - image_width * 0.5);
     std::cout << "Optimal rolling shutter coefficient is " << optimal_line_delay
               << "." << std::endl
               << std::flush;
@@ -234,34 +226,34 @@ int main(int argc, char **argv)
     // double initial_factor = 0.1;
     // while (info != Eigen::ComputationInfo::Success)
     // {
-        // printf("Factor : %f\n", initial_factor);
-        // undistortion_params = Eigen::VectorXd::Zero(2);
-        undistortion_params << optimal_time_offset, optimal_line_delay;
-        lm.resetParameters();
-        // lm.parameters.factor = initial_factor; //step bound for the diagonal shift, is this related to damping parameter, lambda?
-        int info2 = lm.minimize(undistortion_params);
-        switch (info2)
-        {
-        case Eigen::ComputationInfo::Success:
-            std::cout << "Success:" << undistortion_params << std::endl;
-            break;
-        case Eigen::ComputationInfo::InvalidInput:
-            std::cout << "Error : InvalidInput" << std::endl;
-            // return -1;
-            break;
-        case Eigen::ComputationInfo::NoConvergence:
-            std::cout << "Error : NoConvergence:" << undistortion_params << std::endl;
-            // return -1;
-            break;
-        case Eigen::ComputationInfo::NumericalIssue:
-            std::cout << "Error : NumericalIssue" << std::endl;
-            // return -1;
-            break;
-        default:
-            std::cout << "Default :" << undistortion_params << std::endl;
-            break;
-        }
-        // initial_factor *= 1.1;
+    // printf("Factor : %f\n", initial_factor);
+    // undistortion_params = Eigen::VectorXd::Zero(2);
+    undistortion_params << optimal_time_offset, optimal_line_delay;
+    lm.resetParameters();
+    // lm.parameters.factor = initial_factor; //step bound for the diagonal shift, is this related to damping parameter, lambda?
+    int info2 = lm.minimize(undistortion_params);
+    switch (info2)
+    {
+    case Eigen::ComputationInfo::Success:
+        std::cout << "Success:" << undistortion_params << std::endl;
+        break;
+    case Eigen::ComputationInfo::InvalidInput:
+        std::cout << "Error : InvalidInput" << std::endl;
+        // return -1;
+        break;
+    case Eigen::ComputationInfo::NoConvergence:
+        std::cout << "Error : NoConvergence:" << undistortion_params << std::endl;
+        // return -1;
+        break;
+    case Eigen::ComputationInfo::NumericalIssue:
+        std::cout << "Error : NumericalIssue" << std::endl;
+        // return -1;
+        break;
+    default:
+        std::cout << "Default :" << undistortion_params << std::endl;
+        break;
+    }
+    // initial_factor *= 1.1;
     // }
     optimal_time_offset = undistortion_params[0];
     optimal_line_delay = undistortion_params[1];
@@ -285,7 +277,7 @@ int main(int argc, char **argv)
             std::vector<cv::Point2d> dst;
             for (auto &el : corner_dict[frame])
             {
-                shrinked.push_back(cv::Point2f(el.x,el.y) * 0.5);
+                shrinked.push_back(cv::Point2f(el.x, el.y) * 0.5);
             }
             cv::drawChessboardCorners(color_image, PatternSize, shrinked, false);
 
@@ -317,7 +309,8 @@ int main(int argc, char **argv)
     }
 
     auto camera_info_json_perser = std::dynamic_pointer_cast<CameraInformationJsonParser>(camera_info);
-    if(camera_info_json_perser){
+    if (camera_info_json_perser)
+    {
         camera_info_json_perser->line_delay_ = undistortion_params[1];
         camera_info_json_perser->writeCameraInformationJson();
     }

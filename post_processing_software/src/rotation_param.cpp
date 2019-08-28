@@ -19,7 +19,6 @@
 
 #include "rotation_param.h"
 #include "rotation_math.h"
-#include <boost/math/special_functions/bessel.hpp>
 const double BaseParam::getFrequency()
 {
     return frequency_;
@@ -180,6 +179,77 @@ Eigen::Quaterniond RotationQuaternion::getRotationQuaternion(double time)
     return angle_[integer_frame].slerp(frame - integer_frame, angle_[integer_frame + 1]);
 }
 
+double AngularVelocity::convertEstimatedToMeasuredAngularVelocityFrame(double estimated_angular_velocity_frame, std::vector<std::pair<int32_t,double>> &sync_table){
+ //テーブルから所望のaとbの値の計算
+    auto result = std::find_if_not(sync_table.begin(),sync_table.end(),[estimated_angular_velocity_frame](std::pair<int32_t,double> x){return x.first > (int32_t) estimated_angular_velocity_frame;});
+    
+    int32_t x;
+    int32_t x1;
+    double y;
+    double y1;
+
+    // Previous section of sync_table
+    if(sync_table.end() == result)
+    {
+        x = sync_table[0].first;
+        x1 = sync_table[1].first;
+        y = sync_table[0].second;
+        y1 = sync_table[1].second;
+    }else{
+        x = result->first;
+        x1 = (result+1)->first;
+        y = result->second;
+        y1 = (result+1)->second;
+    }
+
+
+    double a = (y1-y)/(x1-x);
+    double b = (y*x1-x*y1)/(x1-x);
+
+    // printf("table position:%ld a:%f b:%f\r\n",(std::distance(sync_table.begin(),result) == (int)sync_table.size() ? -1 : std::distance(sync_table.begin(),result)),a,b);
+
+
+
+
+    //aとbからmeasured_angular_velocityのframeの計算
+    return a * estimated_angular_velocity_frame + b;
+
+}
+
+Eigen::Quaterniond AngularVelocity::getCorrectionQuaternionFromFrame(   double estimated_angular_velocity_frame, 
+                                                                        const Eigen::VectorXd &filter_coeff,
+                                                                        std::vector<std::pair<int32_t,double>> &sync_table){
+    
+    double frame = convertEstimatedToMeasuredAngularVelocityFrame(estimated_angular_velocity_frame, sync_table);
+
+    assert((frame + 1.) < (double)std::numeric_limits<size_t>::max());
+    assert(frame > 0.);
+    size_t integer_frame = floor(frame);
+
+    if ((frame < 0) || (frame >= data.rows()))
+    {
+        std::cerr << "Waring: Frame range is out of range." << std::endl;
+        return Eigen::Quaterniond(1., 0., 0., 0.);
+    }
+    else
+    {
+        // Convert time to measured anguler velocity frame position
+        double ratio = frame - floor(frame);
+        // std::cout << "ratio:" << ratio << std::endl;
+        // std::cout << "frame:" << frame << std::endl;
+        Eigen::MatrixXd first  = getRelativeAngle(integer_frame,filter_coeff.rows());
+        Eigen::MatrixXd second = getRelativeAngle(integer_frame+1,filter_coeff.rows());
+        // std::cout << "first:\r\n" << first << std::endl;
+        // std::cout << "second:\r\n" << second << std::endl;
+        // std::cout << "filter_coeff\r\n" << filter_coeff << std::endl;
+        // std::cout << "first:\r\n" << first.transpose() * filter_coeff << std::endl;
+        // std::cout << "second:\r\n" << second.transpose() * filter_coeff << std::endl;
+        
+
+        return Vector2Quaternion<double>(first.transpose() *  filter_coeff * (1.0 - ratio) + second.transpose() * filter_coeff * ratio).conjugate();
+    }
+}
+
 Eigen::Quaterniond AngularVelocity::getCorrectionQuaternion(double time, const Eigen::VectorXd &filter_coeff)
 {
     // Convert time to measured anguler velocity frame position
@@ -253,37 +323,47 @@ const Eigen::MatrixXd &AngularVelocity::getRelativeAngle(size_t frame, int lengt
 
 
 
-KaiserWindowFilter::KaiserWindowFilter(uint32_t filter_length, uint32_t alpha) : Filter(), filter_length_(filter_length)
-{
-    assert(filter_length_ % 2);// Must be odd
-    setFilterCoefficient(alpha);
+
+
+NormalDistributionFilter::NormalDistributionFilter(){
+    // Do nothing.
 }
 
-const Eigen::VectorXd &KaiserWindowFilter::getFilterCoefficient(){
-    return filter_coefficients_[alpha_];
-}
+void NormalDistributionFilter::setFilterCoefficient(int32_t half_length){
+    if(half_length < 0){
+        std::cerr << "half length should be larger than zero." << std::endl << std::flush;
+        throw;
+    }
 
-void KaiserWindowFilter::setFilterCoefficient(int32_t alpha){
-    alpha_ = alpha;
-    if(filter_coefficients_.count(alpha_)){ // Filter cofficient already exists.
+    half_length_ = half_length;
+    if(filter_coefficients_.count(half_length)){
         return;
     }else{
-        filter_coefficients_[alpha_] = Eigen::VectorXd::Zero(filter_length_);
+        filter_coefficients_[half_length] = Eigen::VectorXd::Zero(half_length*2+1);
     }
-   
-    int32_t L = filter_length_/2;
-    for(int32_t n=-L,e=L;n<=e;++n){
-        filter_coefficients_[alpha][n+L] = boost::math::cyl_bessel_i(0.0,alpha_*sqrt(1.0-pow((double)n/(double)L,2.0)))
-                /boost::math::cyl_bessel_i(0.0,alpha_);
+
+    if(0 == half_length){
+        filter_coefficients_[half_length][0] = 1.0;
+        return;
     }
-    filter_coefficients_[alpha].array() /= filter_coefficients_[alpha].sum();
+
+    for(int32_t n=-half_length;n<=half_length;++n){
+        filter_coefficients_[half_length][n+half_length]
+        = exp(-9.0*pow((double)n/(double)half_length,2.0));
+    }
+    filter_coefficients_[half_length].array() /= filter_coefficients_[half_length].sum();
 }
 
-KaiserWindowFilter  &KaiserWindowFilter::operator()(int alpha){
-    setFilterCoefficient(alpha);
+// const Eigen::VectorXd &NormalDistributionFilter::getFilterCoefficient(){
+//     return filter_coefficients_[half_length_];
+// }
+
+const Eigen::VectorXd &NormalDistributionFilter::getFilterCoefficient(int32_t half_length){
+    setFilterCoefficient(half_length);
+    return filter_coefficients_[half_length];
+}
+
+NormalDistributionFilter &NormalDistributionFilter::operator()(int32_t half_length){
+    setFilterCoefficient(half_length);
     return *this;
-}
-
-size_t  KaiserWindowFilter::size(){
-    return filter_length_;
 }
