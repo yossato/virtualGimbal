@@ -640,12 +640,12 @@ void VirtualGimbalManager::enableWriter(const char *video_path)
     writer_ = std::make_shared<MultiThreadVideoWriter>(MultiThreadVideoWriter::getOutputName(video_path), *video_param,queue_size_);
 }
 
-std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(int32_t period, int32_t width)
+std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(double period_in_second, int32_t width)
 {
     assert(width % 2);          // Odd
     int32_t radius = width / 2; // radius and width means number of frame in estimated angular velocity, not measured angular velocity.
     std::vector<std::pair<int32_t, double>> table;
-    for (int center = radius, e = estimated_angular_velocity->getFrames() - radius; center < e; center += period)
+    for (int center = radius, e = estimated_angular_velocity->getFrames() - radius; center < e; center += (int32_t)(period_in_second*video_param->getFrequency()))
     {
         Eigen::VectorXd correlation = getCorrelationCoefficient(center - radius, width);
         double measured_frame = getSubframeOffsetInSecond(correlation, center - radius, width) * measured_angular_velocity->getFrequency() + (double)radius / estimated_angular_velocity->getFrequency() * measured_angular_velocity->getFrequency();
