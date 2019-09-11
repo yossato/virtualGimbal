@@ -102,7 +102,13 @@ Eigen::VectorXd VirtualGimbalManager::getCorrelationCoefficient(int32_t begin, i
     Eigen::VectorXd particial_confidence = estimated_angular_velocity->confidence.block(begin, 0, length, estimated_angular_velocity->confidence.cols());
 
     int32_t diff = measured_angular_velocity_resampled.rows() - particial_estimated_angular_velocity.rows();
-    std::cout << diff << std::endl;
+    // std::cout << diff << std::endl;
+    if(0 >= diff){
+        std::cerr << "Error: Measured angular velocity data from a gyroscope sensor is shorter than video length.\r\nPlease confirm input json file of angular velocity\r\n" 
+        << "Length of angular velocity is " <<  measured_angular_velocity->getLengthInSecond() << " seconds.\r\n"
+        << "Length of video is " << estimated_angular_velocity->getLengthInSecond() << " seconds.\r\n" << std::endl << std::flush;
+        throw;
+    }
     Eigen::VectorXd correlation_coefficients(diff + 1);
     for (int32_t frame = 0, end = correlation_coefficients.rows(); frame < end; ++frame)
     {
@@ -651,6 +657,27 @@ std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(doubl
         double measured_frame = getSubframeOffsetInSecond(correlation, center - radius, width) * measured_angular_velocity->getFrequency() + (double)radius / estimated_angular_velocity->getFrequency() * measured_angular_velocity->getFrequency();
         table.emplace_back(center, measured_frame);
     }
+    return table;
+}
+
+std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTableOfShortVideo(){
+    int32_t width = video_param->video_frames;
+    // assert(width % 2);          // Odd
+    int32_t radius = width / 2; // radius and width means number of frame in estimated angular velocity, not measured angular velocity.
+
+    Eigen::VectorXd correlation = getCorrelationCoefficient(0, width);
+    double measured_frame = getSubframeOffsetInSecond(correlation, 0, width) * measured_angular_velocity->getFrequency() + (double)radius / estimated_angular_velocity->getFrequency() * measured_angular_velocity->getFrequency();
+
+    std::vector<std::pair<int32_t, double>> table;
+    table.emplace_back(0,measured_frame+(0-radius) / estimated_angular_velocity->getFrequency() * measured_angular_velocity->getFrequency());
+    table.emplace_back(width-1,measured_frame+((width-1)-radius) / estimated_angular_velocity->getFrequency() * measured_angular_velocity->getFrequency());
+
+    // for (int center = radius, e = estimated_angular_velocity->getFrames() - radius; center < e; center += (int32_t)(period_in_second*video_param->getFrequency()))
+    // {
+    //     Eigen::VectorXd correlation = getCorrelationCoefficient(center - radius, width);
+    //     double measured_frame = getSubframeOffsetInSecond(correlation, center - radius, width) * measured_angular_velocity->getFrequency() + (double)radius / estimated_angular_velocity->getFrequency() * measured_angular_velocity->getFrequency();
+    //     table.emplace_back(center, measured_frame);
+    // }
     return table;
 }
 

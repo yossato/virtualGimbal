@@ -147,6 +147,7 @@ int main(int argc, char **argv)
     auto table = manager.getSyncTable(30.0,999);
     if(2 >table.size()){
         printf("Warning: Input video too short to apply poly line syncronize method, an alternative mothod is used.\r\n");
+        table = manager.getSyncTableOfShortVideo();
     }
     printf("Table:\r\n");
     for(size_t i=0;i<table.size()-1;++i)

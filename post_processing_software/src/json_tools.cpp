@@ -391,7 +391,7 @@ Eigen::MatrixXd readAngularVelocityFromJson(const char* filename){
 
     const rapidjson::Value& angular_velocity_rad_per_sec_array = e["angular_velocity_rad_per_sec"];
     assert(angular_velocity_rad_per_sec_array.IsArray());
-    assert(angular_velocity_rad_per_sec_array[0][0].IsDouble());
+    assert(angular_velocity_rad_per_sec_array[0][0].IsDouble() || angular_velocity_rad_per_sec_array[0][0].IsInt());
     int32_t total_number_of_data=0;
     for(size_t num=0;num<angular_velocity_rad_per_sec_array.Size();++num){
         total_number_of_data += angular_velocity_rad_per_sec_array[num].Size();
