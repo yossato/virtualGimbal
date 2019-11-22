@@ -38,8 +38,8 @@
 #include <memory>
 
 void CalcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd &optical_flow, Eigen::MatrixXd &confidence){
-    //動画を開く
-    assert(0 != total_frames);//仕様変更
+    // Open Video
+    assert(0 != total_frames);
     cv::VideoCapture cap(filename);
     assert(cap.isOpened());
 
@@ -50,10 +50,10 @@ void CalcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd 
     cv::Mat cur, cur_grey;
     cv::Mat prev, prev_grey;
 
-    //動画から最初のフレームを取得
+    // Get first frame
     cap >> prev;
 
-    //中心部を取り出してモノクロへ色変換
+    // Trimming and make it mono
     int width  = cap.get(cv::CAP_PROP_FRAME_WIDTH);
     int height = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
     if((width >= 640) && (height >= 480))
@@ -69,7 +69,7 @@ void CalcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd 
     // int k=1;
 
 
-    //繰り返し処理
+    
     for(int frame=0;frame<total_frames;++frame) {
         cap >> cur;
 
@@ -77,9 +77,7 @@ void CalcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd 
             break;
         }
 
-        //中心部だけ切り抜く
-        // cur = cv::Mat(cur,cv::Rect((cur.cols-640)/2,(cur.rows-480)/2,640,480));
-        // cv::cvtColor(cur, cur_grey, cv::COLOR_BGR2GRAY);
+        // Trimming
         if((width >= 640) && (height >= 480))
         {
             cv::cvtColor(cur(cv::Rect((cur.cols-640)/2,(cur.rows-480)/2,640,480)), cur_grey, cv::COLOR_BGR2GRAY);
@@ -108,7 +106,7 @@ void CalcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd 
 
         // translation + rotation only
         try{
-            cv::Mat T = cv::estimateAffinePartial2D(prev_corner2, cur_corner2); // false = rigid transform, no scaling/shearing
+            cv::Mat T = cv::estimateAffinePartial2D(prev_corner2, cur_corner2); 
 
             // in rare cases no transform is found. We'll just use the last known good transform.
             if(T.data == NULL) {
@@ -118,7 +116,6 @@ void CalcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd 
                 double dx = T.at<double>(0,2);
                 double dy = T.at<double>(1,2);
                 double da = atan2(T.at<double>(1,0), T.at<double>(0,0));
-                // prev_to_cur_transform.push_back(cv::Vec3d(dx, dy, da));
                 optical_flow.row(frame) << dx, dy, da;
                 confidence.row(frame) << 1.0;
             }
@@ -126,17 +123,11 @@ void CalcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd 
             optical_flow.row(frame) << 0.0, 0.0, 0.0;
             confidence.row(frame) << 0.0;
         }
-        //~ out_transform << k << " " << dx << " " << dy << " " << da << endl;
 
         cur.copyTo(prev);
         cur_grey.copyTo(prev_grey);
 
         printf("Frame: %d/%d - good optical flow: %lu       \r",frame,total_frames,prev_corner2.size());
-        // std::cout << "Frame: " << frame << "/" << total_frames << " - good optical flow: " << prev_corner2.size() << std::endl;
-        // k++;
-        
-        // if(calcPeriod <= 0){continue;}	//長さ0ならビデオ全域で継続
-        // else if(calcPeriod < k){break;}	//指定された長さで処理を終了
     }
     // return prev_to_cur_transform;
     return;
