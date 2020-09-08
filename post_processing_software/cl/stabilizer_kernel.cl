@@ -112,7 +112,7 @@ float2 warp_undistort(
 
 __kernel void stabilizer_function(
    image2d_t input,
-   __write_only __global  uchar4 *output,
+   __global  uchar4 *output,
    int output_step, int output_offset, int output_rows, int output_cols, 
    __global float* rotation_matrix,       // Rotation Matrix in each rows.
    int src_step, int src_offset,
