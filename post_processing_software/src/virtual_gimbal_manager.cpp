@@ -568,7 +568,7 @@ void VirtualGimbalManager::spin(double zoom, FilterPtr filter, Eigen::VectorXd &
         LAP
             UMatPtr umat_dst_ptr(new cv::UMat(mat_src.size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY));
         LAP
-            cv::ocl::Image2D image_dst(*umat_dst_ptr, false, true);
+            // cv::ocl::Image2D image_dst(*umat_dst_ptr, false, true);
         LAP
             cv::Mat mat_R = cv::Mat(R->size(), 1, CV_32F, R->data());
         LAP
@@ -577,7 +577,7 @@ void VirtualGimbalManager::spin(double zoom, FilterPtr filter, Eigen::VectorXd &
             cv::ocl::Kernel kernel;
         getKernel(kernel_name, kernel_function, kernel, context, build_opt);
         LAP
-            kernel.args(image, image_dst, cv::ocl::KernelArg::ReadOnlyNoSize(umat_R),
+            kernel.args(image, cv::ocl::KernelArg::WriteOnly(*umat_dst_ptr), cv::ocl::KernelArg::ReadOnlyNoSize(umat_R),
                         (float)zoom,
                         ik1,
                         ik2,
