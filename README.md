@@ -92,7 +92,7 @@ sudo apt-get install cmake
 cd  
 sudo apt-get install build-essential module-assistant libgtk2.0-dev  
 sudo m-a prepare  
-git clone --depth 1 https://github.com/Itseez/opencv.git  
+git clone --depth 1 https://github.com/opencv/opencv.git  
 cd opencv/  
   
 mkdir build  
