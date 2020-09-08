@@ -39,6 +39,11 @@ sudo apt-get install cmake make
 ### Install Git:
 ```
 sudo apt install git-all
+```  
+
+### Install libboost-math-dev:
+```
+sudo apt install libboost-math-dev
 ```
 
 ### Install Python Dev:
