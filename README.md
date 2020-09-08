@@ -76,7 +76,7 @@ sudo apt install yasm
 cd  
 git clone --depth 1 git://source.ffmpeg.org/ffmpeg.git  
 cd ffmpeg  
-./configure --enable-gpl --enable-x86asm --enable-opencl --enable-ffmpeg --enable-pic --enable-shared --enable-swscale --enable-avresample  
+./configure --enable-gpl --enable-x86asm --enable-opencl --enable-ffmpeg --enable-pic --enable-shared --enable-swscale  
 make all -j4  
 sudo make install  
 sudo ldconfig  
