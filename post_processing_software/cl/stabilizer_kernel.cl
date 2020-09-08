@@ -126,7 +126,7 @@ float2 warp_undistort(
 
    float3 x3 = (float3)(x2.x,x2.y,1.0);
    __constant float* R = rotation_matrix + convert_int( 9*p.y);
-   float3 XYZ = (float3)(R.x * x3.x + R.y * x3.y + R.z * x3.z,
+   float3 XYZ = (float3)(R[0] * x3.x + R[1] * x3.y + R[2] * x3.z,
                          R[3] * x3.x + R[4] * x3.y + R[5] * x3.z,
                          R[6] * x3.x + R[7] * x3.y + R[8] * x3.z);
    // float3 XYZ = (float3)(0.99922 * x3.x -0.00527565 * x3.y + 0.0391454 * x3.z,
