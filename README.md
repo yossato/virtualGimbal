@@ -109,8 +109,8 @@ sudo sh -c "echo export PKG_CONFIG_PATH >> /etc/bash.bashrc"
 ### Install Eigen
 ```
 cd  
-wget -O Eigen3.2.10.tar.gz http://bitbucket.org/eigen/eigen/get/3.2.10.tar.gz  
-tar zxvf Eigen3.2.10.tar.gz  
+wget -O eigen-3.3.7.tar.gz https://gitlab.com/libeigen/eigen/-/archive/3.3.7/eigen-3.3.7.tar.gz  
+tar zxvf eigen-3.3.7.tar.gz  
 cd eigen-*  
 mkdir build  
 cd build  
