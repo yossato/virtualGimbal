@@ -15,11 +15,11 @@ FFMPEG, OpenCV3, Eigen, boost and some python libraries.
 
 ## Usage  
 See post_processing_software/README.md  
-Download [Example Video](https://drive.google.com/open?id=1_9TezzdYGgDiATJohvIWNb1i1sQY_SVI) and [Angular Velocity data](https://drive.google.com/open?id=1T-ELckV5Ple4VH9Uazb1MwpPFaCNudmW), then put them in ~/vgdataset. A camera calibration file also required to run a demo below so download [Calibration file](https://drive.google.com/open?id=1rUfCPRwqXse2QZHDRD8aU7ulSAihqEy4) then put it in virtualGimbal/post_processing_software/build/camera_descriptions    
+Download [Example Video](https://drive.google.com/open?id=1_9TezzdYGgDiATJohvIWNb1i1sQY_SVI), put in ~/vgdataset. Download [Angular Velocity data](https://drive.google.com/open?id=1T-ELckV5Ple4VH9Uazb1MwpPFaCNudmW) and put it in virtualGimbal/post_processing_software/build/records. A camera calibration file also required to run a demo below so download [Calibration file](https://drive.google.com/open?id=1rUfCPRwqXse2QZHDRD8aU7ulSAihqEy4) then put it in virtualGimbal/post_processing_software/build/camera_descriptions    
 
 Demo:  
 ```
-./pixelwise_stabilizer -i ~/vgdataset/syukugawara/C0003.MP4 -c ILCE-6500 -l SEL1670Z -j records/2019-04-03_07.27.36.json -z 1.3 -o  
+./pixelwise_stabilizer -i ~/vgdataset/C0003.MP4 -c ILCE-6500 -l SEL1670Z -j records/2019-04-03_07.27.36.json -z 1.3 -o  
 ```
 
 Here, `i` option is an input video file. `c` is a camera name that is calibrated using a calibrator. `l` is a lens name. `j` is a json file that include an angular velocity record of a gyro sensor. `z` is a zooming ratio. Recommended zooming ratio is 1.3 . `o` option outputs stabilized video.  
@@ -39,6 +39,11 @@ sudo apt-get install cmake make
 ### Install Git:
 ```
 sudo apt install git-all
+```  
+
+### Install libboost-math-dev:
+```
+sudo apt install libboost-math-dev
 ```
 
 ### Install Python Dev:
@@ -134,7 +139,7 @@ make -j4
 I added a program angular_velocity_estimator that generates a JSON file. The file will be saved in same directory of video file after execution.
 If the file exists, the pixelwise_stabilizer starts up faster.
 To run the program, execute a command like below.
-./angular_velocity_estimator ~/vgdataset/syukugawara/C0003.MP4
+./angular_velocity_estimator ~/vgdataset/C0003.MP4
 
 This command generates C0003.json .
 
