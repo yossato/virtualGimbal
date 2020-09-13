@@ -4,7 +4,7 @@ Calibration is necessary before executing movie stabilization. By executing the 
 ## Taking a video of a chess board pattern for calibration
 Before activating the calibration tool, we will explain the shooting procedure of the movie data necessary for the calibration.
 Open the [PDF](https://github.com/yossato/macadamia/raw/master/post_processing_software/doc/chessboardpattern.pdf) of the chessboard with PC or tablet and display it in full screen.  Turn off camera shake compensation on the camera, then shoot movies on the screen with the camera.  
-A sample chess board video can be found at [https://drive.google.com/open?id=18N9hlZ-U4sec1Opt3HHLgL9xHEMN3SoX](https://drive.google.com/open?id=18N9hlZ-U4sec1Opt3HHLgL9xHEMN3SoX). Move the camera so that the chess board appears at various distances and angles during shooting.  
+A sample chess board video can be found at [https://www.dropbox.com/s/2ev4rohgjbdgc26/calibration_ILCE-6500_SEL1670Z_4K.MP4?dl=1](https://www.dropbox.com/s/2ev4rohgjbdgc26/calibration_ILCE-6500_SEL1670Z_4K.MP4?dl=1). Move the camera so that the chess board appears at various distances and angles during shooting.  
 After shooting, copy the movie to the appropriate directory on the PC. The following explanation assumes that the movie is saved in the following directory:
 `~/vgdataset/calibration_ILCE-6500_SEL1670Z_4K.MP4  `  
 Turn ON camera shake correction.
