@@ -15,7 +15,7 @@ FFMPEG, OpenCV3, Eigen, boost and some python libraries.
 
 ## Usage  
 See post_processing_software/README.md  
-Download [Example Video](https://www.dropbox.com/s/y9ugb7c9l8qy5zy/C0003.MP4?dl=0), put in ~/vgdataset. Download [Angular Velocity data](https://www.dropbox.com/s/mz7mn3maapkgodw/2019-04-03_07.27.36.json?dl=0) and put it in virtualGimbal/post_processing_software/build/records. A camera calibration file also required to run a demo below so download [Calibration file](https://www.dropbox.com/s/we9r2a2w1un4lyf/cameras.json?dl=0) then put it in virtualGimbal/post_processing_software/build/camera_descriptions    
+Download [Example Video](https://www.dropbox.com/s/y9ugb7c9l8qy5zy/C0003.MP4?dl=1), put in ~/vgdataset. Download [Angular Velocity data](https://www.dropbox.com/s/mz7mn3maapkgodw/2019-04-03_07.27.36.json?dl=1) and put it in virtualGimbal/post_processing_software/build/records. A camera calibration file also required to run a demo below so download [Calibration file](https://www.dropbox.com/s/we9r2a2w1un4lyf/cameras.json?dl=1) then put it in virtualGimbal/post_processing_software/build/camera_descriptions    
 
 Demo:  
 ```
