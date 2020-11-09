@@ -15,11 +15,11 @@ FFMPEG, OpenCV3, Eigen, boost and some python libraries.
 
 ## Usage  
 See post_processing_software/README.md  
-Download [Example Video](https://drive.google.com/open?id=1_9TezzdYGgDiATJohvIWNb1i1sQY_SVI) and [Angular Velocity data](https://drive.google.com/open?id=1T-ELckV5Ple4VH9Uazb1MwpPFaCNudmW), then put them in ~/vgdataset. A camera calibration file also required to run a demo below so download [Calibration file](https://drive.google.com/open?id=1rUfCPRwqXse2QZHDRD8aU7ulSAihqEy4) then put it in virtualGimbal/post_processing_software/build/camera_descriptions    
+Download [Example Video](https://www.dropbox.com/s/y9ugb7c9l8qy5zy/C0003.MP4?dl=1), put in ~/vgdataset. Download [Angular Velocity data](https://www.dropbox.com/s/mz7mn3maapkgodw/2019-04-03_07.27.36.json?dl=1) and put it in virtualGimbal/post_processing_software/build/records. A camera calibration file also required to run a demo below so download [Calibration file](https://www.dropbox.com/s/we9r2a2w1un4lyf/cameras.json?dl=1) then put it in virtualGimbal/post_processing_software/build/camera_descriptions    
 
 Demo:  
 ```
-./pixelwise_stabilizer -i ~/vgdataset/syukugawara/C0003.MP4 -c ILCE-6500 -l SEL1670Z -j records/2019-04-03_07.27.36.json -z 1.3 -o  
+./pixelwise_stabilizer -i ~/vgdataset/C0003.MP4 -c ILCE-6500 -l SEL1670Z -j records/2019-04-03_07.27.36.json -z 1.3 -o  
 ```
 
 Here, `i` option is an input video file. `c` is a camera name that is calibrated using a calibrator. `l` is a lens name. `j` is a json file that include an angular velocity record of a gyro sensor. `z` is a zooming ratio. Recommended zooming ratio is 1.3 . `o` option outputs stabilized video.  
@@ -39,6 +39,11 @@ sudo apt-get install cmake make
 ### Install Git:
 ```
 sudo apt install git-all
+```  
+
+### Install libboost-math-dev:
+```
+sudo apt install libboost-math-dev
 ```
 
 ### Install Python Dev:
@@ -76,7 +81,7 @@ sudo apt install yasm
 cd  
 git clone --depth 1 git://source.ffmpeg.org/ffmpeg.git  
 cd ffmpeg  
-./configure --enable-gpl --enable-x86asm --enable-opencl --enable-ffmpeg --enable-pic --enable-shared --enable-swscale --enable-avresample  
+./configure --enable-gpl --enable-x86asm --enable-opencl --enable-ffmpeg --enable-pic --enable-shared --enable-swscale  
 make all -j4  
 sudo make install  
 sudo ldconfig  
@@ -92,12 +97,12 @@ sudo apt-get install cmake
 cd  
 sudo apt-get install build-essential module-assistant libgtk2.0-dev  
 sudo m-a prepare  
-git clone --depth 1 https://github.com/Itseez/opencv.git  
+git clone --depth 1 https://github.com/opencv/opencv.git  
 cd opencv/  
   
 mkdir build  
 cd build  
-cmake .. -DWITH_TBB=ON -DWITH_OPENGL=ON -DWITH_VTK=ON -DWITH_GTK=ON  -DWITH_FFMPEG=ON   
+cmake .. -DWITH_TBB=ON -DWITH_OPENGL=ON -DWITH_VTK=ON -DWITH_GTK=ON  -DWITH_FFMPEG=ON -DCMAKE_BUILD_TYPE=Release    
 make -j4  
 sudo make install  
 
@@ -109,8 +114,8 @@ sudo sh -c "echo export PKG_CONFIG_PATH >> /etc/bash.bashrc"
 ### Install Eigen
 ```
 cd  
-wget -O Eigen3.2.10.tar.gz http://bitbucket.org/eigen/eigen/get/3.2.10.tar.gz  
-tar zxvf Eigen3.2.10.tar.gz  
+wget -O Eigen-3.3.7.tar.gz https://gitlab.com/libeigen/eigen/-/archive/3.3.7/eigen-3.3.7.tar.gz  
+tar zxvf Eigen-3.3.7.tar.gz  
 cd eigen-*  
 mkdir build  
 cd build  
@@ -134,8 +139,10 @@ make -j4
 I added a program angular_velocity_estimator that generates a JSON file. The file will be saved in same directory of video file after execution.
 If the file exists, the pixelwise_stabilizer starts up faster.
 To run the program, execute a command like below.
-./angular_velocity_estimator ~/vgdataset/syukugawara/C0003.MP4
-
+```  
+./angular_velocity_estimator ~/vgdataset/C0003.MP4  
+```  
+  
 This command generates C0003.json .
 
 The file contains estimated angular velocity from the video that is used for synchronizing between video and angular velocity measured by the gyro sensor.
