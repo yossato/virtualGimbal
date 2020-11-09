@@ -50,7 +50,7 @@ using namespace std;
 
 int main(int argc, char **argv)
 {
-    //引数の確認
+    // Check arguments
     char *videoPass = NULL;
     char *cameraName = NULL;
     char *lensName = NULL;
@@ -59,12 +59,10 @@ int main(int argc, char **argv)
     bool show_image = true;
     const char *kernel_name = "cl/stabilizer_kernel.cl";
     const char *kernel_function = "stabilizer_function";
-    // bool debug_speedup = false;
     double zoom = 1.0;
     int32_t fileter_length = 199;
     int opt;
     int queue_size = 10;
-    //    Eigen::Quaterniond camera_rotation;
 
     while ((opt = getopt(argc, argv, "j:i:c:l:w:z:k:f:o::n::")) != -1)
     {
@@ -83,9 +81,6 @@ int main(int argc, char **argv)
         case 'l':
             lensName = optarg;
             break;
-        // case 'd':
-        //     debug_speedup = true;
-        //     break;
         case 'z':       //zoom ratio, dafault 1.0
             zoom = std::stof(optarg);
             break;
@@ -119,8 +114,8 @@ int main(int argc, char **argv)
     struct stat st;
     if (stat(kernel_name, &st))
     {
-        std::cerr << "Kernel file not found." << std::endl << std::flush;
-        throw "Kernel file not found.";
+        std::cerr << "ERROR: Kernel file not found. " << __FILE__ << ":" << __LINE__ << std::endl << std::flush;
+        return EXIT_FAILURE;
     }
 
 
