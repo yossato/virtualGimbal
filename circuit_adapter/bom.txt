@@ -1,0 +1,18 @@
+Partlist exported from C:/Users/satoy/project/virtualgimbal/circuit_adapter/adapter.sch at 2020/11/09 15:14
+
+Part Value                Device                    Package          Description                   MF MPN         OC_FARNELL OC_NEWARK SPICEPREFIX TP_SIGNAL_NAME
+CN2                       MICROUSB_ZX62D1-B-5PA(30) ZX62D1-B-5PA(30)                                                                                             
+CN3  MICROSD_BARE         MICROSD_BARE              MICROSD                                                                                                      
+CN4  VIRTUALGIMAL         VIRTUALGIMAL              VIRTUALGIMBAL                                                                                                
+CN5  MICROSD_WM11190CT-ND MICROSD_WM11190CT-ND      5033981892                                                                                                   
+GND  PTR1TP19R            PTR1TP19R                 TP19R            TEST PIN                                                                                    
+LED1                      LEDSML0603                SML0603          LED                                                                                         
+LED2                      LEDSML0603                SML0603          LED                                                                                         
+LED3                      LEDSML0603                SML0603          LED                                                                                         
+R1   10k                  R-US_R0402                R0402            RESISTOR, American symbol                                         R                         
+R2   10k                  R-US_R0402                R0402            RESISTOR, American symbol                                         R                         
+R3   10k                  R-US_R0402                R0402            RESISTOR, American symbol                                         R                         
+RX   PTR1TP19R            PTR1TP19R                 TP19R            TEST PIN                                                                                    
+TX   PTR1TP19R            PTR1TP19R                 TP19R            TEST PIN                                                                                    
+VBUS PTR1TP19R            PTR1TP19R                 TP19R            TEST PIN                                                                                    
+X1   2510-                2510-                     PAK100/2500-10   3M (TM) Pak 100 4-Wall Header 3M 2510-6002UB 9838244    46F4725                             
