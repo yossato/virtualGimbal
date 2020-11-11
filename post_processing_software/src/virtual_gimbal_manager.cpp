@@ -619,6 +619,26 @@ void VirtualGimbalManager::spin(double zoom, FilterPtr filter, Eigen::VectorXd &
 #undef LAP_BEGIN
 #undef LAP
 
+void VirtualGimbalManager::spin_inpainting(std::vector<std::pair<int32_t, double>> &sync_table)
+{
+    // UMatの準備
+    // BGRAのバッファ2枚 (b_past,b_future)
+    // 出力画像のBGRAの1枚 (b_output)
+    // 前後10フレーム分の20枚のUMat
+
+    // 動画最も古い1フレームを削除
+    // 動画最新1フレーム読み込み
+    
+    // フィルタ済み姿勢計算 @ 注目フレームの基準時間
+    // UMatとしてつくる　row は 時間軸(フレーム)　colは画像の行数に対応
+
+    // b_futureについて基準フレームから未来方向へfor文で連続して画素を埋めていく
+    // b_pastについて基準フレームから過去方向へfor文で連続して画素を埋めていく
+
+    // 最後に b_pastとb_futureからb_outputを生成
+
+}
+
 void VirtualGimbalManager::enableWriter(const char *video_path)
 {
     writer_ = std::make_shared<MultiThreadVideoWriter>(MultiThreadVideoWriter::getOutputName(video_path), *video_param,queue_size_);

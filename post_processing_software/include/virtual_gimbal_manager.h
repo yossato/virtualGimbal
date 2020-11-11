@@ -82,6 +82,7 @@ public:
                                       std::vector<std::pair<int32_t,double>> &sync_table, 
                                       int32_t strongest_filter_param, int32_t weakest_filter_param);
   void spin(double zoom, FilterPtr filter,Eigen::VectorXd &filter_strength, std::vector<std::pair<int32_t,double>> &sync_table, bool show_image = true);
+  void spin_inpainting(std::vector<std::pair<int32_t, double>> &sync_table);
   void setMaximumGradient(double value);
   void enableWriter(const char *video_path);
   const char *kernel_name = "stabilizer_kernel.cl";
