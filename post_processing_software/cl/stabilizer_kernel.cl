@@ -32,6 +32,18 @@
 #pragma OPENCL EXTENSION cl_khr_fp64: enable
 __constant sampler_t samplerLN = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP_TO_EDGE | CLK_FILTER_LINEAR;
 
+typedef struct {
+   float zoom;
+   float ik1;
+   float ik2;
+   float ip1;
+   float ip2;
+   float fx:
+   float fy;
+   float cx;
+   float cy;
+} camera_params;
+
 __kernel void color_shift2(
    __read_only image2d_t input, __write_only image2d_t output,
    float shift_x,
@@ -166,3 +178,16 @@ __kernel void stabilizer_function(
 
 }
 
+__kernel void fill_function(
+   __global uchar4 *input,
+   int input_step, int intput_offset, int input_rows, int input_cols,
+   __global uchar4 *output,
+   int output_step, int output_offset, int output_rows, int output_cols,
+   __global float* rotation_matrix,       // Rotation Matrix in each rows.
+   int rotation_matrix_step, int rotation_matrix_offset,
+   __global float* params,
+   int params_step, int params_offset
+)
+{
+   
+}

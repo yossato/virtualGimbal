@@ -619,18 +619,12 @@ void VirtualGimbalManager::spin(double zoom, FilterPtr filter, Eigen::VectorXd &
 #undef LAP_BEGIN
 #undef LAP
 
-void VirtualGimbalManager::spin_inpainting(std::vector<std::pair<int32_t, double>> &sync_table, FilterPtr filter, int filter_strength)
+void VirtualGimbalManager::spinInpainting(double zoom, std::vector<std::pair<int32_t, double>> &sync_table, FilterPtr filter, int filter_strength)
 {
     // Prepare
     measured_angular_velocity->calculateAngleQuaternion();
 
     // UMatの準備
-    // BGRAのバッファ2枚 (b_past,b_future)
-    cv::UMat b_past,b_future;
-
-    // 出力画像のBGRAの1枚 (b_output)
-    cv::UMat b_output;
-
     // UMatのバッファ
     UMatMap b;
 
@@ -639,6 +633,15 @@ void VirtualGimbalManager::spin_inpainting(std::vector<std::pair<int32_t, double
     {
         reader_->get(b[i]);
     }
+
+    // BGRAのバッファ2枚 (b_past,b_future)
+    UMatPtr b_past(new cv::UMat(b[0]->size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY));
+    UMatPtr b_future(new cv::UMat(b[0]->size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY));
+
+    // 出力画像のBGRAの1枚 (b_output)
+    UMatPtr b_output(new cv::UMat(b[0]->size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY));
+
+
 
     // TODO: MultiThreadVideoReaderがすでに内部にbufferをもっているので、こいつを借りてもいい気がする
     for(int frame = 0; frame < video_param->video_frames ; ++frame)
@@ -668,11 +671,12 @@ void VirtualGimbalManager::spin_inpainting(std::vector<std::pair<int32_t, double
         , sync_table, stabilized_angle_quaternion);
         
         // UMatとしてつくる　col は 時間軸(フレーム、行数)　rowはバッファーのサイズ(=フレーム数)に対応
-        static cv::UMat correction_matrices(cv::Size(video_param->camera_info->height_ * 9, buffer_size),CV_32F, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+        // static cv::UMat correction_matrices(cv::Size(video_param->camera_info->height_ * 9, buffer_size),CV_32F, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
 
         
 
         // b_futureについて基準フレームから未来方向へfor文で連続して画素を埋めていく
+        b_future->setTo(cv::Scalar(127,127,127,127)); // BGR A, A channel means distance from target frame
         for(int future_frame = frame + buffer_size/2; frame <= future_frame; --future_frame)
         {
             if(b.count(future_frame) == 0)
@@ -681,8 +685,8 @@ void VirtualGimbalManager::spin_inpainting(std::vector<std::pair<int32_t, double
             }
             std::vector<float> stabilized_angle_matrices;
             measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, future_frame, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices);
-            // int matrix_row = future_frame - frame + buffer_size/2 + 1;
-            // fillPixelValues(matrix_row,correction_matrices,b[future_frame],b_future);
+            int distance = future_frame - frame;
+            fillPixelValues(zoom, stabilized_angle_matrices,distance,b[future_frame],b_future);
         }
 
         // // b_pastについて基準フレームから過去方向へfor文で連続して画素を埋めていく
@@ -699,6 +703,40 @@ void VirtualGimbalManager::spin_inpainting(std::vector<std::pair<int32_t, double
     }
     
     
+}
+
+void VirtualGimbalManager::fillPixelValues(double zoom, std::vector<float> stabilized_angle_matrices, int distance, UMatPtr &source_image, UMatPtr &dest_image)
+{
+    // Prepare OpenCL
+    cv::ocl::Context context;
+    cv::Mat mat_src = cv::Mat::zeros(video_param->camera_info->height_, video_param->camera_info->width_, CV_8UC4); // TODO:冗長なので書き換える
+    cv::UMat umat_src = mat_src.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+
+    cv::Mat mat_matrices = cv::Mat(stabilized_angle_matrices.size(), 1, CV_32F, stabilized_angle_matrices.data());
+    cv::UMat umat_matrices = mat_matrices.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+
+    // Stabilize every frames
+    float ik1 = video_param->camera_info->inverse_k1_;
+    float ik2 = video_param->camera_info->inverse_k2_;
+    float ip1 = video_param->camera_info->inverse_p1_;
+    float ip2 = video_param->camera_info->inverse_p2_;
+    float fx = video_param->camera_info->fx_;
+    float fy = video_param->camera_info->fy_;
+    float cx = video_param->camera_info->cx_;
+    float cy = video_param->camera_info->cy_;
+    cv::Mat mat_params = (cv::Mat_<float>(9,1) << (float)zoom, ik1, ik2, ip1, ip2, fx, fy, cx, cy);
+    cv::UMat umat_params = mat_params.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+
+    cv::String build_opt;
+    initializeCL(context);
+    cv::ocl::Kernel kernel;
+    getKernel(kernel_name, "fill_function", kernel, context, build_opt);
+    kernel.args(cv::ocl::KernelArg::ReadOnly(*source_image),
+                cv::ocl::KernelArg::WriteOnly(*dest_image),
+                cv::ocl::KernelArg::ReadOnlyNoSize(umat_matrices),
+                cv::ocl::KernelArg::ReadOnlyNoSize(umat_params));
+    size_t globalThreads[3] = {(size_t)source_image->cols, (size_t)source_image->rows, 1};
+    bool success = kernel.run(3, globalThreads, NULL, true);
 }
 
 void VirtualGimbalManager::enableWriter(const char *video_path)
