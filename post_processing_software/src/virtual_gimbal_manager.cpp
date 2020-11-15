@@ -661,32 +661,39 @@ void VirtualGimbalManager::spin_inpainting(std::vector<std::pair<int32_t, double
         // getRelativeAngleで前後のフレームは得られるらしい
         // Privateなので直接アクセスできないorz
         // 以下の関数で、補正用のquaternionと、相対角度のquaternionを、estimatedな時間で取得する
-        std::vector<Eigen::Quaterniond> measured_angle_quaternions(video_param->camera_info->height_*buffer_size);
-        Eigen::Quaterniond correction_quaternion;
+        // std::vector<Eigen::Quaterniond> measured_angle_quaternions(video_param->camera_info->height_*buffer_size);
+        Eigen::Quaterniond stabilized_angle_quaternion;
 
-        measured_angular_velocity->getCorrectionAndRelativeQuaternion(frame, filter->getFilterCoefficient(filter_strength)
-        , sync_table, correction_quaternion, measured_angle_quaternions);
+        measured_angular_velocity->getCorrectionQuaternion(frame, filter->getFilterCoefficient(filter_strength)
+        , sync_table, stabilized_angle_quaternion);
+        
         // UMatとしてつくる　col は 時間軸(フレーム、行数)　rowはバッファーのサイズ(=フレーム数)に対応
         static cv::UMat correction_matrices(cv::Size(video_param->camera_info->height_ * 9, buffer_size),CV_32F, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
 
-        getCorrectionMatrix(correction_quaternion, measured_angle_quaternions,correction_matrices);
+        
 
         // b_futureについて基準フレームから未来方向へfor文で連続して画素を埋めていく
         for(int future_frame = frame + buffer_size/2; frame <= future_frame; --future_frame)
         {
-            int matrix_row = future_frame - frame + buffer_size/2 + 1;
-            fillPixelValues(matrix_row,correction_matrices,b[future_frame],b_future);
+            if(b.count(future_frame) == 0)
+            {
+                continue;
+            }
+            std::vector<float> stabilized_angle_matrices;
+            measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, future_frame, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices);
+            // int matrix_row = future_frame - frame + buffer_size/2 + 1;
+            // fillPixelValues(matrix_row,correction_matrices,b[future_frame],b_future);
         }
 
-        // b_pastについて基準フレームから過去方向へfor文で連続して画素を埋めていく
-        for(int past_frame = frame - buffer_size/2; past_frame <= frame; ++past_frame)
-        {
-            int matrix_row = past_frame - frame + buffer_size/2 + 1;
-            fillPixelValues(matrix_row,correction_matrices,b[past_frame],b_past);
-        }
+        // // b_pastについて基準フレームから過去方向へfor文で連続して画素を埋めていく
+        // for(int past_frame = frame - buffer_size/2; past_frame <= frame; ++past_frame)
+        // {
+        //     int matrix_row = past_frame - frame + buffer_size/2 + 1;
+        //     fillPixelValues(matrix_row,correction_matrices,b[past_frame],b_past);
+        // }
 
-        // 最後に b_pastとb_futureからb_outputを生成
-        interpolateFrames(b_past,b_future,b_output);
+        // // 最後に b_pastとb_futureからb_outputを生成
+        // interpolateFrames(b_past,b_future,b_output);
 
 
     }
