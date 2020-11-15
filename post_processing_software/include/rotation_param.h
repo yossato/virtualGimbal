@@ -97,11 +97,15 @@ public:
   Eigen::Quaterniond getCorrectionQuaternion(double time, const Eigen::VectorXd &filter_coeff);
   double convertEstimatedToMeasuredAngularVelocityFrame(double estimate_angular_velocity_frame, std::vector<std::pair<int32_t,double>> &sync_table);
   Eigen::Quaterniond getCorrectionQuaternionFromFrame(double estimated_angular_velocity_frame, const Eigen::VectorXd &filter_coeff, std::vector<std::pair<int32_t,double>> &sync_table);
+  void calculateAngleQuaternion();
+  Eigen::Quaterniond quaternion(double frame);
+  void getCorrectionAndRelativeQuaternion(double estimated_angular_velocity_frame, const Eigen::VectorXd &filter_coeff, std::vector<std::pair<int32_t,double>> &sync_table,  Eigen::Quaterniond& correction_quaternion, std::vector<Eigen::Quaterniond>& measured_angle_quaternions);
   double getLengthInSecond();
   int32_t getFrames();
 private:
   // ResamplerParameter resampler_;
   std::map<int, Eigen::MatrixXd> relative_angle_vectors;
+  std::vector<Eigen::Quaterniond> quaternion_;
   const Eigen::MatrixXd &getRelativeAngle(size_t frame, int length);
 };
 

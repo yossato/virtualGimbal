@@ -232,6 +232,7 @@ void MultiThreadRotationMatrixGenerator::process()
         {
             double frame_in_row = frame + (video_parameter->camera_info->line_delay_ * (row - video_parameter->camera_info->height_ * 0.5))
             * video_parameter->getFrequency();
+            // TODO: Fix invalid function name, a function returns a matrix
             Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>>(&(*R)[row * 9], 3, 3) 
             = measured_angular_velocity->getCorrectionQuaternionFromFrame(frame_in_row,filter->getFilterCoefficient(filter_strength(frame)),sync_table).matrix().cast<float>();
             

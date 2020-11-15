@@ -263,6 +263,86 @@ Eigen::Quaterniond AngularVelocity::getCorrectionQuaternionFromFrame(   double e
     }
 }
 
+void AngularVelocity::calculateAngleQuaternion()
+{
+    Eigen::Quaterniond q(1.0, 0.0, 0.0, 0.0);
+    for(size_t frame=0;frame<data.rows();++frame)
+    {
+        q = (q * Vector2Quaternion<double>(getAngularVelocityVector(frame))).normalized();
+        quaternion_.push_back(q);
+    }
+}
+
+Eigen::Quaterniond AngularVelocity::quaternion(double frame)
+{
+    size_t integer_frame = floor(frame);
+    if ((frame < 0) || (frame >= (data.rows()-1)))
+    {
+        std::cerr << "Error: Frame range is out of range." << std::endl;
+        return;
+    }
+    else
+    {
+        double ratio = frame - integer_frame;
+        return quaternion_[integer_frame].slerp(ratio,quaternion_[integer_frame+1]);
+    }
+}
+
+void AngularVelocity::getCorrectionAndRelativeQuaternion(double estimated_angular_velocity_frame, 
+                                                        const Eigen::VectorXd &filter_coeff, 
+                                                        std::vector<std::pair<int32_t,double>> &sync_table, 
+                                                        Eigen::Quaterniond& correction_quaternion, 
+                                                        std::vector<Eigen::Quaterniond>& measured_angle_quaternions)
+{
+    double frame = convertEstimatedToMeasuredAngularVelocityFrame(estimated_angular_velocity_frame, sync_table);
+    assert((frame + 1.) < (double)std::numeric_limits<size_t>::max());
+    assert(frame > 0.);
+    size_t integer_frame = floor(frame);
+
+    if ((frame < 0) || (frame >= data.rows()))
+    {
+        std::cerr << "Error: Frame range is out of range." << std::endl;
+        return;
+    }
+    else
+    {
+        Eigen::MatrixXd relative_angle_vector(filter_coeff.rows(),3);
+        Eigen::Quaterniond conjugate_origin_quaternion = quaternion(frame).conjugate();
+
+
+        // Convert time to measured anguler velocity frame position
+        size_t length = filter_coeff.rows();
+        double ratio = frame - floor(frame);
+
+        // Eigen::Quaterniond diff_quaternion(1., 0., 0., 0.);
+        Eigen::MatrixXd rotation_vector = Eigen::MatrixXd::Zero(length, 3);
+        size_t center = length / 2;
+        // size_t r = center + 1;
+        for (int frame_position = /*frame +*/ 1; length /*+ frame*/ - center > frame_position; ++frame_position)
+        {
+            // diff_quaternion = (diff_quaternion * quaternion((double)frame_position + frame)).normalized();//Vector2Quaternion<double>(getAngularVelocityVector(frame_position))).normalized();
+            rotation_vector.row(frame_position /*- frame*/ + center) = Quaternion2Vector(quaternion((double)frame_position + frame) * conjugate_origin_quaternion);
+        }
+
+        // r = center - 1;
+        // diff_quaternion = Eigen::Quaterniond(1., 0., 0., 0.);
+        for (int frame_position = /*frame */- 1; /*frame*/ - center <= frame_position; --frame_position)
+        {
+            // diff_quaternion = (diff_quaternion * Vector2Quaternion<double>(getAngularVelocityVector(frame_position)).conjugate()).normalized();
+            rotation_vector.row(frame_position /*- frame*/ + center) = Quaternion2Vector(quaternion((double)frame_position + frame) * conjugate_origin_quaternion);
+        }
+        // std::cout << "rotation_vector:\r\n" << rotation_vector << std::endl;
+        // relative_angle_vectors[frame] = rotation_vector;
+        // return relative_angle_vectors[frame];
+
+        correction_quaternion = Vector2Quaternion<double>(rotation_vector.transpose() *  filter_coeff).conjugate();
+
+        return;
+    }
+
+    measured_angle_quaternions.resize()
+}
+
 Eigen::Quaterniond AngularVelocity::getCorrectionQuaternion(double time, const Eigen::VectorXd &filter_coeff)
 {
     // Convert time to measured anguler velocity frame position
@@ -310,6 +390,8 @@ const Eigen::MatrixXd &AngularVelocity::getRelativeAngle(size_t frame, int lengt
             return relative_angle_vectors[frame];
         }
     }
+
+    // TODO: Memory limitation, limit relative_angle_vectors's size
 
     // It is not available, create it.
     Eigen::Quaterniond diff_rotation(1., 0., 0., 0.);

@@ -619,8 +619,11 @@ void VirtualGimbalManager::spin(double zoom, FilterPtr filter, Eigen::VectorXd &
 #undef LAP_BEGIN
 #undef LAP
 
-void VirtualGimbalManager::spin_inpainting(std::vector<std::pair<int32_t, double>> &sync_table)
+void VirtualGimbalManager::spin_inpainting(std::vector<std::pair<int32_t, double>> &sync_table, FilterPtr filter, int filter_strength)
 {
+    // Prepare
+    measured_angular_velocity->calculateAngleQuaternion();
+
     // UMatの準備
     // BGRAのバッファ2枚 (b_past,b_future)
     cv::UMat b_past,b_future;
@@ -654,18 +657,41 @@ void VirtualGimbalManager::spin_inpainting(std::vector<std::pair<int32_t, double
             b[back_index] = std::move(p);
         }
 
+        // フィルタ済み姿勢計算 @ 注目フレームの基準時間
+        // getRelativeAngleで前後のフレームは得られるらしい
+        // Privateなので直接アクセスできないorz
+        // 以下の関数で、補正用のquaternionと、相対角度のquaternionを、estimatedな時間で取得する
+        std::vector<Eigen::Quaterniond> measured_angle_quaternions(video_param->camera_info->height_*buffer_size);
+        Eigen::Quaterniond correction_quaternion;
+
+        measured_angular_velocity->getCorrectionAndRelativeQuaternion(frame, filter->getFilterCoefficient(filter_strength)
+        , sync_table, correction_quaternion, measured_angle_quaternions);
+        // UMatとしてつくる　col は 時間軸(フレーム、行数)　rowはバッファーのサイズ(=フレーム数)に対応
+        static cv::UMat correction_matrices(cv::Size(video_param->camera_info->height_ * 9, buffer_size),CV_32F, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+
+        getCorrectionMatrix(correction_quaternion, measured_angle_quaternions,correction_matrices);
+
+        // b_futureについて基準フレームから未来方向へfor文で連続して画素を埋めていく
+        for(int future_frame = frame + buffer_size/2; frame <= future_frame; --future_frame)
+        {
+            int matrix_row = future_frame - frame + buffer_size/2 + 1;
+            fillPixelValues(matrix_row,correction_matrices,b[future_frame],b_future);
+        }
+
+        // b_pastについて基準フレームから過去方向へfor文で連続して画素を埋めていく
+        for(int past_frame = frame - buffer_size/2; past_frame <= frame; ++past_frame)
+        {
+            int matrix_row = past_frame - frame + buffer_size/2 + 1;
+            fillPixelValues(matrix_row,correction_matrices,b[past_frame],b_past);
+        }
+
+        // 最後に b_pastとb_futureからb_outputを生成
+        interpolateFrames(b_past,b_future,b_output);
+
 
     }
     
-    // フィルタ済み姿勢計算 @ 注目フレームの基準時間
-        // getRelativeAngleで前後のフレームは得られるらしい
-    // UMatとしてつくる　row は 時間軸(フレーム)　colは画像の行数に対応
-
-    // b_futureについて基準フレームから未来方向へfor文で連続して画素を埋めていく
-    // b_pastについて基準フレームから過去方向へfor文で連続して画素を埋めていく
-
-    // 最後に b_pastとb_futureからb_outputを生成
-
+    
 }
 
 void VirtualGimbalManager::enableWriter(const char *video_path)
