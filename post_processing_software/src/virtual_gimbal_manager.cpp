@@ -623,13 +623,42 @@ void VirtualGimbalManager::spin_inpainting(std::vector<std::pair<int32_t, double
 {
     // UMatの準備
     // BGRAのバッファ2枚 (b_past,b_future)
-    // 出力画像のBGRAの1枚 (b_output)
-    // 前後10フレーム分の20枚のUMat
+    cv::UMat b_past,b_future;
 
-    // 動画最も古い1フレームを削除
-    // 動画最新1フレーム読み込み
+    // 出力画像のBGRAの1枚 (b_output)
+    cv::UMat b_output;
+
+    // UMatのバッファ
+    UMatMap b;
+
+    size_t buffer_size = 21;
+    for(size_t i=0;i<buffer_size/2 ;++i)
+    {
+        reader_->get(b[i]);
+    }
+
+    // TODO: MultiThreadVideoReaderがすでに内部にbufferをもっているので、こいつを借りてもいい気がする
+    for(int frame = 0; frame < video_param->video_frames ; ++frame)
+    {
+        // 動画最も古い1フレームを削除
+        while(b.size()>buffer_size)
+        {
+            b.erase(b.begin());
+        }
+        // 動画最新1フレーム読み込み
+        int back_index = frame+buffer_size/2;
+        UMatPtr p;
+        reader_->get(p);
+        if(p)
+        {
+            b[back_index] = std::move(p);
+        }
+
+
+    }
     
     // フィルタ済み姿勢計算 @ 注目フレームの基準時間
+        // getRelativeAngleで前後のフレームは得られるらしい
     // UMatとしてつくる　row は 時間軸(フレーム)　colは画像の行数に対応
 
     // b_futureについて基準フレームから未来方向へfor文で連続して画素を埋めていく

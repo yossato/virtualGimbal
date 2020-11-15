@@ -46,6 +46,7 @@
 #include "cl_manager.h"
 #include "multi_thread_video_writer.h"
 #include <chrono>         // std::chrono::seconds
+#include <map>
 class VirtualGimbalManager
 {
 public:
@@ -123,6 +124,8 @@ protected:
       angular_velocity(row, 2) = avq.z();
     }
   }
+
+  using UMatMap = std::map<int,UMatPtr>;
 };
 
 #endif // __VIRTUAL_GIMBAL_MANAGER_H__
