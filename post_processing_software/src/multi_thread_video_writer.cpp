@@ -49,7 +49,7 @@ MultiThreadVideoWriter::MultiThreadVideoWriter(std::string output_pass, Video &v
         throw "Output file already exist.";
     }
 
-    video_writer = cv::VideoWriter(output_pass, cv::VideoWriter::fourcc('F', 'M', 'P', '4'), video_param.getFrequency(), cv::Size(video_param.camera_info->width_, video_param.camera_info->height_), true);
+    video_writer = cv::VideoWriter(output_pass, cv::VideoWriter::fourcc('a', 'v', 'c', '1'), video_param.getFrequency(), cv::Size(video_param.camera_info->width_, video_param.camera_info->height_), true);
     if (!video_writer.isOpened())
     {
         std::cerr << "Error: Can't Open Video Writer." << std::endl;
@@ -108,12 +108,12 @@ std::string MultiThreadVideoWriter::getOutputName(const char *source_video_name)
 
     if ((pos = output_pass.find_last_of(".")) == std::string::npos)
     {
-        output_pass = output_pass + "_stabilized_" + s.str() + ".avi";
+        output_pass = output_pass + "_stabilized_" + s.str() + ".mp4";
     }
     else
     {
         output_pass.substr(0, pos);
-        output_pass = output_pass.substr(0, pos) + "_stabilized_" + s.str() + ".avi";
+        output_pass = output_pass.substr(0, pos) + "_stabilized_" + s.str() + ".mp4";
     }
     return output_pass;
 }
