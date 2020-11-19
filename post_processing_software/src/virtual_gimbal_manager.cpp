@@ -676,7 +676,7 @@ void VirtualGimbalManager::spinInpainting(double zoom, std::vector<std::pair<int
         
 
         // b_futureについて基準フレームから未来方向へfor文で連続して画素を埋めていく
-        b_future->setTo(cv::Scalar(127,127,127,127)); // BGR A, A channel means distance from target frame
+        b_future->setTo(cv::Scalar(127,127,127,255)); // BGR A, A channel means distance from target frame
         for(int future_frame = frame + buffer_size/2; frame <= future_frame; --future_frame)
         {
             if(b.count(future_frame) == 0)
@@ -685,19 +685,28 @@ void VirtualGimbalManager::spinInpainting(double zoom, std::vector<std::pair<int
             }
             std::vector<float> stabilized_angle_matrices;
             measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, future_frame, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices);
+            assert(future_frame >= frame);
             int distance = future_frame - frame;
             fillPixelValues(zoom, stabilized_angle_matrices,distance,b[future_frame],b_future);
         }
 
-        // // b_pastについて基準フレームから過去方向へfor文で連続して画素を埋めていく
-        // for(int past_frame = frame - buffer_size/2; past_frame <= frame; ++past_frame)
-        // {
-        //     int matrix_row = past_frame - frame + buffer_size/2 + 1;
-        //     fillPixelValues(matrix_row,correction_matrices,b[past_frame],b_past);
-        // }
+        // b_pastについて基準フレームから過去方向へfor文で連続して画素を埋めていく
+        b_past->setTo(cv::Scalar(127,127,127,255));
+        for(int past_frame = frame - buffer_size/2; past_frame <= frame; ++past_frame)
+        {
+            if(b.count(past_frame) == 0)
+            {
+                continue;
+            }
+            std::vector<float> stabilized_angle_matrices;
+            measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, past_frame, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices);
+            assert(frame >= past_frame);
+            int distance = frame - past_frame;
+            fillPixelValues(zoom,stabilized_angle_matrices,distance,b[past_frame],b_past);
+        }
 
-        // // 最後に b_pastとb_futureからb_outputを生成
-        // interpolateFrames(b_past,b_future,b_output);
+        // 最後に b_pastとb_futureからb_outputを生成
+        interpolatePixels(b_past,b_future,b_output);
 
 
     }
@@ -705,12 +714,12 @@ void VirtualGimbalManager::spinInpainting(double zoom, std::vector<std::pair<int
     
 }
 
-void VirtualGimbalManager::fillPixelValues(double zoom, std::vector<float> stabilized_angle_matrices, int distance, UMatPtr &source_image, UMatPtr &dest_image)
+bool VirtualGimbalManager::fillPixelValues(double zoom, std::vector<float> stabilized_angle_matrices, uint8_t distance, UMatPtr &source_image, UMatPtr &dest_image)
 {
     // Prepare OpenCL
     cv::ocl::Context context;
-    cv::Mat mat_src = cv::Mat::zeros(video_param->camera_info->height_, video_param->camera_info->width_, CV_8UC4); // TODO:冗長なので書き換える
-    cv::UMat umat_src = mat_src.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+    // cv::Mat mat_src = cv::Mat::zeros(video_param->camera_info->height_, video_param->camera_info->width_, CV_8UC4); // TODO:冗長なので書き換える
+    // cv::UMat umat_src = mat_src.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
 
     cv::Mat mat_matrices = cv::Mat(stabilized_angle_matrices.size(), 1, CV_32F, stabilized_angle_matrices.data());
     cv::UMat umat_matrices = mat_matrices.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
@@ -729,15 +738,42 @@ void VirtualGimbalManager::fillPixelValues(double zoom, std::vector<float> stabi
 
     cv::String build_opt;
     initializeCL(context);
+
+    cv::ocl::Image2D image(*source_image);
+
     cv::ocl::Kernel kernel;
     getKernel(kernel_name, "fill_function", kernel, context, build_opt);
-    kernel.args(cv::ocl::KernelArg::ReadOnly(*source_image),
+    kernel.args(image,
                 cv::ocl::KernelArg::WriteOnly(*dest_image),
                 cv::ocl::KernelArg::ReadOnlyNoSize(umat_matrices),
-                cv::ocl::KernelArg::ReadOnlyNoSize(umat_params));
-    size_t globalThreads[3] = {(size_t)source_image->cols, (size_t)source_image->rows, 1};
+                cv::ocl::KernelArg::ReadOnlyNoSize(umat_params),
+                distance);
+    size_t globalThreads[3] = {(size_t)dest_image->cols, (size_t)dest_image->rows, 1};
     bool success = kernel.run(3, globalThreads, NULL, true);
+    return success;
 }
+
+bool VirtualGimbalManager::interpolatePixels(UMatPtr &past, UMatPtr &future, UMatPtr &output)
+{
+    // Prepare OpenCL
+    cv::ocl::Context context;
+
+    cv::String build_opt;
+    initializeCL(context);
+
+    cv::ocl::Image2D past_image(*past);
+    cv::ocl::Image2D future_image(*future);
+    cv::ocl::Kernel kernel;
+    getKernel(kernel_name, "interpoloate_function", kernel, context, build_opt);
+    kernel.args(past_image,
+                future_image,
+                cv::ocl::KernelArg::WriteOnly(*output)
+                );
+    size_t globalThreads[3] = {(size_t)output->cols, (size_t)output->rows, 1};
+    bool success = kernel.run(3, globalThreads, NULL, true);
+    return success;
+}
+
 
 void VirtualGimbalManager::enableWriter(const char *video_path)
 {

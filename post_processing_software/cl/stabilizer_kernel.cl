@@ -31,6 +31,7 @@
 *************************************************************************/
 #pragma OPENCL EXTENSION cl_khr_fp64: enable
 __constant sampler_t samplerLN = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP_TO_EDGE | CLK_FILTER_LINEAR;
+__constant sampler_t samplerNN = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP_TO_EDGE | CLK_FILTER_NEAREST;
 
 typedef struct {
    float zoom;
@@ -179,15 +180,104 @@ __kernel void stabilizer_function(
 }
 
 __kernel void fill_function(
-   __global uchar4 *input,
-   int input_step, int intput_offset, int input_rows, int input_cols,
+   image2d_t input,
    __global uchar4 *output,
    int output_step, int output_offset, int output_rows, int output_cols,
    __global float* rotation_matrix,       // Rotation Matrix in each rows.
    int rotation_matrix_step, int rotation_matrix_offset,
    __global float* params,
-   int params_step, int params_offset
+   int params_step, int params_offset,
+   int distance
 )
 {
+   int2 size   = get_image_dim(input);
+   int2 uv     = (int2)(get_grobal_id(0),get_global_id(1));
+   if(any(uv >= size)) return;
+
+   __global camera_params *p = params;
+   float2 f = (float2)(p.fx,p.fy);
+   float2 c = (float2)(p.cx,p.cy);
+
+   float2 uv0_ = convert_float2(uv);
+   float2 uv1_ = convert_float2(uv + (float2)(1,0));
+   float2 uv2_ = convert_float2(uv + (float2)(1,1));
+   float2 uv3_ = convert_float2(uv + (float2)(0,1));
+   float2 uv0 = warp_undistort(uv0_, p.zoom, rotation_matrix, p.ik1, p.ik2, p.ip1, p.ip2, f, c);
+   float2 uv1 = warp_undistort(uv1_, p.zoom, rotation_matrix, p.ik1, p.ik2, p.ip1, p.ip2, f, c);
+   float2 uv2 = warp_undistort(uv2_, p.zoom, rotation_matrix, p.ik1, p.ik2, p.ip1, p.ip2, f, c);
+   float2 uv3 = warp_undistort(uv3_, p.zoom, rotation_matrix, p.ik1, p.ik2, p.ip1, p.ip2, f, c);
+
    
+   int2 uvMin = convert_int2(floor(min(min(uv0,uv1),min(uv2,uv3))));
+   int2 uvMax = convert_int2(ceil(max(max(uv0,uv1),max(uv2,uv3))));
+
+   for(int v= uvMin.y;v<=uvMax.y;++v){
+      for(int u=uvMin.x;u<=uvMax.x;++u){
+         int2 uvt = (int2)(u,v);
+         if(any(uvt >= size)) continue;
+         if(any(uvt < 0)) continue;
+         
+
+         float2 uw_cam;
+         if(point_in_triangle(convert_float2(uvt),uv0,uv1,uv3)){
+            float3 ratio = baryventrid_coordinate(convert_float2(uvt),uv0,uv1,uv3);
+            uw_cam = uv0_*ratio.x+uv1_*ratio.y+uv3_*ratio.z;
+         }else if(point_in_triangle(convert_float2(uvt),uv1,uv2,uv3)){
+            float3 ratio = baryventrid_coordinate(convert_float2(uvt),uv1,uv2,uv3);
+            uw_cam = uv1_*ratio.x+uv2_*ratio.y+uv3_*ratio.z;
+         }else{
+            continue;
+         }
+         uint4 pixel = read_imageui(input, samplerLN, uw_cam); // TODO:Fix remove a reading every pixel
+
+         int output_index = mad24(uvt.y, output_cols, uvt.x);
+         __global uchar4 *p_out = (__global uchar4 *)(output + output_index);
+         if(pixel.w > distance)
+         {
+            pixel.w = distance;
+            *p_out = convert_uchar4(pixel);
+         }
+      }
+   }
+
+}
+
+__kernel void interpoloate_function(
+   image2d_t past,
+   image2d_t future,
+   __global uchar4 *output,
+   int output_step, int output_offset, int output_rows, int output_cols
+)
+{
+   int2 size   = get_image_dim(past);
+   int2 uv     = (int2)(get_grobal_id(0),get_global_id(1));
+   if(any(uv >= size)) return;
+
+   uint4 past_pixel     = read_imageui(past, samplerNN, uv);
+   uint4 future_pixel   = read_imageui(future, samplerNN, uv);
+
+   int output_index = mad24(uv.y, output_cols, uv.x);
+   __global uchar4 *p_output = (__global uchar4 *)(output + output_index);
+   if(past_pixel.w == 0)
+   {
+      *p_output = past_pixel;
+      // (*p_output).w = 255;    // TODO: Is w channel a invalid value? Shoud I care it?
+      return;
+   }
+   else if(future_pixel.w == 0)
+   {
+      *p_output = future_pixel;
+      // (*p_output).w = 255;
+      return;
+   }
+   else
+   {
+      float ratio = convert_float(past_pixel.w) / convert_float(past_pixel.w + future_pixel.w);
+      *p_output = convert_uchar4_sat((1.f - ratio)*convert_float4(past_pixel) + ratio*(convert_float4(future_pixel)));
+      // (*p_output).w = 255;
+      return;
+   }
+
+   
+
 }
