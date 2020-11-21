@@ -67,8 +67,17 @@ void VirtualGimbalManager::setVideoParam(const char *file_name, CameraInformatio
 
 void VirtualGimbalManager::setMeasuredAngularVelocity(const char *file_name, CameraInformationPtr info)
 {
-    measured_angular_velocity.reset(new AngularVelocity(readSamplingRateFromJson(file_name)));
-    measured_angular_velocity->data = readAngularVelocityFromJson(file_name);
+    try
+    {
+        measured_angular_velocity.reset(new AngularVelocity(readSamplingRateFromJson(file_name)));
+        measured_angular_velocity->data = readAngularVelocityFromJson(file_name);
+    }
+    catch(std::string e)
+    {
+        std::cerr << "Error: " << e << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    
     if (info)
     {
         rotateAngularVelocity(measured_angular_velocity->data, info->sd_card_rotation_);

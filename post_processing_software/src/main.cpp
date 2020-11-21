@@ -125,7 +125,16 @@ int main(int argc, char **argv)
 
     // TODO:Check kernel availability here. Build once.
 
-    shared_ptr<CameraInformation> camera_info(new CameraInformationJsonParser(cameraName, lensName, VirtualGimbalManager::getVideoSize(videoPass).c_str()));
+    shared_ptr<CameraInformation> camera_info;
+    try
+    {
+        camera_info = shared_ptr<CameraInformation>( new CameraInformationJsonParser(cameraName, lensName, VirtualGimbalManager::getVideoSize(videoPass).c_str()));        
+    }
+    catch(std::string e)
+    {
+        std::cerr << "Error: " << e <<  std::endl;
+        std::exit(EXIT_FAILURE);
+    }
     calcInverseDistortCoeff(*camera_info);
     manager.setMeasuredAngularVelocity(jsonPass, camera_info);
     manager.setVideoParam(videoPass, camera_info);

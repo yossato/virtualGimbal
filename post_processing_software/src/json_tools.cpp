@@ -46,7 +46,7 @@ CameraInformationJsonParser::CameraInformationJsonParser(const char *camera_name
     struct stat st;
     if (stat(file_name, &st))
     {
-        throw "File doesn's exist";
+       throw std::string("Camera calibration data file: ") + std::string(file_name) + std::string(" not found.");
     }
     FILE *fp = fopen(file_name, "rb"); // non-Windows use "r"
     std::vector<char> readBuffer((intmax_t)st.st_size + 10);
@@ -57,7 +57,7 @@ CameraInformationJsonParser::CameraInformationJsonParser(const char *camera_name
 
     if (!e.HasMember(camera_name))
     {
-        throw "Camera not found.";
+        throw std::string("Camera model: ") + std::string(camera_name) + std::string(" is not found in a calibration data");
     }
 
     const Value &camera = e[camera_name];
@@ -68,9 +68,9 @@ CameraInformationJsonParser::CameraInformationJsonParser(const char *camera_name
 
     camera_name_ = camera_name;
     if(!camera["lenses"].HasMember(lens_name)){
-        throw "lense not found";
+        throw std::string("lense not found");
     }else if(!camera["lenses"][lens_name].HasMember(image_size)){
-        throw "image size not found";
+        throw std::string("image size not found");
     }
     const Value &parameters = camera["lenses"][lens_name][image_size];
     lens_name_ = lens_name;
@@ -321,7 +321,7 @@ std::string videoNameToJsonName(std::string video_name)
 double readSamplingRateFromJson(const char* filename){
     struct stat st;
     if(stat(filename,&st)){
-        return -1;
+        throw std::string(filename) + std::string(" is not found.");
     }
     FILE* fp = fopen(filename, "rb"); // non-Windows use "r"
     std::vector<char> readBuffer((intmax_t)st.st_size+10);
@@ -411,7 +411,7 @@ Eigen::MatrixXd readAngularVelocityFromJson(const char* filename){
     struct stat st;
     Eigen::MatrixXd retval;
     if(stat(filename,&st)){
-        throw "Json file is not exists.";
+        throw std::string(filename) +  std::string(" is not found.");
     }
     FILE* fp = fopen(filename, "rb"); // non-Windows use "r"
     std::vector<char> readBuffer((intmax_t)st.st_size+10);
