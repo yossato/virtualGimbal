@@ -35,15 +35,15 @@ void initializeCL(cv::ocl::Context &context)
 {
     if (!cv::ocl::haveOpenCL())
     {
-        cout << "OpenCL is not avaiable..." << endl
+        cout << "OpenCL is not avaiable." << endl
              << flush;
-        throw "OpenCL is not avaiable...";
+        std::exit(EXIT_FAILURE);
     }
     // cv::ocl::Context context;
     if (!context.create(cv::ocl::Device::TYPE_GPU))
     {
-        cout << "Failed creating the context..." << endl;
-        throw "Failed creating the context...";
+        cout << "Failed creating the context." << endl;
+        std::exit(EXIT_FAILURE);
     }
 
     // In OpenCV 3.0.0 beta, only a single device is detected.
