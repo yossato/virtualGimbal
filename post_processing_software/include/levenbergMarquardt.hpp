@@ -192,7 +192,7 @@ template <typename _Tp> struct calc_timing_from_image : Functor<double>
 					int imapy = round(mapy);
 					//もしも画像の範囲内にあれば
 					if((0<=imapx)&&(imapx<vecFrames[0].cols)&&(0<=imapy)&&(imapy<vecFrames[0].rows)){
-						pixelBuff.at<cv::Vec3b>(imapy,imapx) = vecFrames[i*cLen].at<cv::Vec3b>(v,u);
+						pixelBuff.at<cv::Vec3b>(imapy,imapx) = vecFrames[i*cLen].template at<cv::Vec3b>(v,u);
 					}
 				}
 			}
@@ -240,7 +240,7 @@ template <typename _Tp> struct calc_timing_from_image : Functor<double>
 						int imapy = round(mapy);
 						//もしも画像の範囲内にあれば
 						if((0<=imapx)&&(imapx<vecFrames[0].cols)&&(0<=imapy)&&(imapy<vecFrames[0].rows)){
-							pixelBuff2.at<cv::Vec3b>(imapy,imapx) = vecFrames[j].at<cv::Vec3b>(v,u);//ここもiではなくjである。
+							pixelBuff2.at<cv::Vec3b>(imapy,imapx) = vecFrames[j].template at<cv::Vec3b>(v,u);//ここもiではなくjである。
 						}
 					}
 				}

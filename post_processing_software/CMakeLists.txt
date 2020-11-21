@@ -23,6 +23,8 @@ configure_file(cl/stabilizer_kernel.cl cl/stabilizer_kernel.cl)
 include_directories(include)
 include_directories(/usr/local/include/eigen3)
 include_directories(${PYTHON_INCLUDE_DIRS})
+include_directories(/usr/local/include)
+include_directories(/usr/local/lib/python3.9/site-packages/numpy/core/include)
 set(ALL_LIBS
         ${OpenCV_LIBS}
 )
