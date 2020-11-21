@@ -83,9 +83,9 @@ public:
                                       std::vector<std::pair<int32_t,double>> &sync_table, 
                                       int32_t strongest_filter_param, int32_t weakest_filter_param);
   void spin(double zoom, FilterPtr filter,Eigen::VectorXd &filter_strength, std::vector<std::pair<int32_t,double>> &sync_table, bool show_image = true);
-  void spinInpainting(double zoom, std::vector<std::pair<int32_t, double>> &sync_table, FilterPtr filter,int filter_strength=199);
-  bool fillPixelValues(double zoom, std::vector<float> stabilized_angle_matrices, uint8_t distance, UMatPtr &source_image, UMatPtr &dest_image);
-  bool interpolatePixels(UMatPtr &past, UMatPtr &future, UMatPtr &output);
+  int spinInpainting(double zoom, std::vector<std::pair<int32_t, double>> &sync_table, FilterPtr filter,int filter_strength=199, bool show_image = true);
+  bool fillPixelValues(cv::ocl::Context &context, double zoom, std::vector<float> stabilized_angle_matrices, uint8_t distance, UMatPtr &source_image, UMatPtr &dest_image);
+  bool interpolatePixels(cv::ocl::Context &context, UMatPtr &past, UMatPtr &future, UMatPtr &output);
   void setMaximumGradient(double value);
   void enableWriter(const char *video_path);
   const char *kernel_name = "stabilizer_kernel.cl";
