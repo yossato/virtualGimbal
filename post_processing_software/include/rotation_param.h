@@ -99,7 +99,7 @@ public:
   Eigen::Quaterniond getCorrectionQuaternionFromFrame(double estimated_angular_velocity_frame, const Eigen::VectorXd &filter_coeff, std::vector<std::pair<int32_t,double>> &sync_table);
   void calculateAngleQuaternion();
   Eigen::Quaterniond quaternion(double frame);
-  void getCorrectionQuaternion(double estimated_angular_velocity_frame, const Eigen::VectorXd &filter_coeff, std::vector<std::pair<int32_t,double>> &sync_table,  Eigen::Quaterniond& stabilized_angle_quaternion);
+  void getStabilizedQuaternion(double estimated_angular_velocity_frame, const Eigen::VectorXd &filter_coeff, std::vector<std::pair<int32_t,double>> &sync_table,  Eigen::Quaterniond& stabilized_angle_quaternion);
   void getCorrectionMatrices(const Eigen::Quaterniond& stabilized_angle_quaternion, int frame, int height, double line_delay_in_video_frame, std::vector<std::pair<int32_t,double>> &sync_table,  std::vector<float> &stabilized_angle_matrices);
   double getLengthInSecond();
   int32_t getFrames();

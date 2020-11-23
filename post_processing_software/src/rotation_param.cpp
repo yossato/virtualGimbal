@@ -288,7 +288,7 @@ Eigen::Quaterniond AngularVelocity::quaternion(double frame)
     }
 }
 
-void AngularVelocity::getCorrectionQuaternion(double estimated_angular_velocity_frame, 
+void AngularVelocity::getStabilizedQuaternion(double estimated_angular_velocity_frame, 
                                                         const Eigen::VectorXd &filter_coeff, 
                                                         std::vector<std::pair<int32_t,double>> &sync_table, 
                                                         Eigen::Quaterniond& stabilized_angle_quaternion)
@@ -306,7 +306,7 @@ void AngularVelocity::getCorrectionQuaternion(double estimated_angular_velocity_
     else
     {
         Eigen::MatrixXd relative_angle_vector(filter_coeff.rows(),3);
-        Eigen::Quaterniond origin_quaternion = quaternion(frame).conjugate();
+        Eigen::Quaterniond origin_quaternion = quaternion(frame);
         Eigen::Quaterniond conjugate_origin_quaternion = origin_quaternion.conjugate();
 
 
@@ -318,16 +318,22 @@ void AngularVelocity::getCorrectionQuaternion(double estimated_angular_velocity_
         int center = length / 2;
         for (int frame_position = 1; length - center > frame_position; ++frame_position)
         {
-            rotation_vector.row(frame_position + center) = Quaternion2Vector(quaternion((double)frame_position + frame) * conjugate_origin_quaternion);
+            rotation_vector.row(frame_position + center) = Quaternion2Vector(quaternion((double)frame_position + frame) * conjugate_origin_quaternion, rotation_vector.row(frame_position + center -1));
         }
 
         for (int frame_position = - 1; - center <= frame_position; --frame_position)
         {
-            rotation_vector.row(frame_position + center) = Quaternion2Vector(quaternion((double)frame_position + frame) * conjugate_origin_quaternion);
+            rotation_vector.row(frame_position + center) = Quaternion2Vector(quaternion((double)frame_position + frame) * conjugate_origin_quaternion , rotation_vector.row(frame_position + center +1));
         }
-     
-        stabilized_angle_quaternion = Vector2Quaternion<double>(rotation_vector.transpose() *  filter_coeff).normalized() * origin_quaternion;
 
+        // std::cout << "rotation_vector" << std::endl << rotation_vector << std::endl;
+
+        // std::cout << "original_quaternion:" << origin_quaternion.coeffs().transpose() << std::endl; 
+        std::cout << "part:" << Vector2Quaternion<double>(rotation_vector.transpose() *  filter_coeff).conjugate().normalized().coeffs().transpose() << std::endl; 
+        std::cout << "stabilized_angle_quaternion:" << (Vector2Quaternion<double>(rotation_vector.transpose() *  filter_coeff).conjugate().normalized() * origin_quaternion).coeffs().transpose() << std::endl; 
+
+        stabilized_angle_quaternion = Vector2Quaternion<double>(rotation_vector.transpose() *  filter_coeff).normalized() * origin_quaternion;
+// stabilized_angle_quaternion = quaternion(frame);
         return;
     }
 }
@@ -356,7 +362,10 @@ void AngularVelocity::getCorrectionMatrices(  const Eigen::Quaterniond& stabiliz
             double line_position_in_gyro_frame = convertEstimatedToMeasuredAngularVelocityFrame(line_position_in_video_frame, sync_table);
             
             Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(&(stabilized_angle_matrices[row * 3 * 3]),3,3) 
-            = (quaternion(line_position_in_gyro_frame) * stabilized_angle_quaternion.conjugate()).matrix().cast<float>();
+            // = (quaternion(line_position_in_gyro_frame) * stabilized_angle_quaternion.conjugate()).matrix().cast<float>();
+            // = (stabilized_angle_quaternion * quaternion(line_position_in_gyro_frame).conjugate()).matrix().cast<float>();
+            // = (quaternion(line_position_in_gyro_frame).conjugate() * stabilized_angle_quaternion).matrix().cast<float>();
+            = (stabilized_angle_quaternion.conjugate() * quaternion(line_position_in_gyro_frame)).matrix().cast<float>();
         }
     }
 }

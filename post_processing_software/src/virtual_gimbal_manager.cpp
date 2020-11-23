@@ -645,7 +645,7 @@ int VirtualGimbalManager::spinInpainting(double zoom, std::vector<std::pair<int3
     // UMatのバッファ
     UMatMap b;
 
-    size_t buffer_size = 21;
+    size_t buffer_size = 3;//21
     for(size_t i=0;i<buffer_size/2 ;++i)
     {
         reader_->get(b[i]);
@@ -696,7 +696,7 @@ int VirtualGimbalManager::spinInpainting(double zoom, std::vector<std::pair<int3
         // std::vector<Eigen::Quaterniond> measured_angle_quaternions(video_param->camera_info->height_*buffer_size);
         Eigen::Quaterniond stabilized_angle_quaternion;
 
-        measured_angular_velocity->getCorrectionQuaternion(frame, filter->getFilterCoefficient(filter_strength)
+        measured_angular_velocity->getStabilizedQuaternion(frame, filter->getFilterCoefficient(filter_strength)
         , sync_table, stabilized_angle_quaternion);
         
         // UMatとしてつくる　col は 時間軸(フレーム、行数)　rowはバッファーのサイズ(=フレーム数)に対応
@@ -752,8 +752,13 @@ int VirtualGimbalManager::spinInpainting(double zoom, std::vector<std::pair<int3
         // Show image on displayreturn 0;
         if (show_image)
         {
-            cv::imshow("Original", *b[frame]);
-            cv::imshow("Result", *b_output);
+            // cv::imshow("Original", *b[frame]);
+            // cv::imshow("Result", *b_output);
+            cv::UMat small, small_src;
+            cv::resize(*b_output, small, cv::Size(), 0.5, 0.5);
+            cv::resize(*b[frame], small_src, cv::Size(), 0.5, 0.5);
+            cv::imshow("Original", small_src);
+            cv::imshow("Result", small);
             char key = cv::waitKey(1);
             if ('q' == key)
             {
