@@ -39,7 +39,7 @@ typedef struct {
    float ik2;
    float ip1;
    float ip2;
-   float fx:
+   float fx;
    float fy;
    float cx;
    float cy;
@@ -191,21 +191,21 @@ __kernel void fill_function(
 )
 {
    int2 size   = get_image_dim(input);
-   int2 uv     = (int2)(get_grobal_id(0),get_global_id(1));
+   int2 uv     = (int2)(get_global_id(0),get_global_id(1));
    if(any(uv >= size)) return;
 
-   __global camera_params *p = params;
-   float2 f = (float2)(p.fx,p.fy);
-   float2 c = (float2)(p.cx,p.cy);
+   __global camera_params* p = (__global camera_params*)params;
+   float2 f = (float2)(p->fx,p->fy);
+   float2 c = (float2)(p->cx,p->cy);
 
    float2 uv0_ = convert_float2(uv);
-   float2 uv1_ = convert_float2(uv + (float2)(1,0));
-   float2 uv2_ = convert_float2(uv + (float2)(1,1));
-   float2 uv3_ = convert_float2(uv + (float2)(0,1));
-   float2 uv0 = warp_undistort(uv0_, p.zoom, rotation_matrix, p.ik1, p.ik2, p.ip1, p.ip2, f, c);
-   float2 uv1 = warp_undistort(uv1_, p.zoom, rotation_matrix, p.ik1, p.ik2, p.ip1, p.ip2, f, c);
-   float2 uv2 = warp_undistort(uv2_, p.zoom, rotation_matrix, p.ik1, p.ik2, p.ip1, p.ip2, f, c);
-   float2 uv3 = warp_undistort(uv3_, p.zoom, rotation_matrix, p.ik1, p.ik2, p.ip1, p.ip2, f, c);
+   float2 uv1_ = convert_float2(uv + (int2)(1,0));
+   float2 uv2_ = convert_float2(uv + (int2)(1,1));
+   float2 uv3_ = convert_float2(uv + (int2)(0,1));
+   float2 uv0 = warp_undistort(uv0_, p->zoom, rotation_matrix, p->ik1, p->ik2, p->ip1, p->ip2, f, c);
+   float2 uv1 = warp_undistort(uv1_, p->zoom, rotation_matrix, p->ik1, p->ik2, p->ip1, p->ip2, f, c);
+   float2 uv2 = warp_undistort(uv2_, p->zoom, rotation_matrix, p->ik1, p->ik2, p->ip1, p->ip2, f, c);
+   float2 uv3 = warp_undistort(uv3_, p->zoom, rotation_matrix, p->ik1, p->ik2, p->ip1, p->ip2, f, c);
 
    
    int2 uvMin = convert_int2(floor(min(min(uv0,uv1),min(uv2,uv3))));
@@ -250,11 +250,11 @@ __kernel void interpoloate_function(
 )
 {
    int2 size   = get_image_dim(past);
-   int2 uv     = (int2)(get_grobal_id(0),get_global_id(1));
+   int2 uv     = (int2)(get_global_id(0),get_global_id(1));
    if(any(uv >= size)) return;
 
-   uint4 past_pixel     = read_imageui(past, samplerNN, uv);
-   uint4 future_pixel   = read_imageui(future, samplerNN, uv);
+   uchar4 past_pixel     = convert_uchar4_sat(read_imageui(past, samplerNN, uv));
+   uchar4 future_pixel   = convert_uchar4_sat(read_imageui(future, samplerNN, uv));
 
    int output_index = mad24(uv.y, output_cols, uv.x);
    __global uchar4 *p_output = (__global uchar4 *)(output + output_index);
@@ -269,8 +269,11 @@ __kernel void interpoloate_function(
       *p_output = future_pixel;
       // (*p_output).w = 255;
       return;
+   }else if((past_pixel.w == 255) && (future_pixel.w == 255))  // Invalid pixel. There is no color information in this pixel.
+   {
+      *p_output = (uchar4)(0,255,0,255);
    }
-   else
+   else // Valid
    {
       float ratio = convert_float(past_pixel.w) / convert_float(past_pixel.w + future_pixel.w);
       *p_output = convert_uchar4_sat((1.f - ratio)*convert_float4(past_pixel) + ratio*(convert_float4(future_pixel)));

@@ -752,7 +752,7 @@ int VirtualGimbalManager::spinInpainting(double zoom, std::vector<std::pair<int3
         // Show image on displayreturn 0;
         if (show_image)
         {
-            cv::imshow("Original", *p);
+            cv::imshow("Original", *b[frame]);
             cv::imshow("Result", *b_output);
             char key = cv::waitKey(1);
             if ('q' == key)
