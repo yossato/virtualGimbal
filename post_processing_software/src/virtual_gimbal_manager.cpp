@@ -518,7 +518,7 @@ void VirtualGimbalManager::spin(double zoom, FilterPtr filter, Eigen::VectorXd &
 
     // Open Video
     reader_ = std::make_shared<MultiThreadVideoReader>(video_param->video_file_name,queue_size_);
-    auto capture = getVideoCapture();
+    // auto capture = getVideoCapture();
 
     // Stabilize every frames
     float ik1 = video_param->camera_info->inverse_k1_;
@@ -634,6 +634,9 @@ int VirtualGimbalManager::spinInpainting(double zoom, std::vector<std::pair<int3
     cv::ocl::Context context;
     initializeCL(context);
 
+    // Open Video
+    reader_ = std::make_shared<MultiThreadVideoReader>(video_param->video_file_name,queue_size_);
+    
 
     // Prepare
     measured_angular_velocity->calculateAngleQuaternion();
@@ -646,6 +649,11 @@ int VirtualGimbalManager::spinInpainting(double zoom, std::vector<std::pair<int3
     for(size_t i=0;i<buffer_size/2 ;++i)
     {
         reader_->get(b[i]);
+        if(!b[i])
+        {
+            std::cerr << "Failed to read video frame" << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
     }
 
     // BGRAのバッファ2枚 (b_past,b_future)
@@ -795,7 +803,17 @@ bool VirtualGimbalManager::fillPixelValues(cv::ocl::Context &context, double zoo
     cv::ocl::Image2D image(*source_image);
 
     cv::ocl::Kernel kernel;
-    getKernel(kernel_name, "fill_function", kernel, context, build_opt);
+    try
+    {
+        getKernel(kernel_name, "fill_function", kernel, context, build_opt);
+    }
+    catch(const char* e)
+    {
+        std::cerr << "Error: " << e << '\n';
+        std::exit(EXIT_FAILURE);
+    }
+    
+    
     kernel.args(image,
                 cv::ocl::KernelArg::WriteOnly(*dest_image),
                 cv::ocl::KernelArg::ReadOnlyNoSize(umat_matrices),
@@ -817,7 +835,17 @@ bool VirtualGimbalManager::interpolatePixels(cv::ocl::Context &context, UMatPtr 
     cv::ocl::Image2D past_image(*past);
     cv::ocl::Image2D future_image(*future);
     cv::ocl::Kernel kernel;
-    getKernel(kernel_name, "interpoloate_function", kernel, context, build_opt);
+    try
+    {
+        getKernel(kernel_name, "interpoloate_function", kernel, context, build_opt);
+    }
+    catch(const char* e)
+    {
+        std::cerr << "Error: " << e << '\n';
+        std::exit(EXIT_FAILURE);
+    }
+    
+    
     kernel.args(past_image,
                 future_image,
                 cv::ocl::KernelArg::WriteOnly(*output)

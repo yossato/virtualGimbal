@@ -57,6 +57,7 @@ int main(int argc, char **argv)
     char *jsonPass = NULL;
     bool output = false;
     bool show_image = true;
+    bool inpainting = false;
     const char *kernel_name = "cl/stabilizer_kernel.cl";
     const char *kernel_function = "stabilizer_function";
     double zoom = 1.0;
@@ -64,7 +65,7 @@ int main(int argc, char **argv)
     int opt;
     int queue_size = 10;
 
-    while ((opt = getopt(argc, argv, "j:i:c:l:w:z:k:f:o::n::")) != -1)
+    while ((opt = getopt(argc, argv, "j:i:c:l:w:z:k:f:o::n::p::")) != -1)
     {
         switch (opt)
         {
@@ -102,6 +103,9 @@ int main(int argc, char **argv)
         case 'n':
             show_image = false;
             break;
+        case 'p':
+            inpainting = true;
+            break;
         default:
             //            printf(     "virtualGimbal\r\n"
             //                        "Hyper fast video stabilizer\r\n\r\n"
@@ -115,7 +119,13 @@ int main(int argc, char **argv)
     if (stat(kernel_name, &st))
     {
         std::cerr << "ERROR: Kernel file not found. " << __FILE__ << ":" << __LINE__ << std::endl << std::flush;
-        return EXIT_FAILURE;
+        std::exit(EXIT_FAILURE);
+    }
+
+    if (stat(videoPass, &st))
+    {
+        std::cerr << "ERROR: " << videoPass << " is not found. "  << std::endl << std::flush;
+        std::exit(EXIT_FAILURE) ;
     }
 
 
@@ -201,7 +211,15 @@ int main(int argc, char **argv)
     vgp::plot(filter_coefficients, "filter_coefficients", legends_angular_velocity);
 #endif
 
-    manager.spin(zoom,fir_filter,filter_coefficients,table, show_image);
+    if(inpainting)
+    {
+        manager.spinInpainting(zoom,table,fir_filter);
+    }
+    else
+    {
+        manager.spin(zoom,fir_filter,filter_coefficients,table, show_image);    
+    }
+    
 
     return 0;
 }
