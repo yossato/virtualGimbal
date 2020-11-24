@@ -33,7 +33,7 @@ Camera calibration is required before you stabilize your own video. See a [detai
 ## Install dependencies
 ### Install system dependencies:
 ```
-sudo apt-get install cmake make 
+sudo apt-get install cmake make git  
 ```
 
 ### Install Git:
