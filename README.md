@@ -41,11 +41,6 @@ sudo apt-get install cmake make
 sudo apt install git-all
 ```  
 
-### Install libboost-math-dev:
-```
-sudo apt install libboost-math-dev
-```
-
 ### Install Python Dev:
 ```
 sudo apt-get install python3-dev python3-pip python3-tk python3-lxml python3-six

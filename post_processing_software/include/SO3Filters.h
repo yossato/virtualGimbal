@@ -36,9 +36,7 @@
 #include <Eigen/Dense>
 #include <vector>
 #include <rotation_param.h>
-#include <boost/math/special_functions/bessel.hpp>
 #include <memory>
-// Eigen::MatrixXd getFilterCoefficients
 
 void gradientLimit(Eigen::VectorXd &input, double maximum_gradient_);
 bool isGoodWarp(std::vector<Eigen::Array2d, Eigen::aligned_allocator<Eigen::Array2d>> &contour, VideoPtr video_param);
