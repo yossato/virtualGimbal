@@ -77,7 +77,7 @@ sudo dpkg -i *.deb
 
 ### Install ffmpeg:  
 ```
-sudo apt install yasm 
+sudo apt install yasm pkg-config  
 cd  
 git clone --depth 1 git://source.ffmpeg.org/ffmpeg.git  
 cd ffmpeg  
