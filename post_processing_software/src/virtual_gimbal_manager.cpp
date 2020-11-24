@@ -775,6 +775,28 @@ int VirtualGimbalManager::spinInpainting(double zoom, std::vector<std::pair<int3
                 }
             }
         }
+
+        if (writer_)
+        {
+            UMatPtr copied(new cv::UMat(b_output->clone()));
+            writer_->push(copied);
+        }
+
+        {
+             //Show fps
+            auto t4 = std::chrono::system_clock::now();
+            static auto t3 = t4;
+            // 処理の経過時間
+            double elapsedmicroseconds = std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count();
+            static double fps = 0.0;
+            if (elapsedmicroseconds != 0.0)
+            {
+                fps = 0.05 * (1e6 / elapsedmicroseconds) + 0.95 * fps;
+            }
+            t3 = t4;
+            printf("fps:%4.2f\r", fps);
+            fflush(stdout);
+        }
     }
     cv::destroyAllWindows();
     return 0;
