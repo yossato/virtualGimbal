@@ -87,11 +87,6 @@ sudo make install
 sudo ldconfig  
 ```
 
-### Install cmake:
-```
-sudo apt-get install cmake
-```
-
 ### Install OpenCV  
 ```
 cd  
