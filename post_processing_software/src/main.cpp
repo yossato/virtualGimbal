@@ -64,8 +64,8 @@ int main(int argc, char **argv)
     int32_t fileter_length = 199;
     int opt;
     int queue_size = 10;
-
-    while ((opt = getopt(argc, argv, "j:i:c:l:w:z:k:f:o::n::p::")) != -1)
+    size_t buffer_size = 21;
+    while ((opt = getopt(argc, argv, "j:i:c:l:w:z:k:f:o::n::p::b:")) != -1)
     {
         switch (opt)
         {
@@ -105,6 +105,9 @@ int main(int argc, char **argv)
             break;
         case 'p':
             inpainting = true;
+            break;
+        case 'b':
+            buffer_size = std::stoi(optarg);
             break;
         default:
             //            printf(     "virtualGimbal\r\n"
@@ -213,7 +216,7 @@ int main(int argc, char **argv)
 
     if(inpainting)
     {
-        manager.spinInpainting(zoom,table,fir_filter);
+        manager.spinInpainting(zoom,table,fir_filter,buffer_size);
     }
     else
     {

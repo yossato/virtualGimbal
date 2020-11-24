@@ -628,7 +628,7 @@ void VirtualGimbalManager::spin(double zoom, FilterPtr filter, Eigen::VectorXd &
 #undef LAP_BEGIN
 #undef LAP
 
-int VirtualGimbalManager::spinInpainting(double zoom, std::vector<std::pair<int32_t, double>> &sync_table, FilterPtr filter, int filter_strength, bool show_image)
+int VirtualGimbalManager::spinInpainting(double zoom, std::vector<std::pair<int32_t, double>> &sync_table, FilterPtr filter, size_t buffer_size, int filter_strength, bool show_image)
 {
     // Prepare OpenCL
     cv::ocl::Context context;
@@ -645,7 +645,7 @@ int VirtualGimbalManager::spinInpainting(double zoom, std::vector<std::pair<int3
     // UMatのバッファ
     UMatMap b;
 
-    size_t buffer_size = 3;//21
+    // size_t buffer_size = 3;//21
     for(size_t i=0;i<buffer_size/2 ;++i)
     {
         reader_->get(b[i]);

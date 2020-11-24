@@ -192,7 +192,7 @@ __kernel void fill_function(
 {
    int2 size   = get_image_dim(input);
    int2 uv     = (int2)(get_global_id(0),get_global_id(1));
-   if(any(uv >= size)) return;
+   if(any(uv >= (size - (int2)(1,1)))) return;
 
    __global camera_params* p = (__global camera_params*)params;
    float2 f = (float2)(p->fx,p->fy);
