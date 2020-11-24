@@ -74,7 +74,7 @@ int main(int argc, char **argv)
             break;
         case 'i': //input video file pass
             videoPass = optarg;
-            printf("videoPass %s",videoPass);
+            printf("videoPass %s\r\n",videoPass);
             break;
         case 'c':
             cameraName = optarg;

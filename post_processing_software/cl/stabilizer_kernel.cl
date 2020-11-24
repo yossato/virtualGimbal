@@ -187,7 +187,7 @@ __kernel void fill_function(
    int rotation_matrix_step, int rotation_matrix_offset,
    __global float* params,
    int params_step, int params_offset,
-   int distance
+   uchar distance
 )
 {
    int2 size   = get_image_dim(input);
@@ -228,7 +228,7 @@ __kernel void fill_function(
          }else{
             continue;
          }
-         uint4 pixel = read_imageui(input, samplerLN, uw_cam); // TODO:Fix remove a reading every pixel
+         uchar4 pixel = convert_uchar4_sat(read_imageui(input, samplerLN, uw_cam)); // TODO:Fix remove a reading every pixel
 
          int output_index = mad24(uvt.y, output_cols, uvt.x);
          __global uchar4 *p_out = (__global uchar4 *)(output + output_index);
