@@ -108,15 +108,7 @@ sudo sh -c "echo export PKG_CONFIG_PATH >> /etc/bash.bashrc"
 
 ### Install Eigen
 ```
-cd  
-wget -O Eigen-3.3.7.tar.gz https://gitlab.com/libeigen/eigen/-/archive/3.3.7/eigen-3.3.7.tar.gz  
-tar zxvf Eigen-3.3.7.tar.gz  
-cd eigen-*  
-mkdir build  
-cd build  
-cmake ..  
-make -j4  
-sudo make install  
+sudo apt install libeigen3-dev  
 ```
 
 ## Build
