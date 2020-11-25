@@ -90,7 +90,7 @@ sudo ldconfig
 ### Install OpenCV  
 ```
 cd  
-sudo apt-get install build-essential module-assistant libgtk2.0-dev  
+sudo apt-get install build-essential module-assistant libgtk-3-dev  
 sudo m-a prepare  
 git clone --depth 1 https://github.com/opencv/opencv.git  
 cd opencv/  
