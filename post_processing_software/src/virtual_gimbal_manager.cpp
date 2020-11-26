@@ -696,13 +696,13 @@ int VirtualGimbalManager::spinInpainting(double zoom, std::vector<std::pair<int3
         // std::vector<Eigen::Quaterniond> measured_angle_quaternions(video_param->camera_info->height_*buffer_size);
         Eigen::Quaterniond stabilized_angle_quaternion;
 
-        measured_angular_velocity->getStabilizedQuaternion(frame, filter->getFilterCoefficient(filter_strength)
+        double diff_angle = measured_angular_velocity->getStabilizedQuaternion(frame, filter->getFilterCoefficient(filter_strength)
         , sync_table, stabilized_angle_quaternion);
         
         // UMatとしてつくる　col は 時間軸(フレーム、行数)　rowはバッファーのサイズ(=フレーム数)に対応
         // static cv::UMat correction_matrices(cv::Size(video_param->camera_info->height_ * 9, buffer_size),CV_32F, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
 
-        
+        std::cout << "angle:" << diff_angle << std::endl;
 
         // b_futureについて基準フレームから未来方向へfor文で連続して画素を埋めていく
         b_future->setTo(cv::Scalar(127,127,127,255)); // BGR A, A channel means distance from target frame

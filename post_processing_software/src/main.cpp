@@ -153,7 +153,16 @@ int main(int argc, char **argv)
     manager.setVideoParam(videoPass, camera_info);
 
     if(output){
-        manager.enableWriter(videoPass);
+        try
+        {
+            manager.enableWriter(videoPass);
+        }
+        catch(const char& e)
+        {
+            std::cerr << "Error: " << e << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+        
     }
 
 
