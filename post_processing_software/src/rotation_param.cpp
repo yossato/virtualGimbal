@@ -288,7 +288,7 @@ Eigen::Quaterniond AngularVelocity::quaternion(double frame)
     }
 }
 
-void AngularVelocity::getStabilizedQuaternion(double estimated_angular_velocity_frame, 
+double AngularVelocity::getStabilizedQuaternion(double estimated_angular_velocity_frame, 
                                                         const Eigen::VectorXd &filter_coeff, 
                                                         std::vector<std::pair<int32_t,double>> &sync_table, 
                                                         Eigen::Quaterniond& stabilized_angle_quaternion)
@@ -301,7 +301,7 @@ void AngularVelocity::getStabilizedQuaternion(double estimated_angular_velocity_
     if ((frame < 0) || (frame >= data.rows()))
     {
         std::cerr << "Error: Frame range is out of range." << std::endl;
-        return;
+        return std::numeric_limits<double>::quiet_NaN() ;
     }
     else
     {
@@ -329,12 +329,13 @@ void AngularVelocity::getStabilizedQuaternion(double estimated_angular_velocity_
         // std::cout << "rotation_vector" << std::endl << rotation_vector << std::endl;
 
         // std::cout << "original_quaternion:" << origin_quaternion.coeffs().transpose() << std::endl; 
-        std::cout << "part:" << Vector2Quaternion<double>(rotation_vector.transpose() *  filter_coeff).conjugate().normalized().coeffs().transpose() << std::endl; 
-        std::cout << "stabilized_angle_quaternion:" << (Vector2Quaternion<double>(rotation_vector.transpose() *  filter_coeff).conjugate().normalized() * origin_quaternion).coeffs().transpose() << std::endl; 
+        // std::cout << "part:" << Vector2Quaternion<double>(rotation_vector.transpose() *  filter_coeff).conjugate().normalized().coeffs().transpose() << std::endl; 
+        // std::cout << "stabilized_angle_quaternion:" << (Vector2Quaternion<double>(rotation_vector.transpose() *  filter_coeff).conjugate().normalized() * origin_quaternion).coeffs().transpose() << std::endl; 
 
-        stabilized_angle_quaternion = Vector2Quaternion<double>(rotation_vector.transpose() *  filter_coeff).normalized() * origin_quaternion;
-// stabilized_angle_quaternion = quaternion(frame);
-        return;
+        Eigen::Quaterniond diff_angle_quaternion = Vector2Quaternion<double>(rotation_vector.transpose() *  filter_coeff).normalized();
+        stabilized_angle_quaternion = diff_angle_quaternion * origin_quaternion;
+        double diff_angle =  acos(diff_angle_quaternion.w()) * 2.0;
+        return diff_angle;
     }
 }
 
