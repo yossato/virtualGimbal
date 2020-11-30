@@ -47,6 +47,9 @@
 #include "multi_thread_video_writer.h"
 #include <chrono>         // std::chrono::seconds
 #include <map>
+
+#include "inpainting.hpp"
+
 class VirtualGimbalManager
 {
 public:

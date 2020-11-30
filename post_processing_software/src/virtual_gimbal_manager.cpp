@@ -670,6 +670,7 @@ int VirtualGimbalManager::spinInpainting(double zoom, std::vector<std::pair<int3
     {
         cv::namedWindow("Original",cv::WINDOW_NORMAL);
         cv::namedWindow("Result",cv::WINDOW_NORMAL);
+        cv::namedWindow("inpaint",cv::WINDOW_NORMAL);
     }
 
     // TODO: MultiThreadVideoReaderがすでに内部にbufferをもっているので、こいつを借りてもいい気がする
@@ -747,6 +748,49 @@ int VirtualGimbalManager::spinInpainting(double zoom, std::vector<std::pair<int3
         {
             std::cerr << "Failed to run a interpoloate_function kernel at Line:" << __LINE__ << " of " << __FILE__ << std::endl;
             return -1;
+        }
+
+        // Inpaint test
+        if(frame + 1 < video_param->video_frames){
+            static UMatPtr b_latest;
+            if(!b_latest) b_latest = UMatPtr(new cv::UMat(b[0]->size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY));
+            static UMatPtr b_next;
+            if(!b_next) b_next = UMatPtr(new cv::UMat(b[0]->size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY));
+            
+            // Generate latest frame
+            std::vector<float> stabilized_angle_matrices;
+            measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, frame, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices);
+            if(OPENCL_SUCCESS !=  fillPixelValues(context, zoom, stabilized_angle_matrices,0,b[frame],b_latest))
+            {
+                std::cerr << "Failed to run a fill_function kernel at Line:" << __LINE__ << " of " << __FILE__ << std::endl;
+                return -1;
+            }
+
+            // Generate next frame 
+            stabilized_angle_matrices.clear();
+            measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, frame+1, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices);
+            if(OPENCL_SUCCESS !=  fillPixelValues(context, zoom, stabilized_angle_matrices,0,b[frame+1],b_next))
+            {
+                std::cerr << "Failed to run a fill_function kernel at Line:" << __LINE__ << " of " << __FILE__ << std::endl;
+                return -1;
+            }
+
+            cv::UMat mono_latest;
+            cv::UMat mono_next;
+            cv::cvtColor(*b_latest,mono_latest,COLOR_BGRA2GRAY);
+            cv::cvtColor(*b_next,mono_next,COLOR_BGRA2GRAY);
+            cv::Mat float_latest,float_next;
+            mono_latest.convertTo(float_latest,CV_32F);
+            mono_next.convertTo(float_next,CV_32F);
+            cv::Size map_size = cv::Size(10,10);
+            cv::Size window_size = cv::Size(100,100);
+            cv::Mat map = generateInpaintingMap(map_size,window_size,float_latest,float_next);
+            
+            //  = b_next->getMat(cv::ACCESS_READ)
+            cv::Mat latest = b[frame]->getMat(cv::ACCESS_READ).clone();
+            visualizeInpaintingMap(latest,window_size,map);
+            
+            cv::imshow("inpaint",latest);
         }
 
         // Show image on displayreturn 0;
