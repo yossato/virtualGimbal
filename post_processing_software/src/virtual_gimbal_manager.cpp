@@ -782,14 +782,21 @@ int VirtualGimbalManager::spinInpainting(double zoom, std::vector<std::pair<int3
             cv::Mat float_latest,float_next;
             mono_latest.convertTo(float_latest,CV_32F);
             mono_next.convertTo(float_next,CV_32F);
-            cv::Size map_size = cv::Size(10,10);
-            cv::Size window_size = cv::Size(100,100);
+            cv::Size map_size = cv::Size(5,5);
+            cv::Size window_size = cv::Size(600,400);
             cv::Mat map = generateInpaintingMap(map_size,window_size,float_latest,float_next);
             
             //  = b_next->getMat(cv::ACCESS_READ)
-            cv::Mat latest = b[frame]->getMat(cv::ACCESS_READ).clone();
+            cv::Mat latest = b_latest->getMat(cv::ACCESS_READ).clone();
             visualizeInpaintingMap(latest,window_size,map);
-            
+
+            if (writer_)
+            {
+                UMatPtr copied(new cv::UMat(latest.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY)));
+                writer_->push(copied);
+            }
+
+            cv::resize(latest,latest,cv::Size(),0.3,0.3);
             cv::imshow("inpaint",latest);
         }
 

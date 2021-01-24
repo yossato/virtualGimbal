@@ -8,8 +8,8 @@ cv::Rect getWindowRoi(const cv::Size map_size, const cv::Size window_size, const
     assert(map_size.width * window_size.width < source_image_size.width);
     assert(map_size.height * window_size.height < source_image_size.height);
 
-    double col_step = (double)(source_image_size.width - window_size.width)/(double)map_size.width;
-    double row_step = (double)(source_image_size.height- window_size.height)/(double)map_size.height;
+    double col_step = (double)(source_image_size.width - window_size.width)/(double)(map_size.width-1);
+    double row_step = (double)(source_image_size.height- window_size.height)/(double)(map_size.height-1);
     cv::Rect2i roi(col_step * roi_position.x, row_step * roi_position.y, window_size.width, window_size.height);
     return roi;
 }
