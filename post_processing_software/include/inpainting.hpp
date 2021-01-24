@@ -48,6 +48,6 @@
 
 cv::Rect getWindowRoi(const cv::Size map_size, const cv::Size window_size, const cv::Size source_image_size, cv::Point roi_position);
 cv::Mat generateInpaintingMap(const cv::Size map_size, const cv::Size window_size, const cv::Mat source, const cv::Mat target);
-void visualizeInpaintingMap(const cv::Mat source,const cv::Size window_size, const cv::Mat inpainting_map);
+void visualizeInpaintingMap(cv::Mat &source,const cv::Size window_size, const cv::Mat inpainting_map);
 
 #endif // __VIRTUALGIMBAL_INPAINTING_H__

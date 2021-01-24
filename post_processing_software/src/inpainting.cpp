@@ -29,7 +29,7 @@ cv::Mat generateInpaintingMap(const cv::Size map_size, const cv::Size window_siz
     return map;
 }
 
-void visualizeInpaintingMap(const cv::Mat source, const cv::Size window_size, const cv::Mat inpainting_map)
+void visualizeInpaintingMap(cv::Mat &source, const cv::Size window_size, const cv::Mat inpainting_map)
 {
     cv::Size map_size = inpainting_map.size();
     for(int row=0;row<map_size.height;++row)
@@ -43,7 +43,7 @@ void visualizeInpaintingMap(const cv::Mat source, const cv::Size window_size, co
             std::cout << "start:" << start << " end:" << end << std::endl;
             cv::line(source,start,end,cv::Scalar(0,0,255),2);    
             cv::rectangle(source,roi,cv::Scalar(0,0,255),2);
-            cv::rectangle(source,cv::Rect(roi.x+shift.x,roi.y+shift.y,roi.width,roi.height),cv::Scalar(0,255,255),2);        
+            cv::rectangle(source,cv::Rect(roi.x+shift.x,roi.y+shift.y,roi.width,roi.height),cv::Scalar(127,cv::saturate_cast<uint8_t>(shift.y/roi.height*1000.f+127),cv::saturate_cast<uint8_t>(shift.x/roi.width*1000.f+127)),2);        
         }
     }
 }
