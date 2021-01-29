@@ -100,7 +100,7 @@ int main(int argc, char **argv)
         mono_latest.convertTo(float_latest,CV_32F);
         mono_next.convertTo(float_next,CV_32F);
         cv::Size map_size = cv::Size(map_col,map_row);
-        cv::Size window_size = cv::Size(window_height,window_width);
+        cv::Size window_size = cv::Size(window_width,window_height);
         cv::Mat map = generateInpaintingMap(map_size,window_size,float_latest,float_next);
         
         cv::Mat visualize_image = umat_src.getMat(cv::ACCESS_RW).clone();
