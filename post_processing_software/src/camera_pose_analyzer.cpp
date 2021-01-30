@@ -44,7 +44,8 @@ int main(int argc, char **argv)
     int map_row = 5; 
     int window_height = 100;
     int window_width = 100;
-    while ((opt = getopt(argc, argv, "i:c::r::w::h::")) != -1)
+    float colored_map_gain = 2.0;
+    while ((opt = getopt(argc, argv, "i:c::r::w::g::h::")) != -1)
     {
         switch (opt)
         {
@@ -67,6 +68,11 @@ int main(int argc, char **argv)
             printf("window_width %d\r\n",window_width);
             assert(window_width > 0);
             break;
+        case 'g':   // colored_map_gain
+            colored_map_gain = std::stof(optarg);
+            printf("window_width %d\r\n",window_width);
+            assert(window_width > 0);
+            break;
         case 'h':   // window height
             window_height = std::stoi(optarg);
             printf("window_height %d\r\n",window_height);
@@ -79,7 +85,7 @@ int main(int argc, char **argv)
     }
 
     cv::namedWindow("inpaint",cv::WINDOW_NORMAL);
-
+    cv::namedWindow("colored_map",cv::WINDOW_NORMAL);
 
     // Read video frame
     cv::VideoCapture cap(videoPass);
@@ -107,6 +113,10 @@ int main(int argc, char **argv)
         visualizeInpaintingMap(visualize_image,window_size,map);
         cv::resize(visualize_image,visualize_image,cv::Size(),0.3,0.3);
         cv::imshow("inpaint",visualize_image);
+
+        cv::Mat colored_map = generateOpticalFlowMap(map,colored_map_gain);
+        cv::imshow("colored_map",colored_map);
+
         uint8_t key = (uint8_t)cv::waitKey(1);
         if(key == 'q')
         {

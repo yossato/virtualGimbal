@@ -47,3 +47,37 @@ void visualizeInpaintingMap(cv::Mat &source, const cv::Size window_size, const c
         }
     }
 }
+
+cv::Mat generateOpticalFlowMap(const cv::Mat &map,const float gain)
+{
+    cv::Mat hsv_image = cv::Mat(map.size(),CV_8UC3);
+    for(int v=0;v<map.rows;++v)
+    {
+        for(int u=0;u<map.cols;++u)
+        {
+            const cv::Vec2f &value = map.at<cv::Vec2f>(v,u);
+            // Hue
+            if(fabs(value[0])> std::numeric_limits<float>::epsilon())
+            {
+                float angle_radian = std::atan2(value[1],value[0]);
+                float angle_degree = angle_radian / M_PI * 180;
+                angle_degree = angle_degree >= 0.f ? angle_degree : angle_degree + 180.f;
+                hsv_image.at<cv::Vec3b>(v,u)[0] = cv::saturate_cast<uint8_t>(angle_degree);
+            }
+            else
+            {
+                hsv_image.at<cv::Vec3b>(v,u)[0] = 0;
+            }
+            
+
+            // Saturation
+            hsv_image.at<cv::Vec3b>(v,u)[1] = 255;
+            // Value
+            uint8_t norm = cv::saturate_cast<uint8_t>(sqrt(value.dot(value)) * gain);
+            hsv_image.at<cv::Vec3b>(v,u)[2] = norm;
+        }
+    }
+    cv::Mat bgr_image;
+    cv::cvtColor(hsv_image,bgr_image,cv::COLOR_HSV2BGR);
+    return bgr_image;
+}
