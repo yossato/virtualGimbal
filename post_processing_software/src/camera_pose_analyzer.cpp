@@ -70,8 +70,8 @@ int main(int argc, char **argv)
             break;
         case 'g':   // colored_map_gain
             colored_map_gain = std::stof(optarg);
-            printf("window_width %d\r\n",window_width);
-            assert(window_width > 0);
+            printf("colored_map_gain %f\r\n",colored_map_gain);
+            assert(colored_map_gain > 0);
             break;
         case 'h':   // window height
             window_height = std::stoi(optarg);
@@ -86,6 +86,9 @@ int main(int argc, char **argv)
 
     cv::namedWindow("inpaint",cv::WINDOW_NORMAL);
     cv::namedWindow("colored_map",cv::WINDOW_NORMAL);
+    cv::namedWindow("colored_map_0",cv::WINDOW_NORMAL);
+    cv::namedWindow("colored_map_1",cv::WINDOW_NORMAL);
+    cv::namedWindow("colored_map_2",cv::WINDOW_NORMAL);
 
     // Read video frame
     cv::VideoCapture cap(videoPass);
@@ -116,6 +119,24 @@ int main(int argc, char **argv)
 
         cv::Mat colored_map = generateOpticalFlowMap(map,colored_map_gain);
         cv::imshow("colored_map",colored_map);
+
+        cv::Mat pyramid_float_latest = float_latest.clone();
+        cv::Mat pyramid_float_next = float_next.clone();
+        cv::Size pyramid_map_size = map_size;
+        std::vector<cv::Mat> pyramid_colored_map;
+        for(int i=0;i<1;++i)
+        {
+            cv::resize(pyramid_float_latest,pyramid_float_latest,pyramid_float_latest.size()/2,0,0,cv::INTER_LINEAR);
+            cv::resize(pyramid_float_next,pyramid_float_next,pyramid_float_next.size()/2,0,0,cv::INTER_LINEAR);
+            pyramid_map_size = pyramid_map_size/2;
+            if(pyramid_float_latest.cols < window_size.width) break;
+            if(pyramid_float_latest.rows < window_size.height) break;
+
+            cv::Mat pyramid_map = generateInpaintingMap(pyramid_map_size,window_size,pyramid_float_latest,pyramid_float_next);
+            cv::Mat pyramid_colored_map = generateOpticalFlowMap(pyramid_map,colored_map_gain);
+            cv::imshow(std::string("colored_map_")+std::to_string(i),pyramid_colored_map); 
+        }
+
 
         uint8_t key = (uint8_t)cv::waitKey(1);
         if(key == 'q')
