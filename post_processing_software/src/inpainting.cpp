@@ -14,6 +14,13 @@ cv::Rect getWindowRoi(const cv::Size map_size, const cv::Size window_size, const
     return roi;
 }
 
+cv::Rect getFitWindowRoi(const cv::Size map_size, const cv::Size source_image_size, cv::Point roi_position)
+{
+    assert(0 <= roi_position.x && roi_position.x < map_size.width);
+    assert(0 <= roi_position.y && roi_position.y < map_size.height);
+    return cv::Rect2i(source_image_size.width/map_size.width*roi_position.x,source_image_size.height/map_size.height*roi_position.y,source_image_size.width/map_size.width,source_image_size.height/map_size.height);
+}
+
 cv::Mat generateInpaintingMap(const cv::Size map_size, const cv::Size window_size, const cv::Mat source, const cv::Mat target)
 {
     cv::Mat map(map_size,CV_32FC2);
@@ -21,7 +28,7 @@ cv::Mat generateInpaintingMap(const cv::Size map_size, const cv::Size window_siz
     {
         for(int col=0;col<map_size.width;++col)
         {
-            cv::Rect roi = getWindowRoi(map_size,window_size,source.size(),cv::Point(col,row));
+            cv::Rect roi = getFitWindowRoi(map_size,source.size(),cv::Point(col,row));
             cv::Point2d shift = cv::phaseCorrelate(source(roi),target(roi));
             map.at<cv::Point2f>(row,col) = shift;            
         }
@@ -40,7 +47,7 @@ void visualizeInpaintingMap(cv::Mat &source, const cv::Size window_size, const c
             cv::Point start(roi.x+roi.width/2,roi.y+roi.height/2);
             cv::Point2f shift = inpainting_map.at<cv::Point2f>(row,col);
             cv::Point end = cv::Point(shift) + start;
-            std::cout << "start:" << start << " end:" << end << std::endl;
+            // std::cout << "start:" << start << " end:" << end << std::endl;
             cv::line(source,start,end,cv::Scalar(0,0,255),2);    
             cv::rectangle(source,roi,cv::Scalar(0,0,255),2);
             cv::rectangle(source,cv::Rect(roi.x+shift.x,roi.y+shift.y,roi.width,roi.height),cv::Scalar(127,cv::saturate_cast<uint8_t>(shift.y/roi.height*1000.f+127),cv::saturate_cast<uint8_t>(shift.x/roi.width*1000.f+127)),2);        

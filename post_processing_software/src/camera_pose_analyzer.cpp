@@ -124,16 +124,18 @@ int main(int argc, char **argv)
         cv::Mat pyramid_float_next = float_next.clone();
         cv::Size pyramid_map_size = map_size;
         std::vector<cv::Mat> pyramid_colored_map;
-        for(int i=0;i<1;++i)
+        double pyramid_colored_map_gain = colored_map_gain;
+        for(int i=0;i<5;++i)
         {
-            cv::resize(pyramid_float_latest,pyramid_float_latest,pyramid_float_latest.size()/2,0,0,cv::INTER_LINEAR);
-            cv::resize(pyramid_float_next,pyramid_float_next,pyramid_float_next.size()/2,0,0,cv::INTER_LINEAR);
+            cv::resize(pyramid_float_latest,pyramid_float_latest,pyramid_float_latest.size()/2,0,0,cv::INTER_AREA);
+            cv::resize(pyramid_float_next,pyramid_float_next,pyramid_float_next.size()/2,0,0,cv::INTER_AREA);
             pyramid_map_size = pyramid_map_size/2;
+            pyramid_colored_map_gain *= 2.;
             if(pyramid_float_latest.cols < window_size.width) break;
             if(pyramid_float_latest.rows < window_size.height) break;
 
             cv::Mat pyramid_map = generateInpaintingMap(pyramid_map_size,window_size,pyramid_float_latest,pyramid_float_next);
-            cv::Mat pyramid_colored_map = generateOpticalFlowMap(pyramid_map,colored_map_gain);
+            cv::Mat pyramid_colored_map = generateOpticalFlowMap(pyramid_map,pyramid_colored_map_gain);
             cv::imshow(std::string("colored_map_")+std::to_string(i),pyramid_colored_map); 
         }
 
