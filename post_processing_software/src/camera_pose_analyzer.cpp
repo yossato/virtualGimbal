@@ -101,7 +101,7 @@ int main(int argc, char **argv)
     cv::resize(umat_next,umat_next,cv::Size(),resize_ratio,resize_ratio,cv::INTER_AREA);
 
     cv::UMat mono_old,mono_next;
-    cv::Mat float_old,float_next;
+    cv::UMat float_old,float_next;
     cv::cvtColor(umat_old,mono_old,cv::COLOR_BGRA2GRAY);
     mono_old.convertTo(float_old,CV_32F);
     
@@ -116,7 +116,7 @@ int main(int argc, char **argv)
 
         {
             cv::Mat flow(float_old.size(), CV_32FC2);
-            cv::calcOpticalFlowFarneback(float_old, float_next, flow, 0.5, 3, 15, 3, 5, 1.2, 0);
+            cv::calcOpticalFlowFarneback(float_old, float_next, flow, 0.5, 5, 15, 3, 5, 1.2, 0);
             // visualization
             cv::Mat flow_parts[2];
             cv::split(flow, flow_parts);
@@ -156,6 +156,7 @@ int main(int argc, char **argv)
         mono_old = std::move(mono_next);
         float_old = std::move(float_next);
         cap >> umat_next;
+        if(umat_next.empty()) break;
         cv::resize(umat_next,umat_next,cv::Size(),resize_ratio,resize_ratio,cv::INTER_AREA);
     }
     return EXIT_SUCCESS;
