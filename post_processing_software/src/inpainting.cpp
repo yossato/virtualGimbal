@@ -21,9 +21,27 @@ cv::Rect getFitWindowRoi(const cv::Size map_size, const cv::Size source_image_si
     return cv::Rect2i(source_image_size.width/map_size.width*roi_position.x,source_image_size.height/map_size.height*roi_position.y,source_image_size.width/map_size.width,source_image_size.height/map_size.height);
 }
 
-cv::Mat generateInpaintingMap(const cv::Size map_size, const cv::Size window_size, const cv::Mat source, const cv::Mat target)
+cv::Mat calculateOpticalFlow(cv::Size map_size, cv::Size window_size, const cv::Mat source, const cv::Mat target)
 {
     cv::Mat map(map_size,CV_32FC2);
+
+    assert(map_size != cv::Size() || window_size != cv::Size());
+
+    // Calculate auto window size if it is empty.
+    if(window_size == cv::Size())
+    {
+        window_size.width = source.cols / map_size.width;
+        window_size.height = source.rows / map_size.height;
+    }
+    else if (map_size == cv::Size())
+    {
+        map_size.width = source.cols / window_size.width;
+        map_size.height = source.rows / window_size.width;
+    }
+    
+
+    // Calculate auto map size if is is empty.
+
     for(int row=0;row<map_size.height;++row)
     {
         for(int col=0;col<map_size.width;++col)

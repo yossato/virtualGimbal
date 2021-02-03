@@ -47,7 +47,7 @@
 // };
 
 cv::Rect getWindowRoi(const cv::Size map_size, const cv::Size window_size, const cv::Size source_image_size, cv::Point roi_position);
-cv::Mat generateInpaintingMap(const cv::Size map_size, const cv::Size window_size, const cv::Mat source, const cv::Mat target);
+cv::Mat calculateOpticalFlow(cv::Size map_size, cv::Size window_size, const cv::Mat source, const cv::Mat target);
 void visualizeInpaintingMap(cv::Mat &source,const cv::Size window_size, const cv::Mat inpainting_map);
 cv::Mat generateOpticalFlowMap(const cv::Mat &map, const float gain=2.0);
 #endif // __VIRTUALGIMBAL_INPAINTING_H__

@@ -784,7 +784,7 @@ int VirtualGimbalManager::spinInpainting(double zoom, std::vector<std::pair<int3
             mono_next.convertTo(float_next,CV_32F);
             cv::Size map_size = cv::Size(5,5);
             cv::Size window_size = cv::Size(600,400);
-            cv::Mat map = generateInpaintingMap(map_size,window_size,float_latest,float_next);
+            cv::Mat map = calculateOpticalFlow(map_size,window_size,float_latest,float_next);
             
             //  = b_next->getMat(cv::ACCESS_READ)
             cv::Mat latest = b_latest->getMat(cv::ACCESS_READ).clone();
