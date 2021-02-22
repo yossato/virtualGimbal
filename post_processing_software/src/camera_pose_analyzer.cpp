@@ -34,6 +34,9 @@
 #include <Eigen/Dense>
 #include <opencv2/opencv.hpp>
 #include <inpainting.hpp>
+
+
+
 int main(int argc, char **argv)
 {
 
@@ -113,9 +116,9 @@ int main(int argc, char **argv)
         cv::cvtColor(umat_next,mono_next,cv::COLOR_BGRA2GRAY);
         mono_next.convertTo(float_next,CV_32F);
  
-
+        cv::Mat flow;
         {
-            cv::Mat flow(float_old.size(), CV_32FC2);
+            flow = cv::Mat(float_old.size(), CV_32FC2);
             cv::calcOpticalFlowFarneback(float_old, float_next, flow, 0.5, 5, 15, 3, 5, 1.2, 0);
             // visualization
             cv::Mat flow_parts[2];
@@ -135,7 +138,10 @@ int main(int argc, char **argv)
             cv::imshow("frame2", bgr);
         }
 
-       
+        // Draw contour on umat_old and umat_next
+        cv::Size grid_size(umat_old.size()/24);
+        cv::Mat grid_old = drawFlowGrid(cv::Mat::zeros(float_old.size(),CV_32FC2),grid_size,umat_old.getMat(cv::ACCESS_READ).clone());
+        cv::Mat grid_next = drawFlowGrid(flow,grid_size,umat_next.getMat(cv::ACCESS_READ).clone());
 
         uint8_t key = (uint8_t)cv::waitKey(1);
         if(key == 'q')
