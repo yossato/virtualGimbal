@@ -35,7 +35,54 @@
 #include <opencv2/opencv.hpp>
 #include <inpainting.hpp>
 
+cv::Mat drawFlowGrid(const cv::Mat flow, const cv::Size grid_size, const cv::Mat src_image)
+{
+    assert(grid_size <= flow.size());
+    assert(flow.type() == CV_32FC1);
+    cv::Mat dst_image = src_image.clone();
 
+    
+
+    // Get destinateion / grid_size ratio
+    cv::Vec2d ratio = cv::Vec2d((double)dst_image.cols/(double)grid_size.width,(double)dst_image.rows/(double)grid_size.height);
+    std::cout << "ratio:" << ratio << std::endl;
+
+    // cv::Mat grid_pos(grid_size,CV_64FC2);
+    // for(int r=0;r<grid_size.height;++r)
+    // {
+    //     for(int c = 0;c<grid_size.width;++c)
+    //     {
+    //         grid_pos.at<cv::Vec2d>(r,c) = ratio.mul(cv::Vec2d((double)r,(double)c));
+    //     }
+    // }
+
+    cv::Mat resized_flow;
+    cv::resize(flow,resized_flow,grid_size,0.0,0.0,cv::INTER_AREA);
+
+    // Draw horizontal lines
+    for(int r=0;r<grid_size.width;++r)
+    {
+        for(int c=0;c<grid_size.height-1;++c)
+        {
+            cv::Point line_begin = (cv::Vec2i)ratio.mul(cv::Vec2d(r,c)+(cv::Vec2d)resized_flow.at<cv::Vec2f>(r,c));
+            cv::Point line_end = (cv::Vec2i)ratio.mul(cv::Vec2d(r,c+1)+(cv::Vec2d)resized_flow.at<cv::Vec2f>(r,c+1));
+            cv::line(dst_image,line_begin,line_end,cv::Scalar(0,0,255));
+        }
+    }
+
+    // Draw vertical lines
+    for(int c=0;c<grid_size.height;++c)
+    {
+        for(int r=0;r<grid_size.width-1;++r)
+        {
+            cv::Point line_begin = (cv::Vec2i)ratio.mul(cv::Vec2d(r,c)+(cv::Vec2d)resized_flow.at<cv::Vec2f>(r,c));
+            cv::Point line_end = (cv::Vec2i)ratio.mul(cv::Vec2d(r+1,c)+(cv::Vec2d)resized_flow.at<cv::Vec2f>(r+1,c));
+            cv::line(dst_image,line_begin,line_end,cv::Scalar(0,0,255));
+        }
+    }
+
+    return dst_image;
+}
 
 int main(int argc, char **argv)
 {
@@ -89,6 +136,8 @@ int main(int argc, char **argv)
 
     cv::namedWindow("frame2", cv::WINDOW_NORMAL);
     cv::namedWindow("source",cv::WINDOW_NORMAL);
+    cv::namedWindow("grid_old",cv::WINDOW_NORMAL);
+    cv::namedWindow("grid_next",cv::WINDOW_NORMAL);
 
     // Read video frame
     cv::VideoCapture cap(videoPass);
@@ -140,8 +189,10 @@ int main(int argc, char **argv)
 
         // Draw contour on umat_old and umat_next
         cv::Size grid_size(umat_old.size()/24);
-        cv::Mat grid_old = drawFlowGrid(cv::Mat::zeros(float_old.size(),CV_32FC2),grid_size,umat_old.getMat(cv::ACCESS_READ).clone());
-        cv::Mat grid_next = drawFlowGrid(flow,grid_size,umat_next.getMat(cv::ACCESS_READ).clone());
+        cv::Mat grid_old = drawFlowGrid(cv::Mat::zeros(flow.size(),CV_32FC2),   grid_size,  umat_old.getMat(cv::ACCESS_READ).clone());
+        cv::Mat grid_next = drawFlowGrid(flow,                                  grid_size,  umat_next.getMat(cv::ACCESS_READ).clone());
+        cv::imshow("grid_old",grid_old);
+        cv::imshow("grid_next",grid_next);
 
         uint8_t key = (uint8_t)cv::waitKey(1);
         if(key == 'q')
