@@ -58,25 +58,25 @@ cv::Mat drawFlowGrid(const cv::Mat flow, const cv::Size grid_size, const cv::Mat
 
     cv::Mat resized_flow;
     cv::resize(flow,resized_flow,grid_size,0.0,0.0,cv::INTER_AREA);
-
+    std::cout << "grid_size:" << grid_size << std::endl;
     // Draw horizontal lines
-    for(int r=0;r<grid_size.width;++r)
+    for(int y=0;y<grid_size.height;++y)
     {
-        for(int c=0;c<grid_size.height-1;++c)
+        for(int x=0;x<grid_size.width-1;++x)
         {
-            cv::Point line_begin = (cv::Vec2i)ratio.mul(cv::Vec2d(r,c)+(cv::Vec2d)resized_flow.at<cv::Vec2f>(r,c));
-            cv::Point line_end = (cv::Vec2i)ratio.mul(cv::Vec2d(r,c+1)+(cv::Vec2d)resized_flow.at<cv::Vec2f>(r,c+1));
+            cv::Point line_begin = (cv::Vec2i)(ratio.mul(cv::Vec2d(x,y))+(cv::Vec2d)resized_flow.at<cv::Vec2f>(y,x));
+            cv::Point line_end = (cv::Vec2i)(ratio.mul(cv::Vec2d(x+1,y))+(cv::Vec2d)resized_flow.at<cv::Vec2f>(y,x+1));
             cv::line(dst_image,line_begin,line_end,cv::Scalar(0,0,255));
         }
     }
 
     // Draw vertical lines
-    for(int c=0;c<grid_size.height;++c)
+    for(int x=0;x<grid_size.width;++x)
     {
-        for(int r=0;r<grid_size.width-1;++r)
+        for(int y=0;y<grid_size.height-1;++y)
         {
-            cv::Point line_begin = (cv::Vec2i)ratio.mul(cv::Vec2d(r,c)+(cv::Vec2d)resized_flow.at<cv::Vec2f>(r,c));
-            cv::Point line_end = (cv::Vec2i)ratio.mul(cv::Vec2d(r+1,c)+(cv::Vec2d)resized_flow.at<cv::Vec2f>(r+1,c));
+            cv::Point line_begin = (cv::Vec2i)(ratio.mul(cv::Vec2d(x,y))+(cv::Vec2d)resized_flow.at<cv::Vec2f>(y,x));
+            cv::Point line_end = (cv::Vec2i)(ratio.mul(cv::Vec2d(x,y+1))+(cv::Vec2d)resized_flow.at<cv::Vec2f>(y+1,x));
             cv::line(dst_image,line_begin,line_end,cv::Scalar(0,0,255));
         }
     }
