@@ -35,14 +35,22 @@
 #include <opencv2/opencv.hpp>
 #include <inpainting.hpp>
 
-cv::Mat getGridVertex(cv::Vec2d ratio, cv::Mat flow)
+cv::Mat getGridVertex(cv::Size grid_size, cv::Mat flow)
 {
+
+    cv::Mat resized_flow;
+    cv::resize(flow,resized_flow,grid_size,0.0,0.0,cv::INTER_AREA);
+    // std::cout << "grid_size:" << grid_size << std::endl;
+
+    cv::Vec2d ratio = cv::Vec2d((double)flow.cols/(double)resized_flow.cols,(double)flow.rows/(double)resized_flow.rows);
+    // std::cout << "ratio:" << ratio << std::endl;
+
     cv::Mat grid_vertex(flow.size(),CV_32FC2);
     for(int y=0;y<grid_vertex.rows;++y)
     {
         for(int x=0;x<grid_vertex.cols;++x)
         {
-            grid_vertex.at<cv::Vec2f>(y,x) = ((cv::Vec2f)ratio).mul(cv::Vec2f(x+0.5,y+0.5))+flow.at<cv::Vec2f>(y,x);
+            grid_vertex.at<cv::Vec2f>(y,x) = ((cv::Vec2f)ratio).mul(cv::Vec2f(x+0.5,y+0.5))+resized_flow.at<cv::Vec2f>(y,x);
         }
     }
     return grid_vertex;
@@ -54,26 +62,7 @@ cv::Mat drawFlowGrid(const cv::Mat flow, const cv::Size grid_size, const cv::Mat
     assert(flow.type() == CV_32FC1);
     cv::Mat dst_image = src_image.clone();
 
-    
-
-    // Get destinateion / grid_size ratio
-    cv::Vec2d ratio = cv::Vec2d((double)dst_image.cols/(double)grid_size.width,(double)dst_image.rows/(double)grid_size.height);
-    std::cout << "ratio:" << ratio << std::endl;
-
-    // cv::Mat grid_pos(grid_size,CV_64FC2);
-    // for(int r=0;r<grid_size.height;++r)
-    // {
-    //     for(int c = 0;c<grid_size.width;++c)
-    //     {
-    //         grid_pos.at<cv::Vec2d>(r,c) = ratio.mul(cv::Vec2d((double)r,(double)c));
-    //     }
-    // }
-
-    cv::Mat resized_flow;
-    cv::resize(flow,resized_flow,grid_size,0.0,0.0,cv::INTER_AREA);
-    std::cout << "grid_size:" << grid_size << std::endl;
-
-    cv::Mat vertex = getGridVertex(ratio,resized_flow);
+    cv::Mat vertex = getGridVertex(grid_size,flow);
 
     // Draw horizontal lines
     for(int y=0;y<grid_size.height;++y)
