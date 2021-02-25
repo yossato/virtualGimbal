@@ -35,6 +35,19 @@
 #include <opencv2/opencv.hpp>
 #include <inpainting.hpp>
 
+cv::Mat getGridVertex(cv::Vec2d ratio, cv::Mat flow)
+{
+    cv::Mat grid_vertex(flow.size(),CV_32FC2);
+    for(int y=0;y<grid_vertex.rows;++y)
+    {
+        for(int x=0;x<grid_vertex.cols;++x)
+        {
+            grid_vertex.at<cv::Vec2f>(y,x) = ((cv::Vec2f)ratio).mul(cv::Vec2f(x+0.5,y+0.5))+flow.at<cv::Vec2f>(y,x);
+        }
+    }
+    return grid_vertex;
+}
+
 cv::Mat drawFlowGrid(const cv::Mat flow, const cv::Size grid_size, const cv::Mat src_image)
 {
     assert(grid_size <= flow.size());
@@ -59,13 +72,16 @@ cv::Mat drawFlowGrid(const cv::Mat flow, const cv::Size grid_size, const cv::Mat
     cv::Mat resized_flow;
     cv::resize(flow,resized_flow,grid_size,0.0,0.0,cv::INTER_AREA);
     std::cout << "grid_size:" << grid_size << std::endl;
+
+    cv::Mat vertex = getGridVertex(ratio,resized_flow);
+
     // Draw horizontal lines
     for(int y=0;y<grid_size.height;++y)
     {
         for(int x=0;x<grid_size.width-1;++x)
         {
-            cv::Point line_begin = (cv::Vec2i)(ratio.mul(cv::Vec2d(x+0.5,y+0.5))+(cv::Vec2d)resized_flow.at<cv::Vec2f>(y,x));
-            cv::Point line_end = (cv::Vec2i)(ratio.mul(cv::Vec2d(x+1.5,y+0.5))+(cv::Vec2d)resized_flow.at<cv::Vec2f>(y,x+1));
+            cv::Point line_begin = (cv::Vec2i)vertex.at<cv::Vec2f>(y,x);
+            cv::Point line_end = (cv::Vec2i)vertex.at<cv::Vec2f>(y,x+1);
             cv::line(dst_image,line_begin,line_end,cv::Scalar(0,0,255));
         }
     }
@@ -75,8 +91,8 @@ cv::Mat drawFlowGrid(const cv::Mat flow, const cv::Size grid_size, const cv::Mat
     {
         for(int y=0;y<grid_size.height-1;++y)
         {
-            cv::Point line_begin = (cv::Vec2i)(ratio.mul(cv::Vec2d(x+0.5,y+0.5))+(cv::Vec2d)resized_flow.at<cv::Vec2f>(y,x));
-            cv::Point line_end = (cv::Vec2i)(ratio.mul(cv::Vec2d(x+0.5,y+1.5))+(cv::Vec2d)resized_flow.at<cv::Vec2f>(y+1,x));
+            cv::Point line_begin = (cv::Vec2i)vertex.at<cv::Vec2f>(y,x);
+            cv::Point line_end = (cv::Vec2i)vertex.at<cv::Vec2f>(y+1,x);
             cv::line(dst_image,line_begin,line_end,cv::Scalar(0,0,255));
         }
     }
