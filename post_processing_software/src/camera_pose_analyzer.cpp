@@ -64,8 +64,8 @@ cv::Mat drawFlowGrid(const cv::Mat flow, const cv::Size grid_size, const cv::Mat
     {
         for(int x=0;x<grid_size.width-1;++x)
         {
-            cv::Point line_begin = (cv::Vec2i)(ratio.mul(cv::Vec2d(x,y))+(cv::Vec2d)resized_flow.at<cv::Vec2f>(y,x));
-            cv::Point line_end = (cv::Vec2i)(ratio.mul(cv::Vec2d(x+1,y))+(cv::Vec2d)resized_flow.at<cv::Vec2f>(y,x+1));
+            cv::Point line_begin = (cv::Vec2i)(ratio.mul(cv::Vec2d(x+0.5,y+0.5))+(cv::Vec2d)resized_flow.at<cv::Vec2f>(y,x));
+            cv::Point line_end = (cv::Vec2i)(ratio.mul(cv::Vec2d(x+1.5,y+0.5))+(cv::Vec2d)resized_flow.at<cv::Vec2f>(y,x+1));
             cv::line(dst_image,line_begin,line_end,cv::Scalar(0,0,255));
         }
     }
@@ -75,8 +75,8 @@ cv::Mat drawFlowGrid(const cv::Mat flow, const cv::Size grid_size, const cv::Mat
     {
         for(int y=0;y<grid_size.height-1;++y)
         {
-            cv::Point line_begin = (cv::Vec2i)(ratio.mul(cv::Vec2d(x,y))+(cv::Vec2d)resized_flow.at<cv::Vec2f>(y,x));
-            cv::Point line_end = (cv::Vec2i)(ratio.mul(cv::Vec2d(x,y+1))+(cv::Vec2d)resized_flow.at<cv::Vec2f>(y+1,x));
+            cv::Point line_begin = (cv::Vec2i)(ratio.mul(cv::Vec2d(x+0.5,y+0.5))+(cv::Vec2d)resized_flow.at<cv::Vec2f>(y,x));
+            cv::Point line_end = (cv::Vec2i)(ratio.mul(cv::Vec2d(x+0.5,y+1.5))+(cv::Vec2d)resized_flow.at<cv::Vec2f>(y+1,x));
             cv::line(dst_image,line_begin,line_end,cv::Scalar(0,0,255));
         }
     }
