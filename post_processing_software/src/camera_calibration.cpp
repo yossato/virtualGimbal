@@ -130,7 +130,8 @@ int main(int argc, char** argv){
         Eigen::Quaterniond( 0, 0,-S, S),
         Eigen::Quaterniond( S,-S, 0, 0),
         Eigen::Quaterniond( F,-F,-F, F),
-        Eigen::Quaterniond( F,-F, F,-F) //15
+        Eigen::Quaterniond( F,-F, F,-F), //15
+        Eigen::Quaterniond( 0, 1, 0, 0) 
     };
 
     Eigen::Quaterniond sd_card_rotation;
