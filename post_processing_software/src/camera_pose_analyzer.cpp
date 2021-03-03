@@ -56,10 +56,59 @@ cv::Mat getGridVertex(cv::Size grid_size, cv::Mat flow)
     return grid_vertex;
 }
 
+cv::Mat warpImageUsingGrid(const cv::Mat src_grid_vertex, const cv::Mat dst_grid_vertex, const cv::Mat src_image)
+{
+    cv::Mat dst_image = cv::Mat::zeros(src_image.size(),src_image.type());
+    for(int y=0;y<src_grid_vertex.rows-1;++y)
+    {
+        for(int x=0;x<src_grid_vertex.cols-1;++x)
+        {   
+            
+            // Get perspective transform matrix
+            std::vector<cv::Vec2f> src_vertex,dst_vertex;
+            src_vertex.push_back(src_grid_vertex.at<cv::Vec2f>(y,x));
+            src_vertex.push_back(src_grid_vertex.at<cv::Vec2f>(y,x+1));
+            src_vertex.push_back(src_grid_vertex.at<cv::Vec2f>(y+1,x+1));
+            src_vertex.push_back(src_grid_vertex.at<cv::Vec2f>(y+1,x));
+            dst_vertex.push_back(dst_grid_vertex.at<cv::Vec2f>(y,x));
+            dst_vertex.push_back(dst_grid_vertex.at<cv::Vec2f>(y,x+1));
+            dst_vertex.push_back(dst_grid_vertex.at<cv::Vec2f>(y+1,x+1));
+            dst_vertex.push_back(dst_grid_vertex.at<cv::Vec2f>(y+1,x));
+            cv::Mat perspective_transform = cv::getPerspectiveTransform(src_vertex,dst_vertex);
+
+            printf("x:%d y:%d ",x,y);
+            std::cout << perspective_transform << std::endl;
+            // std::cout << perspective_transform.type() << std::endl;
+            if(!isfinite(perspective_transform.at<double>(0,0)) || fabs(perspective_transform.at<double>(0,0)) < std::numeric_limits<double>::epsilon())
+            {
+                continue;
+            }
+            // Generate mask
+            cv::Mat mask = cv::Mat::zeros(src_image.size(),CV_8UC1);
+            std::vector<cv::Vec2i> dst_vertex_i;
+            for(auto &el:dst_vertex)
+            {
+                dst_vertex_i.push_back((cv::Vec2i)el);
+            }
+            cv::fillConvexPoly(mask,dst_vertex_i,cv::Scalar(255));
+
+            // Warp
+            cv::Mat transformed;
+            cv::warpPerspective(src_image,transformed,perspective_transform,src_image.size(),cv::INTER_LINEAR);
+
+            // Copy
+
+            transformed.copyTo(dst_image,mask);
+        }
+    }
+    return dst_image;
+
+}
+
 cv::Mat drawFlowGrid(const cv::Mat flow, const cv::Size grid_size, const cv::Mat src_image)
 {
-    assert(grid_size <= flow.size());
-    assert(flow.type() == CV_32FC1);
+    // assert(grid_size <= flow.size());
+    assert(flow.type() == CV_32FC2);
     cv::Mat dst_image = src_image.clone();
 
     cv::Mat vertex = getGridVertex(grid_size,flow);
@@ -198,6 +247,13 @@ int main(int argc, char **argv)
         cv::Mat grid_next = drawFlowGrid(flow,                                  grid_size,  umat_next.getMat(cv::ACCESS_READ).clone());
         cv::imshow("grid_old",grid_old);
         cv::imshow("grid_next",grid_next);
+
+        if(0){
+            cv::Mat next_grid_vertex = getGridVertex(grid_size,flow);
+            cv::Mat old_grid_vertex = getGridVertex(grid_size,cv::Mat::zeros(flow.size(),CV_32FC2));
+            cv::Mat warped = warpImageUsingGrid(next_grid_vertex,old_grid_vertex,umat_old.getMat(cv::ACCESS_READ).clone());
+            cv::imshow("warped",warped);
+        }
 
         uint8_t key = (uint8_t)cv::waitKey(1);
         if(key == 'q')
