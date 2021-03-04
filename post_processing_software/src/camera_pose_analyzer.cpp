@@ -192,6 +192,8 @@ int main(int argc, char **argv)
     cv::namedWindow("grid_old",cv::WINDOW_NORMAL);
     cv::namedWindow("grid_next",cv::WINDOW_NORMAL);
     cv::namedWindow("warped",cv::WINDOW_NORMAL);
+    cv::namedWindow("diff_old",cv::WINDOW_NORMAL);
+    cv::namedWindow("diff_next",cv::WINDOW_NORMAL);
     // Read video frame
     cv::VideoCapture cap(videoPass);
     cv::UMat umat_old,umat_next;
@@ -248,10 +250,30 @@ int main(int argc, char **argv)
         cv::imshow("grid_next",grid_next);
 
         if(1){
-            cv::Mat next_grid_vertex = getGridVertex(grid_size,flow);
             cv::Mat old_grid_vertex = getGridVertex(grid_size,cv::Mat::zeros(flow.size(),CV_32FC2));
-            cv::Mat warped = warpImageUsingGrid(next_grid_vertex,old_grid_vertex,umat_old.getMat(cv::ACCESS_READ).clone());
+            cv::Mat next_grid_vertex = getGridVertex(grid_size,flow);
+            cv::Mat warped = warpImageUsingGrid(next_grid_vertex,old_grid_vertex,umat_next.getMat(cv::ACCESS_READ).clone());
             cv::imshow("warped",warped);
+            cv::Mat warped_32S,old_32S,next_32S,diff;
+            
+            // Diff old
+            {
+                warped.convertTo(warped_32S,CV_32SC3);
+                umat_old.getMat(cv::ACCESS_READ).clone().convertTo(old_32S,CV_32SC3);
+                diff = (warped_32S - old_32S + 127);
+                diff.convertTo(diff,CV_8UC3);
+                cv::imshow("diff_old",diff);
+
+            }
+            // Diff next
+            {
+                warped.convertTo(warped_32S,CV_32SC3);
+                umat_next.getMat(cv::ACCESS_READ).clone().convertTo(next_32S,CV_32SC3);
+                diff = (warped_32S - next_32S + 127);
+                diff.convertTo(diff,CV_8UC3);
+                cv::imshow("diff_next",diff);
+
+            }
         }
 
         uint8_t key = (uint8_t)cv::waitKey(1);
