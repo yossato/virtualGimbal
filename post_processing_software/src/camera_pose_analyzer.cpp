@@ -45,7 +45,7 @@ cv::Mat getGridVertex(cv::Size grid_size, cv::Mat flow)
     cv::Vec2d ratio = cv::Vec2d((double)flow.cols/(double)resized_flow.cols,(double)flow.rows/(double)resized_flow.rows);
     // std::cout << "ratio:" << ratio << std::endl;
 
-    cv::Mat grid_vertex(flow.size(),CV_32FC2);
+    cv::Mat grid_vertex(resized_flow.size(),CV_32FC2);
     for(int y=0;y<grid_vertex.rows;++y)
     {
         for(int x=0;x<grid_vertex.cols;++x)
@@ -65,7 +65,7 @@ cv::Mat warpImageUsingGrid(const cv::Mat src_grid_vertex, const cv::Mat dst_grid
         {   
             
             // Get perspective transform matrix
-            std::vector<cv::Vec2f> src_vertex,dst_vertex;
+            std::vector<cv::Point2f> src_vertex,dst_vertex;
             src_vertex.push_back(src_grid_vertex.at<cv::Vec2f>(y,x));
             src_vertex.push_back(src_grid_vertex.at<cv::Vec2f>(y,x+1));
             src_vertex.push_back(src_grid_vertex.at<cv::Vec2f>(y+1,x+1));
@@ -76,9 +76,8 @@ cv::Mat warpImageUsingGrid(const cv::Mat src_grid_vertex, const cv::Mat dst_grid
             dst_vertex.push_back(dst_grid_vertex.at<cv::Vec2f>(y+1,x));
             cv::Mat perspective_transform = cv::getPerspectiveTransform(src_vertex,dst_vertex);
 
-            printf("x:%d y:%d ",x,y);
-            std::cout << perspective_transform << std::endl;
-            // std::cout << perspective_transform.type() << std::endl;
+            // printf("x:%d y:%d ",x,y);
+            // std::cout << perspective_transform << std::endl;
             if(!isfinite(perspective_transform.at<double>(0,0)) || fabs(perspective_transform.at<double>(0,0)) < std::numeric_limits<double>::epsilon())
             {
                 continue;
@@ -88,7 +87,7 @@ cv::Mat warpImageUsingGrid(const cv::Mat src_grid_vertex, const cv::Mat dst_grid
             std::vector<cv::Vec2i> dst_vertex_i;
             for(auto &el:dst_vertex)
             {
-                dst_vertex_i.push_back((cv::Vec2i)el);
+                dst_vertex_i.push_back((cv::Vec2i)(cv::Point2i)el);
             }
             cv::fillConvexPoly(mask,dst_vertex_i,cv::Scalar(255));
 
@@ -192,7 +191,7 @@ int main(int argc, char **argv)
     cv::namedWindow("source",cv::WINDOW_NORMAL);
     cv::namedWindow("grid_old",cv::WINDOW_NORMAL);
     cv::namedWindow("grid_next",cv::WINDOW_NORMAL);
-
+    cv::namedWindow("warped",cv::WINDOW_NORMAL);
     // Read video frame
     cv::VideoCapture cap(videoPass);
     cv::UMat umat_old,umat_next;
@@ -248,7 +247,7 @@ int main(int argc, char **argv)
         cv::imshow("grid_old",grid_old);
         cv::imshow("grid_next",grid_next);
 
-        if(0){
+        if(1){
             cv::Mat next_grid_vertex = getGridVertex(grid_size,flow);
             cv::Mat old_grid_vertex = getGridVertex(grid_size,cv::Mat::zeros(flow.size(),CV_32FC2));
             cv::Mat warped = warpImageUsingGrid(next_grid_vertex,old_grid_vertex,umat_old.getMat(cv::ACCESS_READ).clone());
