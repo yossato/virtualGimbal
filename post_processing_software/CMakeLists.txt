@@ -73,7 +73,7 @@ add_executable(angular_velocity_estimator src/angular_velocity_estimator.cpp
 target_link_libraries(angular_velocity_estimator ${ALL_LIBS} ${OpenCV_LIBS} ${PYTHON_LIBRARIES})
 
 add_executable(camera_pose_analyzer src/camera_pose_analyzer.cpp
-        src/inpainting.cpp)
+        src/inpainting.cpp src/stabilizer_kernel_cpu.cpp)
 target_link_libraries(camera_pose_analyzer ${ALL_LIBS} ${OpenCV_LIBS})
 
 # デバッグビルド
