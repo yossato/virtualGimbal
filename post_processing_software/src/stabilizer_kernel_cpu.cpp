@@ -1,5 +1,6 @@
 #include <Eigen/Dense>
 #include <vector>
+#include <opencv2/opencv.hpp>
 Eigen::Vector2d warp_undistort(
     Eigen::Vector2d p,                              // UV coordinate position in a image.
     double zoom_ratio,
@@ -30,6 +31,15 @@ Eigen::Vector2d warp_optical_flow(
     cv::Mat optical_flow
 )
 {
-    
-    p + optical_flow
+    assert(optical_flow.type() == CV_32FC2);
+    int u = (int)round(p[0]);
+    int v = (int)round(p[1]);
+    assert(0<=u);
+    assert(u<optical_flow.cols);
+    assert(0<=v);
+    assert(v<optical_flow.rows);
+
+    cv::Vec2f flow = optical_flow.at<cv::Vec2f>(v,u); // Nearest neigbor. TODO: Use linear interpolation.
+    p +  Eigen::Vector2d(flow[0],flow[1]);
+    return p;
 }
