@@ -104,6 +104,27 @@ cv::Mat warpImageUsingGrid(const cv::Mat src_grid_vertex, const cv::Mat dst_grid
 
 }
 
+cv::Mat createExtrapolateMap(const cv::Mat &flow, int padding_width)
+{
+    cv::Mat extrapolated_map(flow.size()+cv::Size(padding_width,padding_width)*2,CV_32FC2,cv::Scalar(-1.f, -1.f));
+    // Top side
+    for(int c=0;c<flow.cols;++c)
+    {
+        // Get slope vector
+        cv::Vec2f d = flow.at<cv::Vec2f>(0,c)-flow.at<cv::Vec2f>(1,c);
+        // Extrapolate all top side
+        for(int r=-1,e=-padding_width;r>e;--r)
+        {
+            cv::Vec2f val = flow.at<cv::Vec2f>(0,c) + d * fabs((float)r) + cv::Vec2f(c,0);
+            if(val[0] < 0.f || val[1] < 0.f) break;
+            
+            extrapolated_map.at<cv::Vec2f>(r+padding_width,c) = val;
+        }
+    }
+    // std::cout << extrapolated_map << std::endl;
+    return extrapolated_map;
+}
+
 cv::Mat drawFlowGrid(const cv::Mat flow, const cv::Size grid_size, const cv::Mat src_image)
 {
     // assert(grid_size <= flow.size());
@@ -243,7 +264,7 @@ int main(int argc, char **argv)
         }
 
         // Draw contour on umat_old and umat_next
-        cv::Size grid_size(umat_old.size()/24);
+        cv::Size grid_size(umat_old.size()/64);
         cv::Mat grid_old = drawFlowGrid(cv::Mat::zeros(flow.size(),CV_32FC2),   grid_size,  umat_old.getMat(cv::ACCESS_READ).clone());
         cv::Mat grid_next = drawFlowGrid(flow,                                  grid_size,  umat_next.getMat(cv::ACCESS_READ).clone());
         cv::imshow("grid_old",grid_old);
@@ -275,6 +296,18 @@ int main(int argc, char **argv)
 
             }
         }
+
+        int extrapolate_width = 10;
+        cv::Mat extrapolated_map = createExtrapolateMap(flow, extrapolate_width);
+        cv::Mat extrapolated_maps[2];
+        cv::split(extrapolated_map,extrapolated_maps);
+        cv::Mat extrapolated_image;
+        cv::remap(umat_next.getMat(cv::ACCESS_READ).clone(),extrapolated_image,extrapolated_maps[0],extrapolated_maps[1],cv::INTER_CUBIC,cv::BORDER_CONSTANT,cv::Scalar(255,0,0));
+        // umat_old.getMat(cv::ACCESS_READ).copyTo(extrapolated_image(cv::Rect(extrapolate_width,extrapolate_width,umat_next.cols,umat_next.rows)));
+        cv::imshow("x",extrapolated_maps[0]);
+        cv::imshow("y",extrapolated_maps[1]);
+        // std::cout << extrapolated_map << std::endl;
+        cv::imshow("extrapolation",extrapolated_image);
 
         uint8_t key = (uint8_t)cv::waitKey(1);
         if(key == 'q')
