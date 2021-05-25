@@ -277,11 +277,12 @@ int main(int argc, char **argv)
     cv::namedWindow("warped",cv::WINDOW_NORMAL);
     cv::namedWindow("diff_old",cv::WINDOW_NORMAL);
     cv::namedWindow("diff_next",cv::WINDOW_NORMAL);
+    cv::namedWindow("extrapolation",cv::WINDOW_NORMAL);
     // Read video frame
     cv::VideoCapture cap(videoPass);
     cv::UMat umat_old,umat_next;
 
-    float resize_ratio = 1./16.;
+    float resize_ratio = 1./8.;
 
     // Read a first frame
     cap >> umat_old;
@@ -365,9 +366,9 @@ int main(int argc, char **argv)
         cv::split(extrapolated_map,extrapolated_maps);
         cv::Mat extrapolated_image;
         cv::remap(umat_next.getMat(cv::ACCESS_READ).clone(),extrapolated_image,extrapolated_maps[0],extrapolated_maps[1],cv::INTER_CUBIC,cv::BORDER_CONSTANT,cv::Scalar(255,0,0));
-        // umat_old.getMat(cv::ACCESS_READ).copyTo(extrapolated_image(cv::Rect(extrapolate_width,extrapolate_width,umat_next.cols,umat_next.rows)));
-        cv::imshow("x",extrapolated_maps[0]);
-        cv::imshow("y",extrapolated_maps[1]);
+        umat_old.getMat(cv::ACCESS_READ).copyTo(extrapolated_image(cv::Rect(extrapolate_width,extrapolate_width,umat_next.cols,umat_next.rows)));
+        // cv::imshow("x",extrapolated_maps[0]);
+        // cv::imshow("y",extrapolated_maps[1]);
         // std::cout << extrapolated_map << std::endl;
         cv::imshow("extrapolation",extrapolated_image);
 
