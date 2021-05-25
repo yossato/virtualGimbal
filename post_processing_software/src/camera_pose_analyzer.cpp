@@ -111,16 +111,78 @@ cv::Mat createExtrapolateMap(const cv::Mat &flow, int padding_width)
     for(int c=0;c<flow.cols;++c)
     {
         // Get slope vector
-        cv::Vec2f d = flow.at<cv::Vec2f>(0,c)-flow.at<cv::Vec2f>(1,c);
+        cv::Vec2f d0 = flow.at<cv::Vec2f>(0,c);
+        cv::Vec2f d1 = flow.at<cv::Vec2f>(1,c);
+        cv::Vec2f d = d0-d1;
         // Extrapolate all top side
         for(int r=-1,e=-padding_width;r>e;--r)
         {
-            cv::Vec2f val = flow.at<cv::Vec2f>(0,c) + d * fabs((float)r) + cv::Vec2f(c,0);
-            if(val[0] < 0.f || val[1] < 0.f) break;
-            
-            extrapolated_map.at<cv::Vec2f>(r+padding_width,c) = val;
+            // Calculate extrapolated map value
+            cv::Vec2f val = d0 + d * fabs((float)r) + cv::Vec2f(c,r);
+            // if(val[0] < 0.f || val[1] < 0.f) break;
+            if(val[1] < 0.f) break;
+
+            extrapolated_map.at<cv::Vec2f>(r+padding_width,c+padding_width) = val;
         }
     }
+
+    // Bottom side
+    for(int c=0;c<flow.cols;++c)
+    {
+        // Get slope vector
+        cv::Vec2f d0 = flow.at<cv::Vec2f>(flow.rows-1,c);
+        cv::Vec2f d1 = flow.at<cv::Vec2f>(flow.rows-2,c);
+        cv::Vec2f d = d0-d1;
+        // Extrapolate all top side
+        for(int r=flow.rows,e=flow.rows + padding_width;r<e;++r)
+        {
+            // Calculate extrapolated map value
+            cv::Vec2f val = d0 + d * fabs((float)(r-flow.rows+1)) + cv::Vec2f(c,r);
+            // if((val[0] > (flow.rows - 1))  || (val[1] > (flow.rows - 1))) break;
+            if(val[1] > (flow.rows-1)) break;
+
+            extrapolated_map.at<cv::Vec2f>(r+padding_width,c+padding_width) = val;
+        }
+    }
+
+    // Left side
+    for(int r=0;r<flow.rows;++r)
+    {
+        // Get slope vector
+        cv::Vec2f d0 = flow.at<cv::Vec2f>(r,0);
+        cv::Vec2f d1 = flow.at<cv::Vec2f>(r,1);
+        cv::Vec2f d = d0-d1;
+        // Extrapolate all top side
+        for(int c=-1,e=-padding_width;c>e;--c)
+        {
+            // Calculate extrapolated map value
+            cv::Vec2f val = d0 + d * fabs((float)c) + cv::Vec2f(c,r);
+            // if(val[0] < 0.f || val[1] < 0.f) break;
+            if(val[0] < 0.f) break;
+
+            extrapolated_map.at<cv::Vec2f>(r+padding_width,c+padding_width) = val;
+        }
+    }
+
+    // Right side
+    for(int r=0;r<flow.rows;++r)
+    {
+        // Get slope vector
+        cv::Vec2f d0 = flow.at<cv::Vec2f>(r,0);
+        cv::Vec2f d1 = flow.at<cv::Vec2f>(r,1);
+        cv::Vec2f d = d0-d1;
+        // Extrapolate all top side
+        for(int c=flow.cols,e=flow.cols+padding_width;c<e;++c)
+        {
+            // Calculate extrapolated map value
+            cv::Vec2f val = d0 + d * fabs((float)(c-flow.cols+1)) + cv::Vec2f(c,r);
+            // if(val[0] < 0.f || val[1] < 0.f) break;
+            if(val[0] > (flow.cols-1)) break;
+
+            extrapolated_map.at<cv::Vec2f>(r+padding_width,c+padding_width) = val;
+        }
+    }
+
     // std::cout << extrapolated_map << std::endl;
     return extrapolated_map;
 }
