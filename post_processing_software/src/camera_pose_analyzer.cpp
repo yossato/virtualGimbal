@@ -231,6 +231,7 @@ int main(int argc, char **argv)
     int window_height = 100;
     int window_width = 100;
     float colored_map_gain = 2.0;
+    bool verbose = false;
     while ((opt = getopt(argc, argv, "i:c::r::w::g::h::")) != -1)
     {
         switch (opt)
@@ -361,7 +362,12 @@ int main(int argc, char **argv)
         }
 
         int extrapolate_width = 10;
-        cv::Mat extrapolated_map = createExtrapolateMap(flow, extrapolate_width);
+
+        cv::Mat resized_flow,expand_flow;
+        cv::resize(flow,resized_flow,cv::Size(),0.05,0.05,cv::INTER_LANCZOS4);
+        cv::resize(resized_flow,expand_flow,flow.size(),0.0,0.0,cv::INTER_LANCZOS4);
+
+        cv::Mat extrapolated_map = createExtrapolateMap(expand_flow, extrapolate_width);
         cv::Mat extrapolated_maps[2];
         cv::split(extrapolated_map,extrapolated_maps);
         cv::Mat extrapolated_image;
@@ -370,7 +376,15 @@ int main(int argc, char **argv)
         // cv::imshow("x",extrapolated_maps[0]);
         // cv::imshow("y",extrapolated_maps[1]);
         // std::cout << extrapolated_map << std::endl;
+        if(verbose)
+        {
+            cv::rectangle(extrapolated_image,cv::Rect(extrapolate_width,extrapolate_width,umat_next.cols,umat_next.rows),cv::Scalar(255,255,255));
+        }
         cv::imshow("extrapolation",extrapolated_image);
+
+        cv::Mat nan_image[2];
+        cv::split(flow != flow,nan_image);
+        cv::imshow("NaN",nan_image[0]);
 
         uint8_t key = (uint8_t)cv::waitKey(1);
         if(key == 'q')
@@ -386,6 +400,17 @@ int main(int argc, char **argv)
                 cv::destroyAllWindows();
                 break;
             }
+        }
+        else if('v' == key)
+        {
+            // sleep(1);
+            // key = cv::waitKey(0);
+            // if ('q' == key)
+            // {
+            //     cv::destroyAllWindows();
+            //     break;
+            // }
+            verbose = !verbose;
         }
         umat_old = std::move(umat_next);
         mono_old = std::move(mono_next);
