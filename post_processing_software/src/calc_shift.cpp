@@ -54,11 +54,17 @@ void calcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd 
     cap >> prev;
 
     // Trimming and make it mono
+    double ratio = 1.0;
     int width  = cap.get(cv::CAP_PROP_FRAME_WIDTH);
     int height = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
-    if((width >= 640) && (height >= 480))
+    cv::Size target_size(640,480);
+    if((width >= 640) && (height >= target_size.height))
     {
-        cv::cvtColor(prev(cv::Rect((prev.cols-640)/2,(prev.rows-480)/2,640,480)), prev_grey, cv::COLOR_BGR2GRAY);
+        ratio = std::min(target_size.width/(double)prev.cols,target_size.height/(double)prev.rows);
+        // cv::cvtColor(prev(cv::Rect((prev.cols-target_size.width)/2,(prev.rows-target_size.height)/2,target_size.width,target_size.height)), prev_grey, cv::COLOR_BGR2GRAY);
+        cv::Mat prev_resized;
+        cv::resize(prev,prev_resized,cv::Size(),ratio,ratio,cv::INTER_AREA);
+        cv::cvtColor(prev_resized, prev_grey, cv::COLOR_BGR2GRAY);
     }else
     {
         cv::cvtColor(prev, prev_grey, cv::COLOR_BGR2GRAY);
@@ -78,9 +84,11 @@ void calcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd 
         }
 
         // Trimming
-        if((width >= 640) && (height >= 480))
+        cv::Mat cur_resized;
+        if((width >= target_size.width) && (height >= target_size.height))
         {
-            cv::cvtColor(cur(cv::Rect((cur.cols-640)/2,(cur.rows-480)/2,640,480)), cur_grey, cv::COLOR_BGR2GRAY);
+            cv::resize(cur,cur_resized,cv::Size(),ratio,ratio,cv::INTER_AREA);
+            cv::cvtColor(cur_resized, cur_grey, cv::COLOR_BGR2GRAY);
         }else
         {
             cv::cvtColor(cur, cur_grey, cv::COLOR_BGR2GRAY);
@@ -107,10 +115,10 @@ void calcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd 
         if(verbose)
         {
             cv::Mat drawn_img = cur.clone();
-            if((width >= 640) && (height >= 480))
+            if((width >= target_size.width) && (height >= target_size.height))
             {
 
-                drawn_img = cur(cv::Rect((prev.cols-640)/2,(prev.rows-480)/2,640,480));
+                drawn_img = cur_resized.clone();
             }else
             {
                 drawn_img = cur.clone();
