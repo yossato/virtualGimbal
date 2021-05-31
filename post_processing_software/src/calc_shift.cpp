@@ -104,6 +104,32 @@ void calcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd 
             }
         }
 
+        if(verbose)
+        {
+            cv::Mat drawn_img = cur.clone();
+            if((width >= 640) && (height >= 480))
+            {
+
+                drawn_img = cur(cv::Rect((prev.cols-640)/2,(prev.rows-480)/2,640,480));
+            }else
+            {
+                drawn_img = cur.clone();
+            }
+            for(const auto &el:cur_corner2)
+            {
+                cv::circle(drawn_img,el,3,cv::Scalar(0,0,255),-1);
+            }
+            cv::namedWindow("good_feature_to_track",cv::WINDOW_NORMAL);
+            cv::imshow("good_feature_to_track",drawn_img);
+            cv::waitKey(1);
+            // std::vector<int> matches;
+            // for(int i=0;i<cur_corner2.size();++i)
+            // {
+            //     matches.push_back(i);
+            // }
+            // cv::drawMatches(prev,prev_corner2,cur,cur_corner2,matches);
+        }
+
         // translation + rotation only
         try{
             cv::Mat T = cv::estimateAffinePartial2D(prev_corner2, cur_corner2); 
