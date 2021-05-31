@@ -39,7 +39,7 @@ add_executable(rolling_shutter_parameter_estimator src/rolling_shutter_parameter
         src/camera_information.cpp
         src/virtual_gimbal_manager.cpp
         src/rotation_param.cpp
-        src/calcShift.cpp
+        src/calc_shift.cpp
         src/visualizer.cpp
         src/rotation_math.cpp
         src/distortion.cpp
@@ -54,7 +54,7 @@ add_executable(pixelwise_stabilizer src/main.cpp
         src/json_tools.cpp
         src/camera_information.cpp
         src/rotation_param.cpp
-        src/calcShift.cpp
+        src/calc_shift.cpp
         src/distortion.cpp
         src/SO3Filters.cpp
         src/cl_manager.cpp
@@ -65,7 +65,7 @@ target_link_libraries(pixelwise_stabilizer ${ALL_LIBS} ${OpenCV_LIBS} ${PYTHON_L
 
 add_executable(angular_velocity_estimator src/angular_velocity_estimator.cpp
         src/json_tools.cpp
-        src/calcShift.cpp
+        src/calc_shift.cpp
         src/camera_information.cpp
 )
 target_link_libraries(angular_velocity_estimator ${ALL_LIBS} ${OpenCV_LIBS} ${PYTHON_LIBRARIES})

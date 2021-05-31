@@ -38,7 +38,7 @@
 #include "unsupported/Eigen/NonLinearOptimization"
 #include "unsupported/Eigen/NumericalDiff"
 #include <opencv2/opencv.hpp>
-#include "calcShift.hpp"
+// #include "calc_shift.hpp"
 using namespace Eigen;
 
 // Generic functor

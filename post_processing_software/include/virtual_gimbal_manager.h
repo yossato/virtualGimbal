@@ -39,7 +39,7 @@
 #include <opencv2/opencv.hpp>
 #include "json_tools.hpp"
 #include "camera_information.h"
-#include "calcShift.hpp"
+#include "calc_shift.hpp"
 #include "Eigen/Dense"
 #include "rotation_math.h"
 #include "SO3Filters.h"

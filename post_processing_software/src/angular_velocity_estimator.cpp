@@ -34,7 +34,7 @@
 #include <string>
 #include <opencv2/opencv.hpp>
 #include "json_tools.hpp"
-#include "calcShift.hpp"
+#include "calc_shift.hpp"
 
 int getVideoLength(const char *videoName)
 {
