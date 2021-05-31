@@ -69,7 +69,7 @@ int main(int argc, char **argv)
         // Jsonがすでにある？
         if (!jsonExists(std::string(argv[i])))
         {
-            CalcShiftFromVideo(argv[i], getVideoLength(argv[i]), optical_flow, confidence); //ビデオからオプティカルフローを用いてシフト量を算出
+            calcShiftFromVideo(argv[i], getVideoLength(argv[i]), optical_flow, confidence); //ビデオからオプティカルフローを用いてシフト量を算出
             writeOpticalFrowToJson(std::string(argv[i]),optical_flow,confidence);
             std::cout << argv[i] << " done." << std::endl;
         }else{

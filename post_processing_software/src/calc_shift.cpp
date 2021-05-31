@@ -37,7 +37,7 @@
 #include <Eigen/Dense>
 #include <memory>
 
-void CalcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd &optical_flow, Eigen::MatrixXd &confidence, bool verbose){
+void calcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd &optical_flow, Eigen::MatrixXd &confidence, bool verbose){
     // Open Video
     assert(0 != total_frames);
     cv::VideoCapture cap(filename);
