@@ -130,13 +130,11 @@ void calcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd 
             cv::namedWindow("good_feature_to_track",cv::WINDOW_NORMAL);
             cv::imshow("good_feature_to_track",drawn_img);
             cv::waitKey(1);
-            // std::vector<int> matches;
-            // for(int i=0;i<cur_corner2.size();++i)
-            // {
-            //     matches.push_back(i);
-            // }
-            // cv::drawMatches(prev,prev_corner2,cur,cur_corner2,matches);
+
         }
+
+        cv::Mat f_mat;
+        cv::findFundamentalMat(prev_corner2,cur_corner2,f_mat,cv::FM_RANSAC);
 
         // translation + rotation only
         try{
