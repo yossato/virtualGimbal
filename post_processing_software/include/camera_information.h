@@ -45,6 +45,8 @@ public:
                       double p2,double line_delay);
 virtual ~CameraInformation() = default;
 
+    Eigen::Matrix3d get_camera_matrix();
+
     std::string camera_name_;
     std::string lens_name_;
     Eigen::Quaterniond sd_card_rotation_;

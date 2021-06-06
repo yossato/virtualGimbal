@@ -36,8 +36,11 @@
 #include <cmath>
 #include <Eigen/Dense>
 #include <memory>
+#include <Eigen/Core>
+#include <opencv2/core/core.hpp>
+#include <opencv2/core/eigen.hpp>
 
-void calcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd &optical_flow, Eigen::MatrixXd &confidence, bool verbose){
+void calcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd &optical_flow, Eigen::MatrixXd &confidence, Eigen::MatrixXd K, bool verbose){
     // Open Video
     assert(0 != total_frames);
     cv::VideoCapture cap(filename);
@@ -133,8 +136,107 @@ void calcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd 
 
         }
 
-        cv::Mat f_mat;
+        cv::Mat f_mat,e_mat;
         cv::findFundamentalMat(prev_corner2,cur_corner2,f_mat,cv::FM_RANSAC);
+        cv::Mat K_cv;
+        cv::eigen2cv(K,K_cv);
+        e_mat = K_cv.t() * f_mat * K_cv;
+
+        // translation + rotation only
+        try{
+            cv::Mat T = cv::estimateAffinePartial2D(prev_corner2, cur_corner2); 
+
+            // in rare cases no transform is found. We'll just use the last known good transform.
+            if(T.data == NULL) {
+                optical_flow.row(frame) << 0.0, 0.0, 0.0;
+                confidence.row(frame) << 0.0;
+            }else{
+                double dx = T.at<double>(0,2);
+                double dy = T.at<double>(1,2);
+                double da = atan2(T.at<double>(1,0), T.at<double>(0,0));
+                optical_flow.row(frame) << dx, dy, da;
+                confidence.row(frame) << 1.0;
+            }
+        }catch(...){
+            optical_flow.row(frame) << 0.0, 0.0, 0.0;
+            confidence.row(frame) << 0.0;
+        }
+
+        cur.copyTo(prev);
+        cur_grey.copyTo(prev_grey);
+
+        printf("Frame: %d/%d - good optical flow: %lu       \r",frame,total_frames,prev_corner2.size());
+    }
+    // return prev_to_cur_transform;
+    return;
+}
+
+void calcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd &optical_flow, Eigen::MatrixXd &confidence){
+    // Open Video
+    assert(0 != total_frames);
+    cv::VideoCapture cap(filename);
+    assert(cap.isOpened());
+
+    assert(cap.get(cv::CAP_PROP_FRAME_COUNT) >= total_frames);
+    optical_flow = Eigen::MatrixXd::Zero(total_frames,3);
+    confidence = Eigen::MatrixXd::Zero(total_frames,1);
+
+    cv::Mat cur, cur_grey;
+    cv::Mat prev, prev_grey;
+
+    // Get first frame
+    cap >> prev;
+
+    // Trimming and make it mono
+    int width  = cap.get(cv::CAP_PROP_FRAME_WIDTH);
+    int height = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
+    if((width >= 640) && (height >= 480))
+    {
+        cv::cvtColor(prev(cv::Rect((prev.cols-640)/2,(prev.rows-480)/2,640,480)), prev_grey, cv::COLOR_BGR2GRAY);
+    }else
+    {
+        cv::cvtColor(prev, prev_grey, cv::COLOR_BGR2GRAY);
+    }
+    
+    // Step 1 - Get previous to current frame transformation (dx, dy, da) for all frames
+    std::vector <cv::Vec3d> prev_to_cur_transform; // previous to current
+    // int k=1;
+
+
+    
+    for(int frame=0;frame<total_frames;++frame) {
+        cap >> cur;
+
+        if(cur.data == NULL) {
+            break;
+        }
+
+        // Trimming
+        if((width >= 640) && (height >= 480))
+        {
+            cv::cvtColor(cur(cv::Rect((cur.cols-640)/2,(cur.rows-480)/2,640,480)), cur_grey, cv::COLOR_BGR2GRAY);
+        }else
+        {
+            cv::cvtColor(cur, cur_grey, cv::COLOR_BGR2GRAY);
+        }
+
+
+        // vector from prev to cur
+        std::vector <cv::Point2f> prev_corner, cur_corner;
+        std::vector <cv::Point2f> prev_corner2, cur_corner2;
+        std::vector <uchar> status;
+        std::vector <float> err;
+
+        cv::goodFeaturesToTrack(prev_grey, prev_corner, 200, 0.01, 30);
+        cv::calcOpticalFlowPyrLK(prev_grey, cur_grey, prev_corner, cur_corner, status, err);
+
+        // weed out bad matches
+        for(size_t i=0; i < status.size(); i++) {
+            if(status[i]) {
+                prev_corner2.push_back(prev_corner[i]);
+                cur_corner2.push_back(cur_corner[i]);
+            }
+        }
 
         // translation + rotation only
         try{

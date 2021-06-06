@@ -92,7 +92,7 @@ cd opencv/
   
 mkdir build  
 cd build  
-cmake .. -DWITH_TBB=ON -DWITH_OPENGL=ON -DWITH_VTK=ON -DWITH_GTK=ON  -DWITH_FFMPEG=ON -DCMAKE_BUILD_TYPE=Release    
+cmake .. -DWITH_TBB=ON -DWITH_OPENGL=ON -DWITH_VTK=ON -DWITH_GTK=ON  -DWITH_FFMPEG=ON -DWITH_EIGEN=ON -DCMAKE_BUILD_TYPE=Release    
 make -j4  
 sudo make install  
 

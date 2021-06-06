@@ -42,3 +42,13 @@ CameraInformation::CameraInformation(std::string camera_name, std::string lens_n
 {
 
 }
+
+Eigen::Matrix3d CameraInformation::get_camera_matrix()
+{
+    Eigen::Matrix3d k = Eigen::Matrix3d::Identity(3,3);
+    k(0,0) = fx_;
+    k(1,1) = fy_;
+    k(0,2) = cx_;
+    k(1,2) = cy_;
+    return k;
+}

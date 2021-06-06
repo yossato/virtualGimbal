@@ -345,7 +345,7 @@ void VirtualGimbalManager::estimateAngularVelocity(Eigen::MatrixXd &estimated_an
     }
     else
     {
-        calcShiftFromVideo(video_param->video_file_name.c_str(), video_param->video_frames, optical_flow, confidence, true);
+        calcShiftFromVideo(video_param->video_file_name.c_str(), video_param->video_frames, optical_flow, confidence, video_param->camera_info->get_camera_matrix(), true);
     }
     estimated_angular_velocity.resize(optical_flow.rows(), optical_flow.cols());
     estimated_angular_velocity.col(0) =
