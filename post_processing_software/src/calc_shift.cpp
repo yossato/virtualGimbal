@@ -37,8 +37,21 @@
 #include <Eigen/Dense>
 #include <memory>
 #include <Eigen/Core>
+#include <vector>
 #include <opencv2/core/core.hpp>
 #include <opencv2/core/eigen.hpp>
+
+std::vector<cv::Point2f> normalizeImagePoint(std::vector<cv::Point2f> &src, cv::Mat &K)
+{
+    std::vector<cv::Point2f> dst;
+    for(const auto &p:src)
+    {
+        cv::Mat homogeneous_point = (cv::Mat_<double>(3,1) << p.x , p.y , 1.);
+        cv::Mat normalized_point = K.inv() * homogeneous_point;
+        dst.emplace_back(normalized_point.at<double>(0,0),normalized_point.at<double>(1,0));
+    }
+    return dst;
+}
 
 void calcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd &optical_flow, Eigen::MatrixXd &confidence, Eigen::MatrixXd K, bool verbose){
     // Open Video
@@ -136,11 +149,53 @@ void calcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd 
 
         }
 
-        cv::Mat f_mat,e_mat;
-        cv::findFundamentalMat(prev_corner2,cur_corner2,f_mat,cv::FM_RANSAC);
+        // Get rotation and translation matrix. An idea comes from https://stackoverflow.com/questions/14150152/extract-translation-and-rotation-from-fundamental-matrix
+
+
         cv::Mat K_cv;
         cv::eigen2cv(K,K_cv);
-        e_mat = K_cv.t() * f_mat * K_cv;
+
+        if(1)
+        {
+            prev_corner2 = normalizeImagePoint(prev_corner2, K_cv);
+            cur_corner2 = normalizeImagePoint(cur_corner2,K_cv);
+        }
+
+        cv::Mat F,F_float,E;
+        F = cv::findFundamentalMat(prev_corner2,cur_corner2,cv::FM_RANSAC);
+        // F_float.convertTo(F,CV_64FC1);
+        E = K_cv.t() * F * K_cv;
+
+        cv::SVD decomp = cv::SVD(E);
+
+        // U
+        cv::Mat U = decomp.u;
+
+        // S
+        cv::Mat S(3, 3, CV_64F, cv::Scalar(0));
+        S.at<double>(0, 0) = decomp.w.at<double>(0, 0);
+        S.at<double>(1, 1) = decomp.w.at<double>(0, 1);
+        S.at<double>(2, 2) = decomp.w.at<double>(0, 2);
+
+        //V
+        cv::Mat V = decomp.vt.inv(); 
+
+        //W
+        cv::Mat W(3, 3, CV_64F, cv::Scalar(0));
+        W.at<double>(0, 1) = -1;
+        W.at<double>(1, 0) = 1;
+        W.at<double>(2, 2) = 1;
+
+        std::cout << "computed rotation 1: " << std::endl;
+        std::cout << U * W.t() * V.t() << std::endl;
+
+        std::cout << "computed rotation 2: " << std::endl;
+        std::cout << U * W * V.t() << std::endl;
+        // std::cout << "real rotation:" << std::endl;
+        // cv::Mat rot;
+        // cv::Rodrigues(images[1].rvec - images[0].rvec, rot); //Difference between known rotations
+        // cv::cout << rot << cv::endl;
+
 
         // translation + rotation only
         try{
