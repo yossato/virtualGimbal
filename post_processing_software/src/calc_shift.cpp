@@ -168,35 +168,51 @@ void calcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd 
         cv::Mat R,t,mask;
         cv::recoverPose(E, prev_corner2, cur_corner2, K_cv, R, t, mask);
 
-        std::cout << "recovered rotation:" << std::endl;
-        std::cout << R << std::endl;
 
-        std::cout << "recovered translation" << std::endl;
-        std::cout << t << std::endl;
+        
 
         cv::Mat rvec;
         cv::Rodrigues(R,rvec);
-        std::cout << "rvec:" << std::endl;
-        std::cout << rvec.t() << std::endl;
+        
+        if(verbose)
+        {
+            std::cout << "recovered rotation:" << std::endl;
+            std::cout << R << std::endl;
+
+            std::cout << "recovered translation" << std::endl;
+            std::cout << t << std::endl;
+
+            std::cout << "rvec:" << std::endl;
+            std::cout << rvec.t() << std::endl;
+        }
+
+        optical_flow.row(frame) << rvec.at<double>(0,0) , rvec.at<double>(1,0) , rvec.at<double>(2,0);
 
         // translation + rotation only
+        Eigen::MatrixXd optical_flow_old = Eigen::MatrixXd::Zero(1,3);
         try{
             cv::Mat T = cv::estimateAffinePartial2D(prev_corner2, cur_corner2); 
 
             // in rare cases no transform is found. We'll just use the last known good transform.
             if(T.data == NULL) {
-                optical_flow.row(frame) << 0.0, 0.0, 0.0;
+                optical_flow_old << 0.0, 0.0, 0.0;
                 confidence.row(frame) << 0.0;
             }else{
                 double dx = T.at<double>(0,2);
                 double dy = T.at<double>(1,2);
                 double da = atan2(T.at<double>(1,0), T.at<double>(0,0));
-                optical_flow.row(frame) << dx, dy, da;
+                optical_flow_old << dx, dy, da;
                 confidence.row(frame) << 1.0;
             }
         }catch(...){
-            optical_flow.row(frame) << 0.0, 0.0, 0.0;
+            optical_flow_old << 0.0, 0.0, 0.0;
             confidence.row(frame) << 0.0;
+        }
+
+        if(verbose)
+        {
+            std::cout << "Old optical flow:" << optical_flow_old << std::endl;
+            std::cout << "New optical flow:" << optical_flow.row(frame) << std::endl;
         }
 
         cur.copyTo(prev);
