@@ -214,9 +214,18 @@ void calcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd 
             confidence.row(frame) << 0.0;
         }
 
-        double minimum_norm = 0.01;
+        double minimum_norm = 0.02;
 
-        confidence.row(frame) << minimum_norm / std::max( fabs(optical_flow.row(frame).norm()), minimum_norm);
+        // confidence.row(frame) << minimum_norm / std::max( fabs(optical_flow.row(frame).norm()), minimum_norm);
+        if(minimum_norm > optical_flow.row(frame).norm())
+        {
+            confidence.row(frame) << 1.;
+        }
+        else
+        {
+            confidence.row(frame) << 0.;
+        }
+        
 
         if(verbose)
         {
