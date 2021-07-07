@@ -158,87 +158,26 @@ void calcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd 
         // if(1)
         // {
             
-        std::vector<cv::Point2f> homogeneous_prev_corner2;
-        std::vector<cv::Point2f> homogeneous_cur_corner2;
-                cv::Mat F,F_float,E;
-        if(1)
-        {
-            homogeneous_prev_corner2 = normalizeImagePoint(prev_corner2, K_cv);
-            homogeneous_cur_corner2 = normalizeImagePoint(cur_corner2,K_cv);
-            F = cv::findFundamentalMat(homogeneous_prev_corner2,homogeneous_cur_corner2,cv::FM_RANSAC);
-            cv::Mat E_direct = cv::findEssentialMat(prev_corner2,cur_corner2,K_cv,cv::RANSAC);
-            E = F;
-            std::cout << "E:" <<std::endl << E << std::endl << "E_direct:" << std::endl << E_direct << std::endl;
-            E = E_direct;
-        }else
-        {
-            F = cv::findFundamentalMat(prev_corner2,cur_corner2,cv::FM_RANSAC);
-            E = K_cv.t() * F * K_cv;
-        }
-        
-        // }
+        // std::vector<cv::Point2f> homogeneous_prev_corner2;
+        // std::vector<cv::Point2f> homogeneous_cur_corner2;
+        // cv::Mat F,F_float,E;
 
+        cv::Mat E = cv::findEssentialMat(prev_corner2,cur_corner2,K_cv,cv::RANSAC);
 
         
-        // F_float.convertTo(F,CV_64FC1);
-        
-
-        cv::SVD decomp = cv::SVD(E);
-
-        // U
-        cv::Mat U = decomp.u;
-
-        // S
-        cv::Mat S(3, 3, CV_64F, cv::Scalar(0));
-        S.at<double>(0, 0) = decomp.w.at<double>(0, 0);
-        S.at<double>(1, 1) = decomp.w.at<double>(0, 1);
-        S.at<double>(2, 2) = decomp.w.at<double>(0, 2);
-
-        //V
-        cv::Mat V = decomp.vt.t(); 
-        std::cout << "V:" << std::endl << V << std::endl;
-        //W
-        cv::Mat W(3, 3, CV_64F, cv::Scalar(0));
-        W.at<double>(0, 1) = -1;
-        W.at<double>(1, 0) = 1;
-        W.at<double>(2, 2) = 1;
-
-        //Z
-        cv::Mat Z(3, 3, CV_64F, cv::Scalar(0));
-        Z.at<double>(0, 1) = 1;
-        Z.at<double>(1, 0) = -1;
-        
-        // std::cout << "W: " << std::endl;
-        // std::cout << W << std::endl;
         cv::Mat R,t,mask;
         cv::recoverPose(E, prev_corner2, cur_corner2, K_cv, R, t, mask);
-
-
-        std::cout << "computed rotation 1: " << std::endl;
-        std::cout << U * W.t() * V.t() << std::endl;
-
-        std::cout << "computed rotation 2: " << std::endl;
-        std::cout << U * W * V.t() << std::endl;
 
         std::cout << "recovered rotation:" << std::endl;
         std::cout << R << std::endl;
 
-        std::cout << "computed translation 1: " << std::endl;
-        cv::Mat Tx = U * Z * U.t();
-        cv::Mat T = (cv::Mat_<double>(3,1) << Tx.at<double>(2,1) , -Tx.at<double>(2,0), Tx.at<double>(1,0));
-        std::cout << T << std::endl;
-        std::cout << U.col(2) << std::endl;
-
-        std::cout << "computed translation 2: " << std::endl;
-        std::cout << -T << std::endl;
-
         std::cout << "recovered translation" << std::endl;
         std::cout << t << std::endl;
-        // std::cout << "real rotation:" << std::endl;
-        // cv::Mat rot;
-        // cv::Rodrigues(images[1].rvec - images[0].rvec, rot); //Difference between known rotations
-        // cv::cout << rot << cv::endl;
 
+        cv::Mat rvec;
+        cv::Rodrigues(R,rvec);
+        std::cout << "rvec:" << std::endl;
+        std::cout << rvec.t() << std::endl;
 
         // translation + rotation only
         try{
