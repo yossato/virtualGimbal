@@ -81,6 +81,10 @@ void calcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd 
         cv::Mat prev_resized;
         cv::resize(prev,prev_resized,cv::Size(),ratio,ratio,cv::INTER_AREA);
         cv::cvtColor(prev_resized, prev_grey, cv::COLOR_BGR2GRAY);
+        K(0,0) *= ratio;    // Scale Fx
+        K(1,1) *= ratio;    // Scale Fy
+        K(0,2) *= ratio;    // Scale Cx
+        K(1,2) *= ratio;    // Scale Cy
     }else
     {
         cv::cvtColor(prev, prev_grey, cv::COLOR_BGR2GRAY);
@@ -201,7 +205,8 @@ void calcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd 
                 double dx = T.at<double>(0,2);
                 double dy = T.at<double>(1,2);
                 double da = atan2(T.at<double>(1,0), T.at<double>(0,0));
-                optical_flow_old << dx, dy, da;
+                // optical_flow_old << dx, dy, da;
+                optical_flow_old << -dy/K(0,0), dx/K(1,1), da;
                 confidence.row(frame) << 1.0;
             }
         }catch(...){
@@ -209,16 +214,20 @@ void calcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd 
             confidence.row(frame) << 0.0;
         }
 
+        double minimum_norm = 0.01;
+
+        confidence.row(frame) << minimum_norm / std::max( fabs(optical_flow.row(frame).norm()), minimum_norm);
+
         if(verbose)
         {
-            std::cout << "Old optical flow:" << optical_flow_old << std::endl;
-            std::cout << "New optical flow:" << optical_flow.row(frame) << std::endl;
+            std::cout << "Optical flow:" << optical_flow_old << " " << optical_flow.row(frame) << std::endl;
+            std::cout << "Confidence:" << confidence.row(frame) << std::endl;
         }
 
         cur.copyTo(prev);
         cur_grey.copyTo(prev_grey);
 
-        printf("Frame: %d/%d - good optical flow: %lu       \r",frame,total_frames,prev_corner2.size());
+        // printf("Frame: %d/%d - good optical flow: %lu       \r",frame,total_frames,prev_corner2.size());
     }
     // return prev_to_cur_transform;
     return;

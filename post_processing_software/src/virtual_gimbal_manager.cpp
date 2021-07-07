@@ -348,10 +348,15 @@ void VirtualGimbalManager::estimateAngularVelocity(Eigen::MatrixXd &estimated_an
         calcShiftFromVideo(video_param->video_file_name.c_str(), video_param->video_frames, optical_flow, confidence, video_param->camera_info->get_camera_matrix(), true);
     }
     estimated_angular_velocity.resize(optical_flow.rows(), optical_flow.cols());
+    // estimated_angular_velocity.col(0) =
+    //     optical_flow.col(1).unaryExpr([&](double a) { return video_param->getFrequency() * atan(a / (video_param->camera_info->fy_)); });
+    // estimated_angular_velocity.col(1) =
+    //     optical_flow.col(0).unaryExpr([&](double a) { return video_param->getFrequency() * -atan(a / (video_param->camera_info->fx_)); });
+    // estimated_angular_velocity.col(2) = -video_param->getFrequency() * optical_flow.col(2);
     estimated_angular_velocity.col(0) =
-        optical_flow.col(1).unaryExpr([&](double a) { return video_param->getFrequency() * atan(a / (video_param->camera_info->fy_)); });
+        optical_flow.col(0) * video_param->getFrequency();
     estimated_angular_velocity.col(1) =
-        optical_flow.col(0).unaryExpr([&](double a) { return video_param->getFrequency() * -atan(a / (video_param->camera_info->fx_)); });
+        optical_flow.col(1) * video_param->getFrequency();
     estimated_angular_velocity.col(2) = -video_param->getFrequency() * optical_flow.col(2);
 }
 
