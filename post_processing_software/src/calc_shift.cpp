@@ -48,7 +48,7 @@ std::vector<cv::Point2f> normalizeImagePoint(std::vector<cv::Point2f> &src, cv::
     {
         cv::Mat homogeneous_point = (cv::Mat_<double>(3,1) << p.x , p.y , 1.);
         cv::Mat normalized_point = K.inv() * homogeneous_point;
-        dst.emplace_back(normalized_point.at<double>(0,0),normalized_point.at<double>(1,0));
+        dst.emplace_back(normalized_point.at<double>(0,0)/normalized_point.at<double>(2,0),normalized_point.at<double>(1,0)/normalized_point.at<double>(2,0));
     }
     return dst;
 }
@@ -160,23 +160,28 @@ void calcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd 
             
         std::vector<cv::Point2f> homogeneous_prev_corner2;
         std::vector<cv::Point2f> homogeneous_cur_corner2;
-        if(0)
+                cv::Mat F,F_float,E;
+        if(1)
         {
             homogeneous_prev_corner2 = normalizeImagePoint(prev_corner2, K_cv);
             homogeneous_cur_corner2 = normalizeImagePoint(cur_corner2,K_cv);
+            F = cv::findFundamentalMat(homogeneous_prev_corner2,homogeneous_cur_corner2,cv::FM_RANSAC);
+            cv::Mat E_direct = cv::findEssentialMat(prev_corner2,cur_corner2,K_cv,cv::RANSAC);
+            E = F;
+            std::cout << "E:" <<std::endl << E << std::endl << "E_direct:" << std::endl << E_direct << std::endl;
+            E = E_direct;
         }else
         {
-            homogeneous_prev_corner2 = prev_corner2;
-            homogeneous_cur_corner2 = cur_corner2;
-        
+            F = cv::findFundamentalMat(prev_corner2,cur_corner2,cv::FM_RANSAC);
+            E = K_cv.t() * F * K_cv;
         }
         
         // }
 
-        cv::Mat F,F_float,E;
-        F = cv::findFundamentalMat(homogeneous_prev_corner2,homogeneous_cur_corner2,cv::FM_RANSAC);
+
+        
         // F_float.convertTo(F,CV_64FC1);
-        E = K_cv.t() * F * K_cv;
+        
 
         cv::SVD decomp = cv::SVD(E);
 
@@ -205,6 +210,8 @@ void calcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd 
         
         // std::cout << "W: " << std::endl;
         // std::cout << W << std::endl;
+        cv::Mat R,t,mask;
+        cv::recoverPose(E, prev_corner2, cur_corner2, K_cv, R, t, mask);
 
 
         std::cout << "computed rotation 1: " << std::endl;
@@ -213,7 +220,8 @@ void calcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd 
         std::cout << "computed rotation 2: " << std::endl;
         std::cout << U * W * V.t() << std::endl;
 
-        
+        std::cout << "recovered rotation:" << std::endl;
+        std::cout << R << std::endl;
 
         std::cout << "computed translation 1: " << std::endl;
         cv::Mat Tx = U * Z * U.t();
@@ -223,6 +231,9 @@ void calcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd 
 
         std::cout << "computed translation 2: " << std::endl;
         std::cout << -T << std::endl;
+
+        std::cout << "recovered translation" << std::endl;
+        std::cout << t << std::endl;
         // std::cout << "real rotation:" << std::endl;
         // cv::Mat rot;
         // cv::Rodrigues(images[1].rvec - images[0].rvec, rot); //Difference between known rotations
