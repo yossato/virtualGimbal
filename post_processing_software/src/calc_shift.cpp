@@ -121,8 +121,23 @@ void calcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd 
         std::vector <uchar> status;
         std::vector <float> err;
 
-        cv::goodFeaturesToTrack(prev_grey, prev_corner, 200, 0.01, 30);
-        cv::calcOpticalFlowPyrLK(prev_grey, cur_grey, prev_corner, cur_corner, status, err);
+        if(0)
+        {
+            cv::goodFeaturesToTrack(prev_grey, prev_corner, 200, 0.01, 30);
+        }
+        else
+        {
+            std::vector<cv::KeyPoint> keypoints_1;
+            int fast_threshold = 20;
+            bool nonmaxSuppression = true;
+            cv::FAST(prev_grey, keypoints_1, fast_threshold, nonmaxSuppression);
+            cv::KeyPoint::convert(keypoints_1, prev_corner, std::vector<int>());
+        }
+        
+        
+        cv::Size winSize=cv::Size(21,21);																								
+        cv::TermCriteria termcrit = cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 30, 0.01);
+        cv::calcOpticalFlowPyrLK(prev_grey, cur_grey, prev_corner, cur_corner, status, err, winSize, 3, termcrit, 0, 0.001);
 
         // weed out bad matches
         for(size_t i=0; i < status.size(); i++) {
