@@ -517,28 +517,8 @@ int VirtualGimbalManager::spin(double zoom, FilterPtr filter, Eigen::VectorXd &f
     // Prepare
     measured_angular_velocity->calculateAngleQuaternion();
 
-    // UMatの準備
-    // UMatのバッファ
-    // UMatMap b;
-
-    // size_t buffer_size = 3;//21
-    // for(size_t i=0;i<buffer_size/2 ;++i)
-    // {
-    //     reader_->get(b[i]);
-    //     if(!b[i])
-    //     {
-    //         std::cerr << "Failed to read video frame" << std::endl;
-    //         std::exit(EXIT_FAILURE);
-    //     }
-    // }
-
-    // BGRAのバッファ2枚 (b_past,b_future)
-    // UMatPtr b_past(new cv::UMat(b[0]->size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY));
-    UMatPtr b_future;
-
-    // 出力画像のBGRAの1枚 (b_output)
-    // UMatPtr b_output;
-
+   
+    UMatPtr umat_p_latest;
 
     constexpr bool OPENCL_SUCCESS = true;
 
@@ -546,152 +526,39 @@ int VirtualGimbalManager::spin(double zoom, FilterPtr filter, Eigen::VectorXd &f
     {
         cv::namedWindow("Original",cv::WINDOW_NORMAL);
         cv::namedWindow("Result",cv::WINDOW_NORMAL);
-        // cv::namedWindow("inpaint",cv::WINDOW_NORMAL);
     }
 
-    // TODO: MultiThreadVideoReaderがすでに内部にbufferをもっているので、こいつを借りてもいい気がする
     for(int frame = 0; frame < video_param->video_frames ; ++frame)
     {
-        // 動画最も古い1フレームを削除
-        // while(b.size()>buffer_size)
-        // {
-        //     b.erase(b.begin());
-        // }
-        // 動画最新1フレーム読み込み
-        // int back_index = frame+buffer_size/2;
-        UMatPtr umat_src;
-        reader_->get(umat_src);
-        if(!b_future)
+        UMatPtr umat_p_src;
+        reader_->get(umat_p_src);
+        if(!umat_p_latest)
         {
-            b_future = UMatPtr(new cv::UMat(umat_src->size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY));
+            umat_p_latest = UMatPtr(new cv::UMat(umat_p_src->size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY));
         }
-        // if(!b_output)
-        // {
-        //     b_output = UMatPtr(new cv::UMat(umat_src->size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY));
-        // }
-        // if(umat_src)
-        // {
-        //     b[back_index] = std::move(umat_src);
-        // }
 
-        // フィルタ済み姿勢計算 @ 注目フレームの基準時間
-        // getRelativeAngleで前後のフレームは得られるらしい
-        // Privateなので直接アクセスできないorz
-        // 以下の関数で、補正用のquaternionと、相対角度のquaternionを、estimatedな時間で取得する
-        // std::vector<Eigen::Quaterniond> measured_angle_quaternions(video_param->camera_info->height_*buffer_size);
         Eigen::Quaterniond stabilized_angle_quaternion;
-
-        double diff_angle = measured_angular_velocity->getStabilizedQuaternion(frame, filter->getFilterCoefficient(filter_strength(frame))
+        measured_angular_velocity->getStabilizedQuaternion(frame, filter->getFilterCoefficient(filter_strength(frame))
         , sync_table, stabilized_angle_quaternion);
         
-        // UMatとしてつくる　col は 時間軸(フレーム、行数)　rowはバッファーのサイズ(=フレーム数)に対応
-        // static cv::UMat correction_matrices(cv::Size(video_param->camera_info->height_ * 9, buffer_size),CV_32F, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
-
-        // std::cout << "angle:" << diff_angle << std::endl;
-
-        // b_futureについて基準フレームから未来方向へfor文で連続して画素を埋めていく
-        b_future->setTo(cv::Scalar(127,127,127,255)); // BGR A, A channel means distance from target frame
-        // for(int future_frame = frame + buffer_size/2; frame <= future_frame; --future_frame)
-        // {
-            // if(b.count(frame) == 0)
-            // {
-            //     continue;
-            // }
+        umat_p_latest->setTo(cv::Scalar(127,127,127,255)); // BGR A, A channel means distance from target frame
             std::vector<float> stabilized_angle_matrices;
             measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, frame, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices);
             assert(frame >= frame);
             int distance = frame - frame;
-            if(OPENCL_SUCCESS !=  fillPixelValues(context, zoom, stabilized_angle_matrices,distance,umat_src,b_future))
+            if(OPENCL_SUCCESS !=  fillPixelValues(context, zoom, stabilized_angle_matrices,distance,umat_p_src,umat_p_latest))
             {
                 std::cerr << "Failed to run a fill_function kernel at Line:" << __LINE__ << " of " << __FILE__ << std::endl;
                 return -1;
             }
-        // }
 
-        // // b_pastについて基準フレームから過去方向へfor文で連続して画素を埋めていく
-        // b_past->setTo(cv::Scalar(127,127,127,255));
-        // for(int past_frame = frame - buffer_size/2; past_frame <= frame; ++past_frame)
-        // {
-        //     if(b.count(past_frame) == 0)
-        //     {
-        //         continue;
-        //     }
-        //     std::vector<float> stabilized_angle_matrices;
-        //     measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, past_frame, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices);
-        //     assert(frame >= past_frame);
-        //     int distance = frame - past_frame;
-        //     if(OPENCL_SUCCESS != fillPixelValues(context, zoom,stabilized_angle_matrices,distance,b[past_frame],b_past))
-        //     {
-        //         std::cerr << "Failed to run a fill_function kernel at Line:" << __LINE__ << " of " << __FILE__ << std::endl;
-        //         return -1;
-        //     }
-        // }
 
-        // 最後に b_pastとb_futureからb_outputを生成
-        // if(OPENCL_SUCCESS != interpolatePixels(context, b_past,b_future,b_output))
-        // {
-        //     std::cerr << "Failed to run a interpoloate_function kernel at Line:" << __LINE__ << " of " << __FILE__ << std::endl;
-        //     return -1;
-        // }
-
-        // // Inpaint test
-        // if(frame + 1 < video_param->video_frames){
-        //     static UMatPtr b_latest;
-        //     if(!b_latest) b_latest = UMatPtr(new cv::UMat(b[0]->size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY));
-        //     static UMatPtr b_next;
-        //     if(!b_next) b_next = UMatPtr(new cv::UMat(b[0]->size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY));
-            
-        //     // Generate latest frame
-        //     std::vector<float> stabilized_angle_matrices;
-        //     measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, frame, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices);
-        //     if(OPENCL_SUCCESS !=  fillPixelValues(context, zoom, stabilized_angle_matrices,0,b[frame],b_latest))
-        //     {
-        //         std::cerr << "Failed to run a fill_function kernel at Line:" << __LINE__ << " of " << __FILE__ << std::endl;
-        //         return -1;
-        //     }
-
-        //     // Generate next frame 
-        //     stabilized_angle_matrices.clear();
-        //     measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, frame+1, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices);
-        //     if(OPENCL_SUCCESS !=  fillPixelValues(context, zoom, stabilized_angle_matrices,0,b[frame+1],b_next))
-        //     {
-        //         std::cerr << "Failed to run a fill_function kernel at Line:" << __LINE__ << " of " << __FILE__ << std::endl;
-        //         return -1;
-        //     }
-
-        //     cv::UMat mono_latest;
-        //     cv::UMat mono_next;
-        //     cv::cvtColor(*b_latest,mono_latest,COLOR_BGRA2GRAY);
-        //     cv::cvtColor(*b_next,mono_next,COLOR_BGRA2GRAY);
-        //     cv::Mat float_latest,float_next;
-        //     mono_latest.convertTo(float_latest,CV_32F);
-        //     mono_next.convertTo(float_next,CV_32F);
-        //     cv::Size map_size = cv::Size(5,5);
-        //     cv::Size window_size = cv::Size(600,400);
-        //     cv::Mat map = calculateOpticalFlow(map_size,window_size,float_latest,float_next);
-            
-        //     //  = b_next->getMat(cv::ACCESS_READ)
-        //     cv::Mat latest = b_latest->getMat(cv::ACCESS_READ).clone();
-        //     visualizeInpaintingMap(latest,window_size,map);
-
-        //     if (writer_)
-        //     {
-        //         UMatPtr copied(new cv::UMat(latest.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY)));
-        //         writer_->push(copied);
-        //     }
-
-        //     cv::resize(latest,latest,cv::Size(),0.3,0.3);
-        //     cv::imshow("inpaint",latest);
-        // }
-
-        // Show image on displayreturn 0;
+        // Show image on display
         if (show_image)
         {
-            // cv::imshow("Original", *b[frame]);
-            // cv::imshow("Result", *b_output);
             cv::UMat small, small_src;
-            cv::resize(*b_future, small, cv::Size(), 0.5, 0.5);
-            cv::resize(*umat_src, small_src, cv::Size(), 0.5, 0.5);
+            cv::resize(*umat_p_latest, small, cv::Size(), 0.5, 0.5);
+            cv::resize(*umat_p_src, small_src, cv::Size(), 0.5, 0.5);
             cv::imshow("Original", small_src);
             cv::imshow("Result", small);
             char key = cv::waitKey(1);
@@ -713,7 +580,7 @@ int VirtualGimbalManager::spin(double zoom, FilterPtr filter, Eigen::VectorXd &f
 
         if (writer_)
         {
-            UMatPtr copied(new cv::UMat(b_future->clone()));
+            UMatPtr copied(new cv::UMat(umat_p_latest->clone()));
             writer_->push(copied);
         }
 
