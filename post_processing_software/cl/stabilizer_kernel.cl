@@ -128,25 +128,25 @@ __kernel void stabilizer_function(
    __global  uchar4 *output,
    int output_step, int output_offset, int output_rows, int output_cols, 
    __global float* rotation_matrix,       // Rotation Matrix in each rows.
-   int src_step, int src_offset,
-   float zoom_ratio,
-   float k1, float k2,float p1, float p2, // Distortion parameters.
-   float fx, float fy, float cx, float cy
+   int rotation_matrix_step, int rotation_matrix_offset,
+   __global float* params,
+   int params_step, int params_offset
 )
 {
    int2 size = get_image_dim(input);
    float2 uv = convert_float2((int2)(get_global_id(0),get_global_id(1)));
-   float2 f = (float2)(fx,fy);
-   float2 c = (float2)(cx,cy);
+   __global camera_params* p = (__global camera_params*)params;
+   float2 f = (float2)(p->fx,p->fy);
+   float2 c = (float2)(p->cx,p->cy);
 
    float2 uv0_ = uv;
    float2 uv1_ = uv + (float2)(1,0);
    float2 uv2_ = uv + (float2)(1,1);
    float2 uv3_ = uv + (float2)(0,1);
-   float2 uv0 = warp_undistort(uv0_, zoom_ratio, rotation_matrix, k1, k2, p1, p2, f, c);
-   float2 uv1 = warp_undistort(uv1_, zoom_ratio, rotation_matrix, k1, k2, p1, p2, f, c);
-   float2 uv2 = warp_undistort(uv2_, zoom_ratio, rotation_matrix, k1, k2, p1, p2, f, c);
-   float2 uv3 = warp_undistort(uv3_, zoom_ratio, rotation_matrix, k1, k2, p1, p2, f, c);
+   float2 uv0 = warp_undistort(uv0_, p->zoom, rotation_matrix, p->ik1, p->ik2, p->ip1, p->ip2, f, c);
+   float2 uv1 = warp_undistort(uv1_, p->zoom, rotation_matrix, p->ik1, p->ik2, p->ip1, p->ip2, f, c);
+   float2 uv2 = warp_undistort(uv2_, p->zoom, rotation_matrix, p->ik1, p->ik2, p->ip1, p->ip2, f, c);
+   float2 uv3 = warp_undistort(uv3_, p->zoom, rotation_matrix, p->ik1, p->ik2, p->ip1, p->ip2, f, c);
 
    
    int2 uvMin = convert_int2(floor(min(min(uv0,uv1),min(uv2,uv3))));
