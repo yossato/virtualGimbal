@@ -46,6 +46,10 @@
 #include "cl_manager.h"
 #include "multi_thread_video_writer.h"
 #include <chrono>         // std::chrono::seconds
+#include <map>
+
+#include "inpainting.hpp"
+
 class VirtualGimbalManager
 {
 public:
@@ -81,7 +85,10 @@ public:
                                       FilterPtr filter,
                                       std::vector<std::pair<int32_t,double>> &sync_table, 
                                       int32_t strongest_filter_param, int32_t weakest_filter_param);
-  void spin(double zoom, FilterPtr filter,Eigen::VectorXd &filter_strength, std::vector<std::pair<int32_t,double>> &sync_table, bool show_image = true);
+  int spin(double zoom, FilterPtr filter,Eigen::VectorXd &filter_strength, std::vector<std::pair<int32_t,double>> &sync_table, bool show_image = true);
+  int spinInpainting(double zoom, std::vector<std::pair<int32_t, double>> &sync_table, FilterPtr filter, size_t buffer_size, int filter_strength=199, bool show_image = true);
+  bool fillPixelValues(cv::ocl::Context &context, double zoom, std::vector<float> stabilized_angle_matrices, uint8_t distance, UMatPtr &source_image, UMatPtr &dest_image);
+  bool interpolatePixels(cv::ocl::Context &context, UMatPtr &past, UMatPtr &future, UMatPtr &output);
   void setMaximumGradient(double value);
   void enableWriter(const char *video_path);
   const char *kernel_name = "stabilizer_kernel.cl";
@@ -122,6 +129,8 @@ protected:
       angular_velocity(row, 2) = avq.z();
     }
   }
+
+  using UMatMap = std::map<int,UMatPtr>;
 };
 
 #endif // __VIRTUAL_GIMBAL_MANAGER_H__

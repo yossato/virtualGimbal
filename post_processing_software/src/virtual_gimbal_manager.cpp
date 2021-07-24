@@ -38,7 +38,6 @@ VirtualGimbalManager::VirtualGimbalManager()
 {
 }
 
-
 VirtualGimbalManager::VirtualGimbalManager(size_t queue_size) : queue_size_(queue_size)
 {
 }
@@ -72,12 +71,11 @@ void VirtualGimbalManager::setMeasuredAngularVelocity(const char *file_name, Cam
         measured_angular_velocity.reset(new AngularVelocity(readSamplingRateFromJson(file_name)));
         measured_angular_velocity->data = readAngularVelocityFromJson(file_name);
     }
-    catch(std::string e)
+    catch (std::string e)
     {
         std::cerr << "Error: " << e << std::endl;
         std::exit(EXIT_FAILURE);
     }
-    
     if (info)
     {
         rotateAngularVelocity(measured_angular_velocity->data, info->sd_card_rotation_);
@@ -124,10 +122,13 @@ Eigen::VectorXd VirtualGimbalManager::getCorrelationCoefficient(int32_t begin, i
     Eigen::VectorXd particial_confidence = estimated_angular_velocity->confidence.block(begin, 0, length, estimated_angular_velocity->confidence.cols());
 
     int32_t diff = measured_angular_velocity_resampled.rows() - particial_estimated_angular_velocity.rows();
-    if(0 >= diff){
-        std::cerr << "Error: Measured angular velocity data from a gyroscope sensor is shorter than video length.\r\nPlease confirm input json file of angular velocity\r\n" 
-        << "Length of angular velocity is " <<  measured_angular_velocity->getLengthInSecond() << " seconds.\r\n"
-        << "Length of video is " << estimated_angular_velocity->getLengthInSecond() << " seconds.\r\n" << std::endl << std::flush;
+    if (0 >= diff)
+    {
+        std::cerr << "Error: Measured angular velocity data from a gyroscope sensor is shorter than video length.\r\nPlease confirm input json file of angular velocity\r\n"
+                  << "Length of angular velocity is " << measured_angular_velocity->getLengthInSecond() << " seconds.\r\n"
+                  << "Length of video is " << estimated_angular_velocity->getLengthInSecond() << " seconds.\r\n"
+                  << std::endl
+                  << std::flush;
         throw;
     }
     Eigen::VectorXd correlation_coefficients(diff + 1);
@@ -349,9 +350,11 @@ void VirtualGimbalManager::estimateAngularVelocity(Eigen::MatrixXd &estimated_an
     }
     estimated_angular_velocity.resize(optical_flow.rows(), optical_flow.cols());
     estimated_angular_velocity.col(0) =
-        optical_flow.col(1).unaryExpr([&](double a) { return video_param->getFrequency() * atan(a / (video_param->camera_info->fy_)); });
+        optical_flow.col(1).unaryExpr([&](double a)
+                                      { return video_param->getFrequency() * atan(a / (video_param->camera_info->fy_)); });
     estimated_angular_velocity.col(1) =
-        optical_flow.col(0).unaryExpr([&](double a) { return video_param->getFrequency() * -atan(a / (video_param->camera_info->fx_)); });
+        optical_flow.col(0).unaryExpr([&](double a)
+                                      { return video_param->getFrequency() * -atan(a / (video_param->camera_info->fx_)); });
     estimated_angular_velocity.col(2) = -video_param->getFrequency() * optical_flow.col(2);
 }
 
@@ -503,85 +506,58 @@ std::shared_ptr<cv::VideoCapture> VirtualGimbalManager::getVideoCapture()
 #define LAP_BEGIN //auto td1=std::chrono::system_clock::now();int line =__LINE__;
 #define LAP       // printf("\r\nDuration from L %d to %d is %ld\r\n", line,__LINE__, std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - td1).count());line=__LINE__;td1=std::chrono::system_clock::now();
 
-void VirtualGimbalManager::spin(double zoom, FilterPtr filter, Eigen::VectorXd &filter_strength, std::vector<std::pair<int32_t, double>> &sync_table, bool show_image)
+int VirtualGimbalManager::spin(double zoom, FilterPtr filter, Eigen::VectorXd &filter_strength, std::vector<std::pair<int32_t, double>> &sync_table, bool show_image)
 {
-
-    // Prepare correction rotation matrix generator. This constructor run a thread.
-    MultiThreadRotationMatrixGenerator gen(video_param, filter, measured_angular_velocity, filter_strength, sync_table,queue_size_);
 
     // Prepare OpenCL
     cv::ocl::Context context;
-    cv::Mat mat_src = cv::Mat::zeros(video_param->camera_info->height_, video_param->camera_info->width_, CV_8UC4); // TODO:冗長なので書き換える
-    cv::UMat umat_src = mat_src.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
-    cv::String build_opt;
     initializeCL(context);
 
     // Open Video
-    reader_ = std::make_shared<MultiThreadVideoReader>(video_param->video_file_name,queue_size_);
-    auto capture = getVideoCapture();
+    reader_ = std::make_shared<MultiThreadVideoReader>(video_param->video_file_name, queue_size_);
 
-    // Stabilize every frames
-    float ik1 = video_param->camera_info->inverse_k1_;
-    float ik2 = video_param->camera_info->inverse_k2_;
-    float ip1 = video_param->camera_info->inverse_p1_;
-    float ip2 = video_param->camera_info->inverse_p2_;
-    float fx = video_param->camera_info->fx_;
-    float fy = video_param->camera_info->fy_;
-    float cx = video_param->camera_info->cx_;
-    float cy = video_param->camera_info->cy_;
+    // Prepare
+    measured_angular_velocity->calculateAngleQuaternion();
 
-    for (int frame = 0; frame <= video_param->video_frames; ++frame)
+    UMatPtr umat_p_latest;
+
+    constexpr bool OPENCL_SUCCESS = true;
+
+    if (show_image)
     {
-        UMatPtr umat_src;
-        reader_->get(umat_src);
-        if (!umat_src)
+        cv::namedWindow("Original", cv::WINDOW_NORMAL);
+        cv::namedWindow("Result", cv::WINDOW_NORMAL);
+    }
+
+    for (int frame = 0; frame < video_param->video_frames; ++frame)
+    {
+        UMatPtr umat_p_src;
+        reader_->get(umat_p_src);
+        if (!umat_p_latest)
         {
-            break;
+            umat_p_latest = UMatPtr(new cv::UMat(umat_p_src->size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY));
         }
 
-        LAP_BEGIN
-        MatrixPtr R;
-        gen.get(R);
-        LAP
+        Eigen::Quaterniond stabilized_angle_quaternion;
+        measured_angular_velocity->getStabilizedQuaternion(frame, filter->getFilterCoefficient(filter_strength(frame)), sync_table, stabilized_angle_quaternion);
 
-            cv::ocl::Image2D image(*umat_src);
-        LAP
-            UMatPtr umat_dst_ptr(new cv::UMat(mat_src.size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY));
-        LAP
-            cv::Mat mat_R = cv::Mat(R->size(), 1, CV_32F, R->data());
-        LAP
-            cv::UMat umat_R = mat_R.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
-        LAP
-            cv::ocl::Kernel kernel;
-        getKernel(kernel_name, kernel_function, kernel, context, build_opt);
-        LAP
-            kernel.args(image, cv::ocl::KernelArg::WriteOnly(*umat_dst_ptr), cv::ocl::KernelArg::ReadOnlyNoSize(umat_R),
-                        (float)zoom,
-                        ik1,
-                        ik2,
-                        ip1,
-                        ip2,
-                        fx,
-                        fy,
-                        cx,
-                        cy);
-        size_t globalThreads[3] = {(size_t)mat_src.cols, (size_t)mat_src.rows, 1};
-        //size_t localThreads[3] = { 16, 16, 1 };
-        LAP bool success = kernel.run(3, globalThreads, NULL, true);
-        if (!success)
+        umat_p_latest->setTo(cv::Scalar(127, 127, 127, 255)); // BGR A, A channel means distance from target frame
+        std::vector<float> stabilized_angle_matrices;
+        measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, frame, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices);
+        assert(frame >= frame);
+        int distance = frame - frame;
+        if (OPENCL_SUCCESS != fillPixelValues(context, zoom, stabilized_angle_matrices, distance, umat_p_src, umat_p_latest))
         {
-            cout << "Failed running the kernel..." << endl
-                 << flush;
-            throw "Failed running the kernel...";
+            std::cerr << "Failed to run a fill_function kernel at Line:" << __LINE__ << " of " << __FILE__ << std::endl;
+            return -1;
         }
 
-        LAP
-            // 画面に表示
-            if (show_image)
+        // Show image on display
+        if (show_image)
         {
             cv::UMat small, small_src;
-            cv::resize(*umat_dst_ptr, small, cv::Size(), 0.5, 0.5);
-            cv::resize(*umat_src, small_src, cv::Size(), 0.5, 0.5);
+            cv::resize(*umat_p_latest, small, cv::Size(), 0.5, 0.5);
+            cv::resize(*umat_p_src, small_src, cv::Size(), 0.5, 0.5);
             cv::imshow("Original", small_src);
             cv::imshow("Result", small);
             char key = cv::waitKey(1);
@@ -596,41 +572,345 @@ void VirtualGimbalManager::spin(double zoom, FilterPtr filter, Eigen::VectorXd &
                 if ('q' == key)
                 {
                     cv::destroyAllWindows();
-                    return;
+                    return 0;
                 }
             }
         }
 
         if (writer_)
         {
-            writer_->push(umat_dst_ptr);
+            UMatPtr copied(new cv::UMat(umat_p_latest->clone()));
+            writer_->push(copied);
         }
-        LAP
+
+        {
             //Show fps
             auto t4 = std::chrono::system_clock::now();
-        static auto t3 = t4;
-        // 処理の経過時間
-        double elapsedmicroseconds = std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count();
-        static double fps = 0.0;
-        if (elapsedmicroseconds != 0.0)
-        {
-            fps = 0.05 * (1e6 / elapsedmicroseconds) + 0.95 * fps;
+            static auto t3 = t4;
+            // 処理の経過時間
+            double elapsedmicroseconds = std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count();
+            static double fps = 0.0;
+            if (elapsedmicroseconds != 0.0)
+            {
+                fps = 0.05 * (1e6 / elapsedmicroseconds) + 0.95 * fps;
+            }
+            t3 = t4;
+            printf("fps:%4.2f\r", fps);
+            fflush(stdout);
         }
-        t3 = t4;
-        printf("fps:%4.2f\r", fps);
-        fflush(stdout);
-        LAP
     }
     cv::destroyAllWindows();
-    return;
+    return 0;
 }
 
 #undef LAP_BEGIN
 #undef LAP
 
+int VirtualGimbalManager::spinInpainting(double zoom, std::vector<std::pair<int32_t, double>> &sync_table, FilterPtr filter, size_t buffer_size, int filter_strength, bool show_image)
+{
+    // Prepare OpenCL
+    cv::ocl::Context context;
+    initializeCL(context);
+
+    // Open Video
+    reader_ = std::make_shared<MultiThreadVideoReader>(video_param->video_file_name, queue_size_);
+
+    // Prepare
+    measured_angular_velocity->calculateAngleQuaternion();
+
+    // UMatの準備
+    // UMatのバッファ
+    UMatMap b;
+
+    // size_t buffer_size = 3;//21
+    for (size_t i = 0; i < buffer_size / 2; ++i)
+    {
+        reader_->get(b[i]);
+        if (!b[i])
+        {
+            std::cerr << "Failed to read video frame" << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+    }
+
+    // BGRAのバッファ2枚 (b_past,b_future)
+    UMatPtr b_past(new cv::UMat(b[0]->size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY));
+    UMatPtr b_future(new cv::UMat(b[0]->size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY));
+
+    // 出力画像のBGRAの1枚 (b_output)
+    UMatPtr b_output(new cv::UMat(b[0]->size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY));
+
+    constexpr bool OPENCL_SUCCESS = true;
+
+    if (show_image)
+    {
+        cv::namedWindow("Original", cv::WINDOW_NORMAL);
+        cv::namedWindow("Result", cv::WINDOW_NORMAL);
+        cv::namedWindow("inpaint", cv::WINDOW_NORMAL);
+    }
+
+    // TODO: MultiThreadVideoReaderがすでに内部にbufferをもっているので、こいつを借りてもいい気がする
+    for (int frame = 0; frame < video_param->video_frames; ++frame)
+    {
+        // 動画最も古い1フレームを削除
+        while (b.size() > buffer_size)
+        {
+            b.erase(b.begin());
+        }
+        // 動画最新1フレーム読み込み
+        int back_index = frame + buffer_size / 2;
+        UMatPtr p;
+        reader_->get(p);
+        if (p)
+        {
+            b[back_index] = std::move(p);
+        }
+
+        // フィルタ済み姿勢計算 @ 注目フレームの基準時間
+        // getRelativeAngleで前後のフレームは得られるらしい
+        // Privateなので直接アクセスできないorz
+        // 以下の関数で、補正用のquaternionと、相対角度のquaternionを、estimatedな時間で取得する
+        // std::vector<Eigen::Quaterniond> measured_angle_quaternions(video_param->camera_info->height_*buffer_size);
+        Eigen::Quaterniond stabilized_angle_quaternion;
+
+        double diff_angle = measured_angular_velocity->getStabilizedQuaternion(frame, filter->getFilterCoefficient(filter_strength), sync_table, stabilized_angle_quaternion);
+
+        // UMatとしてつくる　col は 時間軸(フレーム、行数)　rowはバッファーのサイズ(=フレーム数)に対応
+        // static cv::UMat correction_matrices(cv::Size(video_param->camera_info->height_ * 9, buffer_size),CV_32F, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+
+        std::cout << "angle:" << diff_angle << std::endl;
+
+        // b_futureについて基準フレームから未来方向へfor文で連続して画素を埋めていく
+        b_future->setTo(cv::Scalar(127, 127, 127, 255)); // BGR A, A channel means distance from target frame
+        for (int future_frame = frame + buffer_size / 2; frame <= future_frame; --future_frame)
+        {
+            if (b.count(future_frame) == 0)
+            {
+                continue;
+            }
+            std::vector<float> stabilized_angle_matrices;
+            measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, future_frame, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices);
+            assert(future_frame >= frame);
+            int distance = future_frame - frame;
+            if (OPENCL_SUCCESS != fillPixelValues(context, zoom, stabilized_angle_matrices, distance, b[future_frame], b_future))
+            {
+                std::cerr << "Failed to run a fill_function kernel at Line:" << __LINE__ << " of " << __FILE__ << std::endl;
+                return -1;
+            }
+        }
+
+        // b_pastについて基準フレームから過去方向へfor文で連続して画素を埋めていく
+        b_past->setTo(cv::Scalar(127, 127, 127, 255));
+        for (int past_frame = frame - buffer_size / 2; past_frame <= frame; ++past_frame)
+        {
+            if (b.count(past_frame) == 0)
+            {
+                continue;
+            }
+            std::vector<float> stabilized_angle_matrices;
+            measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, past_frame, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices);
+            assert(frame >= past_frame);
+            int distance = frame - past_frame;
+            if (OPENCL_SUCCESS != fillPixelValues(context, zoom, stabilized_angle_matrices, distance, b[past_frame], b_past))
+            {
+                std::cerr << "Failed to run a fill_function kernel at Line:" << __LINE__ << " of " << __FILE__ << std::endl;
+                return -1;
+            }
+        }
+
+        // 最後に b_pastとb_futureからb_outputを生成
+        if (OPENCL_SUCCESS != interpolatePixels(context, b_past, b_future, b_output))
+        {
+            std::cerr << "Failed to run a interpoloate_function kernel at Line:" << __LINE__ << " of " << __FILE__ << std::endl;
+            return -1;
+        }
+
+        // Inpaint test
+        if (frame + 1 < video_param->video_frames)
+        {
+            static UMatPtr b_latest;
+            if (!b_latest)
+                b_latest = UMatPtr(new cv::UMat(b[0]->size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY));
+            static UMatPtr b_next;
+            if (!b_next)
+                b_next = UMatPtr(new cv::UMat(b[0]->size(), CV_8UC4, cv::ACCESS_WRITE, cv::USAGE_ALLOCATE_DEVICE_MEMORY));
+
+            // Generate latest frame
+            std::vector<float> stabilized_angle_matrices;
+            measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, frame, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices);
+            if (OPENCL_SUCCESS != fillPixelValues(context, zoom, stabilized_angle_matrices, 0, b[frame], b_latest))
+            {
+                std::cerr << "Failed to run a fill_function kernel at Line:" << __LINE__ << " of " << __FILE__ << std::endl;
+                return -1;
+            }
+
+            // Generate next frame
+            stabilized_angle_matrices.clear();
+            measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, frame + 1, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices);
+            if (OPENCL_SUCCESS != fillPixelValues(context, zoom, stabilized_angle_matrices, 0, b[frame + 1], b_next))
+            {
+                std::cerr << "Failed to run a fill_function kernel at Line:" << __LINE__ << " of " << __FILE__ << std::endl;
+                return -1;
+            }
+
+            cv::UMat mono_latest;
+            cv::UMat mono_next;
+            cv::cvtColor(*b_latest, mono_latest, COLOR_BGRA2GRAY);
+            cv::cvtColor(*b_next, mono_next, COLOR_BGRA2GRAY);
+            cv::Mat float_latest, float_next;
+            mono_latest.convertTo(float_latest, CV_32F);
+            mono_next.convertTo(float_next, CV_32F);
+            cv::Size map_size = cv::Size(5, 5);
+            cv::Size window_size = cv::Size(600, 400);
+            cv::Mat map = calculateOpticalFlow(map_size, window_size, float_latest, float_next);
+
+            //  = b_next->getMat(cv::ACCESS_READ)
+            cv::Mat latest = b_latest->getMat(cv::ACCESS_READ).clone();
+            visualizeInpaintingMap(latest, window_size, map);
+
+            if (writer_)
+            {
+                UMatPtr copied(new cv::UMat(latest.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY)));
+                writer_->push(copied);
+            }
+
+            cv::resize(latest, latest, cv::Size(), 0.3, 0.3);
+            cv::imshow("inpaint", latest);
+        }
+
+        // Show image on displayreturn 0;
+        if (show_image)
+        {
+            // cv::imshow("Original", *b[frame]);
+            // cv::imshow("Result", *b_output);
+            cv::UMat small, small_src;
+            cv::resize(*b_output, small, cv::Size(), 0.5, 0.5);
+            cv::resize(*b[frame], small_src, cv::Size(), 0.5, 0.5);
+            cv::imshow("Original", small_src);
+            cv::imshow("Result", small);
+            char key = cv::waitKey(1);
+            if ('q' == key)
+            {
+                break;
+            }
+            else if ('s' == key)
+            {
+                sleep(1);
+                key = cv::waitKey(0);
+                if ('q' == key)
+                {
+                    cv::destroyAllWindows();
+                    return 0;
+                }
+            }
+        }
+
+        if (writer_)
+        {
+            UMatPtr copied(new cv::UMat(b_output->clone()));
+            writer_->push(copied);
+        }
+
+        {
+            //Show fps
+            auto t4 = std::chrono::system_clock::now();
+            static auto t3 = t4;
+            // 処理の経過時間
+            double elapsedmicroseconds = std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count();
+            static double fps = 0.0;
+            if (elapsedmicroseconds != 0.0)
+            {
+                fps = 0.05 * (1e6 / elapsedmicroseconds) + 0.95 * fps;
+            }
+            t3 = t4;
+            printf("fps:%4.2f\r", fps);
+            fflush(stdout);
+        }
+    }
+    cv::destroyAllWindows();
+    return 0;
+}
+
+bool VirtualGimbalManager::fillPixelValues(cv::ocl::Context &context, double zoom, std::vector<float> stabilized_angle_matrices, uint8_t distance, UMatPtr &source_image, UMatPtr &dest_image)
+{
+    // Prepare OpenCL
+    // cv::ocl::Context context;
+    // cv::Mat mat_src = cv::Mat::zeros(video_param->camera_info->height_, video_param->camera_info->width_, CV_8UC4); // TODO:冗長なので書き換える
+    // cv::UMat umat_src = mat_src.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+
+    cv::Mat mat_matrices = cv::Mat(stabilized_angle_matrices.size(), 1, CV_32F, stabilized_angle_matrices.data());
+    cv::UMat umat_matrices = mat_matrices.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+
+    // Stabilize every frames
+    float ik1 = video_param->camera_info->inverse_k1_;
+    float ik2 = video_param->camera_info->inverse_k2_;
+    float ip1 = video_param->camera_info->inverse_p1_;
+    float ip2 = video_param->camera_info->inverse_p2_;
+    float fx = video_param->camera_info->fx_;
+    float fy = video_param->camera_info->fy_;
+    float cx = video_param->camera_info->cx_;
+    float cy = video_param->camera_info->cy_;
+    cv::Mat mat_params = (cv::Mat_<float>(9, 1) << (float)zoom, ik1, ik2, ip1, ip2, fx, fy, cx, cy);
+    cv::UMat umat_params = mat_params.getUMat(cv::ACCESS_READ, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+
+    cv::String build_opt;
+    // initializeCL(context);
+
+    cv::ocl::Image2D image(*source_image);
+
+    cv::ocl::Kernel kernel;
+    try
+    {
+        getKernel(kernel_name, "fill_function", kernel, context, build_opt);
+    }
+    catch (const char *e)
+    {
+        std::cerr << "Error: " << e << '\n';
+        std::exit(EXIT_FAILURE);
+    }
+
+    kernel.args(image,
+                cv::ocl::KernelArg::WriteOnly(*dest_image),
+                cv::ocl::KernelArg::ReadOnlyNoSize(umat_matrices),
+                cv::ocl::KernelArg::ReadOnlyNoSize(umat_params),
+                distance);
+    size_t globalThreads[3] = {(size_t)dest_image->cols, (size_t)dest_image->rows, 1};
+    bool success = kernel.run(3, globalThreads, NULL, true);
+    return success;
+}
+
+bool VirtualGimbalManager::interpolatePixels(cv::ocl::Context &context, UMatPtr &past, UMatPtr &future, UMatPtr &output)
+{
+    // Prepare OpenCL
+    // cv::ocl::Context context;
+
+    cv::String build_opt;
+    // initializeCL(context);
+
+    cv::ocl::Image2D past_image(*past);
+    cv::ocl::Image2D future_image(*future);
+    cv::ocl::Kernel kernel;
+    try
+    {
+        getKernel(kernel_name, "interpoloate_function", kernel, context, build_opt);
+    }
+    catch (const char *e)
+    {
+        std::cerr << "Error: " << e << '\n';
+        std::exit(EXIT_FAILURE);
+    }
+
+    kernel.args(past_image,
+                future_image,
+                cv::ocl::KernelArg::WriteOnly(*output));
+    size_t globalThreads[3] = {(size_t)output->cols, (size_t)output->rows, 1};
+    bool success = kernel.run(3, globalThreads, NULL, true);
+    return success;
+}
+
 void VirtualGimbalManager::enableWriter(const char *video_path)
 {
-    writer_ = std::make_shared<MultiThreadVideoWriter>(MultiThreadVideoWriter::getOutputName(video_path), *video_param,queue_size_);
+    writer_ = std::make_shared<MultiThreadVideoWriter>(MultiThreadVideoWriter::getOutputName(video_path), *video_param, queue_size_);
 }
 
 std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(double period_in_second, int32_t width)
@@ -638,7 +918,7 @@ std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(doubl
     assert(width % 2);          // Odd
     int32_t radius = width / 2; // radius and width means number of frame in estimated angular velocity, not measured angular velocity.
     std::vector<std::pair<int32_t, double>> table;
-    for (int center = radius, e = estimated_angular_velocity->getFrames() - radius; center < e; center += (int32_t)(period_in_second*video_param->getFrequency()))
+    for (int center = radius, e = estimated_angular_velocity->getFrames() - radius; center < e; center += (int32_t)(period_in_second * video_param->getFrequency()))
     {
         Eigen::VectorXd correlation = getCorrelationCoefficient(center - radius, width);
         double measured_frame = getSubframeOffsetInSecond(correlation, center - radius, width) * measured_angular_velocity->getFrequency() + (double)radius / estimated_angular_velocity->getFrequency() * measured_angular_velocity->getFrequency();
@@ -647,7 +927,8 @@ std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(doubl
     return table;
 }
 
-std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTableOfShortVideo(){
+std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTableOfShortVideo()
+{
     int32_t width = video_param->video_frames;
     int32_t radius = width / 2; // radius and width means number of frame in estimated angular velocity, not measured angular velocity.
 
@@ -655,8 +936,8 @@ std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTableOfShor
     double measured_frame = getSubframeOffsetInSecond(correlation, 0, width) * measured_angular_velocity->getFrequency() + (double)radius / estimated_angular_velocity->getFrequency() * measured_angular_velocity->getFrequency();
 
     std::vector<std::pair<int32_t, double>> table;
-    table.emplace_back(0,measured_frame+(0-radius) / estimated_angular_velocity->getFrequency() * measured_angular_velocity->getFrequency());
-    table.emplace_back(width-1,measured_frame+((width-1)-radius) / estimated_angular_velocity->getFrequency() * measured_angular_velocity->getFrequency());
+    table.emplace_back(0, measured_frame + (0 - radius) / estimated_angular_velocity->getFrequency() * measured_angular_velocity->getFrequency());
+    table.emplace_back(width - 1, measured_frame + ((width - 1) - radius) / estimated_angular_velocity->getFrequency() * measured_angular_velocity->getFrequency());
 
     return table;
 }

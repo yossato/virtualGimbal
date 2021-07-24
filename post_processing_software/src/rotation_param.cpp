@@ -263,7 +263,115 @@ Eigen::Quaterniond AngularVelocity::getCorrectionQuaternionFromFrame(   double e
     }
 }
 
-Eigen::Quaterniond AngularVelocity::getCorrectionQuaternion(double time, const Eigen::VectorXd &filter_coeff)
+void AngularVelocity::calculateAngleQuaternion()
+{
+    Eigen::Quaterniond q(1.0, 0.0, 0.0, 0.0);
+    for(size_t frame=0;frame<(size_t)data.rows();++frame)
+    {
+        q = (q * Vector2Quaternion<double>(getAngularVelocityVector(frame))).normalized();
+        quaternion_.push_back(q);
+    }
+}
+
+Eigen::Quaterniond AngularVelocity::quaternion(double frame)
+{
+    size_t integer_frame = floor(frame);
+    if ((frame < 0) || (frame >= (data.rows()-1)))
+    {
+        std::cerr << "Error: Frame range is out of range." << std::endl;
+        return Eigen::Quaterniond(1.0, 0,0,0);
+    }
+    else
+    {
+        double ratio = frame - integer_frame;
+        return quaternion_[integer_frame].slerp(ratio,quaternion_[integer_frame+1]);
+    }
+}
+
+double AngularVelocity::getStabilizedQuaternion(double estimated_angular_velocity_frame, 
+                                                        const Eigen::VectorXd &filter_coeff, 
+                                                        std::vector<std::pair<int32_t,double>> &sync_table, 
+                                                        Eigen::Quaterniond& stabilized_angle_quaternion)
+{
+    double frame = convertEstimatedToMeasuredAngularVelocityFrame(estimated_angular_velocity_frame, sync_table);
+    assert((frame + 1.) < (double)std::numeric_limits<size_t>::max());
+    assert(frame > 0.);
+    // size_t integer_frame = floor(frame);
+
+    if ((frame < 0) || (frame >= data.rows()))
+    {
+        std::cerr << "Error: Frame range is out of range." << std::endl;
+        return std::numeric_limits<double>::quiet_NaN() ;
+    }
+    else
+    {
+        Eigen::MatrixXd relative_angle_vector(filter_coeff.rows(),3);
+        Eigen::Quaterniond origin_quaternion = quaternion(frame);
+        Eigen::Quaterniond conjugate_origin_quaternion = origin_quaternion.conjugate();
+
+
+        // Convert time to measured anguler velocity frame position
+        int length = filter_coeff.rows();
+        // double ratio = frame - floor(frame);
+
+        Eigen::MatrixXd rotation_vector = Eigen::MatrixXd::Zero(length, 3);
+        int center = length / 2;
+        for (int frame_position = 1; length - center > frame_position; ++frame_position)
+        {
+            rotation_vector.row(frame_position + center) = Quaternion2Vector(quaternion((double)frame_position + frame) * conjugate_origin_quaternion, rotation_vector.row(frame_position + center -1));
+        }
+
+        for (int frame_position = - 1; - center <= frame_position; --frame_position)
+        {
+            rotation_vector.row(frame_position + center) = Quaternion2Vector(quaternion((double)frame_position + frame) * conjugate_origin_quaternion , rotation_vector.row(frame_position + center +1));
+        }
+
+        // std::cout << "rotation_vector" << std::endl << rotation_vector << std::endl;
+
+        // std::cout << "original_quaternion:" << origin_quaternion.coeffs().transpose() << std::endl; 
+        // std::cout << "part:" << Vector2Quaternion<double>(rotation_vector.transpose() *  filter_coeff).conjugate().normalized().coeffs().transpose() << std::endl; 
+        // std::cout << "stabilized_angle_quaternion:" << (Vector2Quaternion<double>(rotation_vector.transpose() *  filter_coeff).conjugate().normalized() * origin_quaternion).coeffs().transpose() << std::endl; 
+
+        Eigen::Quaterniond diff_angle_quaternion = Vector2Quaternion<double>(rotation_vector.transpose() *  filter_coeff).normalized();
+        stabilized_angle_quaternion = diff_angle_quaternion * origin_quaternion;
+        double diff_angle =  acos(diff_angle_quaternion.w()) * 2.0;
+        return diff_angle;
+    }
+}
+
+void AngularVelocity::getCorrectionMatrices(  const Eigen::Quaterniond& stabilized_angle_quaternion,
+                                            int frame,
+                                            int height,
+                                            double line_delay_in_video_frame,
+                                            std::vector<std::pair<int32_t,double>> &sync_table, 
+                                            std::vector<float> &stabilized_angle_matrices)
+{
+    double begin_line_in_gyro_frame = convertEstimatedToMeasuredAngularVelocityFrame(frame - line_delay_in_video_frame*height, sync_table);
+    double end_line_in_gyro_frame = convertEstimatedToMeasuredAngularVelocityFrame(frame + line_delay_in_video_frame*height, sync_table);
+
+    if ((begin_line_in_gyro_frame < 0) || (begin_line_in_gyro_frame >= data.rows()) || (end_line_in_gyro_frame < 0) || (end_line_in_gyro_frame >= data.rows()))
+    {
+        std::cerr << "Error: Frame range is out of range." << std::endl;
+        return;
+    }
+    else
+    {
+        stabilized_angle_matrices.resize(height * 3 * 3); // height * (3x3 matirx)
+        for(int row = 0; row<height; ++ row)
+        {
+            double line_position_in_video_frame = frame + line_delay_in_video_frame*(row - height * 0.5);
+            double line_position_in_gyro_frame = convertEstimatedToMeasuredAngularVelocityFrame(line_position_in_video_frame, sync_table);
+            
+            Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(&(stabilized_angle_matrices[row * 3 * 3]),3,3) 
+            // = (quaternion(line_position_in_gyro_frame) * stabilized_angle_quaternion.conjugate()).matrix().cast<float>();
+            // = (stabilized_angle_quaternion * quaternion(line_position_in_gyro_frame).conjugate()).matrix().cast<float>();
+            // = (quaternion(line_position_in_gyro_frame).conjugate() * stabilized_angle_quaternion).matrix().cast<float>();
+            = (stabilized_angle_quaternion.conjugate() * quaternion(line_position_in_gyro_frame)).matrix().cast<float>();
+        }
+    }
+}
+
+/*Eigen::Quaterniond AngularVelocity::getCorrectionQuaternion(double time, const Eigen::VectorXd &filter_coeff)
 {
     // Convert time to measured anguler velocity frame position
     const double frame = time * getFrequency();
@@ -294,7 +402,7 @@ Eigen::Quaterniond AngularVelocity::getCorrectionQuaternion(double time, const E
         return Vector2Quaternion<double>(first.transpose() *  filter_coeff * (1.0 - ratio) + second.transpose() * filter_coeff * ratio).conjugate();
     }
 
-}
+}*/
 
 const Eigen::MatrixXd &AngularVelocity::getRelativeAngle(size_t frame, int length)
 {
@@ -310,6 +418,8 @@ const Eigen::MatrixXd &AngularVelocity::getRelativeAngle(size_t frame, int lengt
             return relative_angle_vectors[frame];
         }
     }
+
+    // TODO: Memory limitation, limit relative_angle_vectors's size
 
     // It is not available, create it.
     Eigen::Quaterniond diff_rotation(1., 0., 0., 0.);

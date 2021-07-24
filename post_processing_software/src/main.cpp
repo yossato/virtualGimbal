@@ -50,23 +50,22 @@ using namespace std;
 
 int main(int argc, char **argv)
 {
-    //引数の確認
+    // Check arguments
     char *videoPass = NULL;
     char *cameraName = NULL;
     char *lensName = NULL;
     char *jsonPass = NULL;
     bool output = false;
     bool show_image = true;
+    bool inpainting = false;
     const char *kernel_name = "cl/stabilizer_kernel.cl";
     const char *kernel_function = "stabilizer_function";
-    // bool debug_speedup = false;
     double zoom = 1.0;
     int32_t fileter_length = 199;
     int opt;
     int queue_size = 10;
-    //    Eigen::Quaterniond camera_rotation;
-
-    while ((opt = getopt(argc, argv, "j:i:c:l:w:z:k:f:o::n::")) != -1)
+    size_t buffer_size = 21;
+    while ((opt = getopt(argc, argv, "j:i:c:l:w:z:k:f:o::n::p::b:")) != -1)
     {
         switch (opt)
         {
@@ -75,7 +74,7 @@ int main(int argc, char **argv)
             break;
         case 'i': //input video file pass
             videoPass = optarg;
-            printf("videoPass %s",videoPass);
+            printf("videoPass %s\r\n",videoPass);
             break;
         case 'c':
             cameraName = optarg;
@@ -83,9 +82,6 @@ int main(int argc, char **argv)
         case 'l':
             lensName = optarg;
             break;
-        // case 'd':
-        //     debug_speedup = true;
-        //     break;
         case 'z':       //zoom ratio, dafault 1.0
             zoom = std::stof(optarg);
             break;
@@ -107,6 +103,12 @@ int main(int argc, char **argv)
         case 'n':
             show_image = false;
             break;
+        // case 'p':
+        //     inpainting = true;
+        //     break;
+        // case 'b':
+        //     buffer_size = std::stoi(optarg);
+        //     break;
         default:
             //            printf(     "virtualGimbal\r\n"
             //                        "Hyper fast video stabilizer\r\n\r\n"
@@ -119,8 +121,14 @@ int main(int argc, char **argv)
     struct stat st;
     if (stat(kernel_name, &st))
     {
-        std::cerr << "Kernel file not found." << std::endl << std::flush;
-        throw "Kernel file not found.";
+        std::cerr << "ERROR: Kernel file not found. " << __FILE__ << ":" << __LINE__ << std::endl << std::flush;
+        std::exit(EXIT_FAILURE);
+    }
+
+    if (stat(videoPass, &st))
+    {
+        std::cerr << "ERROR: " << videoPass << " is not found. "  << std::endl << std::flush;
+        std::exit(EXIT_FAILURE) ;
     }
 
 
@@ -145,7 +153,16 @@ int main(int argc, char **argv)
     manager.setVideoParam(videoPass, camera_info);
 
     if(output){
-        manager.enableWriter(videoPass);
+        try
+        {
+            manager.enableWriter(videoPass);
+        }
+        catch(const char& e)
+        {
+            std::cerr << "Error: " << e << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+        
     }
 
 
@@ -206,7 +223,15 @@ int main(int argc, char **argv)
     vgp::plot(filter_coefficients, "filter_coefficients", legends_angular_velocity);
 #endif
 
-    manager.spin(zoom,fir_filter,filter_coefficients,table, show_image);
+    if(inpainting)
+    {
+        manager.spinInpainting(zoom,table,fir_filter,buffer_size);
+    }
+    else
+    {
+        manager.spin(zoom,fir_filter,filter_coefficients,table, show_image);    
+    }
+    
 
     return 0;
 }

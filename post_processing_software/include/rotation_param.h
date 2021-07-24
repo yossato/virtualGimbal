@@ -94,14 +94,19 @@ public:
   Eigen::Vector3d getAngularVelocityVector(size_t frame);
   Eigen::Vector3d getAngularVelocityVector(double frame);
   Eigen::Quaterniond getAngularVelocity(size_t frame);
-  Eigen::Quaterniond getCorrectionQuaternion(double time, const Eigen::VectorXd &filter_coeff);
+  // Eigen::Quaterniond getCorrectionQuaternion(double time, const Eigen::VectorXd &filter_coeff);
   double convertEstimatedToMeasuredAngularVelocityFrame(double estimate_angular_velocity_frame, std::vector<std::pair<int32_t,double>> &sync_table);
   Eigen::Quaterniond getCorrectionQuaternionFromFrame(double estimated_angular_velocity_frame, const Eigen::VectorXd &filter_coeff, std::vector<std::pair<int32_t,double>> &sync_table);
+  void calculateAngleQuaternion();
+  Eigen::Quaterniond quaternion(double frame);
+  double getStabilizedQuaternion(double estimated_angular_velocity_frame, const Eigen::VectorXd &filter_coeff, std::vector<std::pair<int32_t,double>> &sync_table,  Eigen::Quaterniond& stabilized_angle_quaternion);
+  void getCorrectionMatrices(const Eigen::Quaterniond& stabilized_angle_quaternion, int frame, int height, double line_delay_in_video_frame, std::vector<std::pair<int32_t,double>> &sync_table,  std::vector<float> &stabilized_angle_matrices);
   double getLengthInSecond();
   int32_t getFrames();
 private:
   // ResamplerParameter resampler_;
   std::map<int, Eigen::MatrixXd> relative_angle_vectors;
+  std::vector<Eigen::Quaterniond> quaternion_;
   const Eigen::MatrixXd &getRelativeAngle(size_t frame, int length);
 };
 
