@@ -103,12 +103,12 @@ int main(int argc, char **argv)
         case 'n':
             show_image = false;
             break;
-        case 'p':
-            inpainting = true;
-            break;
-        case 'b':
-            buffer_size = std::stoi(optarg);
-            break;
+        // case 'p':
+        //     inpainting = true;
+        //     break;
+        // case 'b':
+        //     buffer_size = std::stoi(optarg);
+        //     break;
         default:
             //            printf(     "virtualGimbal\r\n"
             //                        "Hyper fast video stabilizer\r\n\r\n"
