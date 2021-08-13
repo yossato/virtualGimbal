@@ -9,6 +9,8 @@ NO_DEFAULT_PATH)
 set(Python_ADDITIONAL_VERSIONS 3.5)
 find_package(PythonInterp 3.5 REQUIRED)
 find_package(PythonLibs 3.5 REQUIRED)
+find_package(Eigen3 REQUIRED)
+
 
 # Copy setting files
 configure_file(chess_board_settings.ini chess_board_settings.ini)
@@ -21,7 +23,7 @@ configure_file(records/sample.json records/sample.json)
 configure_file(cl/stabilizer_kernel.cl cl/stabilizer_kernel.cl)
 
 include_directories(include)
-include_directories(/usr/local/include/eigen3)
+include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(${PYTHON_INCLUDE_DIRS})
 set(ALL_LIBS
         ${OpenCV_LIBS}
