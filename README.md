@@ -10,7 +10,7 @@ The VirtualGimbal is an electronic stabilize device for videos that were taken b
 3.Stabilization completely based on captured angular velocity data.  
 
 ## Requirement
-Ubuntu 16.04 or later
+Ubuntu 18.04 or later
 FFMPEG, OpenCV3, Eigen, boost and some python libraries.
 
 ## Usage  
@@ -74,9 +74,10 @@ sudo dpkg -i *.deb
 ```
 sudo apt install yasm pkg-config  
 cd  
-git clone --depth 1 git://source.ffmpeg.org/ffmpeg.git  
-cd ffmpeg  
-./configure --enable-gpl --enable-x86asm --enable-opencl --enable-ffmpeg --enable-pic --enable-shared --enable-swscale  
+git clone  git://source.ffmpeg.org/ffmpeg.git  
+cd ffmpeg
+git checkout -b tag refs/tags/n4.4
+./configure --enable-gpl --enable-x86asm --enable-opencl --enable-ffmpeg --enable-pic --enable-shared --disable-static --enable-swscale
 make all -j4  
 sudo make install  
 sudo ldconfig  
@@ -87,7 +88,9 @@ sudo ldconfig
 cd  
 sudo apt-get install build-essential module-assistant libgtk-3-dev  
 sudo m-a prepare  
-git clone --depth 1 https://github.com/opencv/opencv.git  
+git clone https://github.com/opencv/opencv.git
+cd opencv
+git checkout refs/tags/4.5.3
 cd opencv/  
   
 mkdir build  
