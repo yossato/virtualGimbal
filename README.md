@@ -59,15 +59,10 @@ sudo apt-get install python3-matplotlib
 ### Install OpenCL: See [detail information](https://github.com/intel/compute-runtime/releases)
 ```
 sudo apt install ocl-icd-libopencl1 opencl-headers clinfo ocl-icd-opencl-dev  
-cd  
-mkdir neo  
-cd neo  
-wget https://github.com/intel/compute-runtime/releases/download/19.31.13700/intel-gmmlib_19.2.3_amd64.deb  
-wget https://github.com/intel/compute-runtime/releases/download/19.31.13700/intel-igc-core_1.0.10-2364_amd64.deb  
-wget https://github.com/intel/compute-runtime/releases/download/19.31.13700/intel-igc-opencl_1.0.10-2364_amd64.deb  
-wget https://github.com/intel/compute-runtime/releases/download/19.31.13700/intel-opencl_19.31.13700_amd64.deb  
-wget https://github.com/intel/compute-runtime/releases/download/19.31.13700/intel-ocloc_19.31.13700_amd64.deb  
-sudo dpkg -i *.deb  
+
+# OPTION: Install intel conpute-runtime with a command below if you use intel HD graphics.
+# If you use NVIDIA gpu, it is not required. On the other hand, CUDA is required.
+sudo apt-get install intel-opencl-icd
 ```
 
 ### Install ffmpeg:  
