@@ -59,10 +59,10 @@
     template <typename T_num>
     Eigen::Vector3d Quaternion2Vector(Eigen::Quaternion<T_num> q)
     {
-        double denom = sqrt(1 - q.w() * q.w());
+        double denom = sqrt(1 - q.w() * q.w()); // abs(sin(theta/2))
         if (fabs(denom) < EPS_Q)
-        {                                    //まったく回転しない時は０割になるので、場合分けする//TODO:
-            return Eigen::Vector3d(0, 0, 0); //return zero vector
+        {
+            return Eigen::Vector3d(q.x(), q.y(), q.z()) * 2.0; // If an angle is smaller than one, sin(theta/2) can be approximated to theta/2. We can remove denominator to prevent zero devision error.
         }
         return Eigen::Vector3d(q.x(), q.y(), q.z()) * 2.0 * atan2(denom, q.w()) / denom;
     }
