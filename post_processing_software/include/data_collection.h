@@ -1,7 +1,7 @@
 /*************************************************************************
 *  Software License Agreement (BSD 3-Clause License)
 *  
-*  Copyright (c) 2019, Yoshiaki Sato
+*  Copyright (c) 2022, Yoshiaki Sato
 *  All rights reserved.
 *  
 *  Redistribution and use in source and binary forms, with or without
@@ -29,19 +29,51 @@
 *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *************************************************************************/
-#ifndef VISUALIZER_H
-#define VISUALIZER_H
-#include <stdio.h>
+#ifndef __VIRTUALGIMBAL_DATA_COLLECTION_H__
+#define __VIRTUALGIMBAL_DATA_COLLECTION_H__
+
 #include <string>
-#include <opencv2/opencv.hpp>
-#include <Eigen/Dense>
-namespace vgp
+// #include <unistd.h>
+#include <vector>
+// #include <sys/stat.h>
+#include <map>
+#include <ctime>
+#include <chrono>
+#include <assert.h>
+
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
+
+#include <unistd.h>
+
+using LoggingDouble = std::map<std::string, std::vector<double>>;
+using LoggingTime = std::vector<timespec>;
+
+class DataCollection
 {
+public:
+    DataCollection();       // Dafault constructor, file path is automatically generated.
+    DataCollection(std::string file_path);  // Constructor with file path.
+    ~DataCollection();      // Destructor
+    void set(LoggingTime &time);
+    void set(LoggingDouble &value);
+    void setDuplicateFilePath(std::string duplicate_file_path);
+    
+    void print();
+    
+    std::string getValueTimeStamp();
+    static std::string getSystemTimeStamp();
+    
 
-    void plot(std::vector<cv::Vec3d> data, std::string title = "", std::string legend_x = "", std::string legend_y = "", std::string legend_z = "");
-    void plot(std::vector<Eigen::Quaterniond> data, std::string title = "", std::string legend_x = "", std::string legend_y = "", std::string legend_z = "");
-    void plot(std::vector<double> x, std::vector<double>  y,std::vector<double> z, std::string title = "", std::string legend_x = "", std::string legend_y = "", std::string legend_z = "");
-    void plot(const Eigen::MatrixXd mat, std::string title,  std::vector<std::string> &legends);
-}
+private:
+    LoggingDouble values_;
+    LoggingTime time_;
+    std::string file_path_;
+    std::string duplicate_file_path_;
+    std::string valuesToString();
+    void write(std::string file_path);
+};
 
-#endif // VISUALIZER_H
+#endif //__VIRTUALGIMBAL_DATA_COLLECTION_H__

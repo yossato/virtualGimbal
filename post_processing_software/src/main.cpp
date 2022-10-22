@@ -41,11 +41,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-// #define __DEBUG_ONLY
-#ifdef __DEBUG_ONLY
-#include "visualizer.h"
+#include "data_collection.h"
 
-#endif
+
+
 using namespace std;
 
 int main(int argc, char **argv)
@@ -65,6 +64,7 @@ int main(int argc, char **argv)
     int opt;
     int queue_size = 10;
     size_t buffer_size = 21;
+    bool analyze = true;
     while ((opt = getopt(argc, argv, "j:i:c:l:w:z:k:f:o::n::p::b:")) != -1)
     {
         switch (opt)
@@ -102,6 +102,9 @@ int main(int argc, char **argv)
             break;
         case 'n':
             show_image = false;
+            break;
+        case 'a':
+            analyze = true;
             break;
         // case 'p':
         //     inpainting = true;
@@ -165,38 +168,28 @@ int main(int argc, char **argv)
         
     }
 
-
-    
-
     Eigen::MatrixXd estimated_angular_velocity,confidence;
     manager.estimateAngularVelocity(estimated_angular_velocity,confidence);
     
+    if(analyze)
+    {
+        LoggingDouble d;
+        for(int r=0;r<estimated_angular_velocity.rows();++r)
+        {
+            d["Frame"].push_back((double)r);
+            d["rx"].push_back(estimated_angular_velocity(r,0));
+            d["ry"].push_back(estimated_angular_velocity(r,1));
+            d["rz"].push_back(estimated_angular_velocity(r,2));
+        }
+        std::string time_stamp = DataCollection::getSystemTimeStamp();
+        DataCollection collection(time_stamp + "_estimated_angular_velocity.csv");
+        collection.setDuplicateFilePath("latest_estimated_angular_velocity.csv");
+        collection.set(d);
+
+
+    }
+
     manager.setEstimatedAngularVelocity(estimated_angular_velocity, confidence);
-    // std::cout << "confidence:" << confidence.transpose() << std::endl
-    //           << std::flush;
-              
-
-    // Eigen::VectorXd correlation = manager.getCorrelationCoefficient(0,1000);
-    // double offset = manager.getSubframeOffsetInSecond(correlation,0,1000);
-    // manager.setResamplerParameter(offset);
-
-    // Eigen::VectorXd correlation_begin,correlation_end;
-    // auto modified_resampler_parameter = manager.getResamplerParameterWithClockError(correlation_begin,correlation_end);
-    // manager.setResamplerParameter(modified_resampler_parameter);
-// #ifdef __DEBUG_ONLY
-//     std::vector<string> legends_angular_velocity = {"c"};
-//     vgp::plot(correlation_begin, "correlation_begin", legends_angular_velocity);
-//     vgp::plot(correlation_end, "correlation_end", legends_angular_velocity);
-// #endif 
-
-
-
-
-
-// #ifdef __DEBUG_ONLY
-    // std::vector<string> legends_angular_velocity = {"c"};
-//     vgp::plot(correlation, "correlation", legends_angular_velocity);
-// #endif 
 
     auto fir_filter = std::make_shared<NormalDistributionFilter>();
     manager.setFilter(fir_filter);
@@ -218,10 +211,23 @@ int main(int argc, char **argv)
 
 
     Eigen::VectorXd filter_coefficients = manager.getFilterCoefficients(zoom,fir_filter,table,fileter_length,0); // Zero is the weakest value since apply no filter, output is equal to input.
-#ifdef __DEBUG_ONLY
-    std::vector<string> legends_angular_velocity = {"c"};
-    vgp::plot(filter_coefficients, "filter_coefficients", legends_angular_velocity);
-#endif
+
+    if(analyze)
+    {
+        LoggingDouble d;
+        for(int r=0;r<filter_coefficients.rows();++r)
+        {
+            d["Frame"].push_back((double)r);
+            d["Filter coefficients"].push_back(filter_coefficients(r,0));
+        }
+        std::string time_stamp = DataCollection::getSystemTimeStamp();
+        DataCollection collection(time_stamp + "_filter_coefficients.csv");
+        collection.setDuplicateFilePath("latest_filter_coefficients.csv");
+        collection.set(d);
+        
+       
+
+    }
 
     if(inpainting)
     {

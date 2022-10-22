@@ -7,8 +7,7 @@ NO_MODULE
 PATHS /usr/local 
 NO_DEFAULT_PATH)
 set(Python_ADDITIONAL_VERSIONS 3.5)
-find_package(PythonInterp 3.5 REQUIRED)
-find_package(PythonLibs 3.5 REQUIRED)
+
 find_package(Eigen3 REQUIRED)
 
 
@@ -35,23 +34,6 @@ add_executable(camera_calibration src/camera_calibration.cpp
     src/camera_information.cpp)
 target_link_libraries(camera_calibration ${ALL_LIBS} ${OpenCV_LIBS})
 
-add_executable(rolling_shutter_parameter_estimator src/rolling_shutter_parameter_estimator.cpp
-        src/mINIRead.cpp
-        src/json_tools.cpp
-        src/camera_information.cpp
-        src/virtual_gimbal_manager.cpp
-        src/rotation_param.cpp
-        src/calcShift.cpp
-        src/visualizer.cpp
-        src/rotation_math.cpp
-        src/distortion.cpp
-        src/cl_manager.cpp
-        src/SO3Filters.cpp
-        src/multi_thread_video_writer.cpp
-        src/inpainting.cpp
-        )
-target_link_libraries(rolling_shutter_parameter_estimator ${ALL_LIBS} ${OpenCV_LIBS} ${PYTHON_LIBRARIES})
-
 add_executable(pixelwise_stabilizer src/main.cpp
         src/virtual_gimbal_manager.cpp
         src/json_tools.cpp
@@ -63,7 +45,7 @@ add_executable(pixelwise_stabilizer src/main.cpp
         src/cl_manager.cpp
         src/multi_thread_video_writer.cpp
         src/inpainting.cpp
-        src/visualizer.cpp #デバッグ専用。後で消す。
+        src/data_collection.cpp
 )
 target_link_libraries(pixelwise_stabilizer ${ALL_LIBS} ${OpenCV_LIBS} ${PYTHON_LIBRARIES})
 
@@ -78,12 +60,13 @@ add_executable(camera_pose_analyzer src/camera_pose_analyzer.cpp
         src/inpainting.cpp src/stabilizer_kernel_cpu.cpp)
 target_link_libraries(camera_pose_analyzer ${ALL_LIBS} ${OpenCV_LIBS})
 
-# デバッグビルド
+
+# Debug build
 IF(CMAKE_BUILD_TYPE MATCHES DEBUG)
 set(CMAKE_C_FLAGS_DEBUG "-O0 -g")
 ENDIF(CMAKE_BUILD_TYPE MATCHES DEBUG)
 
-# リリースビルド
+# Release build
 IF(CMAKE_BUILD_TYPE MATCHES RELEASE)
     set(CMAKE_BUILD_TYPE Release)
     set(CMAKE_C_FLAGS_RELEASE "-O3 -lm")
