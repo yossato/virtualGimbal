@@ -34,11 +34,13 @@
 
 
 #include <opencv2/opencv.hpp>
+#include <opencv2/video/tracking.hpp>
 #include <iostream>
 #include <cassert>
 #include <cmath>
 #include <numeric>
 #include <memory>
+#include <Eigen/Dense>
 //#include "mFibonacci.hpp"
 
 typedef struct{
@@ -47,9 +49,16 @@ typedef struct{
 	double TG2B;	//ジャイロセンサとビデオのタイミング[second]、ジャイロの時間にこの値を足すと、ビデオの時間に変換できる
 }strTimingInformation;
 
+using PointPairs = std::vector<std::pair<std::vector<cv::Point2f>,std::vector<cv::Point2f>>>;
+
+
 // std::vector<cv::Vec3d> CalcShiftFromVideo(const char *filename, int calcPeriod);
 // void calcShiftFromVideo(std::shared_ptr<cv::VideoCapture> capture, int calc_length, Eigen::MatrixXd &dst);
 void CalcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd &optical_flow, Eigen::MatrixXd &confidence);
+PointPairs getFeaturePointsPairsFromVideo(const char *filename, int total_frames);
+void convertFeaturePointsPairsToImageTranslationAndRotation(const PointPairs &point_pairs, Eigen::MatrixXd &translation_and_rotation, Eigen::MatrixXd &confidence);
+
+
 /**
  * @brief 波形を線形補間します。 
  * @param [in] waveform	波形

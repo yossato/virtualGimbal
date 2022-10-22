@@ -168,8 +168,43 @@ int main(int argc, char **argv)
         
     }
 
+    
+    PointPairs feature_points_pairs; // Store feature points at frame [n] and frame [n-1]
     Eigen::MatrixXd estimated_angular_velocity,confidence;
-    manager.estimateAngularVelocity(estimated_angular_velocity,confidence);
+
+    if(!jsonExists(videoPass))
+    {
+        feature_points_pairs = manager.getFeaturePointsPairs();
+        
+        manager.estimateAngularVelocity(feature_points_pairs,estimated_angular_velocity,confidence);
+
+        if(analyze)
+        {
+            LoggingDouble d;
+            for(int r=0;r<estimated_angular_velocity.rows();++r)
+            {
+                d["Frame"].push_back((double)r);
+                d["rx"].push_back(estimated_angular_velocity(r,0));
+                d["ry"].push_back(estimated_angular_velocity(r,1));
+                d["rz"].push_back(estimated_angular_velocity(r,2));
+            }
+            std::string time_stamp = DataCollection::getSystemTimeStamp();
+            DataCollection collection(time_stamp + "_estimated_angular_velocity_new_api.csv");
+            collection.setDuplicateFilePath("latest_estimated_angular_velocity_new_api.csv");
+            collection.set(d);
+
+
+        }
+    }
+    else
+    {
+        manager.getAngularVelocityFromJson(estimated_angular_velocity,confidence);
+    }
+    
+
+
+    
+    manager.estimateAngularVelocity(estimated_angular_velocity,confidence); // TODO: To be deleted
     
     if(analyze)
     {

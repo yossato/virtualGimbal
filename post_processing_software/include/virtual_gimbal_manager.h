@@ -47,9 +47,10 @@
 #include "multi_thread_video_writer.h"
 #include <chrono>         // std::chrono::seconds
 #include <map>
-
+#include <Eigen/Dense>
 #include "inpainting.hpp"
-
+using PointPairs = std::vector<std::pair<std::vector<cv::Point2f>,std::vector<cv::Point2f> >>;
+  
 class VirtualGimbalManager
 {
 public:
@@ -71,7 +72,11 @@ public:
   void setResamplerParameter(ResamplerParameterPtr param);
   Eigen::MatrixXd getSynchronizedMeasuredAngularVelocity();
   std::map<int, std::vector<cv::Point2d>> getCornerDictionary(cv::Size &pattern_size, bool debug_speedup = false, bool Verbose = false);
-  Eigen::MatrixXd estimateAngularVelocity(const std::map<int, std::vector<cv::Point2d>> &corner_dict, const std::vector<cv::Point3d> &world_points, Eigen::VectorXd &confidence);
+  
+  PointPairs getFeaturePointsPairs();
+  void estimateAngularVelocity(const PointPairs &point_pairs, Eigen::MatrixXd &estimated_angular_velocity, Eigen::MatrixXd &confidence);
+  void getAngularVelocityFromJson(Eigen::MatrixXd &estimated_angular_velocity, Eigen::MatrixXd &confidence);
+
   void estimateAngularVelocity(Eigen::MatrixXd &estimated_angular_velocity, Eigen::MatrixXd &confidence);
   Eigen::MatrixXd getRotationQuaternions();
   void getUndistortUnrollingChessBoardPoints(double time_offset, const std::pair<int, std::vector<cv::Point2d>> &corner_dict, std::vector<cv::Point2d> &dst, double line_delay=0.0);

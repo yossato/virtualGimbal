@@ -297,43 +297,47 @@ std::map<int, std::vector<cv::Point2d>> VirtualGimbalManager::getCornerDictionar
     return retval;
 }
 
-Eigen::MatrixXd VirtualGimbalManager::estimateAngularVelocity(const std::map<int, std::vector<cv::Point2d>> &corner_dict, const std::vector<cv::Point3d> &world_points, Eigen::VectorXd &confidence)
+PointPairs VirtualGimbalManager::getFeaturePointsPairs()
 {
-    cv::Mat CameraMatrix = (cv::Mat_<double>(3, 3) << video_param->camera_info->fx_, 0, video_param->camera_info->cx_, 0, video_param->camera_info->fy_, video_param->camera_info->cy_, 0, 0, 1);
-    cv::Mat DistCoeffs = (cv::Mat_<double>(1, 4) << video_param->camera_info->k1_, video_param->camera_info->k2_, video_param->camera_info->p1_, video_param->camera_info->p2_);
-    std::map<int, cv::Mat> RotationVector;
-    std::map<int, cv::Mat> TranslationVector;
-
-    confidence = Eigen::VectorXd::Zero(video_param->video_frames);
-
-    Eigen::MatrixXd estimated_angular_velocity = Eigen::MatrixXd::Zero(video_param->video_frames, 3);
-    for (const auto &el : corner_dict)
-    {
-        cv::solvePnP(world_points, el.second, CameraMatrix, DistCoeffs, RotationVector[el.first], TranslationVector[el.first]);
-
-        Eigen::Quaterniond rotation_quaternion = Vector2Quaternion<double>(
-                                                     Eigen::Vector3d(RotationVector[el.first].at<double>(0, 0), RotationVector[el.first].at<double>(1, 0), RotationVector[el.first].at<double>(2, 0)))
-                                                     .conjugate();
-
-        if (0 != RotationVector.count(el.first - 1))
-        {
-            Eigen::Quaterniond rotation_quaternion_previous = Vector2Quaternion<double>(
-                                                                  Eigen::Vector3d(RotationVector[el.first - 1].at<double>(0, 0), RotationVector[el.first - 1].at<double>(1, 0), RotationVector[el.first - 1].at<double>(2, 0)))
-                                                                  .conjugate();
-            Eigen::Quaterniond diff = rotation_quaternion * rotation_quaternion_previous.conjugate();
-
-            Eigen::Vector3d diff_vector = Quaternion2Vector(diff);
-            Eigen::Quaterniond estimated_angular_velocity_in_board_coordinate(0.0, diff_vector[0], diff_vector[1], diff_vector[2]);
-            Eigen::Quaterniond estimated_angular_velocity_in_camera_coordinate = (rotation_quaternion.conjugate() * estimated_angular_velocity_in_board_coordinate * rotation_quaternion);
-            estimated_angular_velocity.row(el.first) << estimated_angular_velocity_in_camera_coordinate.x(), estimated_angular_velocity_in_camera_coordinate.y(),
-                estimated_angular_velocity_in_camera_coordinate.z();
-            confidence(el.first) = 1.0;
-        }
-    }
-
-    return estimated_angular_velocity * video_param->getFrequency();
+    return  getFeaturePointsPairsFromVideo(video_param->video_file_name.c_str(), video_param->video_frames);
 }
 
+void VirtualGimbalManager::estimateAngularVelocity(const PointPairs &point_pairs, Eigen::MatrixXd &estimated_angular_velocity, Eigen::MatrixXd &confidence)
+{
+    Eigen::MatrixXd translation_and_rotation;
+
+    convertFeaturePointsPairsToImageTranslationAndRotation(point_pairs, translation_and_rotation, confidence);
+        estimated_angular_velocity.resize(translation_and_rotation.rows(), translation_and_rotation.cols());
+    estimated_angular_velocity.col(0) =
+        translation_and_rotation.col(1).unaryExpr([&](double a)
+                                      { return video_param->getFrequency() * atan(a / (video_param->camera_info->fy_)); });
+    estimated_angular_velocity.col(1) =
+        translation_and_rotation.col(0).unaryExpr([&](double a)
+                                      { return video_param->getFrequency() * -atan(a / (video_param->camera_info->fx_)); });
+    estimated_angular_velocity.col(2) = -video_param->getFrequency() * translation_and_rotation.col(2);
+}
+
+void VirtualGimbalManager::getAngularVelocityFromJson(Eigen::MatrixXd &estimated_angular_velocity, Eigen::MatrixXd &confidence)
+{
+    Eigen::MatrixXd optical_flow;
+    if (jsonExists(video_param->video_file_name))
+    {
+        readOpticalFlowFromJson(video_param->video_file_name, optical_flow, confidence);
+    }
+    else
+    {
+        std::cerr << "Failed to read Json file" << std::endl;
+    }
+    
+    estimated_angular_velocity.resize(optical_flow.rows(), optical_flow.cols());
+    estimated_angular_velocity.col(0) =
+        optical_flow.col(1).unaryExpr([&](double a)
+                                      { return video_param->getFrequency() * atan(a / (video_param->camera_info->fy_)); });
+    estimated_angular_velocity.col(1) =
+        optical_flow.col(0).unaryExpr([&](double a)
+                                      { return video_param->getFrequency() * -atan(a / (video_param->camera_info->fx_)); });
+    estimated_angular_velocity.col(2) = -video_param->getFrequency() * optical_flow.col(2);
+}
 /**
  * @brief Estimate angular velocity from video optical flow
  **/
