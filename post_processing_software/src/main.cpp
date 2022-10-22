@@ -204,25 +204,25 @@ int main(int argc, char **argv)
 
 
     
-    manager.estimateAngularVelocity(estimated_angular_velocity,confidence); // TODO: To be deleted
+    //manager.estimateAngularVelocity(estimated_angular_velocity,confidence); // TODO: To be deleted
     
-    if(analyze)
-    {
-        LoggingDouble d;
-        for(int r=0;r<estimated_angular_velocity.rows();++r)
-        {
-            d["Frame"].push_back((double)r);
-            d["rx"].push_back(estimated_angular_velocity(r,0));
-            d["ry"].push_back(estimated_angular_velocity(r,1));
-            d["rz"].push_back(estimated_angular_velocity(r,2));
-        }
-        std::string time_stamp = DataCollection::getSystemTimeStamp();
-        DataCollection collection(time_stamp + "_estimated_angular_velocity.csv");
-        collection.setDuplicateFilePath("latest_estimated_angular_velocity.csv");
-        collection.set(d);
+    // if(analyze)
+    // {
+    //     LoggingDouble d;
+    //     for(int r=0;r<estimated_angular_velocity.rows();++r)
+    //     {
+    //         d["Frame"].push_back((double)r);
+    //         d["rx"].push_back(estimated_angular_velocity(r,0));
+    //         d["ry"].push_back(estimated_angular_velocity(r,1));
+    //         d["rz"].push_back(estimated_angular_velocity(r,2));
+    //     }
+    //     std::string time_stamp = DataCollection::getSystemTimeStamp();
+    //     DataCollection collection(time_stamp + "_estimated_angular_velocity.csv");
+    //     collection.setDuplicateFilePath("latest_estimated_angular_velocity.csv");
+    //     collection.set(d);
 
 
-    }
+    // }
 
     manager.setEstimatedAngularVelocity(estimated_angular_velocity, confidence);
 
