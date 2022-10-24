@@ -264,6 +264,11 @@ int main(int argc, char **argv)
 
     }
 
+    if(analyze)
+    {
+        manager.spinAnalyse(zoom,fir_filter,filter_coefficients,table,feature_points_pairs);
+    }
+
     if(inpainting)
     {
         manager.spinInpainting(zoom,table,fir_filter,buffer_size);

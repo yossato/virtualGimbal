@@ -607,6 +607,62 @@ int VirtualGimbalManager::spin(double zoom, FilterPtr filter, Eigen::VectorXd &f
     return 0;
 }
 
+cv::Point2f VirtualGimbalManager::warp_undistort(const cv::Point2f &p, float zoom_ratio, const std::vector<float> &stabilized_angle_matrices)
+{
+    // prepare intrinsic parameters
+    float k1 = video_param->camera_info->inverse_k1_;
+    float k2 = video_param->camera_info->inverse_k2_;
+    float p1 = video_param->camera_info->inverse_p1_;
+    float p2 = video_param->camera_info->inverse_p2_;
+    float fx = video_param->camera_info->fx_;
+    float fy = video_param->camera_info->fy_;
+    float cx = video_param->camera_info->cx_;
+    float cy = video_param->camera_info->cy_;
+
+    cv::Point2f c(cx,cy);
+    cv::Point2f f(fx,fy);
+    cv::Point2f x1 = (p-c)/f;// (float2)((u - cx)/fx,(v-cy)/fy,1.f);
+    float r2 = x1.dot(x1);
+    cv::Point2f x2 = x1*(1.f + k1*r2+k2*r2*r2);
+    x2 += cv::Point2f(2.f*p1*x1.x*x1.y+p2*(r2+2.f*x1.x*x1.x), p1*(r2+2.f*x1.y*x1.y)+2.f*p2*x1.x*x1.y);
+    //折り返しの話はとりあえずスキップ
+
+    cv::Point3f x3 = cv::Point3f(x2.x,x2.y,1.0);
+    float* R = rotation_matrix + convert_int( 9*p.y);
+    cv::Point3f XYZ = cv::Point3f(R[0] * x3.x + R[1] * x3.y + R[2] * x3.z,
+                        R[3] * x3.x + R[4] * x3.y + R[5] * x3.z,
+                        R[6] * x3.x + R[7] * x3.y + R[8] * x3.z);
+    x2 = XYZ.xy / XYZ.z;
+    return x2*f*zoom_ratio+c;
+}
+
+int spinAnalyse(double zoom, FilterPtr filter,Eigen::VectorXd &filter_strength, std::vector<std::pair<int32_t,double>> &sync_table, const PointPairs &point_pairs)
+{
+    
+    // Prepare
+    measured_angular_velocity->calculateAngleQuaternion();
+
+    for (int frame = 0; frame < video_param->video_frames; ++frame)
+    {
+        // Get stabilization
+        Eigen::Quaterniond stabilized_angle_quaternion;
+        measured_angular_velocity->getStabilizedQuaternion(frame, filter->getFilterCoefficient(filter_strength(frame)), sync_table, stabilized_angle_quaternion);
+
+        // Get rotation matrix in each line of the frame
+        std::vector<float> stabilized_angle_matrices;
+        measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, frame, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices);
+
+        // Warp point
+
+        // Calculate angular velocity
+
+        
+
+    }
+
+    return 0;
+}
+
 #undef LAP_BEGIN
 #undef LAP
 
