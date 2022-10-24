@@ -621,22 +621,23 @@ cv::Point2f VirtualGimbalManager::warp_undistort(const cv::Point2f &p, float zoo
 
     cv::Point2f c(cx,cy);
     cv::Point2f f(fx,fy);
-    cv::Point2f x1 = (p-c)/f;// (float2)((u - cx)/fx,(v-cy)/fy,1.f);
+    // cv::Point2f x1 = (p-c)/f;// (float2)((u - cx)/fx,(v-cy)/fy,1.f);
+    cv::Point2f x1((p.x - c.x)/f.x,(p.y-c.y)/f.y);
     float r2 = x1.dot(x1);
     cv::Point2f x2 = x1*(1.f + k1*r2+k2*r2*r2);
     x2 += cv::Point2f(2.f*p1*x1.x*x1.y+p2*(r2+2.f*x1.x*x1.x), p1*(r2+2.f*x1.y*x1.y)+2.f*p2*x1.x*x1.y);
     //折り返しの話はとりあえずスキップ
 
     cv::Point3f x3 = cv::Point3f(x2.x,x2.y,1.0);
-    float* R = rotation_matrix + convert_int( 9*p.y);
+    auto R = stabilized_angle_matrices.begin() + 9 * std::round(p.y);
     cv::Point3f XYZ = cv::Point3f(R[0] * x3.x + R[1] * x3.y + R[2] * x3.z,
                         R[3] * x3.x + R[4] * x3.y + R[5] * x3.z,
                         R[6] * x3.x + R[7] * x3.y + R[8] * x3.z);
-    x2 = XYZ.xy / XYZ.z;
-    return x2*f*zoom_ratio+c;
+    x2 = cv::Point2f(XYZ.x,XYZ.y) / XYZ.z;
+    return cv::Point2f(x2.x * f.x * zoom_ratio + c.x, x2.y * f.y * zoom_ratio + c.y);
 }
 
-int spinAnalyse(double zoom, FilterPtr filter,Eigen::VectorXd &filter_strength, std::vector<std::pair<int32_t,double>> &sync_table, const PointPairs &point_pairs)
+int VirtualGimbalManager::spinAnalyse(double zoom, FilterPtr filter,Eigen::VectorXd &filter_strength, std::vector<std::pair<int32_t,double>> &sync_table, const PointPairs &point_pairs)
 {
     
     // Prepare
@@ -653,6 +654,11 @@ int spinAnalyse(double zoom, FilterPtr filter,Eigen::VectorXd &filter_strength, 
         measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, frame, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices);
 
         // Warp point
+        for(const auto &pair:point_pairs)
+        {
+            cv::Point2f warped_points_pair_prev = warp_undistort(pair.first,  zoom, stabilized_angle_matrices);
+            cv::Point2f warped_points_pair_curr = warp_undistort(pair.second, zoom, stabilized_angle_matrices);
+        }
 
         // Calculate angular velocity
 
