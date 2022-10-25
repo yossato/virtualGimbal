@@ -49,6 +49,8 @@
 #include <map>
 #include <Eigen/Dense>
 #include "inpainting.hpp"
+#include "data_collection.h"
+using PointPair = std::pair<std::vector<cv::Point2f>,std::vector<cv::Point2f> >;
 using PointPairs = std::vector<std::pair<std::vector<cv::Point2f>,std::vector<cv::Point2f> >>;
   
 class VirtualGimbalManager

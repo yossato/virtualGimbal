@@ -639,31 +639,66 @@ cv::Point2f VirtualGimbalManager::warp_undistort(const cv::Point2f &p, float zoo
 
 int VirtualGimbalManager::spinAnalyse(double zoom, FilterPtr filter,Eigen::VectorXd &filter_strength, std::vector<std::pair<int32_t,double>> &sync_table, const PointPairs &point_pairs)
 {
-    
+    PointPairs warped_point_paires;
+            
     // Prepare
     measured_angular_velocity->calculateAngleQuaternion();
 
-    for (int frame = 0; frame < video_param->video_frames; ++frame)
+    for(size_t frame = 0; frame<point_pairs.size(); ++frame)
     {
         // Get stabilization
         Eigen::Quaterniond stabilized_angle_quaternion;
         measured_angular_velocity->getStabilizedQuaternion(frame, filter->getFilterCoefficient(filter_strength(frame)), sync_table, stabilized_angle_quaternion);
 
         // Get rotation matrix in each line of the frame
-        std::vector<float> stabilized_angle_matrices;
-        measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, frame, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices);
-
-        // Warp point
-        for(const auto &pair:point_pairs)
+        std::vector<float> stabilized_angle_matrices_prev,stabilized_angle_matrices_curr;
+        measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, frame, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices_prev);
+        if(stabilized_angle_matrices_curr.empty())
         {
-            cv::Point2f warped_points_pair_prev = warp_undistort(pair.first,  zoom, stabilized_angle_matrices);
-            cv::Point2f warped_points_pair_curr = warp_undistort(pair.second, zoom, stabilized_angle_matrices);
+            measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, frame+1, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices_curr);
         }
 
-        // Calculate angular velocity
-
+        // Warp point
+        std::vector<cv::Point2f> warped_points_prev;
+        std::vector<cv::Point2f> warped_points_curr;    
+        for(const auto &point:point_pairs[frame].first) // previous frame
+        {
+            warped_points_prev.push_back(warp_undistort(point,  zoom, stabilized_angle_matrices_prev));
+        }
         
+        for(const auto &point:point_pairs[frame].second) // 
+        {
+            warped_points_curr.push_back(warp_undistort(point, zoom, stabilized_angle_matrices_curr));
+        }   
+        
+        warped_point_paires.push_back(PointPair(warped_points_prev,warped_points_curr));
+        
+        // Save it to prepare next frame
+        stabilized_angle_matrices_curr.swap(stabilized_angle_matrices_prev);
+    }
+    
+    
 
+    
+    // Calculate angular velocity
+    Eigen::MatrixXd warped_estimated_angular_velocity,warped_confidence;
+
+    estimateAngularVelocity(warped_point_paires,warped_estimated_angular_velocity,warped_confidence);
+    
+
+    {
+        LoggingDouble d;
+        for(int r=0;r<warped_estimated_angular_velocity.rows();++r)
+        {
+            d["Frame"].push_back((double)r);
+            d["rx"].push_back(warped_estimated_angular_velocity(r,0));
+            d["ry"].push_back(warped_estimated_angular_velocity(r,1));
+            d["rz"].push_back(warped_estimated_angular_velocity(r,2));
+        }
+        std::string time_stamp = DataCollection::getSystemTimeStamp();
+        DataCollection collection(time_stamp + "_warped_estimated_angular_velocity.csv");
+        collection.setDuplicateFilePath("latest_warped_estimated_angular_velocity.csv");
+        collection.set(d);
     }
 
     return 0;

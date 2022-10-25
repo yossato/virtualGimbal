@@ -265,6 +265,7 @@ Eigen::Quaterniond AngularVelocity::getCorrectionQuaternionFromFrame(   double e
 
 void AngularVelocity::calculateAngleQuaternion()
 {
+    quaternion_.clear();
     Eigen::Quaterniond q(1.0, 0.0, 0.0, 0.0);
     for(size_t frame=0;frame<(size_t)data.rows();++frame)
     {
