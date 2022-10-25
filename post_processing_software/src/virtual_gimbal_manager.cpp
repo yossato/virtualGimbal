@@ -652,10 +652,10 @@ int VirtualGimbalManager::spinAnalyse(double zoom, FilterPtr filter,Eigen::Vecto
 
         // Get rotation matrix in each line of the frame
         std::vector<float> stabilized_angle_matrices_prev,stabilized_angle_matrices_curr;
-        measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, frame, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices_prev);
-        if(stabilized_angle_matrices_curr.empty())
+        measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, frame+1, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices_curr);
+        if(stabilized_angle_matrices_prev.empty())
         {
-            measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, frame+1, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices_curr);
+            measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, frame, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices_prev);
         }
 
         // Warp point
@@ -674,7 +674,7 @@ int VirtualGimbalManager::spinAnalyse(double zoom, FilterPtr filter,Eigen::Vecto
         warped_point_paires.push_back(PointPair(warped_points_prev,warped_points_curr));
         
         // Save it to prepare next frame
-        stabilized_angle_matrices_curr.swap(stabilized_angle_matrices_prev);
+        stabilized_angle_matrices_prev = stabilized_angle_matrices_curr;
     }
     
     

@@ -189,8 +189,8 @@ int main(int argc, char **argv)
                 d["rz"].push_back(estimated_angular_velocity(r,2));
             }
             std::string time_stamp = DataCollection::getSystemTimeStamp();
-            DataCollection collection(time_stamp + "_estimated_angular_velocity_new_api.csv");
-            collection.setDuplicateFilePath("latest_estimated_angular_velocity_new_api.csv");
+            DataCollection collection(time_stamp + "_estimated_angular_velocity.csv");
+            collection.setDuplicateFilePath("latest_estimated_angular_velocity.csv");
             collection.set(d);
 
 
