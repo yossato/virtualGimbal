@@ -79,7 +79,7 @@ public:
   void estimateAngularVelocity(const PointPairs &point_pairs, Eigen::MatrixXd &estimated_angular_velocity, Eigen::MatrixXd &confidence);
   void getAngularVelocityFromJson(Eigen::MatrixXd &estimated_angular_velocity, Eigen::MatrixXd &confidence);
 
-  void estimateAngularVelocity(Eigen::MatrixXd &estimated_angular_velocity, Eigen::MatrixXd &confidence);
+  // void estimateAngularVelocity(Eigen::MatrixXd &estimated_angular_velocity, Eigen::MatrixXd &confidence);
   Eigen::MatrixXd getRotationQuaternions();
   void getUndistortUnrollingChessBoardPoints(double time_offset, const std::pair<int, std::vector<cv::Point2d>> &corner_dict, std::vector<cv::Point2d> &dst, double line_delay=0.0);
   void getUndistortUnrollingChessBoardPoints(double time, const std::vector<cv::Point2d> &src, std::vector<cv::Point2d> &dst, double line_delay = 0.0);
@@ -96,7 +96,7 @@ public:
   int spinInpainting(double zoom, std::vector<std::pair<int32_t, double>> &sync_table, FilterPtr filter, size_t buffer_size, int filter_strength=199, bool show_image = true);
   cv::Point2f warp_undistort(const cv::Point2f &p, float zoom_ratio, const std::vector<float> &stabilized_angle_matrices);
 
-  int spinAnalyse(double zoom, FilterPtr filter,Eigen::VectorXd &filter_strength, std::vector<std::pair<int32_t,double>> &sync_table, const PointPairs &point_pairs);
+  // int spinAnalyse(double zoom, FilterPtr filter,Eigen::VectorXd &filter_strength, std::vector<std::pair<int32_t,double>> &sync_table, const PointPairs &point_pairs);
   bool fillPixelValues(cv::ocl::Context &context, double zoom, std::vector<float> stabilized_angle_matrices, uint8_t distance, UMatPtr &source_image, UMatPtr &dest_image);
   bool interpolatePixels(cv::ocl::Context &context, UMatPtr &past, UMatPtr &future, UMatPtr &output);
   void setMaximumGradient(double value);

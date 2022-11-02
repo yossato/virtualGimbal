@@ -54,7 +54,7 @@ using PointPairs = std::vector<std::pair<std::vector<cv::Point2f>,std::vector<cv
 
 // std::vector<cv::Vec3d> CalcShiftFromVideo(const char *filename, int calcPeriod);
 // void calcShiftFromVideo(std::shared_ptr<cv::VideoCapture> capture, int calc_length, Eigen::MatrixXd &dst);
-void CalcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd &optical_flow, Eigen::MatrixXd &confidence);
+// void CalcShiftFromVideo(const char *filename, int total_frames, Eigen::MatrixXd &optical_flow, Eigen::MatrixXd &confidence);
 PointPairs getFeaturePointsPairsFromVideo(const char *filename, int total_frames);
 void convertFeaturePointsPairsToImageTranslationAndRotation(const PointPairs &point_pairs, Eigen::MatrixXd &translation_and_rotation, Eigen::MatrixXd &confidence);
 

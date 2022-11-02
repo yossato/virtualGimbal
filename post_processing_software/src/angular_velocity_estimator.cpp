@@ -52,7 +52,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    Eigen::MatrixXd optical_flow, confidence;
+    
     //動画からオプティカルフローを計算する
     for (int i = 1; i < argc; ++i)
     {
@@ -69,11 +69,17 @@ int main(int argc, char **argv)
         // Jsonがすでにある？
         if (!jsonExists(std::string(argv[i])))
         {
-            CalcShiftFromVideo(argv[i], getVideoLength(argv[i]), optical_flow, confidence); //ビデオからオプティカルフローを用いてシフト量を算出
-            writeOpticalFrowToJson(std::string(argv[i]),optical_flow,confidence);
-            std::cout << argv[i] << " done." << std::endl;
+            //CalcShiftFromVideo(argv[i], getVideoLength(argv[i]), optical_flow, confidence); //ビデオからオプティカルフローを用いてシフト量を算出
+            PointPairs feature_points_pairs; // Store feature points at frame [n] and frame [n-1]
+            feature_points_pairs = getFeaturePointsPairsFromVideo(argv[i], getVideoLength(argv[i]));
+            
+            Eigen::MatrixXd translation_and_rotation, confidence;
+            convertFeaturePointsPairsToImageTranslationAndRotation(feature_points_pairs, translation_and_rotation, confidence);
+    
+            writeOpticalFrowToJson(std::string(argv[i]),translation_and_rotation,confidence);
+            std::cout << argv[i] << ": Json file is successfully generated." << std::endl;
         }else{
-            std::cout << argv[i] << " already exists." << std::endl;
+            std::cout << argv[i] << ": Json file already exists." << std::endl;
         }
     }
     return 0;

@@ -341,26 +341,26 @@ void VirtualGimbalManager::getAngularVelocityFromJson(Eigen::MatrixXd &estimated
 /**
  * @brief Estimate angular velocity from video optical flow
  **/
-void VirtualGimbalManager::estimateAngularVelocity(Eigen::MatrixXd &estimated_angular_velocity, Eigen::MatrixXd &confidence)
-{
-    Eigen::MatrixXd optical_flow;
-    if (jsonExists(video_param->video_file_name))
-    {
-        readOpticalFlowFromJson(video_param->video_file_name, optical_flow, confidence);
-    }
-    else
-    {
-        CalcShiftFromVideo(video_param->video_file_name.c_str(), video_param->video_frames, optical_flow, confidence);
-    }
-    estimated_angular_velocity.resize(optical_flow.rows(), optical_flow.cols());
-    estimated_angular_velocity.col(0) =
-        optical_flow.col(1).unaryExpr([&](double a)
-                                      { return video_param->getFrequency() * atan(a / (video_param->camera_info->fy_)); });
-    estimated_angular_velocity.col(1) =
-        optical_flow.col(0).unaryExpr([&](double a)
-                                      { return video_param->getFrequency() * -atan(a / (video_param->camera_info->fx_)); });
-    estimated_angular_velocity.col(2) = -video_param->getFrequency() * optical_flow.col(2);
-}
+// void VirtualGimbalManager::estimateAngularVelocity(Eigen::MatrixXd &estimated_angular_velocity, Eigen::MatrixXd &confidence)
+// {
+//     Eigen::MatrixXd optical_flow;
+//     if (jsonExists(video_param->video_file_name))
+//     {
+//         readOpticalFlowFromJson(video_param->video_file_name, optical_flow, confidence);
+//     }
+//     else
+//     {
+//         CalcShiftFromVideo(video_param->video_file_name.c_str(), video_param->video_frames, optical_flow, confidence);
+//     }
+//     estimated_angular_velocity.resize(optical_flow.rows(), optical_flow.cols());
+//     estimated_angular_velocity.col(0) =
+//         optical_flow.col(1).unaryExpr([&](double a)
+//                                       { return video_param->getFrequency() * atan(a / (video_param->camera_info->fy_)); });
+//     estimated_angular_velocity.col(1) =
+//         optical_flow.col(0).unaryExpr([&](double a)
+//                                       { return video_param->getFrequency() * -atan(a / (video_param->camera_info->fx_)); });
+//     estimated_angular_velocity.col(2) = -video_param->getFrequency() * optical_flow.col(2);
+// }
 
 void VirtualGimbalManager::getUndistortUnrollingChessBoardPoints(double time_offset, const std::pair<int, std::vector<cv::Point2d>> &corner_dict, std::vector<cv::Point2d> &dst, double line_delay)
 {
@@ -637,72 +637,72 @@ cv::Point2f VirtualGimbalManager::warp_undistort(const cv::Point2f &p, float zoo
     return cv::Point2f(x2.x * f.x * zoom_ratio + c.x, x2.y * f.y * zoom_ratio + c.y);
 }
 
-int VirtualGimbalManager::spinAnalyse(double zoom, FilterPtr filter,Eigen::VectorXd &filter_strength, std::vector<std::pair<int32_t,double>> &sync_table, const PointPairs &point_pairs)
-{
-    PointPairs warped_point_paires;
+// int VirtualGimbalManager::spinAnalyse(double zoom, FilterPtr filter,Eigen::VectorXd &filter_strength, std::vector<std::pair<int32_t,double>> &sync_table, const PointPairs &point_pairs)
+// {
+//     PointPairs warped_point_paires;
             
-    // Prepare
-    measured_angular_velocity->calculateAngleQuaternion();
+//     // Prepare
+//     measured_angular_velocity->calculateAngleQuaternion();
 
-    for(size_t frame = 0; frame<point_pairs.size(); ++frame)
-    {
-        // Get stabilization
-        Eigen::Quaterniond stabilized_angle_quaternion;
-        measured_angular_velocity->getStabilizedQuaternion(frame, filter->getFilterCoefficient(filter_strength(frame)), sync_table, stabilized_angle_quaternion);
+//     for(size_t frame = 0; frame<point_pairs.size(); ++frame)
+//     {
+//         // Get stabilization
+//         Eigen::Quaterniond stabilized_angle_quaternion;
+//         measured_angular_velocity->getStabilizedQuaternion(frame, filter->getFilterCoefficient(filter_strength(frame)), sync_table, stabilized_angle_quaternion);
 
-        // Get rotation matrix in each line of the frame
-        std::vector<float> stabilized_angle_matrices_prev,stabilized_angle_matrices_curr;
-        measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, frame+1, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices_curr);
-        if(stabilized_angle_matrices_prev.empty())
-        {
-            measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, frame, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices_prev);
-        }
+//         // Get rotation matrix in each line of the frame
+//         std::vector<float> stabilized_angle_matrices_prev,stabilized_angle_matrices_curr;
+//         measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, frame+1, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices_curr);
+//         if(stabilized_angle_matrices_prev.empty())
+//         {
+//             measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, frame, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices_prev);
+//         }
 
-        // Warp point
-        std::vector<cv::Point2f> warped_points_prev;
-        std::vector<cv::Point2f> warped_points_curr;    
-        for(const auto &point:point_pairs[frame].first) // previous frame
-        {
-            warped_points_prev.push_back(warp_undistort(point,  zoom, stabilized_angle_matrices_prev));
-        }
+//         // Warp point
+//         std::vector<cv::Point2f> warped_points_prev;
+//         std::vector<cv::Point2f> warped_points_curr;    
+//         for(const auto &point:point_pairs[frame].first) // previous frame
+//         {
+//             warped_points_prev.push_back(warp_undistort(point,  zoom, stabilized_angle_matrices_prev));
+//         }
         
-        for(const auto &point:point_pairs[frame].second) // 
-        {
-            warped_points_curr.push_back(warp_undistort(point, zoom, stabilized_angle_matrices_curr));
-        }   
+//         for(const auto &point:point_pairs[frame].second) // 
+//         {
+//             warped_points_curr.push_back(warp_undistort(point, zoom, stabilized_angle_matrices_curr));
+//         }   
         
-        warped_point_paires.push_back(PointPair(warped_points_prev,warped_points_curr));
+//         warped_point_paires.push_back(PointPair(warped_points_prev,warped_points_curr));
         
-        // Save it to prepare next frame
-        stabilized_angle_matrices_prev = stabilized_angle_matrices_curr;
-    }
+//         // Save it to prepare next frame
+//         stabilized_angle_matrices_prev = stabilized_angle_matrices_curr;
+//     }
     
     
 
     
-    // Calculate angular velocity
-    Eigen::MatrixXd warped_estimated_angular_velocity,warped_confidence;
+//     // Calculate angular velocity
+//     Eigen::MatrixXd warped_estimated_angular_velocity,warped_confidence;
 
-    estimateAngularVelocity(warped_point_paires,warped_estimated_angular_velocity,warped_confidence);
+//     estimateAngularVelocity(warped_point_paires,warped_estimated_angular_velocity,warped_confidence);
     
 
-    {
-        LoggingDouble d;
-        for(int r=0;r<warped_estimated_angular_velocity.rows();++r)
-        {
-            d["Frame"].push_back((double)r);
-            d["rx"].push_back(warped_estimated_angular_velocity(r,0));
-            d["ry"].push_back(warped_estimated_angular_velocity(r,1));
-            d["rz"].push_back(warped_estimated_angular_velocity(r,2));
-        }
-        std::string time_stamp = DataCollection::getSystemTimeStamp();
-        DataCollection collection(time_stamp + "_warped_estimated_angular_velocity.csv");
-        collection.setDuplicateFilePath("latest_warped_estimated_angular_velocity.csv");
-        collection.set(d);
-    }
+//     {
+//         LoggingDouble d;
+//         for(int r=0;r<warped_estimated_angular_velocity.rows();++r)
+//         {
+//             d["Frame"].push_back((double)r);
+//             d["rx"].push_back(warped_estimated_angular_velocity(r,0));
+//             d["ry"].push_back(warped_estimated_angular_velocity(r,1));
+//             d["rz"].push_back(warped_estimated_angular_velocity(r,2));
+//         }
+//         std::string time_stamp = DataCollection::getSystemTimeStamp();
+//         DataCollection collection(time_stamp + "_warped_estimated_angular_velocity.csv");
+//         collection.setDuplicateFilePath("latest_warped_estimated_angular_velocity.csv");
+//         collection.set(d);
+//     }
 
-    return 0;
-}
+//     return 0;
+// }
 
 #undef LAP_BEGIN
 #undef LAP
