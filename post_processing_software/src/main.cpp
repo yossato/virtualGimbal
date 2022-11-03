@@ -65,7 +65,7 @@ int main(int argc, char **argv)
     int queue_size = 10;
     size_t buffer_size = 21;
     bool analyze = false;
-    while ((opt = getopt(argc, argv, "j:i:c:l:w:z:k:f:o::n::p::b:")) != -1)
+    while ((opt = getopt(argc, argv, "j:i:c:l:w:z:k:f:o::n::p::b:a::")) != -1)
     {
         switch (opt)
         {
@@ -172,7 +172,7 @@ int main(int argc, char **argv)
     PointPairs feature_points_pairs; // Store feature points at frame [n] and frame [n-1]
     Eigen::MatrixXd estimated_angular_velocity,confidence;
 
-    if(!jsonExists(videoPass))
+    if(analyze || !jsonExists(videoPass))
     {
         feature_points_pairs = manager.getFeaturePointsPairs();
         
@@ -264,11 +264,11 @@ int main(int argc, char **argv)
 
     }
 
-    // if(analyze)
-    // {
-    //     // manager.spinAnalyse(zoom,fir_filter,filter_coefficients,table,feature_points_pairs);
-    //     manager.spinAnalyse(1.f,fir_filter,filter_coefficients,table,feature_points_pairs);
-    // }
+    if(analyze)
+    {
+        // manager.spinAnalyse(zoom,fir_filter,filter_coefficients,table,feature_points_pairs);
+        manager.spinAnalyse(1.f,fir_filter,filter_coefficients,table,feature_points_pairs);
+    }
 
     if(inpainting)
     {
