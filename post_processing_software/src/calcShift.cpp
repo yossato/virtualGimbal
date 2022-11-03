@@ -58,9 +58,13 @@ PointPairs getFeaturePointsPairsFromVideo(const char *filename, int total_frames
     // Trimming and make it mono
     int width  = cap.get(cv::CAP_PROP_FRAME_WIDTH);
     int height = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
+    int offset_col = 0;
+    int offset_row = 0;
     if((width >= 640) && (height >= 480))
     {
-        cv::cvtColor(prev(cv::Rect((prev.cols-640)/2,(prev.rows-480)/2,640,480)), prev_grey, cv::COLOR_BGR2GRAY);
+        offset_col = (prev.cols-640)/2;
+        offset_row = (prev.rows-480)/2;
+        cv::cvtColor(prev(cv::Rect(offset_col,offset_row,640,480)), prev_grey, cv::COLOR_BGR2GRAY);
     }else
     {
         cv::cvtColor(prev, prev_grey, cv::COLOR_BGR2GRAY);
@@ -82,7 +86,7 @@ PointPairs getFeaturePointsPairsFromVideo(const char *filename, int total_frames
         // Trimming
         if((width >= 640) && (height >= 480))
         {
-            cv::cvtColor(cur(cv::Rect((cur.cols-640)/2,(cur.rows-480)/2,640,480)), cur_grey, cv::COLOR_BGR2GRAY);
+            cv::cvtColor(cur(cv::Rect(offset_col,offset_row,640,480)), cur_grey, cv::COLOR_BGR2GRAY);
         }else
         {
             cv::cvtColor(cur, cur_grey, cv::COLOR_BGR2GRAY);
@@ -101,10 +105,11 @@ PointPairs getFeaturePointsPairsFromVideo(const char *filename, int total_frames
         cv::calcOpticalFlowPyrLK(prev_grey, cur_grey, prev_corner, cur_corner, status, err);
 
         // weed out bad matches
+        cv::Point2f trimming_offset(offset_col,offset_row);
         for(size_t i=0; i < status.size(); i++) {
             if(status[i]) {
-                prev_corner2.push_back(prev_corner[i]);
-                cur_corner2.push_back(cur_corner[i]);
+                prev_corner2.push_back(prev_corner[i]+trimming_offset); // To compensate trimming, add offset of point position.
+                cur_corner2.push_back(cur_corner[i]+trimming_offset);
             }
         }
 
