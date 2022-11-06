@@ -172,20 +172,27 @@ int main(int argc, char **argv)
     PointPairs feature_points_pairs; // Store feature points at frame [n] and frame [n-1]
     Eigen::MatrixXd estimated_angular_velocity,confidence;
 
-    if(analyze || !jsonExists(videoPass))
+    // Read feature points of video from json file.
+    if(pointPairsJsonExists(videoPass))
     {
-
-
-
-
-
+        readPointPairsFromJson(videoNameToPointPairsJsonName(videoPass),feature_points_pairs);
+        manager.estimateAngularVelocity(feature_points_pairs,estimated_angular_velocity,confidence);
+    }
+    else if(jsonExists(videoPass))// Obsolute
+    {
+        manager.getAngularVelocityFromJson(estimated_angular_velocity,confidence);
+    }
+    // If point pairs Json file doesn't exists, create it.
+    else 
+    {
         feature_points_pairs = manager.getFeaturePointsPairs();
         
         manager.estimateAngularVelocity(feature_points_pairs,estimated_angular_velocity,confidence);
 
-        writePointPairesToJson(std::string("pairs.json"),feature_points_pairs);
-        readPointPairsFromJson(std::string("pairs.json"),feature_points_pairs);
-
+        if(analyze)
+        {
+            writePointPairesToJson(videoNameToPointPairsJsonName(videoPass),feature_points_pairs);
+        }
 
         if(analyze)
         {
@@ -201,15 +208,8 @@ int main(int argc, char **argv)
             DataCollection collection(time_stamp + "_estimated_angular_velocity.csv");
             collection.setDuplicateFilePath("latest_estimated_angular_velocity.csv");
             collection.set(d);
-
-
         }
     }
-    else
-    {
-        manager.getAngularVelocityFromJson(estimated_angular_velocity,confidence);
-    }
-    
 
 
     

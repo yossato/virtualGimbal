@@ -43,13 +43,16 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/filewritestream.h"
 #include "rapidjson/filereadstream.h"
-
+#include <sys/types.h>
+#include <sys/stat.h>
 
 
 
 using PointPair = std::pair<std::vector<cv::Point2f>,std::vector<cv::Point2f> >;
 using PointPairs = std::vector<std::pair<std::vector<cv::Point2f>,std::vector<cv::Point2f> >>;
 
+bool pointPairsJsonExists(std::string video_file_name);
+std::string videoNameToPointPairsJsonName(std::string video_name);
 int readPointPairsFromJson(std::string json_path, PointPairs &point_pairs);
 int writePointPairesToJson(std::string json_path, const PointPairs &point_pairs);
 
