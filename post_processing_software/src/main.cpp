@@ -42,7 +42,7 @@
 #include <sys/stat.h>
 
 #include "data_collection.h"
-
+#include "point_pairs.hpp"
 
 
 using namespace std;
@@ -174,9 +174,18 @@ int main(int argc, char **argv)
 
     if(analyze || !jsonExists(videoPass))
     {
+
+
+
+
+
         feature_points_pairs = manager.getFeaturePointsPairs();
         
         manager.estimateAngularVelocity(feature_points_pairs,estimated_angular_velocity,confidence);
+
+        writePointPairesToJson(std::string("pairs.json"),feature_points_pairs);
+        readPointPairsFromJson(std::string("pairs.json"),feature_points_pairs);
+
 
         if(analyze)
         {
