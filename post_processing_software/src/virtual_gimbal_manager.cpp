@@ -637,8 +637,39 @@ cv::Point2f VirtualGimbalManager::warp_undistort(const cv::Point2f &p, float zoo
     return cv::Point2f(x2.x * f.x * zoom_ratio + c.x, x2.y * f.y * zoom_ratio + c.y);
 }
 
-int VirtualGimbalManager::spinAnalyse(double zoom, FilterPtr filter,Eigen::VectorXd &filter_strength, std::vector<std::pair<int32_t,double>> &sync_table, const PointPairs &point_pairs)
+int VirtualGimbalManager::spinAnalyse(double zoom, FilterPtr filter,Eigen::VectorXd &filter_strength, std::vector<std::pair<int32_t,double>> &sync_table, const PointPairs &point_pairs, char* experimental_param_json_path)
 {
+
+    // Modify sync table
+    std::string path_prefix;
+    if(experimental_param_json_path)
+    {
+        struct stat st;
+        if(stat(experimental_param_json_path,&st)){
+            printf("%s is not found.",experimental_param_json_path);
+            return -1;
+        }
+        FILE* fp = fopen(experimental_param_json_path, "rb"); // non-Windows use "r"
+        std::vector<char> readBuffer((intmax_t)st.st_size+10);
+        rapidjson::FileReadStream is(fp, readBuffer.data(), readBuffer.size());
+        rapidjson::Document e;
+        e.ParseStream(is);
+        fclose(fp);
+
+        // return e["frame_offset"].GetDouble();
+
+        // Modify sync table
+        // Sync table is coefficients of linear expression, y = ax + b, between measured and estimated angular velocity.
+        // Unit is frame, not second.
+        for(auto &el:sync_table)
+        {
+            // Add frame offset
+            el.second += e["frame_offset"].GetDouble();
+        }
+
+        path_prefix = e["path_prefix"].GetString();
+    }
+
     PointPairs warped_point_paires;
             
     // Prepare
@@ -705,7 +736,16 @@ int VirtualGimbalManager::spinAnalyse(double zoom, FilterPtr filter,Eigen::Vecto
         }
         std::string time_stamp = DataCollection::getSystemTimeStamp();
         DataCollection collection(time_stamp + "_warped_estimated_angular_velocity.csv");
-        collection.setDuplicateFilePath("latest_warped_estimated_angular_velocity.csv");
+
+        if(path_prefix.empty())
+        {
+            collection.setDuplicateFilePath("latest_warped_estimated_angular_velocity.csv");
+        }
+        else
+        {
+            collection.setDuplicateFilePath(path_prefix + "_warped_estimated_angular_velocity.csv");
+        }
+
         collection.set(d);
     }
 
