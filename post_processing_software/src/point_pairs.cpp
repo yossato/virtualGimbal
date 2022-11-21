@@ -154,3 +154,73 @@ int writePointPairesToJson(std::string json_path, const PointPairs &point_pairs)
 
 
 }
+
+int readSyncTableFromJson(std::string json_path, SyncTable &sync_table)
+{
+    FILE *fp = fopen(json_path.c_str(), "rb"); // non-Windows use "r"
+    char readBuffer[262140];
+    FileReadStream is(fp, readBuffer, sizeof(readBuffer));
+    Document e;
+    e.ParseStream(is);
+    fclose(fp);
+
+    if(!e.HasMember("sync_table"))
+    {
+        return 1;
+    }
+
+    const Value &table = e["sync_table"];
+    for (auto &pair:table.GetArray())
+    {
+        std::pair<int32_t, double> p(pair[0].GetInt(),pair[1].GetFloat());
+        sync_table.push_back(p);
+    }
+    return 0;
+}
+
+int writeSyncTableToJson(std::string json_path, const SyncTable &sync_table)
+{
+    // Document d(kObjectType);
+
+    // If record json file exist, Open it.
+    Document d;
+    struct stat st;
+    if (!stat(json_path.c_str(), &st))
+    {
+        FILE *fp = fopen(json_path.c_str(), "rb"); // non-Windows use "r"
+        std::vector<char> readBuffer((intmax_t)st.st_size + 10);
+        FileReadStream is(fp, readBuffer.data(), readBuffer.size());
+
+        d.ParseStream(is);
+        fclose(fp);
+    }
+    else
+    {
+        d = Document(kObjectType);
+    }
+
+
+    Document::AllocatorType &d_allocator = d.GetAllocator();
+
+    Document table(kArrayType);
+    // Document::AllocatorType &pairs_allocator = pairs.GetAllocator();
+    for(const auto &st:sync_table)
+    {
+        Document pair(kArrayType);
+        // Document::AllocatorType &point_allocator = point.GetAllocator();
+        pair.PushBack(st.first,d_allocator);
+        pair.PushBack(st.second,d_allocator);
+        table.PushBack(pair,d_allocator);
+    }
+
+    d.AddMember("sync_table", table, d_allocator);
+
+    FILE *fp = fopen(json_path.c_str(), "wb"); // non-Windows use "w"
+
+    char writeBuffer[262140];
+    FileWriteStream os(fp, writeBuffer, sizeof(writeBuffer));
+    Writer<FileWriteStream> writer(os);
+    d.Accept(writer);
+    fclose(fp);
+    return 0;
+}

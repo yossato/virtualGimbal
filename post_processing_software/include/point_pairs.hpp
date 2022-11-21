@@ -50,10 +50,15 @@
 
 using PointPair = std::pair<std::vector<cv::Point2f>,std::vector<cv::Point2f> >;
 using PointPairs = std::vector<std::pair<std::vector<cv::Point2f>,std::vector<cv::Point2f> >>;
+using SyncTable = std::vector<std::pair<int32_t, double>>;
 
 bool pointPairsJsonExists(std::string video_file_name);
 std::string videoNameToPointPairsJsonName(std::string video_name);
 int readPointPairsFromJson(std::string json_path, PointPairs &point_pairs);
 int writePointPairesToJson(std::string json_path, const PointPairs &point_pairs);
+
+int readSyncTableFromJson(std::string json_path, SyncTable &sync_table);
+int writeSyncTableToJson(std::string json_path, const SyncTable &sync_table);
+
 
 #endif //__VIRTUAL_GIMBAL_POINT_PAIRS_HPP__
