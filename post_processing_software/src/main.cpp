@@ -245,7 +245,16 @@ int main(int argc, char **argv)
             (table[i].second*table[i+1].first-table[i].first*table[i+1].second)/(table[i+1].first-table[i].first)
             );
         }
-        writeSyncTableToJson(videoNameToPointPairsJsonName(videoPass),table);
+        {
+            auto copied_table = table;
+            for(auto &el:copied_table)
+            {
+                el.second += (double)el.first * -0.0003278362805483809 + 1.1475274725274724;
+            }
+            writeSyncTableToJson(videoNameToPointPairsJsonName(videoPass),copied_table);
+
+        }
+        // writeSyncTableToJson(videoNameToPointPairsJsonName(videoPass),table);
     }
 
 

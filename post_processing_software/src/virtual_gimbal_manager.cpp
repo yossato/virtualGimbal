@@ -735,7 +735,7 @@ int VirtualGimbalManager::spinAnalyse(double zoom, FilterPtr filter,Eigen::Vecto
             d["rz"].push_back(warped_estimated_angular_velocity(r,2));
         }
         std::string time_stamp = DataCollection::getSystemTimeStamp();
-        DataCollection collection(time_stamp + "_warped_estimated_angular_velocity.csv");
+        DataCollection collection("timestamp_"+time_stamp + "_warped_estimated_angular_velocity.csv");
 
         if(path_prefix.empty())
         {
