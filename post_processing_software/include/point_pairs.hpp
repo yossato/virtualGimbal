@@ -56,7 +56,8 @@ bool pointPairsJsonExists(std::string video_file_name);
 std::string videoNameToPointPairsJsonName(std::string video_name);
 int readPointPairsFromJson(std::string json_path, PointPairs &point_pairs);
 int writePointPairesToJson(std::string json_path, const PointPairs &point_pairs);
-
+bool syncTableJsonExists(std::string video_file_name);
+std::string videoNameToSyncTableJsonName(std::string video_name);
 int readSyncTableFromJson(std::string json_path, SyncTable &sync_table);
 int writeSyncTableToJson(std::string json_path, const SyncTable &sync_table);
 
