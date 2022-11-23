@@ -421,23 +421,40 @@ Eigen::MatrixXd readAngularVelocityFromJson(const char* filename){
     fclose(fp);
 
     const rapidjson::Value& angular_velocity_rad_per_sec_array = e["angular_velocity_rad_per_sec"];
-    assert(angular_velocity_rad_per_sec_array.IsArray());
-    assert(angular_velocity_rad_per_sec_array[0][0].IsDouble() || angular_velocity_rad_per_sec_array[0][0].IsInt());
-    int32_t total_number_of_data=0;
-    for(size_t num=0;num<angular_velocity_rad_per_sec_array.Size();++num){
-        total_number_of_data += angular_velocity_rad_per_sec_array[num].Size();
-    }
+    if(angular_velocity_rad_per_sec_array[0].IsArray())
+    {
+        assert(angular_velocity_rad_per_sec_array.IsArray()); // VG angular velocity json
+        assert(angular_velocity_rad_per_sec_array[0][0].IsDouble() || angular_velocity_rad_per_sec_array[0][0].IsInt());
+        int32_t total_number_of_data=0;
+        for(size_t num=0;num<angular_velocity_rad_per_sec_array.Size();++num){
+            total_number_of_data += angular_velocity_rad_per_sec_array[num].Size();
+        }
 
-    int width = 3;
-    retval.resize(total_number_of_data/width,3);
-    int num=0;
-    for(size_t record =0;record<angular_velocity_rad_per_sec_array.Size();++record){
-        for(size_t i=0;i<angular_velocity_rad_per_sec_array[record].Size();++i){
-            retval(num/3,num%3)=angular_velocity_rad_per_sec_array[record][i].GetDouble();
-            ++num;
+        int width = 3;
+        retval.resize(total_number_of_data/width,3);
+        for(size_t record =0;record<angular_velocity_rad_per_sec_array.Size();++record){
+            for(size_t i=0;i<angular_velocity_rad_per_sec_array[record].Size();++i){
+                retval(i/3,i%3)=angular_velocity_rad_per_sec_array[record][i].GetDouble();
+            }
+        }
+
+    }
+    else if(angular_velocity_rad_per_sec_array[0].IsDouble()) // iPhone angular velocity json
+    {
+        int32_t total_number_of_data = angular_velocity_rad_per_sec_array.Size();
+
+        int width = 3;
+        retval.resize(total_number_of_data/width,3);
+        for(size_t i=0;i<angular_velocity_rad_per_sec_array.Size();++i){
+            retval(i/3,i%3)=angular_velocity_rad_per_sec_array[i].GetDouble();
         }
     }
+    else
+    {
+        // TODO: Handle errro case.
+    }
     return retval;
+
 }
 //int main(int argc, char** argv){
 //    int opt;

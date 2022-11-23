@@ -45,6 +45,13 @@ bool pointPairsJsonExists(std::string video_file_name)
     return !stat(json_file_name.c_str(), &st);
 }
 
+bool syncTableJsonExists(std::string video_file_name)
+{
+    std::string json_file_name = videoNameToSyncTableJsonName(video_file_name);
+    struct stat st;
+    return !stat(json_file_name.c_str(), &st);
+}
+
 std::string videoNameToPointPairsJsonName(std::string video_name)
 {
     std::string json_file_name = video_name;
@@ -60,6 +67,26 @@ std::string videoNameToPointPairsJsonName(std::string video_name)
         {
             //拡張子の判定が3文字以下なら拡張子を削除して.jsonをつける
             json_file_name = json_file_name.substr(0, pos) + std::string("_pp.json");
+        }
+    }
+    return json_file_name;
+}
+
+std::string videoNameToSyncTableJsonName(std::string video_name)
+{
+    std::string json_file_name = video_name;
+    std::string::size_type pos;
+    if ((pos = json_file_name.find_last_of(".")) != std::string::npos)
+    {
+        //拡張子の長さをチェック
+        if ((json_file_name.length() - json_file_name.substr(0, pos).length()) > 4)
+        {
+            json_file_name += std::string("_st.json");
+        }
+        else
+        {
+            //拡張子の判定が3文字以下なら拡張子を削除して.jsonをつける
+            json_file_name = json_file_name.substr(0, pos) + std::string("_st.json");
         }
     }
     return json_file_name;

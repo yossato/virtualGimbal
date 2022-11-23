@@ -225,14 +225,14 @@ int main(int argc, char **argv)
 
     SyncTable table;
     
-    if(pointPairsJsonExists(videoPass))
+    if(syncTableJsonExists(videoPass))
     {
-        readSyncTableFromJson(videoNameToPointPairsJsonName(videoPass),table);
+        readSyncTableFromJson(videoNameToSyncTableJsonName(videoPass),table);
     }
     
     
     if(table.empty()){
-        table = manager.getSyncTable(30.0,999);
+        table = manager.getSyncTable(10.0,499);
         if(2 >table.size()){
             printf("Warning: Input video too short to apply poly line syncronize method, an alternative mothod is used.\r\n");
             table = manager.getSyncTableOfShortVideo();
@@ -251,10 +251,10 @@ int main(int argc, char **argv)
             {
                 el.second += (double)el.first * -0.0003278362805483809 + 1.1475274725274724;
             }
-            writeSyncTableToJson(videoNameToPointPairsJsonName(videoPass),copied_table);
+            writeSyncTableToJson(videoNameToSyncTableJsonName(videoPass),copied_table);
 
         }
-        writeSyncTableToJson(videoNameToPointPairsJsonName(videoPass),table);
+        writeSyncTableToJson(videoNameToSyncTableJsonName(videoPass),table);
     }
 
 
