@@ -70,9 +70,11 @@ public:
   Eigen::VectorXd getCorrelationCoefficient(int32_t begin=0, int32_t length=0, double frequency=0.0);
   // Eigen::VectorXd getCorrelationCoefficient2(int32_t center, int32_t length, double frequency=0.0);
   double getSubframeOffsetInSecond(Eigen::VectorXd &correlation_coefficients,int32_t begin=0, int32_t length=0, double frequency=0.0);
-  void setResamplerParameter(double start, double new_frequency = 0.0);
-  void setResamplerParameter(ResamplerParameterPtr param);
-  Eigen::MatrixXd getSynchronizedMeasuredAngularVelocity();
+  double getSubframeOffset(Eigen::VectorXd &correlation_coefficients,int32_t center, int32_t length, double frequency=0.0);
+  double getMeasuredFramePositionFrom(int32_t estimated_frame_position, int32_t length);
+  // void setResamplerParameter(double start, double new_frequency = 0.0);
+  // void setResamplerParameter(ResamplerParameterPtr param);
+  // Eigen::MatrixXd getSynchronizedMeasuredAngularVelocity();
   std::map<int, std::vector<cv::Point2d>> getCornerDictionary(cv::Size &pattern_size, bool debug_speedup = false, bool Verbose = false);
   
   PointPairs getFeaturePointsPairs();
@@ -80,9 +82,9 @@ public:
   void getAngularVelocityFromJson(Eigen::MatrixXd &estimated_angular_velocity, Eigen::MatrixXd &confidence);
 
   // void estimateAngularVelocity(Eigen::MatrixXd &estimated_angular_velocity, Eigen::MatrixXd &confidence);
-  Eigen::MatrixXd getRotationQuaternions();
-  void getUndistortUnrollingChessBoardPoints(double time_offset, const std::pair<int, std::vector<cv::Point2d>> &corner_dict, std::vector<cv::Point2d> &dst, double line_delay=0.0);
-  void getUndistortUnrollingChessBoardPoints(double time, const std::vector<cv::Point2d> &src, std::vector<cv::Point2d> &dst, double line_delay = 0.0);
+  // Eigen::MatrixXd getRotationQuaternions();
+  // void getUndistortUnrollingChessBoardPoints(double time_offset, const std::pair<int, std::vector<cv::Point2d>> &corner_dict, std::vector<cv::Point2d> &dst, double line_delay=0.0);
+  // void getUndistortUnrollingChessBoardPoints(double time, const std::vector<cv::Point2d> &src, std::vector<cv::Point2d> &dst, double line_delay = 0.0);
   double computeReprojectionErrors(const std::vector<std::vector<cv::Point3d>> &objectPoints,
                                    const std::vector<std::vector<cv::Point2d>> &imagePoints,
                                    const std::vector<cv::Mat> &rvecs, const std::vector<cv::Mat> &tvecs,
@@ -104,7 +106,7 @@ public:
   const char *kernel_name = "stabilizer_kernel.cl";
   const char *kernel_function = "stabilizer_function";
   std::shared_ptr<cv::VideoCapture> getVideoCapture();
-  std::shared_ptr<ResamplerParameter> getResamplerParameterWithClockError(Eigen::VectorXd &correlation_begin, Eigen::VectorXd &correlation_end);
+  // std::shared_ptr<ResamplerParameter> getResamplerParameterWithClockError(Eigen::VectorXd &correlation_begin, Eigen::VectorXd &correlation_end);
   std::vector<std::pair<int32_t,double>> getSyncTable(double period_in_second,int32_t width);
   std::vector<std::pair<int32_t, double>> getSyncTableOfShortVideo();
 protected:

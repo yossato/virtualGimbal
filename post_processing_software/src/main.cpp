@@ -179,7 +179,10 @@ int main(int argc, char **argv)
     // Read feature points of video from json file.
     if(pointPairsJsonExists(videoPass))
     {
-        readPointPairsFromJson(videoNameToPointPairsJsonName(videoPass),feature_points_pairs);
+        if(readPointPairsFromJson(videoNameToPointPairsJsonName(videoPass),feature_points_pairs))
+        {
+            std::cerr << std::string("Failed to read ") + videoNameToPointPairsJsonName(videoPass) << std::endl;
+        }
         manager.estimateAngularVelocity(feature_points_pairs,estimated_angular_velocity,confidence);
     }
     else if(jsonExists(videoPass))// Obsolute
@@ -232,7 +235,7 @@ int main(int argc, char **argv)
     
     
     if(table.empty()){
-        table = manager.getSyncTable(10.0,499);
+        table = manager.getSyncTable(30.0,999);
         if(2 >table.size()){
             printf("Warning: Input video too short to apply poly line syncronize method, an alternative mothod is used.\r\n");
             table = manager.getSyncTableOfShortVideo();

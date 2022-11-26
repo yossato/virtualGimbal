@@ -47,10 +47,10 @@ using QuaternionDataPtr = std::shared_ptr<std::vector<Eigen::Quaterniond, Eigen:
 struct ResamplerParameter
 {
   // ResamplerParameter(double frequency) : frequency(frequency), start(0.0), length(0) {}
-  ResamplerParameter(double frequency, double start_time_second, double length) : frequency(frequency), start(start_time_second), length(length) {}
-  double frequency;
-  double start;  // Syncronized position in second.
-  double length; // Length in second
+  ResamplerParameter(double frequency, double center, double length) : frequency(frequency), original_data_center(center), resampled_data_length(length) {}
+  double frequency; // New frequency[Hz]
+  double original_data_center;  // Center position in original data frames.
+  int32_t resampled_data_length; // Length in number of resampled data frames.
 };
 
 using ResamplerParameterPtr = std::shared_ptr<ResamplerParameter>;
@@ -67,11 +67,14 @@ public:
   Eigen::MatrixXd data;
   // Eigen::MatrixXd getResampledData(double resampling_frequency);
   Eigen::MatrixXd getResampledData(const ResamplerParameterPtr param);
-
+  Eigen::MatrixXd generateResampledData(const int32_t length, const double ratio, const double frame_position);
+  Eigen::MatrixXd getResampledData(const double ratio);
+  Eigen::MatrixXd getResampledData(const int32_t length, const double ratio, const double frame_position);
 protected:
   double frequency_;
   // std::map<double, Eigen::MatrixXd> resampled_data;
   virtual Eigen::MatrixXd generateResampledData(const ResamplerParameterPtr resample_param); // TODO: In quaternion, please implement spherical linear interpolation.
+  virtual Eigen::MatrixXd generateResampledData(const double frequency);
 };
 
 class Video : public BaseParam
@@ -116,8 +119,8 @@ class RotationQuaternion
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  RotationQuaternion(AngularVelocityPtr angular_velocity, ResamplerParameter &resampler);
-  Eigen::Quaterniond getRotationQuaternion(double time);
+  // RotationQuaternion(AngularVelocityPtr angular_velocity, ResamplerParameter &resampler);
+  // Eigen::Quaterniond getRotationQuaternion(double time);
 
 
 private:

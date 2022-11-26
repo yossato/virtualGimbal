@@ -51,33 +51,74 @@ Eigen::MatrixXd BaseParam::generateResampledData(const ResamplerParameterPtr res
 {
     Eigen::MatrixXd resampled_data;
     assert(resample_param->frequency > std::numeric_limits<double>::epsilon());
-    assert(resample_param->start > -std::numeric_limits<double>::epsilon());
+    assert(resample_param->original_data_center >= (resample_param->resampled_data_length/2));
+    assert(resample_param->resampled_data_length > 0);
 
-    // Zero length means there is no specific value of resampled data length, so sets it maximum.
-    if (resample_param->length < std::numeric_limits<double>::epsilon())
+    // size_t resampled_data_length = (int)std::round(resample_param->length / frequency_ * resample_param->frequency);
+    // if(!(resampled_data_length % 2)) resampled_data_length += 1; //resampled_data_length must be odd.
+    resampled_data = Eigen::MatrixXd::Zero(resample_param->resampled_data_length, data.cols());
+
+    int32_t half_resampled_data_rows = resampled_data.rows()/2;
+    for (int32_t resampled_frame_diff = -half_resampled_data_rows, e = resampled_data.rows() - half_resampled_data_rows; resampled_frame_diff < e; ++resampled_frame_diff)
     {
-        resampled_data = Eigen::MatrixXd::Zero(round((data.rows() * getInterval() - resample_param->start) * resample_param->frequency), data.cols()); // = Eigen::MatrixXd::Zero(round(data.rows() * resampling_frequency / frequency_), data.cols());
-        resample_param->length = resampled_data.rows() / resample_param->frequency;
-    }
-    else
-    {
-        // Check length
-        // assert(round((resample_param->start + resample_param->length) * frequency_)  < data.rows());//ここでうまく行かない
-        if (round((resample_param->start + resample_param->length) * frequency_) >= data.rows())
-        {
-            std::cout << "異常値を検出、デバッグ用に値を補正した。本番までに直すこと。" << std::endl;
-            resample_param->start = data.rows() / frequency_ - resample_param->length;
-        }
-        resampled_data = Eigen::MatrixXd::Zero(round(resample_param->length * resample_param->frequency), data.cols());
-    }
-    for (int32_t frame_resampled = 0, e = resampled_data.rows(); frame_resampled < e; ++frame_resampled)
-    {
-        double frame_original = (resample_param->start + (double)frame_resampled / resample_param->frequency) * frequency_; //ここ
+        
+        double frame_original = resample_param->original_data_center + (double)resampled_frame_diff / resample_param->frequency * frequency_;
         int integer_part_frame = (int)frame_original;
         double ratio = frame_original - (double)integer_part_frame;
-        assert(frame_resampled + 1 < data.rows());
-        // std::cout << "frame_original:" << frame_original << " start:" << resample_param->start << " integer_part_frame" << integer_part_frame << std::endl;
-        resampled_data.row(frame_resampled) = data.row(integer_part_frame) * (1.0 - ratio) + data.row(integer_part_frame + 1) * ratio;
+        
+        assert(integer_part_frame >= 0);
+        assert(integer_part_frame < data.rows());
+
+        size_t resampled_frame = resampled_frame_diff + half_resampled_data_rows;
+        resampled_data.row(resampled_frame) = data.row(integer_part_frame) * (1.0 - ratio) + data.row(integer_part_frame + 1) * ratio;
+    }
+
+    return resampled_data;
+}
+
+Eigen::MatrixXd BaseParam::generateResampledData(const int32_t length, const double ratio, const double frame_position)
+{
+    Eigen::MatrixXd resampled_data = Eigen::MatrixXd::Zero(length, data.cols());
+
+    int32_t half_length = length/2;
+    for (int32_t diff = - half_length, e = half_length; diff <= e; ++diff)
+    {
+        
+        double this_frame_position = (frame_position + diff) * ratio;
+        int32_t this_frame_integer_position = (int32_t)this_frame_position;
+        double s = this_frame_position - (double)this_frame_integer_position;
+        
+        assert(this_frame_integer_position >= 0);
+        assert(this_frame_integer_position+1 < data.rows());
+
+        size_t resampled_frame = diff + half_length;
+        resampled_data.row(resampled_frame) = data.row(this_frame_integer_position) * (1.0 - s) + data.row(this_frame_integer_position + 1) * s;
+    }
+
+    return resampled_data;
+}
+
+Eigen::MatrixXd BaseParam::generateResampledData(const double ratio)
+{
+
+    assert(ratio > std::numeric_limits<double>::epsilon());
+
+    Eigen::MatrixXd resampled_data = Eigen::MatrixXd::Zero((int)std::round(data.rows() * ratio), data.cols());
+
+    // int32_t half_resampled_data_rows = resampled_data.rows()/2;
+    for (int32_t resampled_frame = 0, e = resampled_data.rows(); resampled_frame < e; ++resampled_frame)
+    {
+        
+        double this_frame = (double)resampled_frame / ratio;
+  
+
+        int this_frame_integer_position = (int)this_frame;
+        double s = this_frame - (double)this_frame_integer_position;
+        
+        assert(this_frame_integer_position >= 0);
+        assert(this_frame_integer_position + 1 < data.rows());
+
+        resampled_data.row(resampled_frame) = data.row(this_frame_integer_position) * (1.0 - s) + data.row(this_frame_integer_position + 1) * s;
     }
 
     return resampled_data;
@@ -86,6 +127,16 @@ Eigen::MatrixXd BaseParam::generateResampledData(const ResamplerParameterPtr res
 Eigen::MatrixXd BaseParam::getResampledData(const ResamplerParameterPtr resample_param)
 {
     return generateResampledData(resample_param);
+}
+
+Eigen::MatrixXd BaseParam::getResampledData(const double ratio)
+{
+    return generateResampledData(ratio);
+}
+
+Eigen::MatrixXd BaseParam::getResampledData(const int32_t length, const double ratio, const double frame_position)
+{
+    return generateResampledData(length, ratio, frame_position);
 }
 
 Video::Video(double frequency)
@@ -150,47 +201,47 @@ Eigen::Quaterniond Rotation::getDiffQuaternion(double index)
     return Eigen::Quaterniond();
 }
 
-RotationQuaternion::RotationQuaternion(AngularVelocityPtr angular_velocity, ResamplerParameter &resampler) : angular_velocity_(angular_velocity), resampler_(resampler)
-{
-    double frame = resampler_.start * angular_velocity_->getFrequency();
-    angle_[(int)frame] = Eigen::Quaterniond(1, 0, 0, 0);
-}
+// RotationQuaternion::RotationQuaternion(AngularVelocityPtr angular_velocity, ResamplerParameter &resampler) : angular_velocity_(angular_velocity), resampler_(resampler)
+// {
+//     double frame = resampler_.start * angular_velocity_->getFrequency();
+//     angle_[(int)frame] = Eigen::Quaterniond(1, 0, 0, 0);
+// }
 
-Eigen::Quaterniond RotationQuaternion::getRotationQuaternion(double time)
-{
-    // Convert time to measured anguler velocity frame position
-    double frame = (resampler_.start + time) * angular_velocity_->getFrequency();
-    assert(frame >= 0);
-    int integer_frame = floor(frame);
+// Eigen::Quaterniond RotationQuaternion::getRotationQuaternion(double time)
+// {
+//     // Convert time to measured anguler velocity frame position
+//     double frame = (resampler_.start + time) * angular_velocity_->getFrequency();
+//     assert(frame >= 0);
+//     int integer_frame = floor(frame);
 
-    // std::cout << "angle_.rbegin()->first : " << angle_.rbegin()->first << std::endl;
-    // std::cout << "angle_.begin()->first : " << angle_.begin()->first << std::endl;
-    // std::cout << "*angle_.begin() : " << angle_.begin()->second.coeffs().transpose() << std::endl;
-    // Check data availability.
-    // If there is no available data, Generate it.
-    if (angle_.rbegin()->first < (integer_frame + 1))
-    {
-        for (int i = angle_.rbegin()->first; i <= integer_frame; ++i)
-        { //TODO: Angular Velocity と Angle の対応関係これでよい？1個ずれない？
-            // Eigen::Vector3d vec = angular_velocity_->data.row(i).transpose() * angular_velocity_->getInterval();
-            Eigen::Quaterniond diff = angular_velocity_->getAngularVelocity(i); // Vector2Quaternion<double>(angular_velocity_->data.row(i).transpose() * angular_velocity_->getInterval());
-            angle_[i + 1] = (angle_[i] * diff).normalized();
-            // std::cout << angle_[i].coeffs().transpose() << std::endl;
-            // std::cout << angle_[i+1].coeffs().transpose() << std::endl << std::flush;
-        }
-    }
-    else if (integer_frame < angle_.begin()->first)
-    {
-        assert(integer_frame >= 0);
-        for (int i = angle_.begin()->first - 1; integer_frame <= i; --i)
-        {
-            Eigen::Quaterniond diff = angular_velocity_->getAngularVelocity(i); //Vector2Quaternion<double>(angular_velocity_->data.row(i).transpose() * angular_velocity_->getInterval());
-            angle_[i] = (angle_[i + 1] * diff.conjugate()).normalized();
-        }
-    }
-    // Return slerped quaternion.
-    return angle_[integer_frame].slerp(frame - integer_frame, angle_[integer_frame + 1]);
-}
+//     // std::cout << "angle_.rbegin()->first : " << angle_.rbegin()->first << std::endl;
+//     // std::cout << "angle_.begin()->first : " << angle_.begin()->first << std::endl;
+//     // std::cout << "*angle_.begin() : " << angle_.begin()->second.coeffs().transpose() << std::endl;
+//     // Check data availability.
+//     // If there is no available data, Generate it.
+//     if (angle_.rbegin()->first < (integer_frame + 1))
+//     {
+//         for (int i = angle_.rbegin()->first; i <= integer_frame; ++i)
+//         { //TODO: Angular Velocity と Angle の対応関係これでよい？1個ずれない？
+//             // Eigen::Vector3d vec = angular_velocity_->data.row(i).transpose() * angular_velocity_->getInterval();
+//             Eigen::Quaterniond diff = angular_velocity_->getAngularVelocity(i); // Vector2Quaternion<double>(angular_velocity_->data.row(i).transpose() * angular_velocity_->getInterval());
+//             angle_[i + 1] = (angle_[i] * diff).normalized();
+//             // std::cout << angle_[i].coeffs().transpose() << std::endl;
+//             // std::cout << angle_[i+1].coeffs().transpose() << std::endl << std::flush;
+//         }
+//     }
+//     else if (integer_frame < angle_.begin()->first)
+//     {
+//         assert(integer_frame >= 0);
+//         for (int i = angle_.begin()->first - 1; integer_frame <= i; --i)
+//         {
+//             Eigen::Quaterniond diff = angular_velocity_->getAngularVelocity(i); //Vector2Quaternion<double>(angular_velocity_->data.row(i).transpose() * angular_velocity_->getInterval());
+//             angle_[i] = (angle_[i + 1] * diff.conjugate()).normalized();
+//         }
+//     }
+//     // Return slerped quaternion.
+//     return angle_[integer_frame].slerp(frame - integer_frame, angle_[integer_frame + 1]);
+// }
 
 double AngularVelocity::convertEstimatedToMeasuredAngularVelocityFrame(double estimated_angular_velocity_frame, std::vector<std::pair<int32_t,double>> &sync_table){
  //テーブルから所望のaとbの値の計算

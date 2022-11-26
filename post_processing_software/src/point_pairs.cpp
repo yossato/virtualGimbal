@@ -102,6 +102,11 @@ int readPointPairsFromJson(std::string json_path, PointPairs &point_pairs)
     e.ParseStream(is);
     fclose(fp);
 
+    if(!e.HasMember("point_pairs"))
+    {
+        return 1;
+    }
+
     const Value &point_pairs_array = e["point_pairs"];
     for (auto &pair:point_pairs_array.GetArray())
     {
