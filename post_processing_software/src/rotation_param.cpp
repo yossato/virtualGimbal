@@ -84,7 +84,7 @@ Eigen::MatrixXd BaseParam::generateResampledData(const int32_t length, const dou
     for (int32_t diff = - half_length, e = half_length; diff <= e; ++diff)
     {
         
-        double this_frame_position = (frame_position + diff) * ratio;
+        double this_frame_position = (frame_position + diff) / ratio;
         int32_t this_frame_integer_position = (int32_t)this_frame_position;
         double s = this_frame_position - (double)this_frame_integer_position;
         

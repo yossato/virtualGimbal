@@ -110,16 +110,20 @@ double VirtualGimbalManager::getMeasuredFramePositionFrom(int32_t estimated_fram
 
     double e2m = measured_angular_velocity->getFrequency()/estimated_angular_velocity->getFrequency();
     double m2e = 1./e2m;
+    Eigen::VectorXd correlation_coefficients;
 
     assert(length % 2); // Odd
 
     int32_t half_length = length / 2;
+
     int32_t begin = estimated_frame_position - half_length;
     assert(begin >= 0);
     Eigen::MatrixXd particial_estimated_angular_velocity = estimated_angular_velocity->data.block(begin, 0, length, estimated_angular_velocity->data.cols());
     Eigen::VectorXd particial_confidence = estimated_angular_velocity->confidence.block(begin, 0, length, estimated_angular_velocity->confidence.cols());
-
+{
     Eigen::MatrixXd measured_angular_velocity_resampled = measured_angular_velocity->getResampledData(m2e);
+    //   std::cout << "measured_angular_velocity_resampled.row(8000):" << measured_angular_velocity_resampled.row(8000) << std::endl; 
+
     int32_t diff = measured_angular_velocity_resampled.rows() - particial_estimated_angular_velocity.rows();
 
     {
@@ -141,6 +145,7 @@ double VirtualGimbalManager::getMeasuredFramePositionFrom(int32_t estimated_fram
         for(int r=0;r<measured_angular_velocity_resampled.rows();++r)
         {
             d["Frame"].push_back((double)r);
+            // std::cout << measured_angular_velocity_resampled.row(r) << std::endl;
             d["x"].push_back(measured_angular_velocity_resampled(r,0));
             d["y"].push_back(measured_angular_velocity_resampled(r,1));
             d["z"].push_back(measured_angular_velocity_resampled(r,2));
@@ -161,7 +166,7 @@ double VirtualGimbalManager::getMeasuredFramePositionFrom(int32_t estimated_fram
         return std::numeric_limits<double>::quiet_NaN();
     }
 
-    Eigen::VectorXd correlation_coefficients(diff + 1);
+    correlation_coefficients = Eigen::VectorXd (diff + 1);
     for (int32_t frame = 0, end = correlation_coefficients.rows(); frame < end; ++frame)
     {
         correlation_coefficients[frame] = ((measured_angular_velocity_resampled.block(frame, 0, particial_estimated_angular_velocity.rows(), particial_estimated_angular_velocity.cols()) 
@@ -173,10 +178,13 @@ double VirtualGimbalManager::getMeasuredFramePositionFrom(int32_t estimated_fram
         //     std::cout << std::flush;
         // }
     }
+}
 
     //最小値サブピクセル推定
     Eigen::VectorXd::Index minimum_correlation_frame_in_estimated_frame;
+    
     correlation_coefficients.minCoeff(&minimum_correlation_frame_in_estimated_frame);
+    int32_t synchronized_frame_in_estimated_frame = minimum_correlation_frame_in_estimated_frame + half_length;
     // std::vector<double> vec_correlation_cofficients(correlation_coefficients.rows());
     // Eigen::Map<Eigen::VectorXd>(vec_correlation_cofficients.data(), correlation_coefficients.rows(), 1) = correlation_coefficients;
     // int32_t minimum_correlation_frame_in_estimated_frame = std::distance(vec_correlation_cofficients.begin(), min_element(vec_correlation_cofficients.begin(), vec_correlation_cofficients.end()));
@@ -193,19 +201,18 @@ double VirtualGimbalManager::getMeasuredFramePositionFrom(int32_t estimated_fram
         collection.set(d);
     }
         
-    
+    // return synchronized_frame_in_estimated_frame  * e2m;
     if ((minimum_correlation_frame_in_estimated_frame == 0) || (minimum_correlation_frame_in_estimated_frame == (correlation_coefficients.rows() - 1)))
     { //位置が最初のフレームで一致している場合
-        return minimum_correlation_frame_in_estimated_frame + (double)half_length * e2m;
-    }
-    
+        return synchronized_frame_in_estimated_frame  * e2m;
+    }    
     double minimum_correlation_subframe_in_estimated_frame = 0.0;
-    std::cout << "minimum_correlation_frame_in_estimated_frame:" << minimum_correlation_frame_in_estimated_frame << std::endl;
+    std::cout << "synchronized_frame_in_estimated_frame:" << synchronized_frame_in_estimated_frame << std::endl;
     double min_value = std::numeric_limits<double>::max();
-    // int32_t number_of_data = particial_confidence.cast<int>().array().sum();
+    int32_t number_of_data = particial_confidence.cast<int>().array().sum();
     for (double sub_frame = -1.0; sub_frame <= 1.0; sub_frame += 0.0001)
     {
-        double frame_position = minimum_correlation_frame_in_estimated_frame + sub_frame;
+        double frame_position = synchronized_frame_in_estimated_frame + sub_frame;
         Eigen::MatrixXd measured_angular_velocity_resampled = measured_angular_velocity->getResampledData(length,e2m,frame_position);
 
         assert(measured_angular_velocity_resampled.rows() == particial_estimated_angular_velocity.rows());
@@ -910,7 +917,7 @@ int VirtualGimbalManager::spinAnalyse(double zoom, FilterPtr filter,Eigen::Vecto
     estimateAngularVelocity(warped_point_paires,warped_estimated_angular_velocity,warped_confidence);
     
 
-    {
+    if(warped_estimated_angular_velocity.rows()){
         LoggingDouble d;
         for(int r=0;r<warped_estimated_angular_velocity.rows();++r)
         {
@@ -932,6 +939,10 @@ int VirtualGimbalManager::spinAnalyse(double zoom, FilterPtr filter,Eigen::Vecto
         }
 
         collection.set(d);
+    }
+    else
+    {
+        std::cout << "warped_estimated_angular_velocity is empty." << std::endl;
     }
 
     return 0;

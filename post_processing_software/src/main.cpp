@@ -228,14 +228,15 @@ int main(int argc, char **argv)
 
     SyncTable table;
     
-    if(syncTableJsonExists(videoPass))
-    {
-        readSyncTableFromJson(videoNameToSyncTableJsonName(videoPass),table);
-    }
+    // Uncomment before flight
+    // if(syncTableJsonExists(videoPass))
+    // {
+    //     readSyncTableFromJson(videoNameToSyncTableJsonName(videoPass),table);
+    // }
     
     
     if(table.empty()){
-        table = manager.getSyncTable(30.0,999);
+        table = manager.getSyncTable(10.0,499);
         if(2 >table.size()){
             printf("Warning: Input video too short to apply poly line syncronize method, an alternative mothod is used.\r\n");
             table = manager.getSyncTableOfShortVideo();
