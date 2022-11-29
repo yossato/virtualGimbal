@@ -112,7 +112,7 @@ Eigen::MatrixXd BaseParam::generateResampledData(const double ratio)
         double this_frame = (double)resampled_frame / ratio;
   
 
-        int this_frame_integer_position = (int)this_frame;
+        int32_t this_frame_integer_position = (int32_t)this_frame;
         double s = this_frame - (double)this_frame_integer_position;
         
         assert(this_frame_integer_position >= 0);

@@ -74,35 +74,35 @@ std::string videoNameToJsonName(std::string video_name);
 double readSamplingRateFromJson(const char* filename);
 
 
-template <typename _Tp, typename _Alloc = std::allocator<_Tp>> int readAngularVelocityFromJson(std::vector<_Tp,_Alloc> &angular_velocity, const char* filename){
-    struct stat st;
-    if(stat(filename,&st)){
-        return -1;
-    }
-    FILE* fp = fopen(filename, "rb"); // non-Windows use "r"
-    std::vector<char> readBuffer((intmax_t)st.st_size+10);
-    rapidjson::FileReadStream is(fp, readBuffer.data(), readBuffer.size());
-    rapidjson::Document e;
-    e.ParseStream(is);
-    fclose(fp);
+// template <typename _Tp, typename _Alloc = std::allocator<_Tp>> int readAngularVelocityFromJson(std::vector<_Tp,_Alloc> &angular_velocity, const char* filename){
+//     struct stat st;
+//     if(stat(filename,&st)){
+//         return -1;
+//     }
+//     FILE* fp = fopen(filename, "rb"); // non-Windows use "r"
+//     std::vector<char> readBuffer((intmax_t)st.st_size+10);
+//     rapidjson::FileReadStream is(fp, readBuffer.data(), readBuffer.size());
+//     rapidjson::Document e;
+//     e.ParseStream(is);
+//     fclose(fp);
 
-    // const rapidjson::Value& ff = ;
-    assert(e["frequency"].IsDouble());
-    const rapidjson::Value& angular_velocity_rad_per_sec_array = e["angular_velocity_rad_per_sec"];
-    assert(angular_velocity_rad_per_sec_array.IsArray());
-    assert(angular_velocity_rad_per_sec_array[0][0].IsDouble());
-    _Tp val;
-    int width = 3;
-    for(size_t a =0;a<angular_velocity_rad_per_sec_array.Size();++a){
-        for(size_t i=0;i<angular_velocity_rad_per_sec_array[a].Size();i+=width){
-            for(int k=0;k<width;++k){
-                val[k]=angular_velocity_rad_per_sec_array[a][i+k].GetDouble();
-            }
-            angular_velocity.push_back(val);
-        }
-    }
-    return 0;
-}
+//     // const rapidjson::Value& ff = ;
+//     assert(e["frequency"].IsDouble());
+//     const rapidjson::Value& angular_velocity_rad_per_sec_array = e["angular_velocity_rad_per_sec"];
+//     assert(angular_velocity_rad_per_sec_array.IsArray());
+//     assert(angular_velocity_rad_per_sec_array[0][0].IsDouble());
+//     _Tp val;
+//     int width = 3;
+//     for(size_t a =0;a<angular_velocity_rad_per_sec_array.Size();++a){
+//         for(size_t i=0;i<angular_velocity_rad_per_sec_array[a].Size();i+=width){
+//             for(int k=0;k<width;++k){
+//                 val[k]=angular_velocity_rad_per_sec_array[a][i+k].GetDouble();
+//             }
+//             angular_velocity.push_back(val);
+//         }
+//     }
+//     return 0;
+// }
 
 Eigen::MatrixXd readAngularVelocityFromJson(const char* filename);
 
