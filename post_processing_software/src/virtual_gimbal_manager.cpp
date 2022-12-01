@@ -213,7 +213,7 @@ double VirtualGimbalManager::getMeasuredFramePositionFrom(int32_t estimated_fram
     for (double sub_frame = -1.0; sub_frame <= 1.0; sub_frame += 0.0001)
     {
         double frame_position = synchronized_frame_in_estimated_frame + sub_frame;
-        Eigen::MatrixXd measured_angular_velocity_resampled = measured_angular_velocity->getResampledData(length,e2m,frame_position);
+        Eigen::MatrixXd measured_angular_velocity_resampled = measured_angular_velocity->getResampledData(length,m2e,frame_position);
 
         assert(measured_angular_velocity_resampled.rows() == particial_estimated_angular_velocity.rows());
         
@@ -1268,9 +1268,6 @@ std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(doubl
     
     for (int estimated_frame = radius, e = estimated_angular_velocity->getFrames() - radius; estimated_frame < e; estimated_frame += (int32_t)(period_in_second * video_param->getFrequency()))
     {
-        // Eigen::VectorXd correlation = getCorrelationCoefficient(estimated_frame, width);
-        // double measured_frame = getSubframeOffset(correlation, estimated_frame, width) * measured_angular_velocity->getFrequency() + (double)radius / estimated_angular_velocity->getFrequency() * measured_angular_velocity->getFrequency();
-        // table.emplace_back(estimated_frame, measured_frame);
         table.emplace_back(estimated_frame,getMeasuredFramePositionFrom(estimated_frame,width));
     }
     return table;

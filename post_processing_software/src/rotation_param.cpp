@@ -76,7 +76,8 @@ Eigen::MatrixXd BaseParam::generateResampledData(const ResamplerParameterPtr res
     return resampled_data;
 }
 
-Eigen::MatrixXd BaseParam::generateResampledData(const int32_t length, const double ratio, const double frame_position)
+// これで作るResampled dataは、平均位置がframe_position。逆にいうと、データの始点がframe_position-length/2
+Eigen::MatrixXd BaseParam::generateResampledData(const int32_t length, const double ratio, const double resampled_frame_position)
 {
     Eigen::MatrixXd resampled_data = Eigen::MatrixXd::Zero(length, data.cols());
 
@@ -84,7 +85,7 @@ Eigen::MatrixXd BaseParam::generateResampledData(const int32_t length, const dou
     for (int32_t diff = - half_length, e = half_length; diff <= e; ++diff)
     {
         
-        double this_frame_position = (frame_position + diff) / ratio;
+        double this_frame_position = (resampled_frame_position + diff) / ratio;
         int32_t this_frame_integer_position = (int32_t)this_frame_position;
         double s = this_frame_position - (double)this_frame_integer_position;
         
@@ -98,6 +99,7 @@ Eigen::MatrixXd BaseParam::generateResampledData(const int32_t length, const dou
     return resampled_data;
 }
 
+// これで作るresampled dataは、始点が0。
 Eigen::MatrixXd BaseParam::generateResampledData(const double ratio)
 {
 
