@@ -79,7 +79,7 @@ Eigen::MatrixXd BaseParam::generateResampledData(const ResamplerParameterPtr res
 // これで作るResampled dataは、平均位置がframe_position。逆にいうと、データの始点がframe_position-length/2
 Eigen::MatrixXd BaseParam::generateResampledData(const int32_t length, const double ratio, const double resampled_frame_position)
 {
-    Eigen::MatrixXd resampled_data = Eigen::MatrixXd::Zero(length, data.cols());
+    Eigen::MatrixXd resampled_data = Eigen::MatrixXd::Zero(length, lpf_filtered_data.cols());
 
     int32_t half_length = length/2;
     for (int32_t diff = - half_length, e = half_length; diff <= e; ++diff)
@@ -90,10 +90,10 @@ Eigen::MatrixXd BaseParam::generateResampledData(const int32_t length, const dou
         double s = this_frame_position - (double)this_frame_integer_position;
         
         assert(this_frame_integer_position >= 0);
-        assert(this_frame_integer_position+1 < data.rows());
+        assert(this_frame_integer_position+1 < lpf_filtered_data.rows());
 
         size_t resampled_frame = diff + half_length;
-        resampled_data.row(resampled_frame) = data.row(this_frame_integer_position) * (1.0 - s) + data.row(this_frame_integer_position + 1) * s;
+        resampled_data.row(resampled_frame) = lpf_filtered_data.row(this_frame_integer_position) * (1.0 - s) + lpf_filtered_data.row(this_frame_integer_position + 1) * s;
     }
 
     return resampled_data;
@@ -105,7 +105,35 @@ Eigen::MatrixXd BaseParam::generateResampledData(const double ratio)
 
     assert(ratio > std::numeric_limits<double>::epsilon());
 
-    Eigen::MatrixXd resampled_data = Eigen::MatrixXd::Zero((int)std::round(data.rows() * ratio), data.cols());
+    if((data.rows() != lpf_filtered_data.rows()) || (data.cols() != lpf_filtered_data.cols()))
+    {
+        Eigen::MatrixXd data_forward_pass = data;
+        Eigen::MatrixXd data_backward_pass = data;
+        
+
+        
+        // Calculate lpf coeff 
+        double a[] = {0.11633651,0.11633651};   // Fc = 10 Hz @ Fs = 240Hz
+        double b = 1. - a[0] - a[1];
+
+        // Apply lpf forward
+        for(int r=1;r<lpf_filtered_data.rows();++r)
+        {
+            data_forward_pass.row(r) = a[0] * data.row(r) + a[1] * data.row(r-1) + b * data_forward_pass.row(r-1);
+        }
+        
+        // Apply lpf backword
+        for(int r=lpf_filtered_data.rows()-2; r>=0; --r)
+        {
+            data_backward_pass.row(r) = a[0] * data.row(r) + a[1] * data.row(r+1) + b * data_backward_pass.row(r+1);
+        }
+
+        lpf_filtered_data = data_backward_pass;
+
+    }
+    // lpf_filtered_data = data;
+
+    Eigen::MatrixXd resampled_data = Eigen::MatrixXd::Zero((int)std::round(lpf_filtered_data.rows() * ratio), lpf_filtered_data.cols());
 
     // int32_t half_resampled_data_rows = resampled_data.rows()/2;
     for (int32_t resampled_frame = 0, e = resampled_data.rows(); resampled_frame < e; ++resampled_frame)
@@ -118,9 +146,9 @@ Eigen::MatrixXd BaseParam::generateResampledData(const double ratio)
         double s = this_frame - (double)this_frame_integer_position;
         
         assert(this_frame_integer_position >= 0);
-        assert(this_frame_integer_position + 1 < data.rows());
+        assert(this_frame_integer_position + 1 < lpf_filtered_data.rows());
 
-        resampled_data.row(resampled_frame) = data.row(this_frame_integer_position) * (1.0 - s) + data.row(this_frame_integer_position + 1) * s;
+        resampled_data.row(resampled_frame) = lpf_filtered_data.row(this_frame_integer_position) * (1.0 - s) + lpf_filtered_data.row(this_frame_integer_position + 1) * s;
     }
 
     return resampled_data;

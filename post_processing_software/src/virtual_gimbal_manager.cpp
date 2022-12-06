@@ -104,6 +104,8 @@ void VirtualGimbalManager::setRotation(const char *file_name, CameraInformation 
     rotation.reset(new Rotation());
 }
 
+// double VirtualGimbalManager::getMeasuredFramePositionFrom(int32_t estimated_frame_position, )
+
 double VirtualGimbalManager::getMeasuredFramePositionFrom(int32_t estimated_frame_position, int32_t length)
 {
 
@@ -118,7 +120,7 @@ double VirtualGimbalManager::getMeasuredFramePositionFrom(int32_t estimated_fram
 
     int32_t begin = estimated_frame_position - half_length;
     assert(begin >= 0);
-    assert(begin+length<=estimated_angular_velocity.rows());
+    assert(begin+length<=estimated_angular_velocity->data.rows());
     Eigen::MatrixXd particial_estimated_angular_velocity = estimated_angular_velocity->data.block(begin, 0, length, estimated_angular_velocity->data.cols());
     Eigen::VectorXd particial_confidence = estimated_angular_velocity->confidence.block(begin, 0, length, estimated_angular_velocity->confidence.cols());
 
@@ -1267,7 +1269,7 @@ std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(doubl
     double offset_frame_between_optical_flow_and_image = 0.5;
     for (int estimated_frame = radius, e = estimated_angular_velocity->getFrames() - radius; estimated_frame < e; estimated_frame += (int32_t)(period_in_second * video_param->getFrequency()))
     {
-        table.emplace_back(estimated_frame - offset_frame_between_optical_flow_and_image,getMeasuredFramePositionFrom(estimated_frame,width));
+        table.emplace_back(estimated_frame + offset_frame_between_optical_flow_and_image,getMeasuredFramePositionFrom(estimated_frame,width));
     }
     return table;
 }

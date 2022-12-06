@@ -65,6 +65,7 @@ public:
   // Eigen::VectorXd operator()(int32_t index, double resampling_frequency); //クォータニオンと時はどうする？？？テンプレートクラスにする？
   Eigen::VectorXd operator()(int32_t index);
   Eigen::MatrixXd data;
+  Eigen::MatrixXd lpf_filtered_data; // Prevent aliasing when it gets resampling data. This data is low pass filtered.
   // Eigen::MatrixXd getResampledData(double resampling_frequency);
   Eigen::MatrixXd getResampledData(const ResamplerParameterPtr param);
   Eigen::MatrixXd generateResampledData(const int32_t length, const double ratio, const double frame_position);
