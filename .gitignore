@@ -3,3 +3,4 @@ CMakeLists.txt.*
 .vscode
 __pycache__
 /post_processing_software/build
+/post_processing_software/jupyter/reports
