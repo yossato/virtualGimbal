@@ -131,7 +131,7 @@ Eigen::MatrixXd BaseParam::generateResampledData(const double ratio)
         lpf_filtered_data = data_backward_pass;
 
     }
-    // lpf_filtered_data = data;
+    lpf_filtered_data = data;
 
     Eigen::MatrixXd resampled_data = Eigen::MatrixXd::Zero((int)std::round(lpf_filtered_data.rows() * ratio), lpf_filtered_data.cols());
 

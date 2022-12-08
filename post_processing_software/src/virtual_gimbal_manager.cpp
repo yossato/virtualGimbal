@@ -211,7 +211,7 @@ double VirtualGimbalManager::getMeasuredFramePositionFrom(int32_t estimated_fram
     std::cout << "synchronized_frame_in_estimated_frame:" << synchronized_frame_in_estimated_frame << std::endl;
     double min_value = std::numeric_limits<double>::max();
     int32_t number_of_data = particial_confidence.cast<int>().array().sum();
-    for (double sub_frame = -1.0; sub_frame <= 1.0; sub_frame += 0.0001)
+    for (double sub_frame = -100.0; sub_frame <= 100.0; sub_frame += 0.01)
     {
         double frame_position = synchronized_frame_in_estimated_frame + sub_frame;
         Eigen::MatrixXd measured_angular_velocity_resampled = measured_angular_velocity->getResampledData(length,m2e,frame_position);
