@@ -1274,6 +1274,51 @@ std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(doubl
     return table;
 }
 
+double VirtualGimbalManager::getAverageAbsoluteAngularAcceleration(PointPairs::iterator &begin, PointPairs::iterator &end, double frequency)
+{
+    // Get angular velocity
+    PointPairs pairs;
+    std::copy(begin,end,std::back_inserter(pairs));
+    Eigen::MatrixXd partial_estimated_angular_velocity;
+    Eigen::MatrixXd partial_confidence;
+    estimateAngularVelocity(pairs,partial_estimated_angular_velocity,partial_confidence);
+
+    // int32_t number_of_data = partial_confidence.cast<int>().array().sum();
+
+    // Get absolute angular acceleration
+    double absolute_angular_acceleration 
+    // = (( partial_estimated_angular_velocity.block(1,0,partial_estimated_angular_velocity.rows()-1,partial_estimated_angular_velocity.cols())
+    //     - partial_estimated_angular_velocity.block(0,0,partial_estimated_angular_velocity.rows()-1,partial_estimated_angular_velocity.cols())
+    //     ).array().colwise() * partial_confidence.array()).abs().sum() / number_of_data / estimated_angular_velocity->getInterval();
+    = (( partial_estimated_angular_velocity.block(1,0,partial_estimated_angular_velocity.rows()-1,partial_estimated_angular_velocity.cols())
+        - partial_estimated_angular_velocity.block(0,0,partial_estimated_angular_velocity.rows()-1,partial_estimated_angular_velocity.cols())
+        ).array()).abs().mean();
+    
+    return absolute_angular_acceleration;
+}
+
+std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(PointPairs &point_pairs, double duration, double length)
+{
+    int32_t frame_length = length * estimated_angular_velocity->getFrequency();
+    std::vector<std::pair<int32_t, double>> table;
+    if(duration + length < estimated_angular_velocity->getLengthInSecond())
+    {
+        // TODO: Short video mode
+        std::cout << "Implement short video mode." << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    else
+    {
+        // Normal video mode
+        PointPairs::iterator pp_begin = point_pairs.begin();
+        assert(std::distance(pp_begin,point_pairs.end())<=frame_length);
+        PointPairs::iterator pp_end = pp_begin + frame_length;
+        double raw_aaaa = getAverageAbsoluteAngularAcceleration(pp_begin,pp_end,estimated_angular_velocity->getFrequency());
+    }
+    
+    return table;
+}
+
 std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTableOfShortVideo()
 {
     int32_t width = video_param->video_frames;

@@ -109,6 +109,9 @@ public:
   // std::shared_ptr<ResamplerParameter> getResamplerParameterWithClockError(Eigen::VectorXd &correlation_begin, Eigen::VectorXd &correlation_end);
   std::vector<std::pair<int32_t,double>> getSyncTable(double period_in_second,int32_t width);
   std::vector<std::pair<int32_t, double>> getSyncTableOfShortVideo();
+  std::vector<std::pair<int32_t, double>> getSyncTable(PointPairs &point_pairs, double duration, double length);
+  double getAverageAbsoluteAngularAcceleration(PointPairs::iterator &begin, PointPairs::iterator &end, double frequency);
+
 protected:
   std::shared_ptr<MultiThreadVideoWriter> writer_;
   std::shared_ptr<MultiThreadVideoReader> reader_;
