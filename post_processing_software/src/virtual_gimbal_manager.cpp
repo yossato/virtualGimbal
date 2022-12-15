@@ -1274,7 +1274,58 @@ std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(doubl
     return table;
 }
 
-double VirtualGimbalManager::getAverageAbsoluteAngularAcceleration(PointPairs::iterator &begin, PointPairs::iterator &end, double frequency)
+PointPairs VirtualGimbalManager::getWarpedPointPairs(double zoom, FilterPtr filter,Eigen::VectorXd &filter_strength, const PointPairs &point_pairs, int32_t start_frame, int32_t frame_length, std::vector<std::pair<int32_t,double>> &sync_table)
+{
+    PointPairs warped_point_pairs;
+            
+    // Prepare
+    measured_angular_velocity->calculateAngleQuaternion();
+
+    std::vector<float> stabilized_angle_matrices_prev;
+
+    for(int32_t frame = start_frame; frame< start_frame + frame_length; ++frame)
+    {
+        // Get stabilization
+        std::vector<float> stabilized_angle_matrices_curr;
+        
+        {
+            Eigen::Quaterniond stabilized_angle_quaternion;
+            measured_angular_velocity->getStabilizedQuaternion(frame+1, filter->getFilterCoefficient(filter_strength(frame)), sync_table, stabilized_angle_quaternion);
+            // Get rotation matrix in each line of the frame
+            measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, frame+1, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices_curr);
+        }
+
+        // Get previous one at once.
+        if(stabilized_angle_matrices_prev.empty())
+        {
+            Eigen::Quaterniond stabilized_angle_quaternion_prev;
+            measured_angular_velocity->getStabilizedQuaternion(frame, filter->getFilterCoefficient(filter_strength(frame)), sync_table, stabilized_angle_quaternion_prev);
+            measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion_prev, frame, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices_prev);
+        }
+
+        // Warp point
+        std::vector<cv::Point2f> warped_points_prev;
+        std::vector<cv::Point2f> warped_points_curr;    
+        for(const auto &point:point_pairs[frame].first) // previous frame
+        {
+            warped_points_prev.push_back(warp_undistort(point,  zoom, stabilized_angle_matrices_prev));
+        }
+        
+        for(const auto &point:point_pairs[frame].second) // 
+        {
+            warped_points_curr.push_back(warp_undistort(point, zoom, stabilized_angle_matrices_curr));
+        }   
+        
+        warped_point_pairs.push_back(PointPair(warped_points_prev,warped_points_curr));
+        
+        // Save it to prepare next frame
+        stabilized_angle_matrices_prev = stabilized_angle_matrices_curr;
+    }
+
+    return warped_point_pairs;
+}
+
+double VirtualGimbalManager::getAverageAbsoluteAngularAcceleration(const PointPairs::iterator &begin, const PointPairs::iterator &end, double frequency)
 {
     // Get angular velocity
     PointPairs pairs;
@@ -1283,13 +1334,7 @@ double VirtualGimbalManager::getAverageAbsoluteAngularAcceleration(PointPairs::i
     Eigen::MatrixXd partial_confidence;
     estimateAngularVelocity(pairs,partial_estimated_angular_velocity,partial_confidence);
 
-    // int32_t number_of_data = partial_confidence.cast<int>().array().sum();
-
-    // Get absolute angular acceleration
     double absolute_angular_acceleration 
-    // = (( partial_estimated_angular_velocity.block(1,0,partial_estimated_angular_velocity.rows()-1,partial_estimated_angular_velocity.cols())
-    //     - partial_estimated_angular_velocity.block(0,0,partial_estimated_angular_velocity.rows()-1,partial_estimated_angular_velocity.cols())
-    //     ).array().colwise() * partial_confidence.array()).abs().sum() / number_of_data / estimated_angular_velocity->getInterval();
     = (( partial_estimated_angular_velocity.block(1,0,partial_estimated_angular_velocity.rows()-1,partial_estimated_angular_velocity.cols())
         - partial_estimated_angular_velocity.block(0,0,partial_estimated_angular_velocity.rows()-1,partial_estimated_angular_velocity.cols())
         ).array()).abs().mean();
@@ -1297,7 +1342,7 @@ double VirtualGimbalManager::getAverageAbsoluteAngularAcceleration(PointPairs::i
     return absolute_angular_acceleration;
 }
 
-std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(PointPairs &point_pairs, double duration, double length)
+std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(double zoom, FilterPtr filter,Eigen::VectorXd &filter_strength, PointPairs &point_pairs, double duration, double length)
 {
     int32_t frame_length = length * estimated_angular_velocity->getFrequency();
     std::vector<std::pair<int32_t, double>> table;
@@ -1310,10 +1355,17 @@ std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(Point
     else
     {
         // Normal video mode
+
+        // Get angular acceleration
         PointPairs::iterator pp_begin = point_pairs.begin();
         assert(std::distance(pp_begin,point_pairs.end())<=frame_length);
         PointPairs::iterator pp_end = pp_begin + frame_length;
         double raw_aaaa = getAverageAbsoluteAngularAcceleration(pp_begin,pp_end,estimated_angular_velocity->getFrequency());
+
+        // ここで仮のSyncTableを作る。
+        SyncTable sync_table; // TODO:何かの初期化関数
+        PointPairs warped_point_pairs = getWarpedPointPairs(zoom, filter, filter_strength, point_pairs, 0, frame_length, sync_table);
+
     }
     
     return table;

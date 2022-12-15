@@ -52,7 +52,7 @@
 #include "data_collection.h"
 using PointPair = std::pair<std::vector<cv::Point2f>,std::vector<cv::Point2f> >;
 using PointPairs = std::vector<std::pair<std::vector<cv::Point2f>,std::vector<cv::Point2f> >>;
-  
+using SyncTable = std::vector<std::pair<int32_t,double>>;
 class VirtualGimbalManager
 {
 public:
@@ -109,8 +109,10 @@ public:
   // std::shared_ptr<ResamplerParameter> getResamplerParameterWithClockError(Eigen::VectorXd &correlation_begin, Eigen::VectorXd &correlation_end);
   std::vector<std::pair<int32_t,double>> getSyncTable(double period_in_second,int32_t width);
   std::vector<std::pair<int32_t, double>> getSyncTableOfShortVideo();
-  std::vector<std::pair<int32_t, double>> getSyncTable(PointPairs &point_pairs, double duration, double length);
-  double getAverageAbsoluteAngularAcceleration(PointPairs::iterator &begin, PointPairs::iterator &end, double frequency);
+  std::vector<std::pair<int32_t, double>> getSyncTable(double zoom, FilterPtr filter,Eigen::VectorXd &filter_strength, PointPairs &point_pairs, double duration, double length);
+  double getAverageAbsoluteAngularAcceleration(const PointPairs::iterator &begin, const PointPairs::iterator &end, double frequency);
+  PointPairs getWarpedPointPairs(double zoom, FilterPtr filter,Eigen::VectorXd &filter_strength, const PointPairs &point_pairs, int32_t start_frame, int32_t frame_length, std::vector<std::pair<int32_t,double>> &sync_table);
+
 
 protected:
   std::shared_ptr<MultiThreadVideoWriter> writer_;
