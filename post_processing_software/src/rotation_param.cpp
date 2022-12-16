@@ -377,7 +377,7 @@ double AngularVelocity::getStabilizedQuaternion(double estimated_angular_velocit
 {
     double frame = convertEstimatedToMeasuredAngularVelocityFrame(estimated_angular_velocity_frame, sync_table);
     assert((frame + 1.) < (double)std::numeric_limits<size_t>::max());
-    assert(frame > 0.);
+    assert(frame >= 0.);
     // size_t integer_frame = floor(frame);
 
     if ((frame < 0) || (frame >= data.rows()))

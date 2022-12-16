@@ -53,6 +53,8 @@
 using PointPair = std::pair<std::vector<cv::Point2f>,std::vector<cv::Point2f> >;
 using PointPairs = std::vector<std::pair<std::vector<cv::Point2f>,std::vector<cv::Point2f> >>;
 using SyncTable = std::vector<std::pair<int32_t,double>>;
+using MeasuredFrame = double;
+using EstimatedFrame = int32_t;
 class VirtualGimbalManager
 {
 public:
@@ -109,7 +111,8 @@ public:
   // std::shared_ptr<ResamplerParameter> getResamplerParameterWithClockError(Eigen::VectorXd &correlation_begin, Eigen::VectorXd &correlation_end);
   std::vector<std::pair<int32_t,double>> getSyncTable(double period_in_second,int32_t width);
   std::vector<std::pair<int32_t, double>> getSyncTableOfShortVideo();
-  std::vector<std::pair<int32_t, double>> getSyncTable(double zoom, FilterPtr filter,Eigen::VectorXd &filter_strength, PointPairs &point_pairs, double duration, double length);
+  SyncTable createSyncTable(int32_t estimate_frame, double measured_frame, double e2m_ratio);
+  std::vector<std::pair<int32_t, double>> getSyncTable(double zoom, FilterPtr filter,int32_t filter_length, PointPairs &point_pairs, double duration, double length);
   double getAverageAbsoluteAngularAcceleration(const PointPairs::iterator &begin, const PointPairs::iterator &end, double frequency);
   PointPairs getWarpedPointPairs(double zoom, FilterPtr filter,Eigen::VectorXd &filter_strength, const PointPairs &point_pairs, int32_t start_frame, int32_t frame_length, std::vector<std::pair<int32_t,double>> &sync_table);
 

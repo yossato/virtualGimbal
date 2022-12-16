@@ -242,6 +242,12 @@ int main(int argc, char **argv)
     //     readSyncTableFromJson(videoNameToSyncTableJsonName(videoPass),table);
     // }
     
+
+    { // Experimental
+        
+        manager.getSyncTable(zoom,fir_filter,fileter_length,feature_points_pairs,sync_period,sync_frame_length/240.0);
+
+    }
     
     if(table.empty()){
         table = manager.getSyncTable(sync_period,sync_frame_length);
