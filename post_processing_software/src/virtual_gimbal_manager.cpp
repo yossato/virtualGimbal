@@ -1352,15 +1352,15 @@ SyncTable VirtualGimbalManager::createSyncTable(int32_t estimated_frame, double 
     return table;
 }
 
-std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(double zoom, FilterPtr filter, int32_t filter_length, PointPairs &point_pairs, double duration, double length)
+std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(double zoom, FilterPtr filter, int32_t filter_length, PointPairs &point_pairs, double sync_interval_sec, double ra4_length_sec)
 {
 
     measured_angular_velocity->calculateAngleQuaternion();
 
     Eigen::VectorXd filter_strength = Eigen::VectorXd::Ones(video_param->video_frames).array() * filter_length;
-    EstimatedFrame frame_in_efs = length * estimated_angular_velocity->getFrequency();
+    EstimatedFrame ra4_length_efs = ra4_length_sec * estimated_angular_velocity->getFrequency();
     std::vector<std::pair<int32_t, double>> table;
-    if(duration + length > estimated_angular_velocity->getLengthInSecond())
+    if(sync_interval_sec + ra4_length_sec > estimated_angular_velocity->getLengthInSecond())
     {
         // TODO: Short video mode
         std::cout << "Implement short video mode." << std::endl;
@@ -1372,8 +1372,8 @@ std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(doubl
 
         // Get angular acceleration
         PointPairs::iterator pp_begin = point_pairs.begin();
-        assert(std::distance(pp_begin,point_pairs.end())>frame_in_efs);
-        PointPairs::iterator pp_end = pp_begin + frame_in_efs;
+        assert(point_pairs.size()>ra4_length_efs);
+        PointPairs::iterator pp_end = pp_begin + ra4_length_efs;
         double raw_aaaa = getAverageAbsoluteAngularAcceleration(pp_begin,pp_end,estimated_angular_velocity->getFrequency());
 
         // ここで仮のSyncTableを作る。
@@ -1381,26 +1381,26 @@ std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(doubl
         MeasuredFrame m = measured_angular_velocity->data.rows();
         EstimatedFrame e = estimated_angular_velocity->data.rows();
         MeasuredFrame d_max = m - e2m * e;
-        EstimatedFrame duration_in_efs = (EstimatedFrame)(duration * estimated_angular_velocity->getFrequency());
+        EstimatedFrame duration_in_efs = (EstimatedFrame)(sync_interval_sec * estimated_angular_velocity->getFrequency());
 
         assert(d_max >= 0);
 
         // ここで部分的な
         PointPairs particial_point_pairs;
-        assert(point_pairs.size()>(size_t)frame_in_efs);
-        std::copy(point_pairs.begin(),point_pairs.begin()+frame_in_efs,std::back_inserter(particial_point_pairs));
+        assert(point_pairs.size()>(size_t)ra4_length_efs);
+        std::copy(point_pairs.begin(),point_pairs.begin()+ra4_length_efs,std::back_inserter(particial_point_pairs));
 
 
+        // Head synchronization
         LoggingDouble ld;
         for(double d=0;d<d_max;d+=1)
         {
             EstimatedFrame e_frame = 0;
             MeasuredFrame m_frame = (1 + filter_length / 2.) * e2m ;    // ローリングシャッター補正のために、 基準フレームよりも負の位置にアクセスする。そのため1フレーム分あらかじめオフセットしておいて、例外を防ぐ。
             SyncTable sync_table = createSyncTable(e_frame,m_frame+d,e2m); // TODO:何かの初期化関数
+
             
-            
-            
-            PointPairs warped_point_pairs = getWarpedPointPairs(zoom, filter, filter_strength, particial_point_pairs, 0, frame_in_efs, sync_table);
+            PointPairs warped_point_pairs = getWarpedPointPairs(zoom, filter, filter_strength, particial_point_pairs, 0, ra4_length_efs, sync_table);
             double warped_aaaa = getAverageAbsoluteAngularAcceleration(warped_point_pairs.begin(),warped_point_pairs.end(),estimated_angular_velocity->getFrequency());
 
             ld["d"].push_back((double)d);
@@ -1411,6 +1411,9 @@ std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(doubl
         DataCollection collection("aaaa_ratio.csv");
         collection.set(ld);
         
+        // Middle synchronization
+
+        // Tail synchronization
 
     }
     
