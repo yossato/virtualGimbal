@@ -1325,14 +1325,12 @@ PointPairs VirtualGimbalManager::getWarpedPointPairs(double zoom, FilterPtr filt
     return warped_point_pairs;
 }
 
-double VirtualGimbalManager::getAverageAbsoluteAngularAcceleration(const PointPairs::iterator &begin, const PointPairs::iterator &end, double frequency)
+double VirtualGimbalManager::getAverageAbsoluteAngularAcceleration(const PointPairs &point_pairs, double frequency)
 {
     // Get angular velocity
-    PointPairs pairs;
-    std::copy(begin,end,std::back_inserter(pairs));
     Eigen::MatrixXd partial_estimated_angular_velocity;
     Eigen::MatrixXd partial_confidence;
-    estimateAngularVelocity(pairs,partial_estimated_angular_velocity,partial_confidence);
+    estimateAngularVelocity(point_pairs,partial_estimated_angular_velocity,partial_confidence);
 
     double absolute_angular_acceleration 
     = (( partial_estimated_angular_velocity.block(1,0,partial_estimated_angular_velocity.rows()-1,partial_estimated_angular_velocity.cols())
@@ -1358,7 +1356,10 @@ std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(doubl
     measured_angular_velocity->calculateAngleQuaternion();
 
     Eigen::VectorXd filter_strength = Eigen::VectorXd::Ones(video_param->video_frames).array() * filter_length;
+    
     EstimatedFrame ra4_length_efs = ra4_length_sec * estimated_angular_velocity->getFrequency();
+    assert(point_pairs.size()>(size_t)ra4_length_efs);
+
     std::vector<std::pair<int32_t, double>> table;
     if(sync_interval_sec + ra4_length_sec > estimated_angular_velocity->getLengthInSecond())
     {
@@ -1370,51 +1371,85 @@ std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(doubl
     {
         // Normal video mode
 
-        // Get angular acceleration
-        PointPairs::iterator pp_begin = point_pairs.begin();
-        assert(point_pairs.size()>ra4_length_efs);
-        PointPairs::iterator pp_end = pp_begin + ra4_length_efs;
-        double raw_aaaa = getAverageAbsoluteAngularAcceleration(pp_begin,pp_end,estimated_angular_velocity->getFrequency());
-
-        // ここで仮のSyncTableを作る。
-        double e2m = measured_angular_velocity->getFrequency() / estimated_angular_velocity->getFrequency();
-        MeasuredFrame m = measured_angular_velocity->data.rows();
-        EstimatedFrame e = estimated_angular_velocity->data.rows();
-        MeasuredFrame d_max = m - e2m * e;
-        EstimatedFrame duration_in_efs = (EstimatedFrame)(sync_interval_sec * estimated_angular_velocity->getFrequency());
+        
+        // ここで仮のSyncTableを作るための必要な定数を定義
+        const double e2m = measured_angular_velocity->getFrequency() / estimated_angular_velocity->getFrequency();
+        const MeasuredFrame m = measured_angular_velocity->data.rows();
+        const EstimatedFrame e = estimated_angular_velocity->data.rows();
+        const MeasuredFrame d_max = m - e2m * e;
+        const EstimatedFrame duration_in_efs = (EstimatedFrame)(sync_interval_sec * estimated_angular_velocity->getFrequency());
 
         assert(d_max >= 0);
 
-        // ここで部分的な
-        PointPairs particial_point_pairs;
-        assert(point_pairs.size()>(size_t)ra4_length_efs);
-        std::copy(point_pairs.begin(),point_pairs.begin()+ra4_length_efs,std::back_inserter(particial_point_pairs));
-
 
         // Head synchronization
-        LoggingDouble ld;
-        for(double d=0;d<d_max;d+=1)
+        EstimatedFrame e_frame = 0;
+        MeasuredFrame m_frame = (e_frame + 1 ) * e2m + filter_length;    // ローリングシャッター補正のために、 基準フレームよりも負の位置にアクセスする。そのため1フレーム分あらかじめオフセットしておいて、例外を防ぐ。
+
         {
-            EstimatedFrame e_frame = 0;
-            MeasuredFrame m_frame = (1 + filter_length / 2.) * e2m ;    // ローリングシャッター補正のために、 基準フレームよりも負の位置にアクセスする。そのため1フレーム分あらかじめオフセットしておいて、例外を防ぐ。
-            SyncTable sync_table = createSyncTable(e_frame,m_frame+d,e2m); // TODO:何かの初期化関数
-
             
-            PointPairs warped_point_pairs = getWarpedPointPairs(zoom, filter, filter_strength, particial_point_pairs, 0, ra4_length_efs, sync_table);
-            double warped_aaaa = getAverageAbsoluteAngularAcceleration(warped_point_pairs.begin(),warped_point_pairs.end(),estimated_angular_velocity->getFrequency());
+            // ここで部分的なfeature point pairsを生成
+            PointPairs particial_point_pairs;
+            std::copy(point_pairs.begin()+e_frame,point_pairs.begin()+e_frame+ra4_length_efs,std::back_inserter(particial_point_pairs));
 
-            ld["d"].push_back((double)d);
-            ld["ratio"].push_back(warped_aaaa/raw_aaaa);
+            // Get angular acceleration
+            double raw_aaaa = getAverageAbsoluteAngularAcceleration(particial_point_pairs,estimated_angular_velocity->getFrequency());
+            
+            LoggingDouble ld;
+            for(double d=0;d<d_max;d+=1)
+            {
+                SyncTable sync_table = createSyncTable(e_frame,m_frame+d,e2m); // TODO:何かの初期化関数
+                constexpr EstimatedFrame start_efs = 0;
+                PointPairs warped_point_pairs = getWarpedPointPairs(zoom, filter, filter_strength, particial_point_pairs, start_efs, particial_point_pairs.size(), sync_table);
+                double warped_aaaa = getAverageAbsoluteAngularAcceleration(warped_point_pairs,estimated_angular_velocity->getFrequency());
 
+                ld["Measured Frame"].push_back(m_frame+d);
+                ld["Ratio"].push_back(warped_aaaa/raw_aaaa);
+
+            }
+
+            DataCollection collection("aaaa_ratio.csv");
+            collection.set(ld);
         }
-
-        DataCollection collection("aaaa_ratio.csv");
-        collection.set(ld);
         
         // Middle synchronization
 
         // Tail synchronization
+        e_frame = point_pairs.size() - 1 - ra4_length_efs;
+        // m_frame = (e_frame - 1 - filter_length / 2.) * e2m ;    // ローリングシャッター補正のために、 基準フレームよりも負の位置にアクセスする。そのため1フレーム分あらかじめオフセットしておいて、例外を防ぐ。
+        // m_frame = (e_frame -1 ) * e2m - filter_length / 2. ;    // ローリングシャッター補正のために、 基準フレームよりも負の位置にアクセスする。そのため1フレーム分あらかじめオフセットしておいて、例外を防ぐ。
+        m_frame = (e_frame -1 ) * e2m - filter_length ;    // ローリングシャッター補正のために、 基準フレームよりも負の位置にアクセスする。そのため1フレーム分あらかじめオフセットしておいて、例外を防ぐ。
+        {
+            
+            // ここで部分的なfeature point pairsを生成
+            PointPairs particial_point_pairs;
+            std::cout << "e_frame:" << e_frame << std::endl;
+            std::cout << "m_frame:" << m_frame << std::endl;
+            std::cout << "ra4_length_efs:" << ra4_length_efs << std::endl;
+            std::cout << "point_pairs.size():" << point_pairs.size() << std::endl; 
+            std::cout << "measured_angular_velocity->data.rows():" << measured_angular_velocity->data.rows() << std::endl;
 
+            std::copy(point_pairs.begin()+e_frame,point_pairs.begin()+e_frame+ra4_length_efs,std::back_inserter(particial_point_pairs));
+
+            // Get angular acceleration
+            double raw_aaaa = getAverageAbsoluteAngularAcceleration(particial_point_pairs,estimated_angular_velocity->getFrequency());
+            
+            LoggingDouble ld;
+            constexpr EstimatedFrame start_efs = 0;
+            for(double d=0;d<d_max;d+=1)
+            {
+                SyncTable sync_table = createSyncTable(start_efs,m_frame+d,e2m); // TODO:何かの初期化関数
+                PointPairs warped_point_pairs = getWarpedPointPairs(zoom, filter, filter_strength, particial_point_pairs, start_efs, particial_point_pairs.size(), sync_table);
+                double warped_aaaa = getAverageAbsoluteAngularAcceleration(warped_point_pairs,estimated_angular_velocity->getFrequency());
+
+                ld["Measured Frame"].push_back(m_frame+d);
+                ld["Ratio"].push_back(warped_aaaa/raw_aaaa);
+
+            }
+
+            DataCollection collection("aaaa_ratio_tail.csv");
+            collection.set(ld);
+        }
     }
     
     return table;
