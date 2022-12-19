@@ -1384,7 +1384,7 @@ std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(doubl
 
         // Head synchronization
         EstimatedFrame e_frame = 0;
-        MeasuredFrame m_frame = (e_frame + 1 ) * e2m + filter_length;    // ローリングシャッター補正のために、 基準フレームよりも負の位置にアクセスする。そのため1フレーム分あらかじめオフセットしておいて、例外を防ぐ。
+        MeasuredFrame m_frame = 1+ filter_length;    // ローリングシャッター補正のために、 基準フレームよりも負の位置にアクセスする。そのため1フレーム分あらかじめオフセットしておいて、例外を防ぐ。
 
         {
             
@@ -1418,13 +1418,15 @@ std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(doubl
         e_frame = point_pairs.size() - 1 - ra4_length_efs;
         // m_frame = (e_frame - 1 - filter_length / 2.) * e2m ;    // ローリングシャッター補正のために、 基準フレームよりも負の位置にアクセスする。そのため1フレーム分あらかじめオフセットしておいて、例外を防ぐ。
         // m_frame = (e_frame -1 ) * e2m - filter_length / 2. ;    // ローリングシャッター補正のために、 基準フレームよりも負の位置にアクセスする。そのため1フレーム分あらかじめオフセットしておいて、例外を防ぐ。
-        m_frame = (e_frame -1 ) * e2m - filter_length ;    // ローリングシャッター補正のために、 基準フレームよりも負の位置にアクセスする。そのため1フレーム分あらかじめオフセットしておいて、例外を防ぐ。
+        m_frame = measured_angular_velocity->data.rows() -  1 - ra4_length_efs * e2m -  d_max - filter_length ;    // ローリングシャッター補正のために、 基準フレームよりも負の位置にアクセスする。そのため1フレーム分あらかじめオフセットしておいて、例外を防ぐ。
         {
             
             // ここで部分的なfeature point pairsを生成
             PointPairs particial_point_pairs;
             std::cout << "e_frame:" << e_frame << std::endl;
             std::cout << "m_frame:" << m_frame << std::endl;
+            std::cout << "d_max:" << d_max << std::endl;
+            std::cout << "e2m" << e2m << std::endl;
             std::cout << "ra4_length_efs:" << ra4_length_efs << std::endl;
             std::cout << "point_pairs.size():" << point_pairs.size() << std::endl; 
             std::cout << "measured_angular_velocity->data.rows():" << measured_angular_velocity->data.rows() << std::endl;
