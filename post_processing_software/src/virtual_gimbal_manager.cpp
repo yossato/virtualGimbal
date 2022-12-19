@@ -1357,8 +1357,9 @@ std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(doubl
 
     Eigen::VectorXd filter_strength = Eigen::VectorXd::Ones(video_param->video_frames).array() * filter_length;
     
-    EstimatedFrame ra4_length_efs = ra4_length_sec * estimated_angular_velocity->getFrequency();
+    EstimatedFrame ra4_length_efs = (EstimatedFrame)std::round(ra4_length_sec * estimated_angular_velocity->getFrequency()) | (EstimatedFrame)1; // ra4_length_efs must odd.
     assert(point_pairs.size()>(size_t)ra4_length_efs);
+    assert(ra4_length_efs > 0);
 
     std::vector<std::pair<int32_t, double>> table;
     if(sync_interval_sec + ra4_length_sec > estimated_angular_velocity->getLengthInSecond())
@@ -1396,18 +1397,30 @@ std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(doubl
             double raw_aaaa = getAverageAbsoluteAngularAcceleration(particial_point_pairs,estimated_angular_velocity->getFrequency());
             
             LoggingDouble ld;
+            constexpr EstimatedFrame start_efs = 0;
+            std::pair<int32_t, double> point;
+            double min_ratio = std::numeric_limits<double>::max();
             for(double d=0;d<d_max;d+=1)
             {
-                SyncTable sync_table = createSyncTable(e_frame,m_frame+d,e2m); // TODO:何かの初期化関数
+                SyncTable sync_table = createSyncTable(start_efs,m_frame+d,e2m); // TODO:何かの初期化関数
                 constexpr EstimatedFrame start_efs = 0;
                 PointPairs warped_point_pairs = getWarpedPointPairs(zoom, filter, filter_strength, particial_point_pairs, start_efs, particial_point_pairs.size(), sync_table);
                 double warped_aaaa = getAverageAbsoluteAngularAcceleration(warped_point_pairs,estimated_angular_velocity->getFrequency());
-
+                double ratio = warped_aaaa/raw_aaaa;
+                if(min_ratio > ratio)
+                {
+                    min_ratio = ratio;
+                    point.first = e_frame + ra4_length_efs / 2;
+                    point.second = estimated_angular_velocity->convertEstimatedToMeasuredAngularVelocityFrame(ra4_length_efs / 2,sync_table);
+                }
                 ld["Measured Frame"].push_back(m_frame+d);
-                ld["Ratio"].push_back(warped_aaaa/raw_aaaa);
+                ld["Ratio"].push_back(ratio);
 
             }
-
+            if(min_ratio < 0.8) // Todo: Make this a parameter.
+            {
+                table.push_back(point);
+            }
             DataCollection collection("aaaa_ratio.csv");
             collection.set(ld);
         }
@@ -1438,17 +1451,29 @@ std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(doubl
             
             LoggingDouble ld;
             constexpr EstimatedFrame start_efs = 0;
+            std::pair<int32_t, double> point;
+            double min_ratio = std::numeric_limits<double>::max();
             for(double d=0;d<d_max;d+=1)
             {
                 SyncTable sync_table = createSyncTable(start_efs,m_frame+d,e2m); // TODO:何かの初期化関数
+                constexpr EstimatedFrame start_efs = 0;
                 PointPairs warped_point_pairs = getWarpedPointPairs(zoom, filter, filter_strength, particial_point_pairs, start_efs, particial_point_pairs.size(), sync_table);
                 double warped_aaaa = getAverageAbsoluteAngularAcceleration(warped_point_pairs,estimated_angular_velocity->getFrequency());
-
+                double ratio = warped_aaaa/raw_aaaa;
+                if(min_ratio > ratio)
+                {
+                    min_ratio = ratio;
+                    point.first = e_frame + ra4_length_efs / 2;
+                    point.second = estimated_angular_velocity->convertEstimatedToMeasuredAngularVelocityFrame(ra4_length_efs / 2,sync_table);
+                }
                 ld["Measured Frame"].push_back(m_frame+d);
-                ld["Ratio"].push_back(warped_aaaa/raw_aaaa);
+                ld["Ratio"].push_back(ratio);
 
             }
-
+            if(min_ratio < 0.8) // Todo: Make this a parameter.
+            {
+                table.push_back(point);
+            }
             DataCollection collection("aaaa_ratio_tail.csv");
             collection.set(ld);
         }

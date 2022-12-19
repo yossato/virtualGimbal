@@ -245,8 +245,20 @@ int main(int argc, char **argv)
 
     { // Experimental
         
-        manager.getSyncTable(zoom,fir_filter,fileter_length,feature_points_pairs,sync_period,sync_frame_length/240.0);
-
+        SyncTable table = manager.getSyncTable(zoom,fir_filter,fileter_length,feature_points_pairs,sync_period,sync_frame_length/240.0);
+        // std::cout << "Estimated new sync table:" << std::endl;
+        // for(auto el:table)
+        // {
+        //     std::cout << el.first << "," << el.second << std::endl; 
+        // }
+        printf("Estimated new table:\r\n");
+        for(size_t i=0;i<table.size()-1;++i)
+        {
+            printf("(%d,%f)-(%d,%f), a:%f b=%f\r\n",table[i].first,table[i].second,table[i+1].first,table[i+1].second,
+            (table[i+1].second-table[i].second)/(table[i+1].first-table[i].first),
+            (table[i].second*table[i+1].first-table[i].first*table[i+1].second)/(table[i+1].first-table[i].first)
+            );
+        }
     }
     
     if(table.empty()){
@@ -258,7 +270,7 @@ int main(int argc, char **argv)
         printf("Table:\r\n");
         for(size_t i=0;i<table.size()-1;++i)
         {
-            printf("(%d,%f), a:%f b=%f\r\n",table[i].first,table[i].second,
+            printf("(%d,%f)-(%d,%f), a:%f b=%f\r\n",table[i].first,table[i].second,table[i+1].first,table[i+1].second,
             (table[i+1].second-table[i].second)/(table[i+1].first-table[i].first),
             (table[i].second*table[i+1].first-table[i].first*table[i+1].second)/(table[i+1].first-table[i].first)
             );
