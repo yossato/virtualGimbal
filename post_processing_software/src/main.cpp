@@ -245,12 +245,8 @@ int main(int argc, char **argv)
 
     { // Experimental
         
-        SyncTable table = manager.getSyncTable(zoom,fir_filter,fileter_length,feature_points_pairs,sync_period,sync_frame_length/240.0);
-        // std::cout << "Estimated new sync table:" << std::endl;
-        // for(auto el:table)
-        // {
-        //     std::cout << el.first << "," << el.second << std::endl; 
-        // }
+        /*SyncTable */table = manager.getSyncTable(zoom,fir_filter,fileter_length,feature_points_pairs,sync_period,sync_frame_length/240.0);
+        
         printf("Estimated new table:\r\n");
         LoggingDouble d;
         for(size_t i=0;i<table.size()-1;++i)
