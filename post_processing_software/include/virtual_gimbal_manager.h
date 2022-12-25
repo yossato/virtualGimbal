@@ -50,9 +50,11 @@
 #include <Eigen/Dense>
 #include "inpainting.hpp"
 #include "data_collection.h"
+#include <algorithm>
 using PointPair = std::pair<std::vector<cv::Point2f>,std::vector<cv::Point2f> >;
 using PointPairs = std::vector<std::pair<std::vector<cv::Point2f>,std::vector<cv::Point2f> >>;
-using SyncTable = std::vector<std::pair<int32_t,double>>;
+using SyncPoint = std::pair<int32_t, double>;
+using SyncTable = std::vector<SyncPoint>;
 using MeasuredFrame = double;
 using EstimatedFrame = int32_t;
 class VirtualGimbalManager
