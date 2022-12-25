@@ -1534,8 +1534,8 @@ std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(doubl
     // Middle synchronization
     // Get duration between head and tail.
 
-    SyncTable refined_table = table;
-    double resolution_mfs = 0.1;
+    SyncTable refined_table;
+    double resolution_mfs = 0.02;
     for(e_frame=table.front().first; e_frame<table.back().first; e_frame += duration_in_efs)
     {
         // SyncTable middle_point(m_frame,convertEstimatedToMeasuredAngularVelocityFrame(m_frame,initial_table));
@@ -1545,11 +1545,15 @@ std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(doubl
         MeasuredFrame improved_m_frame = refineMeasuredFrame(e_frame, measured_frame_search_range, resolution_mfs);
         refined_table.push_back(SyncPoint(e_frame,improved_m_frame));
     }
-    // // Refine last point and add it for short video.
-    // e_frame = table.back().first;
-    // m_frame = table.back().second;
-    // MeasuredFrame improved_m_frame = refineMeasuredFrame(e_frame, {m_frame - 10.0, m_frame + 10.0}, resolution_mfs);
-    // refined_table.push_back(SyncPoint(e_frame,improved_m_frame));
+    // Refine last point and add it for short video.
+    if((table.back().first - refined_table.back().first) > duration_in_efs /2 )
+    {
+        e_frame = table.back().first;
+        m_frame = table.back().second;
+        MeasuredFrame improved_m_frame = refineMeasuredFrame(e_frame, {m_frame - 10.0, m_frame + 10.0}, resolution_mfs);
+        refined_table.push_back(SyncPoint(e_frame,improved_m_frame));
+    }
+
 
     
 
