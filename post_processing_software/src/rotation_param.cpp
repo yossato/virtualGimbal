@@ -285,10 +285,10 @@ double AngularVelocity::convertEstimatedToMeasuredAngularVelocityFrame(double es
     // Previous section of sync_table
     if(sync_table.end() == result)
     {
-        x = sync_table[0].first;
-        x1 = sync_table[1].first;
-        y = sync_table[0].second;
-        y1 = sync_table[1].second;
+        x = (result-2)->first;
+        x1 = (result-1)->first;
+        y = (result-2)->second;
+        y1 = (result-1)->second;
     }else{
         x = result->first;
         x1 = (result+1)->first;
