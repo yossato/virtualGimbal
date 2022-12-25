@@ -1373,185 +1373,191 @@ std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTable(doubl
         std::cout << "Implement short video mode." << std::endl;
         std::exit(EXIT_FAILURE);
     }
-    else
+
+    // Normal video mode
+
+    
+    // ここで仮のSyncTableを作るための必要な定数を定義
+    const double e2m = measured_angular_velocity->getFrequency() / estimated_angular_velocity->getFrequency();
+    const MeasuredFrame m = measured_angular_velocity->data.rows();
+    const EstimatedFrame e = estimated_angular_velocity->data.rows();
+    const MeasuredFrame d_max = m - e2m * e;
+    const EstimatedFrame duration_in_efs = (EstimatedFrame)(sync_interval_sec * estimated_angular_velocity->getFrequency());
+
+    assert(d_max >= 0);
+
+
+    // Head synchronization
+    EstimatedFrame e_frame = 0;
+    MeasuredFrame m_frame = 1+ filter_length;    // ローリングシャッター補正のために、 基準フレームよりも負の位置にアクセスする。そのため1フレーム分あらかじめオフセットしておいて、例外を防ぐ。
+
     {
-        // Normal video mode
-
         
-        // ここで仮のSyncTableを作るための必要な定数を定義
-        const double e2m = measured_angular_velocity->getFrequency() / estimated_angular_velocity->getFrequency();
-        const MeasuredFrame m = measured_angular_velocity->data.rows();
-        const EstimatedFrame e = estimated_angular_velocity->data.rows();
-        const MeasuredFrame d_max = m - e2m * e;
-        const EstimatedFrame duration_in_efs = (EstimatedFrame)(sync_interval_sec * estimated_angular_velocity->getFrequency());
+        // ここで部分的なfeature point pairsを生成
+        PointPairs particial_point_pairs;
+        std::copy(point_pairs.begin()+e_frame,point_pairs.begin()+e_frame+ra4_length_efs,std::back_inserter(particial_point_pairs));
 
-        assert(d_max >= 0);
-
-
-        // Head synchronization
-        EstimatedFrame e_frame = 0;
-        MeasuredFrame m_frame = 1+ filter_length;    // ローリングシャッター補正のために、 基準フレームよりも負の位置にアクセスする。そのため1フレーム分あらかじめオフセットしておいて、例外を防ぐ。
-
+        // Get angular acceleration
+        double raw_aaaa = getAverageAbsoluteAngularAcceleration(particial_point_pairs,estimated_angular_velocity->getFrequency());
+        
+        LoggingDouble ld;
+        constexpr EstimatedFrame start_efs = 0;
+        std::pair<int32_t, double> point;
+        double min_ratio = std::numeric_limits<double>::max();
+        for(double d=0;d<d_max;d+=1)
         {
-            
-            // ここで部分的なfeature point pairsを生成
-            PointPairs particial_point_pairs;
-            std::copy(point_pairs.begin()+e_frame,point_pairs.begin()+e_frame+ra4_length_efs,std::back_inserter(particial_point_pairs));
-
-            // Get angular acceleration
-            double raw_aaaa = getAverageAbsoluteAngularAcceleration(particial_point_pairs,estimated_angular_velocity->getFrequency());
-            
-            LoggingDouble ld;
+            SyncTable sync_table = createSyncTable(start_efs,m_frame+d,e2m);
             constexpr EstimatedFrame start_efs = 0;
-            std::pair<int32_t, double> point;
-            double min_ratio = std::numeric_limits<double>::max();
-            for(double d=0;d<d_max;d+=1)
+            PointPairs warped_point_pairs = getWarpedPointPairs(zoom, filter, filter_strength, particial_point_pairs, start_efs, particial_point_pairs.size(), sync_table);
+            double warped_aaaa = getAverageAbsoluteAngularAcceleration(warped_point_pairs,estimated_angular_velocity->getFrequency());
+            double ratio = warped_aaaa/raw_aaaa;
+            if(min_ratio > ratio)
             {
-                SyncTable sync_table = createSyncTable(start_efs,m_frame+d,e2m);
-                constexpr EstimatedFrame start_efs = 0;
-                PointPairs warped_point_pairs = getWarpedPointPairs(zoom, filter, filter_strength, particial_point_pairs, start_efs, particial_point_pairs.size(), sync_table);
-                double warped_aaaa = getAverageAbsoluteAngularAcceleration(warped_point_pairs,estimated_angular_velocity->getFrequency());
-                double ratio = warped_aaaa/raw_aaaa;
-                if(min_ratio > ratio)
-                {
-                    min_ratio = ratio;
-                    point.first = e_frame + ra4_length_efs / 2;
-                    point.second = estimated_angular_velocity->convertEstimatedToMeasuredAngularVelocityFrame(ra4_length_efs / 2,sync_table);
-                }
-                ld["Measured Frame"].push_back(m_frame+d);
-                ld["Ratio"].push_back(ratio);
+                min_ratio = ratio;
+                point.first = e_frame + ra4_length_efs / 2;
+                point.second = estimated_angular_velocity->convertEstimatedToMeasuredAngularVelocityFrame(ra4_length_efs / 2,sync_table);
+            }
+            ld["Measured Frame"].push_back(m_frame+d);
+            ld["Ratio"].push_back(ratio);
 
-            }
-            if(min_ratio < 0.8) // Todo: Make this a parameter.
-            {
-                table.push_back(point);
-            }
-            DataCollection collection("aaaa_ratio.csv");
-            collection.set(ld);
         }
-        
-        
-        // Tail synchronization
-        e_frame = point_pairs.size() - 1 - ra4_length_efs;
-        // m_frame = (e_frame - 1 - filter_length / 2.) * e2m ;    // ローリングシャッター補正のために、 基準フレームよりも負の位置にアクセスする。そのため1フレーム分あらかじめオフセットしておいて、例外を防ぐ。
-        // m_frame = (e_frame -1 ) * e2m - filter_length / 2. ;    // ローリングシャッター補正のために、 基準フレームよりも負の位置にアクセスする。そのため1フレーム分あらかじめオフセットしておいて、例外を防ぐ。
-        m_frame = measured_angular_velocity->data.rows() -  1 - ra4_length_efs * e2m -  d_max - filter_length ;    // ローリングシャッター補正のために、 基準フレームよりも負の位置にアクセスする。そのため1フレーム分あらかじめオフセットしておいて、例外を防ぐ。
+        if(min_ratio < 0.8) // Todo: Make this a parameter.
         {
-            
-            // ここで部分的なfeature point pairsを生成
-            PointPairs particial_point_pairs;
-            std::cout << "e_frame:" << e_frame << std::endl;
-            std::cout << "m_frame:" << m_frame << std::endl;
-            std::cout << "d_max:" << d_max << std::endl;
-            std::cout << "e2m" << e2m << std::endl;
-            std::cout << "ra4_length_efs:" << ra4_length_efs << std::endl;
-            std::cout << "point_pairs.size():" << point_pairs.size() << std::endl; 
-            std::cout << "measured_angular_velocity->data.rows():" << measured_angular_velocity->data.rows() << std::endl;
-
-            std::copy(point_pairs.begin()+e_frame,point_pairs.begin()+e_frame+ra4_length_efs,std::back_inserter(particial_point_pairs));
-
-            // Get angular acceleration
-            double raw_aaaa = getAverageAbsoluteAngularAcceleration(particial_point_pairs,estimated_angular_velocity->getFrequency());
-            
-            LoggingDouble ld;
-            constexpr EstimatedFrame start_efs = 0;
-            std::pair<int32_t, double> point;
-            double min_ratio = std::numeric_limits<double>::max();
-            for(double d=0;d<d_max;d+=1)
-            {
-                SyncTable sync_table = createSyncTable(start_efs,m_frame+d,e2m); 
-                constexpr EstimatedFrame start_efs = 0;
-                PointPairs warped_point_pairs = getWarpedPointPairs(zoom, filter, filter_strength, particial_point_pairs, start_efs, particial_point_pairs.size(), sync_table);
-                double warped_aaaa = getAverageAbsoluteAngularAcceleration(warped_point_pairs,estimated_angular_velocity->getFrequency());
-                double ratio = warped_aaaa/raw_aaaa;
-                if(min_ratio > ratio)
-                {
-                    min_ratio = ratio;
-                    point.first = e_frame + ra4_length_efs / 2;
-                    point.second = estimated_angular_velocity->convertEstimatedToMeasuredAngularVelocityFrame(ra4_length_efs / 2,sync_table);
-                }
-                ld["Measured Frame"].push_back(m_frame+d);
-                ld["Ratio"].push_back(ratio);
-
-            }
-            if(min_ratio < 0.8) // Todo: Make this a parameter.
-            {
-                table.push_back(point);
-            }
-            DataCollection collection("aaaa_ratio_tail.csv");
-            collection.set(ld);
+            table.push_back(point);
         }
-
-        auto refineMeasuredFrame = [this, &ra4_length_efs, &e2m, &point_pairs, &zoom, &filter, &filter_strength](EstimatedFrame frame_efs, std::vector<MeasuredFrame> measured_frame_search_range, MeasuredFrame resolution)
-        {
-
-            // std::pair<int32_t, double> point;
-            assert(measured_frame_search_range.size() == 2);
-            assert(measured_frame_search_range[0] < measured_frame_search_range[1]);
-
-            EstimatedFrame e_frame = frame_efs-ra4_length_efs/2;
-            const double copy_start = e_frame;
-            const double copy_end = e_frame + ra4_length_efs;
-            
-            assert(0 <= copy_start);
-            assert(copy_end<=point_pairs.size());
-
-            PointPairs particial_point_pairs;
-            std::copy(point_pairs.begin()+copy_start,point_pairs.begin()+copy_end,std::back_inserter(particial_point_pairs));
-
-            // Get angular acceleration
-            double raw_aaaa = getAverageAbsoluteAngularAcceleration(particial_point_pairs,estimated_angular_velocity->getFrequency());
-
-            const EstimatedFrame start_efs = ra4_length_efs/2;
-            double min_ratio = std::numeric_limits<double>::max();
-
-            MeasuredFrame refined_measured_frame = std::numeric_limits<double>::quiet_NaN();
-
-            LoggingDouble ld;
-            static int n  = 0;
-            for(double m = measured_frame_search_range[0]; m <= measured_frame_search_range[1]; m += resolution)
-            {
-                SyncTable sync_table = createSyncTable(start_efs,m,e2m); 
-                constexpr EstimatedFrame start_efs = 0;
-                PointPairs warped_point_pairs = getWarpedPointPairs(zoom, filter, filter_strength, particial_point_pairs, start_efs, particial_point_pairs.size(), sync_table);
-                double warped_aaaa = getAverageAbsoluteAngularAcceleration(warped_point_pairs,estimated_angular_velocity->getFrequency());
-                double ratio = warped_aaaa/raw_aaaa;
-                if(min_ratio > ratio)
-                {
-                    min_ratio = ratio;
-                    refined_measured_frame = estimated_angular_velocity->convertEstimatedToMeasuredAngularVelocityFrame(ra4_length_efs / 2,sync_table);
-                    
-                }
-                ld["Measured Frame"].push_back(m);
-                ld["Ratio"].push_back(ratio);
-            }
-            DataCollection collection("aaaa_ratio_" + std::to_string(n) + ".csv");
-            n++;
-            collection.set(ld);
-
-            return refined_measured_frame;
-        };
-
-        // Middle synchronization
-        // Get duration between head and tail.
-
-        SyncTable initial_table = table;
-        for(e_frame=table.front().first+duration_in_efs; e_frame<table.back().first; e_frame += duration_in_efs)
-        {
-            // SyncTable middle_point(m_frame,convertEstimatedToMeasuredAngularVelocityFrame(m_frame,initial_table));
-            m_frame = estimated_angular_velocity->convertEstimatedToMeasuredAngularVelocityFrame(e_frame, initial_table);
-            std::vector<MeasuredFrame> measured_frame_search_range = {m_frame - 10.0, m_frame + 10.0};
-            double resolution_mfs = 0.1;
-            MeasuredFrame improved_m_frame = refineMeasuredFrame(e_frame, measured_frame_search_range, resolution_mfs);
-            table.push_back(SyncPoint(e_frame,improved_m_frame));
-        }
-        
+        DataCollection collection("aaaa_ratio.csv");
+        collection.set(ld);
     }
     
-    // table must be sorted befor return.
-    std::sort(table.begin(),table.end());
+    
+    // Tail synchronization
+    e_frame = point_pairs.size() - 1 - ra4_length_efs;
+    // m_frame = (e_frame - 1 - filter_length / 2.) * e2m ;    // ローリングシャッター補正のために、 基準フレームよりも負の位置にアクセスする。そのため1フレーム分あらかじめオフセットしておいて、例外を防ぐ。
+    // m_frame = (e_frame -1 ) * e2m - filter_length / 2. ;    // ローリングシャッター補正のために、 基準フレームよりも負の位置にアクセスする。そのため1フレーム分あらかじめオフセットしておいて、例外を防ぐ。
+    m_frame = measured_angular_velocity->data.rows() -  1 - ra4_length_efs * e2m -  d_max - filter_length ;    // ローリングシャッター補正のために、 基準フレームよりも負の位置にアクセスする。そのため1フレーム分あらかじめオフセットしておいて、例外を防ぐ。
+    {
+        
+        // ここで部分的なfeature point pairsを生成
+        PointPairs particial_point_pairs;
+        std::cout << "e_frame:" << e_frame << std::endl;
+        std::cout << "m_frame:" << m_frame << std::endl;
+        std::cout << "d_max:" << d_max << std::endl;
+        std::cout << "e2m" << e2m << std::endl;
+        std::cout << "ra4_length_efs:" << ra4_length_efs << std::endl;
+        std::cout << "point_pairs.size():" << point_pairs.size() << std::endl; 
+        std::cout << "measured_angular_velocity->data.rows():" << measured_angular_velocity->data.rows() << std::endl;
 
-    return table;
+        std::copy(point_pairs.begin()+e_frame,point_pairs.begin()+e_frame+ra4_length_efs,std::back_inserter(particial_point_pairs));
+
+        // Get angular acceleration
+        double raw_aaaa = getAverageAbsoluteAngularAcceleration(particial_point_pairs,estimated_angular_velocity->getFrequency());
+        
+        LoggingDouble ld;
+        constexpr EstimatedFrame start_efs = 0;
+        std::pair<int32_t, double> point;
+        double min_ratio = std::numeric_limits<double>::max();
+        for(double d=0;d<d_max;d+=1)
+        {
+            SyncTable sync_table = createSyncTable(start_efs,m_frame+d,e2m); 
+            constexpr EstimatedFrame start_efs = 0;
+            PointPairs warped_point_pairs = getWarpedPointPairs(zoom, filter, filter_strength, particial_point_pairs, start_efs, particial_point_pairs.size(), sync_table);
+            double warped_aaaa = getAverageAbsoluteAngularAcceleration(warped_point_pairs,estimated_angular_velocity->getFrequency());
+            double ratio = warped_aaaa/raw_aaaa;
+            if(min_ratio > ratio)
+            {
+                min_ratio = ratio;
+                point.first = e_frame + ra4_length_efs / 2;
+                point.second = estimated_angular_velocity->convertEstimatedToMeasuredAngularVelocityFrame(ra4_length_efs / 2,sync_table);
+            }
+            ld["Measured Frame"].push_back(m_frame+d);
+            ld["Ratio"].push_back(ratio);
+
+        }
+        if(min_ratio < 0.8) // Todo: Make this a parameter.
+        {
+            table.push_back(point);
+        }
+        DataCollection collection("aaaa_ratio_tail.csv");
+        collection.set(ld);
+    }
+
+    auto refineMeasuredFrame = [this, &ra4_length_efs, &e2m, &point_pairs, &zoom, &filter, &filter_strength](EstimatedFrame frame_efs, std::vector<MeasuredFrame> measured_frame_search_range, MeasuredFrame resolution)
+    {
+
+        // std::pair<int32_t, double> point;
+        assert(measured_frame_search_range.size() == 2);
+        assert(measured_frame_search_range[0] < measured_frame_search_range[1]);
+
+        EstimatedFrame e_frame = frame_efs-ra4_length_efs/2;
+        const double copy_start = e_frame;
+        const double copy_end = e_frame + ra4_length_efs;
+        
+        assert(0 <= copy_start);
+        assert(copy_end<=point_pairs.size());
+
+        PointPairs particial_point_pairs;
+        std::copy(point_pairs.begin()+copy_start,point_pairs.begin()+copy_end,std::back_inserter(particial_point_pairs));
+
+        // Get angular acceleration
+        double raw_aaaa = getAverageAbsoluteAngularAcceleration(particial_point_pairs,estimated_angular_velocity->getFrequency());
+
+        const EstimatedFrame start_efs = ra4_length_efs/2;
+        double min_ratio = std::numeric_limits<double>::max();
+
+        MeasuredFrame refined_measured_frame = std::numeric_limits<double>::quiet_NaN();
+
+        LoggingDouble ld;
+        static int n  = 0;
+        for(double m = measured_frame_search_range[0]; m <= measured_frame_search_range[1]; m += resolution)
+        {
+            SyncTable sync_table = createSyncTable(start_efs,m,e2m); 
+            constexpr EstimatedFrame start_efs = 0;
+            PointPairs warped_point_pairs = getWarpedPointPairs(zoom, filter, filter_strength, particial_point_pairs, start_efs, particial_point_pairs.size(), sync_table);
+            double warped_aaaa = getAverageAbsoluteAngularAcceleration(warped_point_pairs,estimated_angular_velocity->getFrequency());
+            double ratio = warped_aaaa/raw_aaaa;
+            if(min_ratio > ratio)
+            {
+                min_ratio = ratio;
+                refined_measured_frame = estimated_angular_velocity->convertEstimatedToMeasuredAngularVelocityFrame(ra4_length_efs / 2,sync_table);
+                
+            }
+            ld["Measured Frame"].push_back(m);
+            ld["Ratio"].push_back(ratio);
+        }
+        DataCollection collection("aaaa_ratio_" + std::to_string(n) + ".csv");
+        n++;
+        collection.set(ld);
+
+        return refined_measured_frame;
+    };
+
+    // Middle synchronization
+    // Get duration between head and tail.
+
+    SyncTable refined_table = table;
+    double resolution_mfs = 0.1;
+    for(e_frame=table.front().first; e_frame<table.back().first; e_frame += duration_in_efs)
+    {
+        // SyncTable middle_point(m_frame,convertEstimatedToMeasuredAngularVelocityFrame(m_frame,initial_table));
+        m_frame = estimated_angular_velocity->convertEstimatedToMeasuredAngularVelocityFrame(e_frame, table);
+        std::vector<MeasuredFrame> measured_frame_search_range = {m_frame - 10.0, m_frame + 10.0};
+        
+        MeasuredFrame improved_m_frame = refineMeasuredFrame(e_frame, measured_frame_search_range, resolution_mfs);
+        refined_table.push_back(SyncPoint(e_frame,improved_m_frame));
+    }
+    // // Refine last point and add it for short video.
+    // e_frame = table.back().first;
+    // m_frame = table.back().second;
+    // MeasuredFrame improved_m_frame = refineMeasuredFrame(e_frame, {m_frame - 10.0, m_frame + 10.0}, resolution_mfs);
+    // refined_table.push_back(SyncPoint(e_frame,improved_m_frame));
+
+    
+
+
+    // table must be sorted befor return.
+    // std::sort(table.begin(),table.end());
+
+    return refined_table;
 }
 
 
