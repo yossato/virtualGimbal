@@ -115,6 +115,7 @@ public:
   std::vector<std::pair<int32_t, double>> getSyncTableOfShortVideo();
   SyncTable createSyncTable(int32_t estimate_frame, double measured_frame, double e2m_ratio);
   std::vector<std::pair<int32_t, double>> getSyncTable(double zoom, FilterPtr filter,int32_t filter_length, PointPairs &point_pairs, double duration, double length);
+  SyncTable getSyncTableIncrementally(double zoom, FilterPtr filter, int32_t filter_length, PointPairs &point_pairs, double sync_interval_sec, double ra4_length_sec, double ra4_thresh=0.8);
   double getAverageAbsoluteAngularAcceleration(const PointPairs &point_pairs, double frequency);
   PointPairs getWarpedPointPairs(double zoom, FilterPtr filter,Eigen::VectorXd &filter_strength, const PointPairs &point_pairs, int32_t start_frame, int32_t frame_length, std::vector<std::pair<int32_t,double>> &sync_table);
 
