@@ -1380,7 +1380,7 @@ SyncTable VirtualGimbalManager::getSyncTableRobust(double zoom, FilterPtr filter
         y.push_back(el.second);
     }
     Eigen::VectorXd coeffs = calculateLinearEquationCoefficientsRansac(x,y,1000,3.0);
-
+    std::cout << "coeff:" << coeffs.transpose() <<  std::endl;
     // Refine sync table using RA4
 
     measured_angular_velocity->calculateAngleQuaternion();
@@ -1401,12 +1401,12 @@ SyncTable VirtualGimbalManager::getSyncTableRobust(double zoom, FilterPtr filter
 
     // ここで仮のSyncTableを作るための必要な定数を定義
     const double e2m = measured_angular_velocity->getFrequency() / estimated_angular_velocity->getFrequency();
-    const MeasuredFrame m_length = measured_angular_velocity->data.rows();
-    const EstimatedFrame e_length = estimated_angular_velocity->data.rows();
-    const MeasuredFrame d_max = m_length - e2m * e_length;
+    // const MeasuredFrame m_length = measured_angular_velocity->data.rows();
+    // const EstimatedFrame e_length = estimated_angular_velocity->data.rows();
+    // const MeasuredFrame d_max = m_length - e2m * e_length;
     const EstimatedFrame duration_in_efs = (EstimatedFrame)(sync_interval_sec * estimated_angular_velocity->getFrequency());
 
-    assert(d_max >= 0);
+    // assert(d_max >= 0);
 
     auto refineMeasuredFrame = [this, &ra4_length_efs, &e2m, &point_pairs, &zoom, &filter, &filter_strength, &ra4_thresh](EstimatedFrame frame_efs, std::vector<MeasuredFrame> measured_frame_search_range, MeasuredFrame resolution)
     {
@@ -1464,14 +1464,32 @@ SyncTable VirtualGimbalManager::getSyncTableRobust(double zoom, FilterPtr filter
         }
     };
 
-    // EstimatedFrame begin_frame = 0;
-    // EstimatedFrame end_frame = estimated_angular_velocity->data.size()-1;
-    // SyncTable robust_estimated_table({SyncPoint(begin_frame,coeffs[0]+begin_frame*coeffs[1]),SyncPoint(end_frame,coeffs[0]+end_frame*coeffs[1])});
+    EstimatedFrame begin_frame = 0;
+    EstimatedFrame end_frame = estimated_angular_velocity->data.size()-1;
+    SyncTable robust_estimated_table({SyncPoint(begin_frame,coeffs[0]+begin_frame*coeffs[1]),SyncPoint(end_frame,coeffs[0]+end_frame*coeffs[1])});
 
-    SyncTable robust_estimated_table;
+    SyncTable refined_table;
+    SyncPoint point;
+    point.first = ra4_length_efs / 2;
+    point.second = estimated_angular_velocity->convertEstimatedToMeasuredAngularVelocityFrame(ra4_length_efs / 2,robust_estimated_table);
 
+    for(EstimatedFrame e_frame_for_refine=ra4_length_efs / 2; e_frame_for_refine < (EstimatedFrame)point_pairs.size() - 1 - e_frame_for_refine/2; e_frame_for_refine += duration_in_efs)
+    {
+        MeasuredFrame m_frame_for_refine = estimated_angular_velocity->convertEstimatedToMeasuredAngularVelocityFrame(e_frame_for_refine,robust_estimated_table);
+        
+        MeasuredFrame m_refined_frame = refineMeasuredFrame(e_frame_for_refine,{m_frame_for_refine-10,m_frame_for_refine+10},1);// Make 1 a param
+        std::cout << "refined point: (" << e_frame_for_refine << "," << m_refined_frame << ")" << std::endl;
+        if(isfinite(m_refined_frame))
+        {
+            refined_table.emplace_back(e_frame_for_refine,m_refined_frame);
+        }
+        else
+        {
+            std::cout << "Warn: Synchronization quality is low" << std::endl;
+        }
+    }
 
-    return SyncTable();
+    return refined_table;
 }
 
 SyncTable VirtualGimbalManager::getSyncTableIncrementally(double zoom, FilterPtr filter, int32_t filter_length, PointPairs &point_pairs, double sync_interval_sec, double ra4_length_sec, double ra4_thresh)

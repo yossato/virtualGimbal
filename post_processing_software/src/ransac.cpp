@@ -125,6 +125,6 @@ Eigen::VectorXd calculateLinearEquationCoefficientsRansac(std::vector<double> x,
 
         // Get the best coeffs
         Eigen::VectorXd coeffs = least_squares_method(x_in, y_in, 1);
-        printf("Inlier:%d / %lu Line_delay:%.8f [second]", max_inlier, y.size(), -coeffs[1]);
+        printf("RANSAC - Inlier:%d / %lu coeffs[0]:%f coeffs[1]%f\r\n", max_inlier, y.size(), coeffs[0], coeffs[1]);
         return coeffs;
     }

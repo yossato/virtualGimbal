@@ -242,6 +242,38 @@ int main(int argc, char **argv)
     //     readSyncTableFromJson(videoNameToSyncTableJsonName(videoPass),table);
     // }
     {
+        table = manager.getSyncTableRobust(zoom,fir_filter,fileter_length,feature_points_pairs,sync_period,sync_frame_length/240.0, 0.8);
+        if(table.size())
+        {
+            std::cout << "Robust table size:" << table.size() << std::endl;
+            printf("Robust table:\r\n");
+            LoggingDouble d;
+            for(size_t i=0;i<table.size()-1;++i)
+            {
+                printf("(%d,%f)-(%d,%f), a:%f b=%f\r\n",table[i].first,table[i].second,table[i+1].first,table[i+1].second,
+                (table[i+1].second-table[i].second)/(table[i+1].first-table[i].first),
+                (table[i].second*table[i+1].first-table[i].first*table[i+1].second)/(table[i+1].first-table[i].first)
+                );
+                double a = (table[i+1].second-table[i].second)/(table[i+1].first-table[i].first);
+                double b = (table[i].second*table[i+1].first-table[i].first*table[i+1].second)/(table[i+1].first-table[i].first);
+                d["Estimated angular velocity frame"].push_back(table[i].first);
+                d["Measured angular velocity frame"].push_back(table[i].second);
+                d["a-skew"].push_back(a);
+                d["b-offset"].push_back(b);
+            }
+            d["Estimated angular velocity frame"].push_back(table.back().first);
+            d["Measured angular velocity frame"].push_back(table.back().second);
+            d["a-skew"].push_back(0);
+            d["b-offset"].push_back(0);
+
+            std::string time_stamp = DataCollection::getSystemTimeStamp();
+            DataCollection collection(time_stamp + "_incremental_sync_table.csv");
+            collection.setDuplicateFilePath("latest_incremental_sync_table.csv");
+            collection.set(d);  
+        }
+    }
+
+    if(table.empty()){
         table = manager.getSyncTableIncrementally(zoom,fir_filter,fileter_length,feature_points_pairs,sync_period,sync_frame_length/240.0, 0.8);
         if(table.size())
         {
