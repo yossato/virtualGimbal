@@ -68,7 +68,9 @@ int main(int argc, char **argv)
     char *experimental_param_json_path = NULL;
     double sync_period = 30.0;
     int32_t sync_frame_length = 999;
-    while ((opt = getopt(argc, argv, "j:i:c:l:w:z:k:f:o::n::b:a::p:s:x:")) != -1)
+    double subframe_resolution = 0.1;
+    double ra4_thresh = 0.6;
+    while ((opt = getopt(argc, argv, "j:i:c:l:w:q:z:k:f:o::n::b:a::p:s:x:r:t:")) != -1)
     {
         switch (opt)
         {
@@ -117,6 +119,12 @@ int main(int argc, char **argv)
             break;
         case 'x':
             experimental_param_json_path = optarg;
+            break;
+        case 'r':
+            subframe_resolution = std::stof(optarg);
+            break;
+        case 't':
+            ra4_thresh = std::stof(optarg);
             break;
         // case 'p':
         //     inpainting = true;
@@ -242,7 +250,7 @@ int main(int argc, char **argv)
     //     readSyncTableFromJson(videoNameToSyncTableJsonName(videoPass),table);
     // }
     {
-        table = manager.getSyncTableRobust(zoom,fir_filter,fileter_length,feature_points_pairs,sync_period,sync_frame_length/240.0, 0.8);
+        table = manager.getSyncTableRobust(zoom,fir_filter,fileter_length,feature_points_pairs,sync_period,sync_frame_length/240.0, ra4_thresh, subframe_resolution);
         if(table.size())
         {
             std::cout << "Robust table size:" << table.size() << std::endl;
@@ -274,7 +282,7 @@ int main(int argc, char **argv)
     }
 
     if(table.empty()){
-        table = manager.getSyncTableIncrementally(zoom,fir_filter,fileter_length,feature_points_pairs,sync_period,sync_frame_length/240.0, 0.8);
+        table = manager.getSyncTableIncrementally(zoom,fir_filter,fileter_length,feature_points_pairs,sync_period,sync_frame_length/240.0, ra4_thresh);
         if(table.size())
         {
             std::cout << "Incremental table size:" << table.size() << std::endl;
