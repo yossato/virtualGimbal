@@ -1477,7 +1477,7 @@ SyncTable VirtualGimbalManager::getSyncTableRobust(double zoom, FilterPtr filter
     {
         MeasuredFrame m_frame_for_refine = estimated_angular_velocity->convertEstimatedToMeasuredAngularVelocityFrame(e_frame_for_refine,robust_estimated_table);
         
-        MeasuredFrame m_refined_frame = refineMeasuredFrame(e_frame_for_refine,{m_frame_for_refine-10,m_frame_for_refine+10},0.1);// Make 1 a param
+        MeasuredFrame m_refined_frame = refineMeasuredFrame(e_frame_for_refine,{m_frame_for_refine-10,m_frame_for_refine+10},0.01);// Make 1 a param
         std::cout << "refined point: (" << e_frame_for_refine << "," << m_refined_frame << ")" << std::endl;
         if(isfinite(m_refined_frame))
         {
@@ -1487,6 +1487,18 @@ SyncTable VirtualGimbalManager::getSyncTableRobust(double zoom, FilterPtr filter
         {
             std::cout << "Warn: Synchronization quality is low" << std::endl;
         }
+    }
+
+    {
+        LoggingDouble d;
+        for(size_t f=0;f<estimated_angular_velocity->data.size();++f)
+        {
+            d["estimated"].push_back(f);
+            d["measured"].push_back(estimated_angular_velocity->convertEstimatedToMeasuredAngularVelocityFrame(f,refined_table));
+        }
+        std::string time_stamp = DataCollection::getSystemTimeStamp();
+        DataCollection collection("latest_robust_sync_table.csv");
+        collection.set(d);  
     }
 
     return refined_table;
