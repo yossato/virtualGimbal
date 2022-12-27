@@ -1355,6 +1355,125 @@ SyncTable VirtualGimbalManager::createSyncTable(int32_t estimated_frame, double 
     return table;
 }
 
+SyncTable VirtualGimbalManager::getSyncTableRobust(double zoom, FilterPtr filter, int32_t filter_length, PointPairs &point_pairs, double sync_interval_sec, double ra4_length_sec, double ra4_thresh)
+{
+    // Get Initial sync table estimation 
+
+    EstimatedFrame ra4_length_efs = (EstimatedFrame)std::round(ra4_length_sec * estimated_angular_velocity->getFrequency()) | (EstimatedFrame)1; // ra4_length_efs must odd.
+    assert(point_pairs.size()>(size_t)ra4_length_efs);
+    assert(ra4_length_efs > 0);
+    std::vector<std::pair<int32_t, double>> table;
+    
+
+    double offset_frame_between_optical_flow_and_image = 0.5;
+    for (int estimated_frame = ra4_length_efs/2, e = estimated_angular_velocity->getFrames() - ra4_length_efs/2; estimated_frame < e; estimated_frame += (int32_t)(sync_interval_sec * video_param->getFrequency()))
+    {
+        table.emplace_back(estimated_frame + offset_frame_between_optical_flow_and_image,getMeasuredFramePositionFrom(estimated_frame,ra4_length_efs));
+    }
+    // return table;
+
+    // Get robust estimation
+    std::vector<double> x,y;
+    for(auto &el:table)
+    {
+        x.push_back(el.first);
+        y.push_back(el.second);
+    }
+    Eigen::VectorXd coeffs = calculateLinearEquationCoefficientsRansac(x,y,1000,3.0);
+
+    // Refine sync table using RA4
+
+    measured_angular_velocity->calculateAngleQuaternion();
+
+    Eigen::VectorXd filter_strength = Eigen::VectorXd::Ones(video_param->video_frames).array() * filter_length;
+    
+    // EstimatedFrame ra4_length_efs = (EstimatedFrame)std::round(ra4_length_sec * estimated_angular_velocity->getFrequency()) | (EstimatedFrame)1; // ra4_length_efs must odd.
+    assert(point_pairs.size()>(size_t)ra4_length_efs);
+    assert(ra4_length_efs > 0);
+
+    // std::vector<std::pair<int32_t, double>> table;
+    if(sync_interval_sec + ra4_length_sec > estimated_angular_velocity->getLengthInSecond())
+    {
+        // TODO: Short video mode
+        std::cout << "Implement short video mode." << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
+    // ここで仮のSyncTableを作るための必要な定数を定義
+    const double e2m = measured_angular_velocity->getFrequency() / estimated_angular_velocity->getFrequency();
+    const MeasuredFrame m_length = measured_angular_velocity->data.rows();
+    const EstimatedFrame e_length = estimated_angular_velocity->data.rows();
+    const MeasuredFrame d_max = m_length - e2m * e_length;
+    const EstimatedFrame duration_in_efs = (EstimatedFrame)(sync_interval_sec * estimated_angular_velocity->getFrequency());
+
+    assert(d_max >= 0);
+
+    auto refineMeasuredFrame = [this, &ra4_length_efs, &e2m, &point_pairs, &zoom, &filter, &filter_strength, &ra4_thresh](EstimatedFrame frame_efs, std::vector<MeasuredFrame> measured_frame_search_range, MeasuredFrame resolution)
+    {
+
+        // std::pair<int32_t, double> point;
+        assert(measured_frame_search_range.size() == 2);
+        assert(measured_frame_search_range[0] < measured_frame_search_range[1]);
+
+        EstimatedFrame e_frame = frame_efs-ra4_length_efs/2;
+        const double copy_start = e_frame;
+        const double copy_end = e_frame + ra4_length_efs;
+        
+        assert(0 <= copy_start);
+        assert(copy_end<=point_pairs.size());
+
+        PointPairs particial_point_pairs;
+        std::copy(point_pairs.begin()+copy_start,point_pairs.begin()+copy_end,std::back_inserter(particial_point_pairs));
+
+        // Get angular acceleration
+        double raw_aaaa = getAverageAbsoluteAngularAcceleration(particial_point_pairs,estimated_angular_velocity->getFrequency());
+
+        const EstimatedFrame start_efs = ra4_length_efs/2;
+        double min_ratio = std::numeric_limits<double>::max();
+
+        MeasuredFrame refined_measured_frame = std::numeric_limits<double>::quiet_NaN();
+
+        LoggingDouble ld;
+        static int n  = 0;
+        for(double m = measured_frame_search_range[0]; m <= measured_frame_search_range[1]; m += resolution)
+        {
+            SyncTable sync_table = createSyncTable(start_efs,m,e2m); 
+            constexpr EstimatedFrame start_efs = 0;
+            PointPairs warped_point_pairs = getWarpedPointPairs(zoom, filter, filter_strength, particial_point_pairs, start_efs, particial_point_pairs.size(), sync_table);
+            double warped_aaaa = getAverageAbsoluteAngularAcceleration(warped_point_pairs,estimated_angular_velocity->getFrequency());
+            double ratio = warped_aaaa/raw_aaaa;
+            if(min_ratio > ratio)
+            {
+                min_ratio = ratio;
+                refined_measured_frame = estimated_angular_velocity->convertEstimatedToMeasuredAngularVelocityFrame(ra4_length_efs / 2,sync_table);
+                
+            }
+            ld["Measured Frame"].push_back(m);
+            ld["Ratio"].push_back(ratio);
+        }
+        DataCollection collection("aaaa_ratio_" + std::to_string(n) + ".csv");
+        n++;
+        collection.set(ld);
+        if(ra4_thresh > min_ratio)
+        {
+            return refined_measured_frame;
+        }
+        else
+        {
+            return std::numeric_limits<double>::quiet_NaN();
+        }
+    };
+
+    // EstimatedFrame begin_frame = 0;
+    // EstimatedFrame end_frame = estimated_angular_velocity->data.size()-1;
+    // SyncTable robust_estimated_table({SyncPoint(begin_frame,coeffs[0]+begin_frame*coeffs[1]),SyncPoint(end_frame,coeffs[0]+end_frame*coeffs[1])});
+
+    SyncTable robust_estimated_table;
+
+
+    return SyncTable();
+}
+
 SyncTable VirtualGimbalManager::getSyncTableIncrementally(double zoom, FilterPtr filter, int32_t filter_length, PointPairs &point_pairs, double sync_interval_sec, double ra4_length_sec, double ra4_thresh)
 {
     measured_angular_velocity->calculateAngleQuaternion();

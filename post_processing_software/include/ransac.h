@@ -34,7 +34,7 @@
 
 Eigen::VectorXd least_squares_method(Eigen::VectorXd &x, Eigen::VectorXd &y, int degree);
 
-Eigen::VectorXd calculateLinearEquationCoefficientsRansac(std::vector<double> x, std::vector<double> y,int32_t maximum_iteration_ransac_=10000, double maximum_relative_delay_ransac_=0.01);
+Eigen::VectorXd calculateLinearEquationCoefficientsRansac(std::vector<double> x, std::vector<double> y, int32_t iteration=10000, double max_error_ =0.01);
 
 
 #endif //__VIRTUAL_GIMBAL_RANSAC_H__
