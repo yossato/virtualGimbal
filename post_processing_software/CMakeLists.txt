@@ -47,6 +47,7 @@ add_executable(pixelwise_stabilizer src/main.cpp
         src/inpainting.cpp
         src/data_collection.cpp
         src/point_pairs.cpp
+        src/ransac.cpp
 )
 target_link_libraries(pixelwise_stabilizer ${ALL_LIBS} ${OpenCV_LIBS} ${PYTHON_LIBRARIES})
 
