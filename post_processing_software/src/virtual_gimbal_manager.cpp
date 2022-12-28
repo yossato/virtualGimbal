@@ -207,33 +207,33 @@ double VirtualGimbalManager::getMeasuredFramePositionFrom(int32_t estimated_fram
         collection.set(d);
     }
         
-    // return synchronized_frame_in_estimated_frame  * e2m;
-    if ((minimum_correlation_frame_in_estimated_frame == 0) || (minimum_correlation_frame_in_estimated_frame == (correlation_coefficients.rows() - 1)))
-    { //位置が最初のフレームで一致している場合
-        return synchronized_frame_in_estimated_frame  * e2m;
-    }    
-    double minimum_correlation_subframe_in_estimated_frame = 0.0;
-    std::cout << "synchronized_frame_in_estimated_frame:" << synchronized_frame_in_estimated_frame << std::endl;
-    double min_value = std::numeric_limits<double>::max();
-    int32_t number_of_data = particial_confidence.cast<int>().array().sum();
-    for (double sub_frame = -100.0; sub_frame <= 100.0; sub_frame += 0.01)
-    {
-        double frame_position = synchronized_frame_in_estimated_frame + sub_frame;
-        Eigen::MatrixXd measured_angular_velocity_resampled = measured_angular_velocity->getResampledData(length,m2e,frame_position);
+    return synchronized_frame_in_estimated_frame  * e2m;
+    // if ((minimum_correlation_frame_in_estimated_frame == 0) || (minimum_correlation_frame_in_estimated_frame == (correlation_coefficients.rows() - 1)))
+    // { //位置が最初のフレームで一致している場合
+    //     return synchronized_frame_in_estimated_frame  * e2m;
+    // }    
+    // double minimum_correlation_subframe_in_estimated_frame = 0.0;
+    // std::cout << "synchronized_frame_in_estimated_frame:" << synchronized_frame_in_estimated_frame << std::endl;
+    // double min_value = std::numeric_limits<double>::max();
+    // int32_t number_of_data = particial_confidence.cast<int>().array().sum();
+    // for (double sub_frame = -100.0; sub_frame <= 100.0; sub_frame += 0.01)
+    // {
+    //     double frame_position = synchronized_frame_in_estimated_frame + sub_frame;
+    //     Eigen::MatrixXd measured_angular_velocity_resampled = measured_angular_velocity->getResampledData(length,m2e,frame_position);
 
-        assert(measured_angular_velocity_resampled.rows() == particial_estimated_angular_velocity.rows());
+    //     assert(measured_angular_velocity_resampled.rows() == particial_estimated_angular_velocity.rows());
         
-        double value = ((measured_angular_velocity_resampled - particial_estimated_angular_velocity).array().colwise() * particial_confidence.array()).abs().sum() / (double)number_of_data;
-        if (min_value > value)
-        {
-            min_value = value;
-            minimum_correlation_subframe_in_estimated_frame = frame_position;
-        }
-    }
-    std::cout << "min_value:" << min_value << std::endl;
-    std::cout << "minimum_correlation_subframe:" << minimum_correlation_subframe_in_estimated_frame << std::endl;
+    //     double value = ((measured_angular_velocity_resampled - particial_estimated_angular_velocity).array().colwise() * particial_confidence.array()).abs().sum() / (double)number_of_data;
+    //     if (min_value > value)
+    //     {
+    //         min_value = value;
+    //         minimum_correlation_subframe_in_estimated_frame = frame_position;
+    //     }
+    // }
+    // std::cout << "min_value:" << min_value << std::endl;
+    // std::cout << "minimum_correlation_subframe:" << minimum_correlation_subframe_in_estimated_frame << std::endl;
 
-    return minimum_correlation_subframe_in_estimated_frame * e2m;
+    // return minimum_correlation_subframe_in_estimated_frame * e2m;
     
 }
 
@@ -1295,7 +1295,7 @@ PointPairs VirtualGimbalManager::getWarpedPointPairs(double zoom, FilterPtr filt
         
         {
             Eigen::Quaterniond stabilized_angle_quaternion;
-            measured_angular_velocity->getStabilizedQuaternion(frame+1, filter->getFilterCoefficient(filter_strength(frame)), sync_table, stabilized_angle_quaternion);
+            measured_angular_velocity->getStabilizedQuaternion(frame+1, filter->getFilterCoefficient(filter_strength(frame+1)), sync_table, stabilized_angle_quaternion);
             // Get rotation matrix in each line of the frame
             measured_angular_velocity->getCorrectionMatrices(stabilized_angle_quaternion, frame+1, video_param->camera_info->height_, video_param->camera_info->line_delay_ * video_param->getFrequency(), sync_table, stabilized_angle_matrices_curr);
         }
@@ -1400,7 +1400,8 @@ SyncTable VirtualGimbalManager::getSyncTableRobust(double zoom, FilterPtr filter
     }
 
     // ここで仮のSyncTableを作るための必要な定数を定義
-    const double e2m = measured_angular_velocity->getFrequency() / estimated_angular_velocity->getFrequency();
+    const double e2m = coeffs[1];
+    // const double e2m = measured_angular_velocity->getFrequency() / estimated_angular_velocity->getFrequency();
     // const MeasuredFrame m_length = measured_angular_velocity->data.rows();
     // const EstimatedFrame e_length = estimated_angular_velocity->data.rows();
     // const MeasuredFrame d_max = m_length - e2m * e_length;
@@ -1438,14 +1439,14 @@ SyncTable VirtualGimbalManager::getSyncTableRobust(double zoom, FilterPtr filter
         for(double m = measured_frame_search_range[0]; m <= measured_frame_search_range[1]; m += resolution)
         {
             SyncTable sync_table = createSyncTable(start_efs,m,e2m); 
-            constexpr EstimatedFrame start_efs = 0;
-            PointPairs warped_point_pairs = getWarpedPointPairs(zoom, filter, filter_strength, particial_point_pairs, start_efs, particial_point_pairs.size(), sync_table);
+            constexpr EstimatedFrame start_warp_efs = 0;
+            PointPairs warped_point_pairs = getWarpedPointPairs(zoom, filter, filter_strength, particial_point_pairs, start_warp_efs, particial_point_pairs.size(), sync_table);
             double warped_aaaa = getAverageAbsoluteAngularAcceleration(warped_point_pairs,estimated_angular_velocity->getFrequency());
             double ratio = warped_aaaa/raw_aaaa;
             if(min_ratio > ratio)
             {
                 min_ratio = ratio;
-                refined_measured_frame = estimated_angular_velocity->convertEstimatedToMeasuredAngularVelocityFrame(ra4_length_efs / 2,sync_table);
+                refined_measured_frame = estimated_angular_velocity->convertEstimatedToMeasuredAngularVelocityFrame(start_efs,sync_table);
                 
             }
             ld["Measured Frame"].push_back(m);
