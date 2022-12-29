@@ -1404,7 +1404,7 @@ double VirtualGimbalManager::refineMeasuredFrame(EstimatedFrame &ra4_length_efs,
         y.push_back(ratio);
     }
 
-    const double min_ratio_diff_thresh = 0.5;
+    const double min_ratio_diff_thresh = 0.3;
     
     std::vector<double> x_extract,y_extract;    // For curve fitting
     for(size_t i=0;i<x.size();++i)
