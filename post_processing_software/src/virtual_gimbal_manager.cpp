@@ -1355,6 +1355,111 @@ SyncTable VirtualGimbalManager::createSyncTable(int32_t estimated_frame, double 
     return table;
 }
 
+double VirtualGimbalManager::refineMeasuredFrame(EstimatedFrame &ra4_length_efs, const double &e2m, PointPairs &point_pairs, double &zoom, FilterPtr &filter, Eigen::VectorXd &filter_strength, double &ra4_thresh, EstimatedFrame frame_efs, std::vector<MeasuredFrame> measured_frame_search_range, MeasuredFrame resolution)
+{
+
+    // std::pair<int32_t, double> point;
+    assert(measured_frame_search_range.size() == 2);
+    assert(measured_frame_search_range[0] < measured_frame_search_range[1]);
+
+    EstimatedFrame e_frame = frame_efs-ra4_length_efs/2;
+    const double copy_start = e_frame;
+    const double copy_end = e_frame + ra4_length_efs;
+    
+    assert(0 <= copy_start);
+    assert(copy_end<=point_pairs.size());
+
+    PointPairs particial_point_pairs;
+    std::copy(point_pairs.begin()+copy_start,point_pairs.begin()+copy_end,std::back_inserter(particial_point_pairs));
+
+    // Get angular acceleration
+    double raw_aaaa = getAverageAbsoluteAngularAcceleration(particial_point_pairs,estimated_angular_velocity->getFrequency());
+
+    const EstimatedFrame start_efs = ra4_length_efs/2;
+    double min_ratio = std::numeric_limits<double>::max();
+
+    MeasuredFrame refined_measured_frame = std::numeric_limits<double>::quiet_NaN();
+
+    LoggingDouble ld;
+    static int n  = 0;
+    std::vector<double> x,y;    // For curve fitting
+    
+    for(double m = measured_frame_search_range[0]; m <= measured_frame_search_range[1]; m += resolution)
+    {
+        SyncTable sync_table = createSyncTable(start_efs,m,e2m); 
+        constexpr EstimatedFrame start_warp_efs = 0;
+        PointPairs warped_point_pairs = getWarpedPointPairs(zoom, filter, filter_strength, particial_point_pairs, start_warp_efs, particial_point_pairs.size(), sync_table);
+        double warped_aaaa = getAverageAbsoluteAngularAcceleration(warped_point_pairs,estimated_angular_velocity->getFrequency());
+        double ratio = warped_aaaa/raw_aaaa;
+        if(min_ratio > ratio)
+        {
+            min_ratio = ratio;
+            refined_measured_frame = estimated_angular_velocity->convertEstimatedToMeasuredAngularVelocityFrame(start_efs,sync_table);
+            
+        }
+        ld["Measured Frame"].push_back(m);
+        ld["Ratio"].push_back(ratio);
+
+        x.push_back(m);
+        y.push_back(ratio);
+    }
+
+    const double min_ratio_diff_thresh = 0.5;
+    
+    std::vector<double> x_extract,y_extract;    // For curve fitting
+    for(size_t i=0;i<x.size();++i)
+    {
+        if(y[i] < min_ratio + min_ratio_diff_thresh)
+        {
+            x_extract.push_back(x[i]);
+            y_extract.push_back(y[i]);
+            ld["input"].push_back(y[i]);
+        }
+        else
+        {
+            ld["input"].push_back(0.0);
+        }
+    }
+
+    // Curve fitting
+    Eigen::VectorXd x_vec = Eigen::Map<Eigen::VectorXd>(x_extract.data(),x_extract.size());
+    Eigen::VectorXd y_vec = Eigen::Map<Eigen::VectorXd>(y_extract.data(),y_extract.size());
+    
+    x_vec.array() -= refined_measured_frame;
+
+    Eigen::VectorXd cfp = least_squares_method(x_vec,y_vec,2); // Curve fitting using quadratic function
+    const double c0 = cfp(2);
+    const double c1 = cfp(1);
+    const double c2 = cfp(0);
+
+    // Calculate min position
+    double x0 = - c1/(2.0*c0) + refined_measured_frame;
+    double y0 = c2 - pow(c1,2.0)/(4.0*c0);
+    std::cout << "fitted measured frame:" << x0 <<  " fitting min ratio:" << y0 << std::endl;
+    for(double m = measured_frame_search_range[0]; m <= measured_frame_search_range[1]; m += resolution)
+    {
+        double ms  = m - refined_measured_frame;
+        ld["Fitted curve"].push_back(c0*ms*ms + c1*ms + c2);
+    }
+
+    
+
+    DataCollection collection("aaaa_ratio_" + std::to_string(n) + ".csv");
+    n++;
+    collection.set(ld);
+
+    // if(ra4_thresh > min_ratio)
+    if(ra4_thresh > y0)
+    {
+        // return refined_measured_frame;
+        return x0;
+    }
+    else
+    {
+        return std::numeric_limits<double>::quiet_NaN();
+    }
+}
+
 SyncTable VirtualGimbalManager::getSyncTableRobust(double zoom, FilterPtr filter, int32_t filter_length, PointPairs &point_pairs, double sync_interval_sec, double ra4_length_sec, double ra4_thresh, double subframe_resolution)
 {
     // Get Initial sync table estimation 
@@ -1409,61 +1514,7 @@ SyncTable VirtualGimbalManager::getSyncTableRobust(double zoom, FilterPtr filter
 
     // assert(d_max >= 0);
 
-    auto refineMeasuredFrame = [this, &ra4_length_efs, &e2m, &point_pairs, &zoom, &filter, &filter_strength, &ra4_thresh](EstimatedFrame frame_efs, std::vector<MeasuredFrame> measured_frame_search_range, MeasuredFrame resolution)
-    {
-
-        // std::pair<int32_t, double> point;
-        assert(measured_frame_search_range.size() == 2);
-        assert(measured_frame_search_range[0] < measured_frame_search_range[1]);
-
-        EstimatedFrame e_frame = frame_efs-ra4_length_efs/2;
-        const double copy_start = e_frame;
-        const double copy_end = e_frame + ra4_length_efs;
-        
-        assert(0 <= copy_start);
-        assert(copy_end<=point_pairs.size());
-
-        PointPairs particial_point_pairs;
-        std::copy(point_pairs.begin()+copy_start,point_pairs.begin()+copy_end,std::back_inserter(particial_point_pairs));
-
-        // Get angular acceleration
-        double raw_aaaa = getAverageAbsoluteAngularAcceleration(particial_point_pairs,estimated_angular_velocity->getFrequency());
-
-        const EstimatedFrame start_efs = ra4_length_efs/2;
-        double min_ratio = std::numeric_limits<double>::max();
-
-        MeasuredFrame refined_measured_frame = std::numeric_limits<double>::quiet_NaN();
-
-        LoggingDouble ld;
-        static int n  = 0;
-        for(double m = measured_frame_search_range[0]; m <= measured_frame_search_range[1]; m += resolution)
-        {
-            SyncTable sync_table = createSyncTable(start_efs,m,e2m); 
-            constexpr EstimatedFrame start_warp_efs = 0;
-            PointPairs warped_point_pairs = getWarpedPointPairs(zoom, filter, filter_strength, particial_point_pairs, start_warp_efs, particial_point_pairs.size(), sync_table);
-            double warped_aaaa = getAverageAbsoluteAngularAcceleration(warped_point_pairs,estimated_angular_velocity->getFrequency());
-            double ratio = warped_aaaa/raw_aaaa;
-            if(min_ratio > ratio)
-            {
-                min_ratio = ratio;
-                refined_measured_frame = estimated_angular_velocity->convertEstimatedToMeasuredAngularVelocityFrame(start_efs,sync_table);
-                
-            }
-            ld["Measured Frame"].push_back(m);
-            ld["Ratio"].push_back(ratio);
-        }
-        DataCollection collection("aaaa_ratio_" + std::to_string(n) + ".csv");
-        n++;
-        collection.set(ld);
-        if(ra4_thresh > min_ratio)
-        {
-            return refined_measured_frame;
-        }
-        else
-        {
-            return std::numeric_limits<double>::quiet_NaN();
-        }
-    };
+    
 
     EstimatedFrame begin_frame = 0;
     EstimatedFrame end_frame = estimated_angular_velocity->data.size()-1;
@@ -1478,7 +1529,7 @@ SyncTable VirtualGimbalManager::getSyncTableRobust(double zoom, FilterPtr filter
     {
         MeasuredFrame m_frame_for_refine = estimated_angular_velocity->convertEstimatedToMeasuredAngularVelocityFrame(e_frame_for_refine,robust_estimated_table);
         
-        MeasuredFrame m_refined_frame = refineMeasuredFrame(e_frame_for_refine,{m_frame_for_refine-10,m_frame_for_refine+10},subframe_resolution);
+        MeasuredFrame m_refined_frame = refineMeasuredFrame(ra4_length_efs, e2m, point_pairs, zoom, filter, filter_strength, ra4_thresh,e_frame_for_refine,{m_frame_for_refine-10,m_frame_for_refine+10},subframe_resolution);
         std::cout << "refined point: (" << e_frame_for_refine << "," << m_refined_frame << ")" << std::endl;
         if(isfinite(m_refined_frame))
         {

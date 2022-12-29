@@ -117,6 +117,8 @@ public:
   SyncTable createSyncTable(int32_t estimate_frame, double measured_frame, double e2m_ratio);
   std::vector<std::pair<int32_t, double>> getSyncTable(double zoom, FilterPtr filter,int32_t filter_length, PointPairs &point_pairs, double duration, double length);
   SyncTable getSyncTableIncrementally(double zoom, FilterPtr filter, int32_t filter_length, PointPairs &point_pairs, double sync_interval_sec, double ra4_length_sec, double ra4_thresh=0.8);
+  double refineMeasuredFrame(EstimatedFrame &ra4_length_efs, const double &e2m, PointPairs &point_pairs, double &zoom, FilterPtr &filter, Eigen::VectorXd &filter_strength, double &ra4_thresh, EstimatedFrame frame_efs, std::vector<MeasuredFrame> measured_frame_search_range, MeasuredFrame resolution);
+
   SyncTable getSyncTableRobust(double zoom, FilterPtr filter, int32_t filter_length, PointPairs &point_pairs, double sync_interval_sec, double ra4_length_sec, double ra4_thresh=0.8,double subframe_resolution = 0.1);
 
   double getAverageAbsoluteAngularAcceleration(const PointPairs &point_pairs, double frequency);
