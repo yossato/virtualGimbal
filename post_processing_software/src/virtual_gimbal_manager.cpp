@@ -1355,7 +1355,7 @@ SyncTable VirtualGimbalManager::createSyncTable(int32_t estimated_frame, double 
     return table;
 }
 
-double VirtualGimbalManager::refineMeasuredFrame(EstimatedFrame &ra4_length_efs, const double &e2m, PointPairs &point_pairs, double &zoom, FilterPtr &filter, Eigen::VectorXd &filter_strength, double &ra4_thresh, EstimatedFrame frame_efs, std::vector<MeasuredFrame> measured_frame_search_range, MeasuredFrame resolution)
+double VirtualGimbalManager::refineMeasuredFrame(EstimatedFrame &ra4_length_efs, const double &e2m, PointPairs &point_pairs, double &zoom, FilterPtr &filter, Eigen::VectorXd &filter_strength, double &ra4_thresh, EstimatedFrame frame_efs, std::vector<MeasuredFrame> measured_frame_search_range, MeasuredFrame resolution, double curve_fitting_valid_value_thresh)
 {
 
     // std::pair<int32_t, double> point;
@@ -1404,12 +1404,11 @@ double VirtualGimbalManager::refineMeasuredFrame(EstimatedFrame &ra4_length_efs,
         y.push_back(ratio);
     }
 
-    const double min_ratio_diff_thresh = 0.3;
     
     std::vector<double> x_extract,y_extract;    // For curve fitting
     for(size_t i=0;i<x.size();++i)
     {
-        if(y[i] < min_ratio + min_ratio_diff_thresh)
+        if(y[i] < min_ratio + curve_fitting_valid_value_thresh)
         {
             x_extract.push_back(x[i]);
             y_extract.push_back(y[i]);
@@ -1460,7 +1459,7 @@ double VirtualGimbalManager::refineMeasuredFrame(EstimatedFrame &ra4_length_efs,
     }
 }
 
-SyncTable VirtualGimbalManager::getSyncTableRobust(double zoom, FilterPtr filter, int32_t filter_length, PointPairs &point_pairs, double sync_interval_sec, double ra4_length_sec, double ra4_thresh, double subframe_resolution)
+SyncTable VirtualGimbalManager::getSyncTableRobust(double zoom, FilterPtr filter, int32_t filter_length, PointPairs &point_pairs, double sync_interval_sec, double ra4_length_sec, double ra4_thresh, double subframe_resolution, double curve_fitting_valid_value_thresh)
 {
     // Get Initial sync table estimation 
 
@@ -1529,7 +1528,7 @@ SyncTable VirtualGimbalManager::getSyncTableRobust(double zoom, FilterPtr filter
     {
         MeasuredFrame m_frame_for_refine = estimated_angular_velocity->convertEstimatedToMeasuredAngularVelocityFrame(e_frame_for_refine,robust_estimated_table);
         
-        MeasuredFrame m_refined_frame = refineMeasuredFrame(ra4_length_efs, e2m, point_pairs, zoom, filter, filter_strength, ra4_thresh,e_frame_for_refine,{m_frame_for_refine-10,m_frame_for_refine+10},subframe_resolution);
+        MeasuredFrame m_refined_frame = refineMeasuredFrame(ra4_length_efs, e2m, point_pairs, zoom, filter, filter_strength, ra4_thresh,e_frame_for_refine,{m_frame_for_refine-10,m_frame_for_refine+10},subframe_resolution, curve_fitting_valid_value_thresh);
         std::cout << "refined point: (" << e_frame_for_refine << "," << m_refined_frame << ")" << std::endl;
         if(isfinite(m_refined_frame))
         {

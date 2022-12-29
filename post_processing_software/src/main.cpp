@@ -70,7 +70,8 @@ int main(int argc, char **argv)
     int32_t sync_frame_length = 999;
     double subframe_resolution = 0.1;
     double ra4_thresh = 0.6;
-    while ((opt = getopt(argc, argv, "j:i:c:l:w:q:z:k:f:o::n::b:a::p:s:x:r:t:")) != -1)
+    double curve_fitting_valid_value_thresh = 0.3;
+    while ((opt = getopt(argc, argv, "j:i:c:l:w:q:z:k:f:o::n::b:a::p:s:x:r:t:m:")) != -1)
     {
         switch (opt)
         {
@@ -125,6 +126,9 @@ int main(int argc, char **argv)
             break;
         case 't':
             ra4_thresh = std::stof(optarg);
+            break;
+        case 'm':
+            curve_fitting_valid_value_thresh = std::stof(optarg);
             break;
         // case 'p':
         //     inpainting = true;
@@ -250,7 +254,7 @@ int main(int argc, char **argv)
     //     readSyncTableFromJson(videoNameToSyncTableJsonName(videoPass),table);
     // }
     {
-        table = manager.getSyncTableRobust(zoom,fir_filter,fileter_length,feature_points_pairs,sync_period,sync_frame_length/240.0, ra4_thresh, subframe_resolution);
+        table = manager.getSyncTableRobust(zoom,fir_filter,fileter_length,feature_points_pairs,sync_period,sync_frame_length/240.0, ra4_thresh, subframe_resolution, curve_fitting_valid_value_thresh);
         if(table.size())
         {
             std::cout << "Robust table size:" << table.size() << std::endl;
