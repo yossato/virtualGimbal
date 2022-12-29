@@ -74,8 +74,8 @@ public:
   // void getEstimatedAndMeasuredAngularVelocity(Eigen::MatrixXd &data);
   Eigen::VectorXd getCorrelationCoefficient(int32_t begin=0, int32_t length=0, double frequency=0.0);
   // Eigen::VectorXd getCorrelationCoefficient2(int32_t center, int32_t length, double frequency=0.0);
-  double getSubframeOffsetInSecond(Eigen::VectorXd &correlation_coefficients,int32_t begin=0, int32_t length=0, double frequency=0.0);
-  double getSubframeOffset(Eigen::VectorXd &correlation_coefficients,int32_t center, int32_t length, double frequency=0.0);
+  // double getSubframeOffsetInSecond(Eigen::VectorXd &correlation_coefficients,int32_t begin=0, int32_t length=0, double frequency=0.0);
+  // double getSubframeOffset(Eigen::VectorXd &correlation_coefficients,int32_t center, int32_t length, double frequency=0.0);
   double getMeasuredFramePositionFrom(int32_t estimated_frame_position, int32_t length);
   // void setResamplerParameter(double start, double new_frequency = 0.0);
   // void setResamplerParameter(ResamplerParameterPtr param);
@@ -111,7 +111,7 @@ public:
   const char *kernel_function = "stabilizer_function";
   std::shared_ptr<cv::VideoCapture> getVideoCapture();
   // std::shared_ptr<ResamplerParameter> getResamplerParameterWithClockError(Eigen::VectorXd &correlation_begin, Eigen::VectorXd &correlation_end);
-  std::vector<std::pair<int32_t, double>> getSyncTableOfShortVideo();
+  // std::vector<std::pair<int32_t, double>> getSyncTableOfShortVideo();
   SyncTable createSyncTable(int32_t estimate_frame, double measured_frame, double e2m_ratio);
   double refineMeasuredFrame(EstimatedFrame &ra4_length_efs, const double &e2m, PointPairs &point_pairs, double &zoom, FilterPtr &filter, Eigen::VectorXd &filter_strength, double &ra4_thresh, EstimatedFrame frame_efs, std::vector<MeasuredFrame> measured_frame_search_range, MeasuredFrame resolution, double curve_fitting_valid_value_thresh=0.3);
 
@@ -132,7 +132,7 @@ protected:
   RotationQuaternionPtr rotation_quaternion;
   //Synchronize
   AngularVelocityPtr resampled_synchronized_angular_velocity;
-  ResamplerParameterPtr resampler_parameter_;
+  // ResamplerParameterPtr resampler_parameter_;
 
   VideoPtr video_param;
   FilterPtr filter_;

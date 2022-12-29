@@ -44,16 +44,16 @@
 using QuaternionData = std::vector<Eigen::Quaterniond, Eigen::aligned_allocator<Eigen::Quaterniond>>;
 using QuaternionDataPtr = std::shared_ptr<std::vector<Eigen::Quaterniond, Eigen::aligned_allocator<Eigen::Quaterniond>>>;
 
-struct ResamplerParameter
-{
-  // ResamplerParameter(double frequency) : frequency(frequency), start(0.0), length(0) {}
-  ResamplerParameter(double frequency, double center, double length) : frequency(frequency), original_data_center(center), resampled_data_length(length) {}
-  double frequency; // New frequency[Hz]
-  double original_data_center;  // Center position in original data frames.
-  int32_t resampled_data_length; // Length in number of resampled data frames.
-};
+// struct ResamplerParameter
+// {
+//   // ResamplerParameter(double frequency) : frequency(frequency), start(0.0), length(0) {}
+//   ResamplerParameter(double frequency, double center, double length) : frequency(frequency), original_data_center(center), resampled_data_length(length) {}
+//   double frequency; // New frequency[Hz]
+//   double original_data_center;  // Center position in original data frames.
+//   int32_t resampled_data_length; // Length in number of resampled data frames.
+// };
 
-using ResamplerParameterPtr = std::shared_ptr<ResamplerParameter>;
+// using ResamplerParameterPtr = std::shared_ptr<ResamplerParameter>;
 
 class BaseParam
 {
@@ -67,14 +67,14 @@ public:
   Eigen::MatrixXd data;
   Eigen::MatrixXd lpf_filtered_data; // Prevent aliasing when it gets resampling data. This data is low pass filtered.
   // Eigen::MatrixXd getResampledData(double resampling_frequency);
-  Eigen::MatrixXd getResampledData(const ResamplerParameterPtr param);
+  // Eigen::MatrixXd getResampledData(const ResamplerParameterPtr param);
   Eigen::MatrixXd generateResampledData(const int32_t length, const double ratio, const double frame_position);
   Eigen::MatrixXd getResampledData(const double ratio);
   Eigen::MatrixXd getResampledData(const int32_t length, const double ratio, const double frame_position);
 protected:
   double frequency_;
   // std::map<double, Eigen::MatrixXd> resampled_data;
-  virtual Eigen::MatrixXd generateResampledData(const ResamplerParameterPtr resample_param); // TODO: In quaternion, please implement spherical linear interpolation.
+  // virtual Eigen::MatrixXd generateResampledData(const ResamplerParameterPtr resample_param); // TODO: In quaternion, please implement spherical linear interpolation.
   virtual Eigen::MatrixXd generateResampledData(const double frequency);
 };
 
@@ -126,7 +126,7 @@ public:
 
 private:
   AngularVelocityPtr angular_velocity_;
-  ResamplerParameter resampler_;
+  // ResamplerParameter resampler_;
   std::map<int, Eigen::Quaterniond> angle_;
 
 };

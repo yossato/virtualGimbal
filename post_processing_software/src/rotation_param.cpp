@@ -47,34 +47,34 @@ Eigen::VectorXd BaseParam::operator()(int32_t index)
     return data.row(index).transpose();
 }
 
-Eigen::MatrixXd BaseParam::generateResampledData(const ResamplerParameterPtr resample_param)
-{
-    Eigen::MatrixXd resampled_data;
-    assert(resample_param->frequency > std::numeric_limits<double>::epsilon());
-    assert(resample_param->original_data_center >= (resample_param->resampled_data_length/2));
-    assert(resample_param->resampled_data_length > 0);
+// Eigen::MatrixXd BaseParam::generateResampledData(const ResamplerParameterPtr resample_param)
+// {
+//     Eigen::MatrixXd resampled_data;
+//     assert(resample_param->frequency > std::numeric_limits<double>::epsilon());
+//     assert(resample_param->original_data_center >= (resample_param->resampled_data_length/2));
+//     assert(resample_param->resampled_data_length > 0);
 
-    // size_t resampled_data_length = (int)std::round(resample_param->length / frequency_ * resample_param->frequency);
-    // if(!(resampled_data_length % 2)) resampled_data_length += 1; //resampled_data_length must be odd.
-    resampled_data = Eigen::MatrixXd::Zero(resample_param->resampled_data_length, data.cols());
+//     // size_t resampled_data_length = (int)std::round(resample_param->length / frequency_ * resample_param->frequency);
+//     // if(!(resampled_data_length % 2)) resampled_data_length += 1; //resampled_data_length must be odd.
+//     resampled_data = Eigen::MatrixXd::Zero(resample_param->resampled_data_length, data.cols());
 
-    int32_t half_resampled_data_rows = resampled_data.rows()/2;
-    for (int32_t resampled_frame_diff = -half_resampled_data_rows, e = resampled_data.rows() - half_resampled_data_rows; resampled_frame_diff < e; ++resampled_frame_diff)
-    {
+//     int32_t half_resampled_data_rows = resampled_data.rows()/2;
+//     for (int32_t resampled_frame_diff = -half_resampled_data_rows, e = resampled_data.rows() - half_resampled_data_rows; resampled_frame_diff < e; ++resampled_frame_diff)
+//     {
         
-        double frame_original = resample_param->original_data_center + (double)resampled_frame_diff / resample_param->frequency * frequency_;
-        int integer_part_frame = (int)frame_original;
-        double ratio = frame_original - (double)integer_part_frame;
+//         double frame_original = resample_param->original_data_center + (double)resampled_frame_diff / resample_param->frequency * frequency_;
+//         int integer_part_frame = (int)frame_original;
+//         double ratio = frame_original - (double)integer_part_frame;
         
-        assert(integer_part_frame >= 0);
-        assert(integer_part_frame < data.rows());
+//         assert(integer_part_frame >= 0);
+//         assert(integer_part_frame < data.rows());
 
-        size_t resampled_frame = resampled_frame_diff + half_resampled_data_rows;
-        resampled_data.row(resampled_frame) = data.row(integer_part_frame) * (1.0 - ratio) + data.row(integer_part_frame + 1) * ratio;
-    }
+//         size_t resampled_frame = resampled_frame_diff + half_resampled_data_rows;
+//         resampled_data.row(resampled_frame) = data.row(integer_part_frame) * (1.0 - ratio) + data.row(integer_part_frame + 1) * ratio;
+//     }
 
-    return resampled_data;
-}
+//     return resampled_data;
+// }
 
 // これで作るResampled dataは、平均位置がframe_position。逆にいうと、データの始点がframe_position-length/2
 Eigen::MatrixXd BaseParam::generateResampledData(const int32_t length, const double ratio, const double resampled_frame_position)
@@ -154,10 +154,10 @@ Eigen::MatrixXd BaseParam::generateResampledData(const double ratio)
     return resampled_data;
 }
 
-Eigen::MatrixXd BaseParam::getResampledData(const ResamplerParameterPtr resample_param)
-{
-    return generateResampledData(resample_param);
-}
+// Eigen::MatrixXd BaseParam::getResampledData(const ResamplerParameterPtr resample_param)
+// {
+//     return generateResampledData(resample_param);
+// }
 
 Eigen::MatrixXd BaseParam::getResampledData(const double ratio)
 {

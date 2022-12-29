@@ -288,123 +288,123 @@ Eigen::VectorXd VirtualGimbalManager::getCorrelationCoefficient(int32_t estimate
     
 }
 
-double VirtualGimbalManager::getSubframeOffsetInSecond(Eigen::VectorXd &correlation_coefficients, int32_t begin, int32_t length, double frequency)
-{
-    // Set default value if these are not set.
-    if (0 == length)
-    {
-        length = estimated_angular_velocity->data.rows();
-    }
-    if (frequency < std::numeric_limits<double>::epsilon())
-    {
-        frequency = video_param->getFrequency();
-    }
+// double VirtualGimbalManager::getSubframeOffsetInSecond(Eigen::VectorXd &correlation_coefficients, int32_t begin, int32_t length, double frequency)
+// {
+//     // Set default value if these are not set.
+//     if (0 == length)
+//     {
+//         length = estimated_angular_velocity->data.rows();
+//     }
+//     if (frequency < std::numeric_limits<double>::epsilon())
+//     {
+//         frequency = video_param->getFrequency();
+//     }
 
-    // Error check
-    assert(length <= estimated_angular_velocity->data.rows());
+//     // Error check
+//     assert(length <= estimated_angular_velocity->data.rows());
 
-    std::vector<double> vec_correlation_cofficients(correlation_coefficients.rows());
-    Eigen::Map<Eigen::VectorXd>(vec_correlation_cofficients.data(), correlation_coefficients.rows(), 1) = correlation_coefficients;
-    int32_t minimum_correlation_frame = std::distance(vec_correlation_cofficients.begin(), min_element(vec_correlation_cofficients.begin(), vec_correlation_cofficients.end()));
+//     std::vector<double> vec_correlation_cofficients(correlation_coefficients.rows());
+//     Eigen::Map<Eigen::VectorXd>(vec_correlation_cofficients.data(), correlation_coefficients.rows(), 1) = correlation_coefficients;
+//     int32_t minimum_correlation_frame = std::distance(vec_correlation_cofficients.begin(), min_element(vec_correlation_cofficients.begin(), vec_correlation_cofficients.end()));
 
-    Eigen::MatrixXd particial_estimated_angular_velocity = estimated_angular_velocity->data.block(begin, 0, length, estimated_angular_velocity->data.cols());
-    Eigen::VectorXd particial_confidence = estimated_angular_velocity->confidence.block(begin, 0, length, estimated_angular_velocity->confidence.cols());
+//     Eigen::MatrixXd particial_estimated_angular_velocity = estimated_angular_velocity->data.block(begin, 0, length, estimated_angular_velocity->data.cols());
+//     Eigen::VectorXd particial_confidence = estimated_angular_velocity->confidence.block(begin, 0, length, estimated_angular_velocity->confidence.cols());
 
-    //最小値サブピクセル推定
-    double minimum_correlation_subframe = 0.0;
-    if (minimum_correlation_frame == 0)
-    { //位置が最初のフレームで一致している場合
-        minimum_correlation_subframe = 0.0;
-    }
-    else if (minimum_correlation_frame == (correlation_coefficients.rows() - 2)) //なんで2?
-    {                                                                            //末尾
-        minimum_correlation_subframe = (double)(correlation_coefficients.rows() - 2);
-    }
-    else
-    {
-        std::cout << "minimum_correlation_frame" << minimum_correlation_frame << std::endl;
-        double min_value = std::numeric_limits<double>::max();
-        int32_t number_of_data = particial_confidence.cast<int>().array().sum();
-        for (double sub_frame = -2.0; sub_frame <= 2.0; sub_frame += 0.0001)
-        {
-            Eigen::MatrixXd measured_angular_velocity_resampled = measured_angular_velocity->getResampledData(std::make_shared<ResamplerParameter>(frequency, (sub_frame + minimum_correlation_frame) / frequency, estimated_angular_velocity->getInterval() * particial_estimated_angular_velocity.rows()));
-            assert(measured_angular_velocity_resampled.rows() == particial_estimated_angular_velocity.rows());
-            double value = ((measured_angular_velocity_resampled - particial_estimated_angular_velocity).array().colwise() * particial_confidence.array()).abs().sum() / (double)number_of_data;
-            if (min_value > value)
-            {
-                min_value = value;
-                minimum_correlation_subframe = sub_frame;
-            }
-        }
-        std::cout << "min_value:" << min_value << std::endl;
-        std::cout << "minimum_correlation_subframe:" << minimum_correlation_subframe;
-    }
-    minimum_correlation_subframe += (double)minimum_correlation_frame;
-    std::cout << std::endl
-              << minimum_correlation_subframe << std::endl;
+//     //最小値サブピクセル推定
+//     double minimum_correlation_subframe = 0.0;
+//     if (minimum_correlation_frame == 0)
+//     { //位置が最初のフレームで一致している場合
+//         minimum_correlation_subframe = 0.0;
+//     }
+//     else if (minimum_correlation_frame == (correlation_coefficients.rows() - 2)) //なんで2?
+//     {                                                                            //末尾
+//         minimum_correlation_subframe = (double)(correlation_coefficients.rows() - 2);
+//     }
+//     else
+//     {
+//         std::cout << "minimum_correlation_frame" << minimum_correlation_frame << std::endl;
+//         double min_value = std::numeric_limits<double>::max();
+//         int32_t number_of_data = particial_confidence.cast<int>().array().sum();
+//         for (double sub_frame = -2.0; sub_frame <= 2.0; sub_frame += 0.0001)
+//         {
+//             Eigen::MatrixXd measured_angular_velocity_resampled = measured_angular_velocity->getResampledData(std::make_shared<ResamplerParameter>(frequency, (sub_frame + minimum_correlation_frame) / frequency, estimated_angular_velocity->getInterval() * particial_estimated_angular_velocity.rows()));
+//             assert(measured_angular_velocity_resampled.rows() == particial_estimated_angular_velocity.rows());
+//             double value = ((measured_angular_velocity_resampled - particial_estimated_angular_velocity).array().colwise() * particial_confidence.array()).abs().sum() / (double)number_of_data;
+//             if (min_value > value)
+//             {
+//                 min_value = value;
+//                 minimum_correlation_subframe = sub_frame;
+//             }
+//         }
+//         std::cout << "min_value:" << min_value << std::endl;
+//         std::cout << "minimum_correlation_subframe:" << minimum_correlation_subframe;
+//     }
+//     minimum_correlation_subframe += (double)minimum_correlation_frame;
+//     std::cout << std::endl
+//               << minimum_correlation_subframe << std::endl;
 
-    return minimum_correlation_subframe / frequency - (estimated_angular_velocity->getInterval() - measured_angular_velocity->getInterval()) * 0.5;
-}
+//     return minimum_correlation_subframe / frequency - (estimated_angular_velocity->getInterval() - measured_angular_velocity->getInterval()) * 0.5;
+// }
 
-double VirtualGimbalManager::getSubframeOffset(Eigen::VectorXd &correlation_coefficients, int32_t center, int32_t length, double frequency)
-{
-    // Set default value if these are not set.
-    if (0 == length)
-    {
-        length = estimated_angular_velocity->data.rows();
-    }
-    if (frequency < std::numeric_limits<double>::epsilon())
-    {
-        frequency = video_param->getFrequency();
-    }
+// double VirtualGimbalManager::getSubframeOffset(Eigen::VectorXd &correlation_coefficients, int32_t center, int32_t length, double frequency)
+// {
+//     // Set default value if these are not set.
+//     if (0 == length)
+//     {
+//         length = estimated_angular_velocity->data.rows();
+//     }
+//     if (frequency < std::numeric_limits<double>::epsilon())
+//     {
+//         frequency = video_param->getFrequency();
+//     }
 
-    assert(length%2);
+//     assert(length%2);
 
-    int32_t begin = center - length/2;
+//     int32_t begin = center - length/2;
 
-    // Error check
-    assert(length <= estimated_angular_velocity->data.rows());
+//     // Error check
+//     assert(length <= estimated_angular_velocity->data.rows());
 
-    std::vector<double> vec_correlation_cofficients(correlation_coefficients.rows());
-    Eigen::Map<Eigen::VectorXd>(vec_correlation_cofficients.data(), correlation_coefficients.rows(), 1) = correlation_coefficients;
-    int32_t minimum_correlation_frame = std::distance(vec_correlation_cofficients.begin(), min_element(vec_correlation_cofficients.begin(), vec_correlation_cofficients.end()));
+//     std::vector<double> vec_correlation_cofficients(correlation_coefficients.rows());
+//     Eigen::Map<Eigen::VectorXd>(vec_correlation_cofficients.data(), correlation_coefficients.rows(), 1) = correlation_coefficients;
+//     int32_t minimum_correlation_frame = std::distance(vec_correlation_cofficients.begin(), min_element(vec_correlation_cofficients.begin(), vec_correlation_cofficients.end()));
 
-    Eigen::MatrixXd particial_estimated_angular_velocity = estimated_angular_velocity->data.block(begin, 0, length, estimated_angular_velocity->data.cols());
-    Eigen::VectorXd particial_confidence = estimated_angular_velocity->confidence.block(begin, 0, length, estimated_angular_velocity->confidence.cols());
+//     Eigen::MatrixXd particial_estimated_angular_velocity = estimated_angular_velocity->data.block(begin, 0, length, estimated_angular_velocity->data.cols());
+//     Eigen::VectorXd particial_confidence = estimated_angular_velocity->confidence.block(begin, 0, length, estimated_angular_velocity->confidence.cols());
 
-    //最小値サブピクセル推定
-    double minimum_correlation_subframe = 0.0;
-    if (minimum_correlation_frame == 0)
-    { //位置が最初のフレームで一致している場合
-        minimum_correlation_subframe = 0.0;
-    }
-    else if (minimum_correlation_frame == (correlation_coefficients.rows() - 2)) //なんで2?
-    {                                                                            //末尾
-        minimum_correlation_subframe = (double)(correlation_coefficients.rows() - 2);
-    }
-    else
-    {
-        std::cout << "minimum_correlation_frame" << minimum_correlation_frame << std::endl;
-        double min_value = std::numeric_limits<double>::max();
-        int32_t number_of_data = particial_confidence.cast<int>().array().sum();
-        for (double sub_frame = -2.0; sub_frame <= 2.0; sub_frame += 0.0001)
-        {
-            Eigen::MatrixXd measured_angular_velocity_resampled = measured_angular_velocity->getResampledData(std::make_shared<ResamplerParameter>(frequency, (sub_frame + minimum_correlation_frame) , particial_estimated_angular_velocity.rows()));
-            assert(measured_angular_velocity_resampled.rows() == particial_estimated_angular_velocity.rows());
-            double value = ((measured_angular_velocity_resampled - particial_estimated_angular_velocity).array().colwise() * particial_confidence.array()).abs().sum() / (double)number_of_data;
-            if (min_value > value)
-            {
-                min_value = value;
-                minimum_correlation_subframe = sub_frame;
-            }
-        }
-        std::cout << "min_value:" << min_value << std::endl;
-        std::cout << "minimum_correlation_subframe:" << minimum_correlation_subframe;
-    }
-    minimum_correlation_subframe = (double)minimum_correlation_frame + minimum_correlation_subframe;
+//     //最小値サブピクセル推定
+//     double minimum_correlation_subframe = 0.0;
+//     if (minimum_correlation_frame == 0)
+//     { //位置が最初のフレームで一致している場合
+//         minimum_correlation_subframe = 0.0;
+//     }
+//     else if (minimum_correlation_frame == (correlation_coefficients.rows() - 2)) //なんで2?
+//     {                                                                            //末尾
+//         minimum_correlation_subframe = (double)(correlation_coefficients.rows() - 2);
+//     }
+//     else
+//     {
+//         std::cout << "minimum_correlation_frame" << minimum_correlation_frame << std::endl;
+//         double min_value = std::numeric_limits<double>::max();
+//         int32_t number_of_data = particial_confidence.cast<int>().array().sum();
+//         for (double sub_frame = -2.0; sub_frame <= 2.0; sub_frame += 0.0001)
+//         {
+//             Eigen::MatrixXd measured_angular_velocity_resampled = measured_angular_velocity->getResampledData(std::make_shared<ResamplerParameter>(frequency, (sub_frame + minimum_correlation_frame) , particial_estimated_angular_velocity.rows()));
+//             assert(measured_angular_velocity_resampled.rows() == particial_estimated_angular_velocity.rows());
+//             double value = ((measured_angular_velocity_resampled - particial_estimated_angular_velocity).array().colwise() * particial_confidence.array()).abs().sum() / (double)number_of_data;
+//             if (min_value > value)
+//             {
+//                 min_value = value;
+//                 minimum_correlation_subframe = sub_frame;
+//             }
+//         }
+//         std::cout << "min_value:" << min_value << std::endl;
+//         std::cout << "minimum_correlation_subframe:" << minimum_correlation_subframe;
+//     }
+//     minimum_correlation_subframe = (double)minimum_correlation_frame + minimum_correlation_subframe;
 
-    return minimum_correlation_subframe;
-}
+//     return minimum_correlation_subframe;
+// }
 
 // void VirtualGimbalManager::setResamplerParameter(double start, double new_frequency)
 // {
@@ -1323,17 +1323,17 @@ SyncTable VirtualGimbalManager::getSyncTableRobust(double zoom, FilterPtr filter
 
 
 
-std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTableOfShortVideo()
-{
-    int32_t width = video_param->video_frames;
-    int32_t radius = width / 2; // radius and width means number of frame in estimated angular velocity, not measured angular velocity.
+// std::vector<std::pair<int32_t, double>> VirtualGimbalManager::getSyncTableOfShortVideo()
+// {
+//     int32_t width = video_param->video_frames;
+//     int32_t radius = width / 2; // radius and width means number of frame in estimated angular velocity, not measured angular velocity.
 
-    Eigen::VectorXd correlation = getCorrelationCoefficient(0, width);
-    double measured_frame = getSubframeOffsetInSecond(correlation, 0, width) * measured_angular_velocity->getFrequency() + (double)radius / estimated_angular_velocity->getFrequency() * measured_angular_velocity->getFrequency();
+//     Eigen::VectorXd correlation = getCorrelationCoefficient(0, width);
+//     double measured_frame = getSubframeOffsetInSecond(correlation, 0, width) * measured_angular_velocity->getFrequency() + (double)radius / estimated_angular_velocity->getFrequency() * measured_angular_velocity->getFrequency();
 
-    std::vector<std::pair<int32_t, double>> table;
-    table.emplace_back(0, measured_frame + (0 - radius) / estimated_angular_velocity->getFrequency() * measured_angular_velocity->getFrequency());
-    table.emplace_back(width - 1, measured_frame + ((width - 1) - radius) / estimated_angular_velocity->getFrequency() * measured_angular_velocity->getFrequency());
+//     std::vector<std::pair<int32_t, double>> table;
+//     table.emplace_back(0, measured_frame + (0 - radius) / estimated_angular_velocity->getFrequency() * measured_angular_velocity->getFrequency());
+//     table.emplace_back(width - 1, measured_frame + ((width - 1) - radius) / estimated_angular_velocity->getFrequency() * measured_angular_velocity->getFrequency());
 
-    return table;
-}
+//     return table;
+// }
