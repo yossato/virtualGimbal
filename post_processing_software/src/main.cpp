@@ -56,14 +56,12 @@ int main(int argc, char **argv)
     char *jsonPass = NULL;
     bool output = false;
     bool show_image = true;
-    bool inpainting = false;
     const char *kernel_name = "cl/stabilizer_kernel.cl";
     const char *kernel_function = "stabilizer_function";
     double zoom = 1.0;
     int32_t fileter_length = 199;
     int opt;
     int queue_size = 10;
-    size_t buffer_size = 21;
     bool analyze = false;
     char *experimental_param_json_path = NULL;
     double sync_period = 30.0;
@@ -130,12 +128,6 @@ int main(int argc, char **argv)
         case 'm':
             curve_fitting_valid_value_thresh = std::stof(optarg);
             break;
-        // case 'p':
-        //     inpainting = true;
-        //     break;
-        // case 'b':
-        //     buffer_size = std::stoi(optarg);
-        //     break;
         default:
             //            printf(     "virtualGimbal\r\n"
             //                        "Hyper fast video stabilizer\r\n\r\n"
@@ -253,73 +245,12 @@ int main(int argc, char **argv)
     // {
     //     readSyncTableFromJson(videoNameToSyncTableJsonName(videoPass),table);
     // }
+
+    table = manager.getSyncTableRobust(zoom,fir_filter,fileter_length,feature_points_pairs,sync_period,sync_frame_length/240.0, ra4_thresh, subframe_resolution, curve_fitting_valid_value_thresh);
+    if(table.size())
     {
-        table = manager.getSyncTableRobust(zoom,fir_filter,fileter_length,feature_points_pairs,sync_period,sync_frame_length/240.0, ra4_thresh, subframe_resolution, curve_fitting_valid_value_thresh);
-        if(table.size())
-        {
-            std::cout << "Robust table size:" << table.size() << std::endl;
-            printf("Robust table:\r\n");
-            LoggingDouble d;
-            for(size_t i=0;i<table.size()-1;++i)
-            {
-                printf("(%d,%f)-(%d,%f), a:%f b=%f\r\n",table[i].first,table[i].second,table[i+1].first,table[i+1].second,
-                (table[i+1].second-table[i].second)/(table[i+1].first-table[i].first),
-                (table[i].second*table[i+1].first-table[i].first*table[i+1].second)/(table[i+1].first-table[i].first)
-                );
-                double a = (table[i+1].second-table[i].second)/(table[i+1].first-table[i].first);
-                double b = (table[i].second*table[i+1].first-table[i].first*table[i+1].second)/(table[i+1].first-table[i].first);
-                d["Estimated angular velocity frame"].push_back(table[i].first);
-                d["Measured angular velocity frame"].push_back(table[i].second);
-                d["a-skew"].push_back(a);
-                d["b-offset"].push_back(b);
-            }
-            d["Estimated angular velocity frame"].push_back(table.back().first);
-            d["Measured angular velocity frame"].push_back(table.back().second);
-            d["a-skew"].push_back(0);
-            d["b-offset"].push_back(0);
-
-            std::string time_stamp = DataCollection::getSystemTimeStamp();
-            DataCollection collection(time_stamp + "_incremental_sync_table.csv");
-            collection.setDuplicateFilePath("latest_incremental_sync_table.csv");
-            collection.set(d);  
-        }
-    }
-
-    if(table.empty()){
-        table = manager.getSyncTableIncrementally(zoom,fir_filter,fileter_length,feature_points_pairs,sync_period,sync_frame_length/240.0, ra4_thresh);
-        if(table.size())
-        {
-            std::cout << "Incremental table size:" << table.size() << std::endl;
-            printf("Estimated new table:\r\n");
-            LoggingDouble d;
-            for(size_t i=0;i<table.size()-1;++i)
-            {
-                printf("(%d,%f)-(%d,%f), a:%f b=%f\r\n",table[i].first,table[i].second,table[i+1].first,table[i+1].second,
-                (table[i+1].second-table[i].second)/(table[i+1].first-table[i].first),
-                (table[i].second*table[i+1].first-table[i].first*table[i+1].second)/(table[i+1].first-table[i].first)
-                );
-                double a = (table[i+1].second-table[i].second)/(table[i+1].first-table[i].first);
-                double b = (table[i].second*table[i+1].first-table[i].first*table[i+1].second)/(table[i+1].first-table[i].first);
-                d["Estimated angular velocity frame"].push_back(table[i].first);
-                d["Measured angular velocity frame"].push_back(table[i].second);
-                d["a-skew"].push_back(a);
-                d["b-offset"].push_back(b);
-            }
-            d["Estimated angular velocity frame"].push_back(table.back().first);
-            d["Measured angular velocity frame"].push_back(table.back().second);
-
-            std::string time_stamp = DataCollection::getSystemTimeStamp();
-            DataCollection collection(time_stamp + "_incremental_sync_table.csv");
-            collection.setDuplicateFilePath("latest_incremental_sync_table.csv");
-            collection.set(d);  
-        }
-    }
-
-    if(table.empty()){ // Experimental
-        
-        /*SyncTable */table = manager.getSyncTable(zoom,fir_filter,fileter_length,feature_points_pairs,sync_period,sync_frame_length/240.0);
-        
-        printf("Estimated new table:\r\n");
+        std::cout << "Robust table size:" << table.size() << std::endl;
+        printf("Robust table:\r\n");
         LoggingDouble d;
         for(size_t i=0;i<table.size()-1;++i)
         {
@@ -336,39 +267,24 @@ int main(int argc, char **argv)
         }
         d["Estimated angular velocity frame"].push_back(table.back().first);
         d["Measured angular velocity frame"].push_back(table.back().second);
+        d["a-skew"].push_back(0);
+        d["b-offset"].push_back(0);
 
         std::string time_stamp = DataCollection::getSystemTimeStamp();
-        DataCollection collection(time_stamp + "_new_sync_table.csv");
-        collection.setDuplicateFilePath("latest_new_sync_table.csv");
+        DataCollection collection(time_stamp + "_incremental_sync_table.csv");
+        collection.setDuplicateFilePath("latest_incremental_sync_table.csv");
         collection.set(d);  
-    }
-    
-    if(table.empty()){
-        table = manager.getSyncTable(sync_period,sync_frame_length);
-        if(2 >table.size()){
-            printf("Warning: Input video too short to apply poly line syncronize method, an alternative mothod is used.\r\n");
-            table = manager.getSyncTableOfShortVideo();
-        }
-        printf("Table:\r\n");
-        for(size_t i=0;i<table.size()-1;++i)
-        {
-            printf("(%d,%f)-(%d,%f), a:%f b=%f\r\n",table[i].first,table[i].second,table[i+1].first,table[i+1].second,
-            (table[i+1].second-table[i].second)/(table[i+1].first-table[i].first),
-            (table[i].second*table[i+1].first-table[i].first*table[i+1].second)/(table[i+1].first-table[i].first)
-            );
-        }
-        if(0){
-            auto copied_table = table;
-            for(auto &el:copied_table)
-            {
-                el.second += (double)el.first * -0.0003278362805483809 + 1.1475274725274724;
-            }
-            writeSyncTableToJson(videoNameToSyncTableJsonName(videoPass),copied_table);
 
-        }
         writeSyncTableToJson(videoNameToSyncTableJsonName(videoPass),table);
     }
+    else
+    {
+        std::cerr << "Failed to sync video and angular velocity" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
 
+   
+    
 
 
 
@@ -417,14 +333,8 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    if(inpainting)
-    {
-        manager.spinInpainting(zoom,table,fir_filter,buffer_size);
-    }
-    else
-    {
-        manager.spin(zoom,fir_filter,filter_coefficients,table, show_image);    
-    }
+
+    manager.spin(zoom,fir_filter,filter_coefficients,table, show_image);    
     
 
     return 0;

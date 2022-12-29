@@ -100,7 +100,6 @@ public:
                                       std::vector<std::pair<int32_t,double>> &sync_table, 
                                       int32_t strongest_filter_param, int32_t weakest_filter_param);
   int spin(double zoom, FilterPtr filter,Eigen::VectorXd &filter_strength, std::vector<std::pair<int32_t,double>> &sync_table, bool show_image = true);
-  int spinInpainting(double zoom, std::vector<std::pair<int32_t, double>> &sync_table, FilterPtr filter, size_t buffer_size, int filter_strength=199, bool show_image = true);
   cv::Point2f warp_undistort(const cv::Point2f &p, float zoom_ratio, const std::vector<float> &stabilized_angle_matrices);
 
   int spinAnalyse(double zoom, FilterPtr filter,Eigen::VectorXd &filter_strength, std::vector<std::pair<int32_t,double>> &sync_table, const PointPairs &point_pair,char *experimental_param_json_path);
@@ -112,11 +111,8 @@ public:
   const char *kernel_function = "stabilizer_function";
   std::shared_ptr<cv::VideoCapture> getVideoCapture();
   // std::shared_ptr<ResamplerParameter> getResamplerParameterWithClockError(Eigen::VectorXd &correlation_begin, Eigen::VectorXd &correlation_end);
-  std::vector<std::pair<int32_t,double>> getSyncTable(double period_in_second,int32_t width);
   std::vector<std::pair<int32_t, double>> getSyncTableOfShortVideo();
   SyncTable createSyncTable(int32_t estimate_frame, double measured_frame, double e2m_ratio);
-  std::vector<std::pair<int32_t, double>> getSyncTable(double zoom, FilterPtr filter,int32_t filter_length, PointPairs &point_pairs, double duration, double length);
-  SyncTable getSyncTableIncrementally(double zoom, FilterPtr filter, int32_t filter_length, PointPairs &point_pairs, double sync_interval_sec, double ra4_length_sec, double ra4_thresh=0.8);
   double refineMeasuredFrame(EstimatedFrame &ra4_length_efs, const double &e2m, PointPairs &point_pairs, double &zoom, FilterPtr &filter, Eigen::VectorXd &filter_strength, double &ra4_thresh, EstimatedFrame frame_efs, std::vector<MeasuredFrame> measured_frame_search_range, MeasuredFrame resolution, double curve_fitting_valid_value_thresh=0.3);
 
   SyncTable getSyncTableRobust(double zoom, FilterPtr filter, int32_t filter_length, PointPairs &point_pairs, double sync_interval_sec, double ra4_length_sec, double ra4_thresh=0.8,double subframe_resolution = 0.1, double curve_fitting_valid_value_thresh=0.3);
