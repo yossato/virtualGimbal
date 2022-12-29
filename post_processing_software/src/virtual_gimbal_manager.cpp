@@ -1166,7 +1166,7 @@ double VirtualGimbalManager::refineMeasuredFrame(EstimatedFrame &ra4_length_efs,
         y.push_back(ratio);
     }
 
-    
+    assert(std::numeric_limits<double>::epsilon() < curve_fitting_valid_value_thresh);
     std::vector<double> x_extract,y_extract;    // For curve fitting
     for(size_t i=0;i<x.size();++i)
     {
